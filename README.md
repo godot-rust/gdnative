@@ -1,4 +1,4 @@
-#GDNative bindings for Rust
+# GDNative bindings for Rust
 
 Collection of crates to let you easily write code for Godot games in Rust. Actual documentation coming soon™
 
