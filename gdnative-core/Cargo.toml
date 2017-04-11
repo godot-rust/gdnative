@@ -1,0 +1,11 @@
+[package]
+name = "gdnative-core"
+version = "0.1.0"
+authors = ["Max Sandholm <max@sandholm.org>"]
+description = "Godot Engine GDNative scripting in Rust"
+repository = "https://github.com/GodotNativeTools/rust_bindings"
+license = "MIT"
+
+[dependencies]
+gdnative-sys = "0.1.1"
+gdnative-macros = "0.1.0"

@@ -1,0 +1,9 @@
+[package]
+name = "gdnative-sys"
+version = "0.1.1"
+authors = ["Max Sandholm <max@sandholm.org>"]
+description = "Bindings to the GDNative C API"
+repository = "https://gitlab.com/vurpo/gdnative-rust"
+license = "MIT"
+
+[dependencies]

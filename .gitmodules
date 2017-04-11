@@ -1,0 +1,3 @@
+[submodule "gdnative-sys-tmp/godot_headers"]
+	path = gdnative-sys-tmp/godot_headers
+	url = https://github.com/GodotNativeTools/godot_headers
