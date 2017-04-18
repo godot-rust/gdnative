@@ -1,3 +1,4 @@
 */target
 *.rlib
 **/Cargo.lock
+.vscode
