@@ -1,3 +1,5 @@
+**Warning**: this project is currently unfinished and unmaintained. If you're interested in working on this, talk about it in #godotengine-gdnative on Freenode. The project may be picked up and continued in the future, but it is "on hold" for now.
+
 # GDNative bindings for Rust
 
 Collection of crates to let you easily write code for Godot games in Rust. Actual documentation coming soon™
