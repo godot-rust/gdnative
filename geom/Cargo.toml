@@ -1,0 +1,8 @@
+[package]
+name = "gdnative_geom"
+version = "0.2.0"
+license = "MIT"
+workspace = ".."
+
+[dependencies]
+euclid = "0.17.0"

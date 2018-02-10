@@ -1,0 +1,10 @@
+[package]
+name = "gdnative-example"
+version = "0.2.0"
+workspace = ".."
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../gdnative" }

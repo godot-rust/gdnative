@@ -1,0 +1,16 @@
+[package]
+name = "gdnative"
+version = "0.2.0"
+license = "MIT"
+workspace = ".."
+
+[dependencies]
+gdnative-sys = { path = "../sys" }
+gdnative_geom = { path = "../geom" }
+libc = "0.2"
+bitflags = "1.0"
+
+[build-dependencies]
+serde = "1.0.15"
+serde_json = "1.0.3"
+serde_derive = "1.0.15"
