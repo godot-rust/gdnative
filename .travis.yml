@@ -1,0 +1,9 @@
+language: rust
+rust:
+  - stable
+  - nightly
+env:
+  - RUST_BACKTRACE=1
+script:
+  - cargo test --all
+
