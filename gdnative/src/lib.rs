@@ -52,11 +52,23 @@ macro_rules! godot_error {
 mod class;
 mod internal;
 mod property;
-mod types;
+mod godot_type;
+mod color;
+mod variant;
+mod rid;
+mod generated;
+mod node_path;
+
 pub use internal::*;
 pub use property::*;
 pub use class::*;
-pub use types::*;
+pub use godot_type::*;
+pub use variant::*;
+pub use geom::*;
+pub use color::*;
+pub use rid::*;
+pub use node_path::*;
+pub use generated::*;
 
 #[doc(hidden)]
 pub static mut GODOT_API: Option<GodotApi> = None;

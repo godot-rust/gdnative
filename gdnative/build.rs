@@ -254,8 +254,8 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "NodePath" => Some("NodePath".into()),
         "Variant" => Some("Variant".into()),
         "AABB" => Some("Aabb".into()),
+        "RID" => Some("Rid".into()),
         "Array" => None, // TODO:
-        "RID" => None, // TODO:
         "Dictionary" => None, // TODO:
         "PoolStringArray" => None, // TODO:
         "PoolByteArray" => None, // TODO:
@@ -302,12 +302,13 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
         | "Plane"
         | "AABB"
         | "Basis"
-        | "Rect2" => {
+        | "Rect2"
+        | "Color" => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}) as *const _ as *const _;
             "#, name = name, arg = arg).unwrap();
         },
-        "Color" => {
+        "RID" => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
             "#, name = name, arg = arg).unwrap();
@@ -501,14 +502,17 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         | "AABB"
         | "Rect2"
         | "Basis"
-        | "Plane" => {
+        | "Plane"
+        | "Color" => {
             writeln!(w, r#"
             ::std::mem::transmute(ret)
             "#).unwrap();
         },
-        "Color" => {
+        "RID" => {
             writeln!(w, r#"
-            Color(ret)
+            let mut rid = Rid::default();
+            (api.godot_rid_new_with_resource)(&mut rid.0, ret);
+            rid
             "#).unwrap();
         },
         "NodePath" => {

@@ -1,5 +1,5 @@
 use super::*;
-use types::GodotType;
+use godot_type::GodotType;
 use std::marker::PhantomData;
 
 pub struct PropertiesBuilder<C> {
