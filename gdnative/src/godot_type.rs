@@ -1,12 +1,4 @@
-
 use super::*;
-use std::sync::{Once, ONCE_INIT};
-use std::ops::*;
-
-pub use geom::*;
-
-mod variant;
-pub use self::variant::*;
 
 pub unsafe trait GodotType: Sized {
     fn as_variant(&self) -> sys::godot_variant;
@@ -165,125 +157,6 @@ unsafe impl GodotType for String {
         }
     }
 }
-#[derive(Clone, Copy)]
-pub struct Color(sys::godot_color);
-
-impl Color {
-    pub fn new_rgba(r: f32, g: f32, b: f32, a: f32) -> Color {
-        unsafe {
-            let mut dest = sys::godot_color::default();
-            (get_api().godot_color_new_rgba)(&mut dest, r, g, b, a);
-            Color(dest)
-        }
-    }
-
-    pub fn new_rgb(r: f32, g: f32, b: f32) -> Color {
-        unsafe {
-            let mut dest = sys::godot_color::default();
-            (get_api().godot_color_new_rgb)(&mut dest, r, g, b);
-            Color(dest)
-        }
-    }
-
-    pub fn r(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_r)(&self.0)
-        }
-    }
-
-    pub fn set_r(&mut self, v: f32) {
-        unsafe {
-            (get_api().godot_color_set_r)(&mut self.0, v)
-        }
-    }
-
-    pub fn g(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_g)(&self.0)
-        }
-    }
-
-    pub fn set_g(&mut self, v: f32) {
-        unsafe {
-            (get_api().godot_color_set_g)(&mut self.0, v)
-        }
-    }
-
-    pub fn b(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_b)(&self.0)
-        }
-    }
-
-    pub fn set_b(&mut self, v: f32) {
-        unsafe {
-            (get_api().godot_color_set_b)(&mut self.0, v)
-        }
-    }
-
-    pub fn a(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_a)(&self.0)
-        }
-    }
-
-    pub fn set_a(&mut self, v: f32) {
-        unsafe {
-            (get_api().godot_color_set_a)(&mut self.0, v)
-        }
-    }
-
-    pub fn h(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_h)(&self.0)
-        }
-    }
-
-    pub fn s(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_s)(&self.0)
-        }
-    }
-
-    pub fn v(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_v)(&self.0)
-        }
-    }
-}
-
-pub struct NodePath(sys::godot_node_path);
-
-impl NodePath {
-    pub fn new(path: &str) -> NodePath {
-        unsafe {
-            let mut dest = sys::godot_node_path::default();
-            let api = get_api();
-            let mut from = (api.godot_string_chars_to_utf8_with_len)(path.as_ptr() as *const _, path.len() as _);
-            (api.godot_node_path_new)(&mut dest, &from);
-            (api.godot_string_destroy)(&mut from);
-            NodePath(dest)
-        }
-    }
-}
-
-impl Clone for NodePath {
-    fn clone(&self) -> NodePath {
-        unsafe {
-            let mut dest = sys::godot_node_path::default();
-            (get_api().godot_node_path_new_copy)(&mut dest, &self.0);
-            NodePath(dest)
-        }
-    }
-}
-
-impl Drop for NodePath {
-    fn drop(&mut self) {
-        unsafe {
-            (get_api().godot_node_path_destroy)(&mut self.0);
-        }
-    }
-}
 
 pub struct Nothing {
     info: GodotClassInfo,
@@ -317,4 +190,3 @@ unsafe impl GodotClass for Nothing {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/types.rs"));

@@ -28,7 +28,7 @@ godot_class! {
                         "Testing".to_owned()
                     ]
                 })
-                .getter(|s: &mut RustTest| "Hello".to_owned())
+                .getter(|_s: &mut RustTest| "Hello".to_owned())
                 .register();
             builder.property("test/test_flags", 0)
                 .hint(godot::PropertyHint::Flags {
@@ -39,7 +39,7 @@ godot_class! {
                         "D".to_owned()
                     ]
                 })
-                .getter(|s: &mut RustTest| 0)
+                .getter(|_s: &mut RustTest| 0)
                 .register();
         }
         constructor(godot_info) {
@@ -75,7 +75,7 @@ godot_class! {
 
             if let Some(mat) = p.get_surface_material(0) {
                 let mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
-                mat.set_albedo(Color::new_rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
+                mat.set_albedo(Color::rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
             } else {
                 godot_warn!("No material");
             }
