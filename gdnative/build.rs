@@ -158,11 +158,11 @@ impl {name} {{
                         writeln!(output, r#"
                 let {name}: Variant = if let Some(o) = {name} {{
                     o.into()
-                }} else {{ Variant::new_nil() }};
+                }} else {{ Variant::new() }};
                         "#, name = rust_safe_name(&argument.name)).unwrap();
                     } else if ty == "String" {
                         writeln!(output, r#"
-                let {name}: Variant = Variant::new_string({name});
+                let {name}: Variant = Variant::from_str({name});
                         "#, name = rust_safe_name(&argument.name)).unwrap();
                     } else {
                         writeln!(output, r#"

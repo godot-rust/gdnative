@@ -2,7 +2,6 @@ use sys;
 use get_api;
 use std::mem::transmute;
 use std::cmp::{PartialEq, Eq};
-use std::hash::{Hash, Hasher};
 
 /// Resource Id.
 #[derive(Copy, Clone, Debug, Default)]
@@ -18,20 +17,12 @@ impl Rid {
     }
 
     fn to_u64(&self) -> u64 {
-        unsafe { transmute(*self) }
+        unsafe { transmute(self.0) }
     }
 }
 
-impl PartialEq for Rid {
-    fn eq(&self, other: &Self) -> bool {
-        unsafe { (get_api().godot_rid_operator_equal)(&self.0, &other.0) }
-    }
-}
-
-impl Eq for Rid {}
-
-impl Hash for Rid {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.to_u64().hash(state);
+impl_basic_traits!{
+    for Rid as godot_rid {
+        Eq => godot_rid_operator_equal;
     }
 }

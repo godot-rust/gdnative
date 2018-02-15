@@ -59,6 +59,7 @@ mod variant;
 mod rid;
 mod generated;
 mod node_path;
+mod string;
 
 pub use internal::*;
 pub use property::*;
@@ -70,6 +71,7 @@ pub use color::*;
 pub use rid::*;
 pub use node_path::*;
 pub use generated::*;
+pub use string::*;
 
 #[doc(hidden)]
 pub static mut GODOT_API: Option<GodotApi> = None;

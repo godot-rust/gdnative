@@ -48,6 +48,19 @@ macro_rules! impl_basic_trait {
             }
         }
     };
+
+    (
+        Eq for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl PartialEq for $Type {
+            fn eq(&self, other: &Self) -> bool {
+                unsafe {
+                    (get_api().$gd_method)(&self.0, &other.0)
+                }
+            }
+        }
+        impl Eq for $Type {}
+    };
 }
 
 macro_rules! impl_basic_traits {

@@ -125,7 +125,7 @@ impl_basic_traits!(
     for GodotString as godot_string {
         Drop => godot_string_destroy;
         Clone => godot_string_new_copy;
-        PartialEq => godot_string_operator_equal;
+        Eq => godot_string_operator_equal;
         Default => default;
     }
 );
