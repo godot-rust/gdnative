@@ -48,6 +48,7 @@ macro_rules! godot_error {
     })
 }
 
+mod macros;
 #[macro_use]
 mod class;
 mod internal;

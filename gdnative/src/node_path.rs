@@ -16,20 +16,11 @@ impl NodePath {
     }
 }
 
-impl Clone for NodePath {
-    fn clone(&self) -> NodePath {
-        unsafe {
-            let mut dest = sys::godot_node_path::default();
-            (get_api().godot_node_path_new_copy)(&mut dest, &self.0);
-            NodePath(dest)
-        }
+impl_basic_traits!(
+    for NodePath as godot_node_path {
+        Drop => godot_node_path_destroy;
+        Clone => godot_node_path_new_copy;
+        PartialEq => godot_node_path_operator_equal;
+        Default => default;
     }
-}
-
-impl Drop for NodePath {
-    fn drop(&mut self) {
-        unsafe {
-            (get_api().godot_node_path_destroy)(&mut self.0);
-        }
-    }
-}
+);
