@@ -20,7 +20,7 @@ impl_basic_traits!(
     for NodePath as godot_node_path {
         Drop => godot_node_path_destroy;
         Clone => godot_node_path_new_copy;
-        PartialEq => godot_node_path_operator_equal;
+        Eq => godot_node_path_operator_equal;
         Default => default;
     }
 );

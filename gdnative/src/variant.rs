@@ -10,11 +10,11 @@ use std::default::Default;
 /// dependning on the size of the type and whether the it is trivially copyable.
 pub struct Variant(pub(crate) sys::godot_variant);
 
-macro_rules! variant_constructors {
+macro_rules! variant_constructors_transmute {
     (
         $(
             $(#[$attr:meta])*
-            fn $ctor:ident($Type:ty) -> Self as $GdType:ty : $gd_method:ident;
+            pub fn $ctor:ident($Type:ty) -> Self as $GdType:ty : $gd_method:ident;
         )*
     ) => (
         $(
@@ -23,7 +23,7 @@ macro_rules! variant_constructors {
                 unsafe {
                     let api = get_api();
                     let mut dest = sys::godot_variant::default();
-                    let gd_val: $GdType = transmute(val);
+                    let gd_val: $GdType = transmute(*val);
                     (api.$gd_method)(&mut dest, &gd_val);
                     Variant(dest)
                 }
@@ -32,11 +32,32 @@ macro_rules! variant_constructors {
     )
 }
 
-macro_rules! variant_to_type {
+macro_rules! variant_constructors_wrap {
     (
         $(
             $(#[$attr:meta])*
-            fn $method:ident(&self) -> Option<$Type:ident> : $gd_method:ident;
+            pub fn $ctor:ident($Type:ty) -> Self as $GdType:ty : $gd_method:ident;
+        )*
+    ) => (
+        $(
+            $(#[$attr])*
+            pub fn $ctor(val: $Type) -> Variant {
+                unsafe {
+                    let api = get_api();
+                    let mut dest = sys::godot_variant::default();
+                    (api.$gd_method)(&mut dest, &val.0);
+                    Variant(dest)
+                }
+            }
+        )*
+    )
+}
+
+macro_rules! variant_to_type_transmute {
+    (
+        $(
+            $(#[$attr:meta])*
+            pub fn $method:ident(&self) -> Option<$Type:ident> : $gd_method:ident;
         )*
     ) => (
         $(
@@ -47,6 +68,27 @@ macro_rules! variant_to_type {
                 }
                 unsafe {
                     Some(transmute((get_api().$gd_method)(&self.0)))
+                }
+            }
+        )*
+    )
+}
+
+macro_rules! variant_to_type_wrap {
+    (
+        $(
+            $(#[$attr:meta])*
+            pub fn $method:ident(&self) -> Option<$Type:ident> : $gd_method:ident;
+        )*
+    ) => (
+        $(
+            $(#[$attr])*
+            pub fn $method(&self) -> Option<$Type> {
+                if self.get_type() != VariantType::$Type {
+                    return None;
+                }
+                unsafe {
+                    Some($Type((get_api().$gd_method)(&self.0)))
                 }
             }
         )*
@@ -66,7 +108,7 @@ pub enum VariantType {
     Bool = GODOT_VARIANT_TYPE_BOOL as u32,
     I64 = GODOT_VARIANT_TYPE_INT as u32,
     F64 = GODOT_VARIANT_TYPE_REAL as u32,
-    String = GODOT_VARIANT_TYPE_STRING as u32,
+    GodotString = GODOT_VARIANT_TYPE_STRING as u32,
     Vector2 = GODOT_VARIANT_TYPE_VECTOR2 as u32,
     Rect2 = GODOT_VARIANT_TYPE_RECT2 as u32,
     Vector3 = GODOT_VARIANT_TYPE_VECTOR3 as u32,
@@ -99,33 +141,48 @@ fn from_godot_varianty_type(v: sys::godot_variant_type) -> VariantType {
 //    unsafe { transmute(v) }
 //}
 
+// These aliases are just here so the type name matches the VariantType's variant names
+// to make writing macros easier.
+type F64 = f64;
+type I64 = f64;
+type Bool = bool;
+
 impl Variant {
 
-    variant_constructors!(
+    variant_constructors_transmute!(
         /// Creates a `Variant` wrapping a `Vector2`.
-        fn new_vector2(Vector2) -> Self as sys::godot_vector2 : godot_variant_new_vector2;
+        pub fn from_vector2(&Vector2) -> Self as sys::godot_vector2 : godot_variant_new_vector2;
         /// Creates a `Variant` wrapping a `Vector3`.
-        fn new_vector3(Vector3) -> Self as sys::godot_vector3 : godot_variant_new_vector3;
+        pub fn from_vector3(&Vector3) -> Self as sys::godot_vector3 : godot_variant_new_vector3;
         /// Creates a `Variant` wrapping a `Quat`.
-        fn new_quat(Quat) -> Self as sys::godot_quat : godot_variant_new_quat;
+        pub fn from_quat(&Quat) -> Self as sys::godot_quat : godot_variant_new_quat;
         /// Creates a `Variant` wrapping a `Plane`.
-        fn new_plane(Plane) -> Self as sys::godot_plane : godot_variant_new_plane;
+        pub fn from_plane(&Plane) -> Self as sys::godot_plane : godot_variant_new_plane;
         /// Creates a `Variant` wrapping a `Rect2`.
-        fn new_rect2(Rect2) -> Self as sys::godot_rect2 : godot_variant_new_rect2;
+        pub fn from_rect2(&Rect2) -> Self as sys::godot_rect2 : godot_variant_new_rect2;
         /// Creates a `Variant` wrapping a `Transform`.
-        fn new_transform(Transform) -> Self as sys::godot_transform : godot_variant_new_transform;
+        pub fn from_transform(&Transform) -> Self as sys::godot_transform : godot_variant_new_transform;
         /// Creates a `Variant` wrapping a `Transform2D`.
-        fn new_transform2d(Transform2D) -> Self as sys::godot_transform2d : godot_variant_new_transform2d;
+        pub fn from_transform2d(&Transform2D) -> Self as sys::godot_transform2d : godot_variant_new_transform2d;
         /// Creates a `Variant` wrapping a `Basis`.
-        fn new_basis(Basis) -> Self as sys::godot_basis : godot_variant_new_basis;
+        pub fn from_basis(&Basis) -> Self as sys::godot_basis : godot_variant_new_basis;
         /// Creates a `Variant` wrapping a `Color`.
-        fn new_color(Color) -> Self as sys::godot_color : godot_variant_new_color;
+        pub fn from_color(&Color) -> Self as sys::godot_color : godot_variant_new_color;
         /// Creates a `Variant` wrapping an `Aabb`.
-        fn new_aabb(Aabb) -> Self as sys::godot_aabb : godot_variant_new_aabb;
+        pub fn from_aabb(&Aabb) -> Self as sys::godot_aabb : godot_variant_new_aabb;
+    );
+
+    variant_constructors_wrap!(
+        /// Creates a `Variant` wrapping an `Rid`.
+        pub fn from_rid(&Rid) -> Self as sys::godot_rid : godot_variant_new_rid;
+        /// Creates a `Variant` wrapping a `NodePath`.
+        pub fn from_node_path(&NodePath) -> Self as sys::godot_node_path : godot_variant_new_node_path;
+        /// Creates a `Variant` wrapping a `GodotString`.
+        pub fn from_godot_string(&GodotString) -> Self as sys::godot_string : godot_variant_new_string;
     );
 
     /// Creates an empty `Variant`.
-    pub fn new_nil() -> Variant {
+    pub fn new() -> Self {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
@@ -135,7 +192,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a string.
-    pub fn new_string<S>(s: S) -> Variant
+    pub fn from_str<S>(s: S) -> Variant
         where S: AsRef<str>
     {
         unsafe {
@@ -150,7 +207,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a Godot object.
-    pub fn new_object<T>(o: GodotRef<T>) -> Variant
+    pub fn from_object<T>(o: GodotRef<T>) -> Variant
         where T: GodotClass
     {
         unsafe {
@@ -162,7 +219,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a signed integer value.
-    pub fn new_i64(v: i64) -> Variant {
+    pub fn from_i64(v: i64) -> Variant {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
@@ -172,7 +229,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping an unsigned integer value.
-    pub fn new_u64(v: u64) -> Variant {
+    pub fn from_u64(v: u64) -> Variant {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
@@ -182,7 +239,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping an boolean.
-    pub fn new_bool(v: bool) -> Variant {
+    pub fn from_bool(v: bool) -> Variant {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
@@ -192,27 +249,42 @@ impl Variant {
     }
 
 
-    variant_to_type!(
+    variant_to_type_transmute!(
         /// Returns `Some(Vector2)` if this variant is one, `None` otherwise.
-        fn to_vector2(&self) -> Option<Vector2> : godot_variant_as_vector2;
+        pub fn to_vector2(&self) -> Option<Vector2> : godot_variant_as_vector2;
         /// Returns `Some(Vector3)` if this variant is one, `None` otherwise.
-        fn to_vector3(&self) -> Option<Vector3> : godot_variant_as_vector3;
+        pub fn to_vector3(&self) -> Option<Vector3> : godot_variant_as_vector3;
         /// Returns `Some(Quat)` if this variant is one, `None` otherwise.
-        fn to_quat(&self) -> Option<Quat> : godot_variant_as_quat;
+        pub fn to_quat(&self) -> Option<Quat> : godot_variant_as_quat;
         /// Returns `Some(Plane)` if this variant is one, `None` otherwise.
-        fn to_plane(&self) -> Option<Plane> : godot_variant_as_plane;
+        pub fn to_plane(&self) -> Option<Plane> : godot_variant_as_plane;
         /// Returns `Some(Rect2)` if this variant is one, `None` otherwise.
-        fn to_rect2(&self) -> Option<Rect2> : godot_variant_as_rect2;
+        pub fn to_rect2(&self) -> Option<Rect2> : godot_variant_as_rect2;
         /// Returns `Some(Transform)` if this variant is one, `None` otherwise.
-        fn to_transform(&self) -> Option<Transform> : godot_variant_as_transform;
+        pub fn to_transform(&self) -> Option<Transform> : godot_variant_as_transform;
         /// Returns `Some(Transform2D)` if this variant is one, `None` otherwise.
-        fn to_transform2d(&self) -> Option<Transform2D> : godot_variant_as_transform2d;
+        pub fn to_transform2d(&self) -> Option<Transform2D> : godot_variant_as_transform2d;
         /// Returns `Some(Basis)` if this variant is one, `None` otherwise.
-        fn to_basis(&self) -> Option<Basis> : godot_variant_as_basis;
+        pub fn to_basis(&self) -> Option<Basis> : godot_variant_as_basis;
         /// Returns `Some(Color)` if this variant is one, `None` otherwise.
-        fn to_color(&self) -> Option<Color> : godot_variant_as_color;
+        pub fn to_color(&self) -> Option<Color> : godot_variant_as_color;
         /// Returns `Some(Aabb)` if this variant is one, `None` otherwise.
-        fn to_aabb(&self) -> Option<Aabb> : godot_variant_as_aabb;
+        pub fn to_aabb(&self) -> Option<Aabb> : godot_variant_as_aabb;
+        /// Returns `Some(f64)` if this variant is one, `None` otherwise.
+        pub fn to_f64(&self) -> Option<F64> : godot_variant_as_real;
+        /// Returns `Some(i64)` if this variant is one, `None` otherwise.
+        pub fn to_i64(&self) -> Option<I64> : godot_variant_as_int;
+        /// Returns `Some(bool)` if this variant is one, `None` otherwise.
+        pub fn to_bool(&self) -> Option<Bool> : godot_variant_as_bool;
+    );
+
+    variant_to_type_wrap!(
+        /// Returns `Some(NodePath)` if this variant is one, `None` otherwise.
+        pub fn to_node_path(&self) -> Option<NodePath> : godot_variant_as_node_path;
+        /// Returns `Some(GodotString)` if this variant is one, `None` otherwise.
+        pub fn to_godot_string(&self) -> Option<GodotString> : godot_variant_as_string;
+        /// Returns `Some(Rid)` if this variant is one, `None` otherwise.
+        pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
     );
 
     pub fn as_object<T>(&self) -> Option<GodotRef<T>>
@@ -243,6 +315,45 @@ impl Variant {
     pub fn is_nil(&self) -> bool {
         self.get_type() == VariantType::Nil
     }
+
+    pub fn has_method(&mut self, method: &GodotString) -> bool {
+        unsafe {
+            (get_api().godot_variant_has_method)(&mut self.0, &method.0)
+        }
+    }
+
+    // TODO: return a proper error.
+    pub fn call(&mut self, method: &GodotString, args: &[Variant]) -> Result<(), ()> {
+        unsafe {
+            let api = get_api();
+            let mut err = sys::godot_variant_call_error::default();
+            if args.is_empty() {
+                let mut first = ::std::ptr::null() as *const sys::godot_variant;
+                (api.godot_variant_call)(
+                    &mut self.0,
+                    &method.0,
+                    &mut first, 0,
+                    &mut err
+                );
+            } else {
+                // TODO: double check that this is safe.
+                let gd_args: &[sys::godot_variant] = transmute(args);
+                let mut first = &gd_args[0] as *const sys::godot_variant;
+                (api.godot_variant_call)(
+                    &mut self.0,
+                    &method.0,
+                    &mut first, args.len() as i32,
+                    &mut err
+                );
+            }
+
+            if err.error == sys::godot_variant_call_error_error::GODOT_CALL_ERROR_CALL_OK {
+                Ok(())
+            } else {
+                Err(())
+            }
+        }
+    }
 }
 
 impl_basic_traits!(
@@ -254,11 +365,24 @@ impl_basic_traits!(
 );
 
 impl Default for Variant {
-    fn default() -> Self { Variant::new_nil() }
+    fn default() -> Self { Variant::new() }
 }
 
-macro_rules! variant_from {
-    ($(impl From<$Type:ty> : $ctor:ident,)*) => (
+macro_rules! variant_from_ref {
+    ($(impl From<&$Type:ty> : $ctor:ident;)*) => (
+        $(
+            impl<'l> From<&'l $Type> for Variant
+            {
+                fn from(val: &'l $Type) -> Variant {
+                    Variant::$ctor(val)
+                }
+            }
+        )*
+    );
+}
+
+macro_rules! variant_from_val {
+    ($(impl From<$Type:ty> : $ctor:ident;)*) => (
         $(
             impl From<$Type> for Variant
             {
@@ -267,29 +391,35 @@ macro_rules! variant_from {
                 }
             }
         )*
-    )
+    );
 }
 
-variant_from!(
-    impl From<i64> : new_i64,
-    impl From<u64> : new_u64,
-    impl From<bool> : new_bool,
-    impl From<Vector2> : new_vector2,
-    impl From<Vector3> : new_vector3,
-    impl From<Quat> : new_quat,
-    impl From<Plane> : new_plane,
-    impl From<Rect2> : new_rect2,
-    impl From<Transform> : new_transform,
-    impl From<Transform2D> : new_transform2d,
-    impl From<Basis> : new_basis,
-    impl From<Color> : new_color,
-    impl From<Aabb> : new_aabb,
-    impl From<String> : new_string,
+variant_from_val!(
+    impl From<i64> : from_i64;
+    impl From<u64> : from_u64;
+    impl From<bool> : from_bool;
+);
+
+variant_from_ref!(
+    impl From<&Vector2> : from_vector2;
+    impl From<&Vector3> : from_vector3;
+    impl From<&Quat> : from_quat;
+    impl From<&Plane> : from_plane;
+    impl From<&Rect2> : from_rect2;
+    impl From<&Transform> : from_transform;
+    impl From<&Transform2D> : from_transform2d;
+    impl From<&Basis> : from_basis;
+    impl From<&Color> : from_color;
+    impl From<&Aabb> : from_aabb;
+    impl From<&String> : from_str;
+    impl From<&Rid> : from_rid;
+    impl From<&NodePath> : from_node_path;
+    impl From<&GodotString> : from_godot_string;
 );
 
 impl<'l> From<&'l str> for Variant {
     fn from(v: &str) -> Variant {
-        Variant::new_string(v)
+        Variant::from_str(v)
     }
 }
 
@@ -297,6 +427,6 @@ impl <T> From<GodotRef<T>> for Variant
     where T: GodotClass
 {
     fn from(o: GodotRef<T>) -> Variant {
-        Variant::new_object(o)
+        Variant::from_object(o)
     }
 }
