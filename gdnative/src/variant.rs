@@ -245,6 +245,14 @@ impl Variant {
     }
 }
 
+impl_basic_traits!(
+    for Variant as godot_variant {
+        Drop => godot_variant_destroy;
+        Clone => godot_variant_new_copy;
+        PartialEq => godot_variant_operator_equal;
+    }
+);
+
 impl Default for Variant {
     fn default() -> Self { Variant::new_nil() }
 }
@@ -290,23 +298,5 @@ impl <T> From<GodotRef<T>> for Variant
 {
     fn from(o: GodotRef<T>) -> Variant {
         Variant::new_object(o)
-    }
-}
-
-impl Clone for Variant {
-    fn clone(&self) -> Self {
-        unsafe {
-            let mut dest = sys::godot_variant::default();
-            (get_api().godot_variant_new_copy)(&mut dest, &self.0);
-            Variant(dest)
-        }
-    }
-}
-
-impl Drop for Variant {
-    fn drop(&mut self) {
-        unsafe {
-            (get_api().godot_variant_destroy)(&mut self.0);
-        }
     }
 }
