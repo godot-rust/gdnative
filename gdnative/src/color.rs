@@ -2,7 +2,8 @@ use sys;
 use get_api;
 use std::mem::transmute;
 
-#[derive(Clone, Copy)]
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {
     pub r: f32,
     pub g: f32,
