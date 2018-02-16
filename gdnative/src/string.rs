@@ -36,7 +36,7 @@ macro_rules! impl_methods {
 }
 
 impl GodotString {
-    pub fn new<S>(s: S) -> Self
+    pub fn from_str<S>(s: S) -> Self
         where S: AsRef<str>
     {
         unsafe {
@@ -169,3 +169,55 @@ impl_basic_traits!(
         Default => default;
     }
 );
+
+
+pub struct StringName(pub(crate) sys::godot_string_name);
+
+impl StringName {
+    pub fn new() -> Self {
+        StringName::default()
+    }
+
+    pub fn from_str<S>(s: S)
+        where S: AsRef<str>
+    {
+        let gd_string = GodotString::from_str(s);
+        StringName::from_godot_string(&gd_string);
+    }
+
+    pub fn from_c_str(s: &CStr) -> Self {
+        unsafe {
+            let mut result = StringName::default();
+            (get_api().godot_string_name_new_data)(&mut result.0, s.as_ptr());
+            result
+        }
+    }
+
+    pub fn from_godot_string(s: &GodotString) -> Self {
+        unsafe {
+            let mut result = StringName::default();
+            (get_api().godot_string_name_new)(&mut result.0, &s.0);
+            result
+        }
+    }
+
+    pub fn get_hash(&self) -> u32 {
+        unsafe {
+            (get_api().godot_string_name_get_hash)(&self.0)
+        }
+    }
+
+    pub fn get_name(&self) -> GodotString {
+        unsafe {
+            GodotString((get_api().godot_string_name_get_name)(&self.0))
+        }
+    }
+}
+
+impl_basic_traits! {
+    for StringName as godot_string_name {
+        Drop => godot_string_name_destroy;
+        Eq => godot_string_name_operator_equal;
+        Default => default;
+    }
+}
