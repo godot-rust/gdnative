@@ -6,13 +6,7 @@ use GodotType;
 pub struct Array(pub(crate) sys::godot_array);
 
 impl Array {
-    pub fn new() -> Self {
-        unsafe {
-            let mut gd_array = sys::godot_array::default();
-            (get_api().godot_array_new)(&mut gd_array);
-            Array(gd_array)
-        }
-    }
+    pub fn new() -> Self { Array::default() }
 
     pub fn set(&mut self, idx: i32, val: &Variant) {
         unsafe {
@@ -129,7 +123,7 @@ impl_basic_traits!(
     for Array as godot_array {
         Drop => godot_array_destroy;
         Clone => godot_array_new_copy;
-        Default => default;
+        Default => godot_array_new;
     }
 );
 

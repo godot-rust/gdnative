@@ -6,7 +6,7 @@ use Variant;
 pub struct NodePath(pub(crate) sys::godot_node_path);
 
 impl NodePath {
-    pub fn new(path: &str) -> NodePath {
+    pub fn from_str(path: &str) -> NodePath {
         unsafe {
             let mut dest = sys::godot_node_path::default();
             let api = get_api();
@@ -23,7 +23,6 @@ impl_basic_traits!(
         Drop => godot_node_path_destroy;
         Clone => godot_node_path_new_copy;
         Eq => godot_node_path_operator_equal;
-        Default => default;
     }
 );
 

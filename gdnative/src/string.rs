@@ -128,7 +128,7 @@ impl_basic_traits!(
         Drop => godot_string_destroy;
         Clone => godot_string_new_copy;
         Eq => godot_string_operator_equal;
-        Default => default;
+        Default => godot_string_new;
     }
 );
 
@@ -173,7 +173,6 @@ impl Utf8String {
 impl_basic_traits!(
     for Utf8String as godot_char_string {
         Drop => godot_char_string_destroy;
-        Default => default;
     }
 );
 
@@ -181,10 +180,6 @@ impl_basic_traits!(
 pub struct StringName(pub(crate) sys::godot_string_name);
 
 impl StringName {
-    pub fn new() -> Self {
-        StringName::default()
-    }
-
     pub fn from_str<S>(s: S)
         where S: AsRef<str>
     {
@@ -194,17 +189,17 @@ impl StringName {
 
     pub fn from_c_str(s: &CStr) -> Self {
         unsafe {
-            let mut result = StringName::default();
-            (get_api().godot_string_name_new_data)(&mut result.0, s.as_ptr());
-            result
+            let mut result = sys::godot_string_name::default();
+            (get_api().godot_string_name_new_data)(&mut result, s.as_ptr());
+            StringName(result)
         }
     }
 
     pub fn from_godot_string(s: &GodotString) -> Self {
         unsafe {
-            let mut result = StringName::default();
-            (get_api().godot_string_name_new)(&mut result.0, &s.0);
-            result
+            let mut result = sys::godot_string_name::default();
+            (get_api().godot_string_name_new)(&mut result, &s.0);
+            StringName(result)
         }
     }
 
@@ -225,6 +220,5 @@ impl_basic_traits! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
         Eq => godot_string_name_operator_equal;
-        Default => default;
     }
 }
