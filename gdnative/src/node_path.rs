@@ -1,5 +1,7 @@
 use sys;
 use get_api;
+use GodotType;
+use Variant;
 
 pub struct NodePath(pub(crate) sys::godot_node_path);
 
@@ -24,3 +26,8 @@ impl_basic_traits!(
         Default => default;
     }
 );
+
+impl GodotType for NodePath {
+    fn to_variant(&self) -> Variant { Variant::from_node_path(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_node_path() }
+}

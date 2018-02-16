@@ -1,5 +1,5 @@
 use super::*;
-use std::mem::transmute;
+use std::mem::{transmute, forget};
 use std::default::Default;
 
 // TODO: implement Debug, PartialEq, etc.
@@ -371,6 +371,12 @@ impl Variant {
 
     pub(crate) fn cast_mut_ref<'l>(ptr: *mut sys::godot_variant) -> &'l mut Variant {
         unsafe { transmute(ptr) }
+    }
+
+    pub fn forget(self) -> sys::godot_variant {
+        let v = self.0;
+        forget(self);
+        v
     }
 }
 

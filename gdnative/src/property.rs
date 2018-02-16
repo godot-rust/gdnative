@@ -87,7 +87,7 @@ impl <C> PropertiesBuilder<C>
 {
     pub fn property<T: GodotType>(&mut self, name: &str, default: T) -> PropertyBuilder<C, (), (), T>
     {
-        let def = default.as_variant();
+        let def = default.to_variant().forget();
         let api = get_api();
         PropertyBuilder {
             parent: self,
@@ -303,7 +303,7 @@ unsafe impl <F, C, T> GodotSetFunction<C, T> for F
                 let mut rust_ty = rust_ty.borrow_mut();
                 let func = &mut *(method as *mut F);
 
-                if let Some(val) = T::from_variant(&mut *val) {
+                if let Some(val) = T::from_variant(&Variant::cast_ref(val)) {
                     func(&mut *rust_ty, val);
                 } else {
                     godot_error!("Incorrect type passed to property");
@@ -346,7 +346,7 @@ unsafe impl <F, C, T> GodotGetFunction<C, T> for F
                 let mut rust_ty = rust_ty.borrow_mut();
                 let func = &mut *(method as *mut F);
                 let ret = func(&mut *rust_ty);
-                ret.as_variant()
+                ret.to_variant().forget()
             }
         }
         get.get_func = Some(invoke::<C, F, T>);

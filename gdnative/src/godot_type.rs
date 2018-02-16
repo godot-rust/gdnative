@@ -1,53 +1,54 @@
 use super::*;
 
-pub unsafe trait GodotType: Sized {
-    fn as_variant(&self) -> sys::godot_variant;
-    fn from_variant(variant: &mut sys::godot_variant) -> Option<Self>;
+pub trait GodotType: Sized {
+    fn to_variant(&self) -> Variant;
+    fn from_variant(variant: &Variant) -> Option<Self>;
+
+    fn to_sys_variant(&self) -> sys::godot_variant {
+        self.to_variant().forget()
+    }
+    fn from_sys_variant(variant: &sys::godot_variant) -> Option<Self> {
+        Self::from_variant(Variant::cast_ref(variant))
+    }
 }
 
-unsafe impl GodotType for () {
-    fn as_variant(&self) -> sys::godot_variant {
-        unsafe {
-            let mut ret = sys::godot_variant::default();
-            (get_api().godot_variant_new_nil)(&mut ret);
-            ret
-        }
+impl GodotType for () {
+    fn to_variant(&self) -> Variant {
+        Variant::new()
     }
 
-    fn from_variant(variant: &mut sys::godot_variant) -> Option<Self> {
-        unsafe {
-            if (get_api().godot_variant_get_type)(variant) == sys::godot_variant_type::GODOT_VARIANT_TYPE_NIL {
-                Some(())
-            } else {
-                None
-            }
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        if variant.get_type() == VariantType::Nil {
+            Some(())
+        } else {
+            None
         }
     }
 }
 
 macro_rules! godot_int_impl {
     ($ty:ty) => (
-        unsafe impl GodotType for $ty {
-            fn as_variant(&self) -> sys::godot_variant {
+        impl GodotType for $ty {
+            fn to_variant(&self) -> Variant {
                 unsafe {
                     let mut ret = sys::godot_variant::default();
                     (get_api().godot_variant_new_int)(&mut ret, *self as i64);
-                    ret
+                    Variant(ret)
                 }
             }
 
-            fn from_variant(variant: &mut sys::godot_variant) -> Option<Self> {
+            fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
-                    if (api.godot_variant_get_type)(variant) == sys::godot_variant_type::GODOT_VARIANT_TYPE_INT {
-                        Some((api.godot_variant_as_int)(variant) as Self)
+                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_INT {
+                        Some((api.godot_variant_as_int)(&variant.0) as Self)
                     } else {
                         None
                     }
                 }
             }
         }
-            )
+    )
 }
 
 godot_int_impl!(i8);
@@ -57,27 +58,27 @@ godot_int_impl!(i64);
 
 macro_rules! godot_uint_impl {
     ($ty:ty) => (
-        unsafe impl GodotType for $ty {
-            fn as_variant(&self) -> sys::godot_variant {
+        impl GodotType for $ty {
+            fn to_variant(&self) -> Variant {
                 unsafe {
                     let mut ret = sys::godot_variant::default();
                     (get_api().godot_variant_new_uint)(&mut ret, *self as u64);
-                    ret
+                    Variant(ret)
                 }
             }
 
-            fn from_variant(variant: &mut sys::godot_variant) -> Option<Self> {
+            fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
-                    if (api.godot_variant_get_type)(variant) == sys::godot_variant_type::GODOT_VARIANT_TYPE_INT {
-                        Some((api.godot_variant_as_uint)(variant) as Self)
+                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_INT {
+                        Some((api.godot_variant_as_uint)(&variant.0) as Self)
                     } else {
                         None
                     }
                 }
             }
         }
-            )
+    )
 }
 
 godot_uint_impl!(u8);
@@ -86,20 +87,20 @@ godot_uint_impl!(u32);
 godot_uint_impl!(u64);
 
 
-unsafe impl GodotType for f32 {
-    fn as_variant(&self) -> sys::godot_variant {
+impl GodotType for f32 {
+    fn to_variant(&self) -> Variant {
         unsafe {
             let mut ret = sys::godot_variant::default();
             (get_api().godot_variant_new_real)(&mut ret, *self as f64);
-            ret
+            Variant(ret)
         }
     }
 
-    fn from_variant(variant: &mut sys::godot_variant) -> Option<Self> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(variant) == sys::godot_variant_type::GODOT_VARIANT_TYPE_REAL {
-                Some((api.godot_variant_as_real)(variant) as Self)
+            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_REAL {
+                Some((api.godot_variant_as_real)(&variant.0) as Self)
             } else {
                 None
             }
@@ -107,20 +108,20 @@ unsafe impl GodotType for f32 {
     }
 }
 
-unsafe impl GodotType for f64 {
-    fn as_variant(&self) -> sys::godot_variant {
+impl GodotType for f64 {
+    fn to_variant(&self) -> Variant {
         unsafe {
             let mut ret = sys::godot_variant::default();
             (get_api().godot_variant_new_real)(&mut ret, *self);
-            ret
+            Variant(ret)
         }
     }
 
-    fn from_variant(variant: &mut sys::godot_variant) -> Option<Self> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(variant) == sys::godot_variant_type::GODOT_VARIANT_TYPE_REAL {
-                Some((api.godot_variant_as_real)(variant) as Self)
+            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_REAL {
+                Some((api.godot_variant_as_real)(&variant.0) as Self)
             } else {
                 None
             }
@@ -128,28 +129,21 @@ unsafe impl GodotType for f64 {
     }
 }
 
-unsafe impl GodotType for String {
-    fn as_variant(&self) -> sys::godot_variant {
-        unsafe {
-            let mut ret = sys::godot_variant::default();
-            let api = get_api();
-            let mut string = (api.godot_string_chars_to_utf8_with_len)(self.as_ptr() as *const _, self.len() as _);
-            (api.godot_variant_new_string)(&mut ret, &string);
-            (api.godot_string_destroy)(&mut string);
-            ret
-        }
+impl GodotType for String {
+    fn to_variant(&self) -> Variant {
+        Variant::from_str(&self)
     }
 
-    fn from_variant(variant: &mut sys::godot_variant) -> Option<Self> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(variant) == sys::godot_variant_type::GODOT_VARIANT_TYPE_STRING {
-                let mut variant = (api.godot_variant_as_string)(variant);
-                let tmp = (api.godot_string_utf8)(&variant);
+            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_STRING {
+                let mut gd_variant = (api.godot_variant_as_string)(&variant.0);
+                let tmp = (api.godot_string_utf8)(&gd_variant);
                 let ret = ::std::ffi::CStr::from_ptr((api.godot_char_string_get_data)(&tmp) as *const _)
                     .to_string_lossy()
                     .into_owned();
-                (api.godot_string_destroy)(&mut variant);
+                (api.godot_string_destroy)(&mut gd_variant);
                 Some(ret)
             } else {
                 None
