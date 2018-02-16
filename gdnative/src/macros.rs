@@ -19,9 +19,9 @@ macro_rules! impl_basic_trait {
         impl Clone for $Type {
             fn clone(&self) -> Self {
                unsafe {
-                    let mut result = $Type::default();
-                    (get_api().$gd_method)(&mut result.0, &self.0);
-                    result
+                    let mut result = sys::$GdType::default();
+                    (get_api().$gd_method)(&mut result, &self.0);
+                    $Type(result)
                 }
             }
         }
@@ -32,7 +32,11 @@ macro_rules! impl_basic_trait {
     ) => {
         impl Default for $Type {
             fn default() -> Self {
-                $Type(sys::$GdType::default())
+                unsafe {
+                    let mut gd_val = sys::$GdType::default();
+                    (get_api().$gd_method)(&mut gd_val);
+                    $Type(gd_val)
+                }
             }
         }
     };
