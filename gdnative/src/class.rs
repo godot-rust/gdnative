@@ -57,7 +57,7 @@ macro_rules! godot_class_build_export_methods {
                     }
                     let mut offset = 0;
                     $(
-                        let $pname = if let Some(val) = <$pty as $crate::GodotType>::from_variant(&mut *(*args).offset(offset)) {
+                        let $pname = if let Some(val) = <$pty as $crate::GodotType>::from_sys_variant(&mut *(*args).offset(offset)) {
                             val
                         } else {
                             godot_error!("Incorrect parameter type for parameter {}", offset);
@@ -89,7 +89,7 @@ macro_rules! godot_class_build_export_methods {
                             return ret;
                         }
                     };
-                    <$retty as $crate::GodotType>::as_variant(&rust_ret)
+                    <$retty as $crate::GodotType>::to_sys_variant(&rust_ret)
                 }
             }
             let method = $crate::sys::godot_instance_method {

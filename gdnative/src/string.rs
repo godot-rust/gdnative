@@ -1,5 +1,7 @@
 use sys;
 use get_api;
+use Variant;
+use GodotType;
 
 use std::ffi::CStr;
 use std::ops::Range;
@@ -129,6 +131,11 @@ impl_basic_traits!(
         Default => default;
     }
 );
+
+impl GodotType for GodotString {
+    fn to_variant(&self) -> Variant { Variant::from_godot_string(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_godot_string() }
+}
 
 pub struct Utf8String(pub(crate) sys::godot_char_string);
 

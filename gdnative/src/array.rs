@@ -1,6 +1,7 @@
 use sys;
 use get_api;
 use Variant;
+use GodotType;
 
 pub struct Array(pub(crate) sys::godot_array);
 
@@ -131,3 +132,8 @@ impl_basic_traits!(
         Default => default;
     }
 );
+
+impl GodotType for Array {
+    fn to_variant(&self) -> Variant { Variant::from_array(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_array() }
+}
