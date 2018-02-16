@@ -179,6 +179,9 @@ impl Variant {
         pub fn from_node_path(&NodePath) -> Self as sys::godot_node_path : godot_variant_new_node_path;
         /// Creates a `Variant` wrapping a `GodotString`.
         pub fn from_godot_string(&GodotString) -> Self as sys::godot_string : godot_variant_new_string;
+        // TODO: missing C binding?
+        // /// Creates a `Variant` wrapping a `StringName`.
+        // pub fn from_string_name(&StringName) -> Self as sys::godot_string_name : godot_variant_new_string_name;
     );
 
     /// Creates an empty `Variant`.
@@ -285,6 +288,9 @@ impl Variant {
         pub fn to_godot_string(&self) -> Option<GodotString> : godot_variant_as_string;
         /// Returns `Some(Rid)` if this variant is one, `None` otherwise.
         pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
+        // TODO: missing C binding?
+        // /// Returns `Some(StringName)` if this variant is one, `None` otherwise.
+        // pub fn to_string_name(&self) -> Option<StringName> : godot_variant_as_string_name;
     );
 
     pub fn as_object<T>(&self) -> Option<GodotRef<T>>
