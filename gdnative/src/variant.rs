@@ -144,7 +144,7 @@ fn from_godot_varianty_type(v: sys::godot_variant_type) -> VariantType {
 // These aliases are just here so the type name matches the VariantType's variant names
 // to make writing macros easier.
 type F64 = f64;
-type I64 = f64;
+type I64 = i64;
 type Bool = bool;
 
 impl Variant {
@@ -326,9 +326,9 @@ impl Variant {
         self.get_type() == VariantType::Nil
     }
 
-    pub fn has_method(&mut self, method: &GodotString) -> bool {
+    pub fn has_method(&self, method: &GodotString) -> bool {
         unsafe {
-            (get_api().godot_variant_has_method)(&mut self.0, &method.0)
+            (get_api().godot_variant_has_method)(&self.0, &method.0)
         }
     }
 
@@ -454,3 +454,42 @@ impl <T> From<GodotRef<T>> for Variant
         Variant::from_object(o)
     }
 }
+
+godot_test!(
+    test_variant_nil {
+        let nil = Variant::new();
+        assert_eq!(nil.get_type(), VariantType::Nil);
+        assert!(nil.is_nil());
+
+        assert!(nil.to_array().is_none());
+        assert!(nil.to_rid().is_none());
+        assert!(nil.to_i64().is_none());
+        assert!(nil.to_bool().is_none());
+        assert!(nil.to_aabb().is_none());
+        assert!(nil.to_vector2().is_none());
+        assert!(nil.to_basis().is_none());
+
+        assert!(!nil.has_method(&GodotString::from_str("foo")));
+
+        let clone = nil.clone();
+        assert!(clone == nil);
+    }
+
+    test_variant_i64 {
+        let v_42 = Variant::from_i64(42);
+        assert_eq!(v_42.get_type(), VariantType::I64);
+
+        assert!(!v_42.is_nil());
+        assert_eq!(v_42.to_i64(), Some(42));
+        assert!(v_42.to_f64().is_none());
+        assert!(v_42.to_array().is_none());
+
+        let v_m1 = Variant::from_i64(-1);
+        assert_eq!(v_m1.get_type(), VariantType::I64);
+
+        assert!(!v_m1.is_nil());
+        assert_eq!(v_m1.to_i64(), Some(-1));
+        assert!(v_m1.to_f64().is_none());
+        assert!(v_m1.to_array().is_none());
+    }
+);

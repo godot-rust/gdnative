@@ -4,6 +4,9 @@ version = "0.2.0"
 license = "MIT"
 workspace = ".."
 
+[features]
+gd_test = []
+
 [dependencies]
 gdnative-sys = { path = "../sys" }
 gdnative_geom = { path = "../geom" }

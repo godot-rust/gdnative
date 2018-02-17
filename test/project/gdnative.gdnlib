@@ -1,0 +1,16 @@
+[entry]
+
+X11.32="res://lib/libgdnative_test.so"
+X11.64="res://lib/libgdnative_test.so"
+Windows="res://lib/libgdnative_test.dll"
+
+[dependencies]
+
+X11.64=[  ]
+
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true

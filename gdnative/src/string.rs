@@ -222,3 +222,24 @@ impl_basic_traits! {
         Eq => godot_string_name_operator_equal;
     }
 }
+
+godot_test!(test_string {
+    use VariantType;
+    let foo = GodotString::from_str("foo");
+    assert_eq!(foo.len(), 3);
+
+    let foo_clone = foo.clone();
+    assert!(foo == foo_clone);
+
+    let variant = Variant::from_godot_string(&foo);
+    assert!(variant.get_type() == VariantType::GodotString);
+
+    let variant2 = Variant::from_str("foo");
+    assert!(variant == variant2);
+
+    if let Some(foo_variant) = variant.to_godot_string() {
+        assert!(foo_variant == foo);
+    } else {
+        panic!("variant should be a GodotString");
+    }
+});
