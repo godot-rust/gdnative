@@ -69,7 +69,7 @@ godot_class! {
             let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
             p.set_translation(self.start + offset);
 
-            if let Some(cap) = p.get_node(NodePath::new("./Cap")).and_then(|v| v.cast::<Spatial>()) {
+            if let Some(cap) = p.get_node(NodePath::from_str("./Cap")).and_then(|v| v.cast::<Spatial>()) {
                 cap.rotate_x(0.05);
             }
 
