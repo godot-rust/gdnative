@@ -1,0 +1,10 @@
+[package]
+name = "gdnative-test"
+version = "0.1.0"
+workspace = ".."
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../gdnative", features = ["gd_test"] }

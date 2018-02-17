@@ -111,6 +111,7 @@ macro_rules! godot_init {
 
         #[no_mangle]
         #[doc(hidden)]
+        #[allow(unused_unsafe, unused_variables)]
         pub extern "C" fn godot_nativescript_init(desc: *mut $crate::libc::c_void) {
             unsafe {
                 $(

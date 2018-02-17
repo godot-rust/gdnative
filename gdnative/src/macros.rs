@@ -80,3 +80,25 @@ macro_rules! impl_basic_traits {
         )*
     )
 }
+
+macro_rules! godot_test {
+    ($($test_name:ident $body:block)*) => {
+        $(
+            #[cfg(feature = "gd_test")]
+            pub fn $test_name() -> bool {
+                let str_name = stringify!($test_name);
+                println!("   -- {}", str_name);
+
+                let ok = ::std::panic::catch_unwind(
+                    || $body
+                ).is_ok();
+
+                if !ok {
+                    godot_error!("   !! Test {} failed", str_name);
+                }
+
+                ok
+            }
+        )*
+    }
+}
