@@ -256,7 +256,7 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "AABB" => Some("Aabb".into()),
         "RID" => Some("Rid".into()),
         "Array" => Some("Array".into()),
-        "Dictionary" => None, // TODO:
+        "Dictionary" => Some("Dictionary".into()),
         "PoolStringArray" => None, // TODO:
         "PoolByteArray" => None, // TODO:
         "PoolVector2Array" => None, // TODO:
@@ -319,6 +319,11 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
             "#, name = name, arg = arg).unwrap();
         },
         "Array" => {
+            writeln!(w, r#"
+            argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
+            "#, name = name, arg = arg).unwrap();
+        },
+        "Dictionary" => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
             "#, name = name, arg = arg).unwrap();
@@ -469,6 +474,12 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &str) {
             let ret_ptr = &mut ret as *mut _;
             "#).unwrap();
         },
+        "Dictionary" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_dictionary::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
         _ty => {
             writeln!(w, r#"
             let mut ret: *mut sys::godot_object = ptr::null_mut();
@@ -534,6 +545,11 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         "Array" => {
             writeln!(w, r#"
             Array(ret)
+            "#).unwrap();
+        },
+        "Dictionary" => {
+            writeln!(w, r#"
+            Dictionary(ret)
             "#).unwrap();
         },
         "Variant" => {

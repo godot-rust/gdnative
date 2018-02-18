@@ -181,6 +181,8 @@ impl Variant {
         pub fn from_godot_string(&GodotString) -> Self as sys::godot_string : godot_variant_new_string;
         /// Creates a `Variant` wrapping an array of variants.
         pub fn from_array(&Array) -> Self as sys::godot_array : godot_variant_new_array;
+        /// Creates a `Variant` wrapping an array of variants.
+        pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
         // TODO: missing C binding?
         // /// Creates a `Variant` wrapping a `StringName`.
         // pub fn from_string_name(&StringName) -> Self as sys::godot_string_name : godot_variant_new_string_name;
@@ -292,6 +294,8 @@ impl Variant {
         pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
         /// Returns `Some(Array)` if this variant is one, `None` otherwise.
         pub fn to_array(&self) -> Option<Array> : godot_variant_as_array;
+        /// Returns `Some(Array)` if this variant is one, `None` otherwise.
+        pub fn to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
         // TODO: missing C binding?
         // /// Returns `Some(StringName)` if this variant is one, `None` otherwise.
         // pub fn to_string_name(&self) -> Option<StringName> : godot_variant_as_string_name;
