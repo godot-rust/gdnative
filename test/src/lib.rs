@@ -9,6 +9,7 @@ pub extern "C" fn run_tests(
 
     let mut status = true;
     status &= gdnative::test_string();
+    status &= gdnative::test_dictionary();
     status &= gdnative::test_variant_nil();
     status &= gdnative::test_variant_i64();
 
