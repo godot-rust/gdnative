@@ -272,21 +272,6 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
 }
 fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usize) {
     match ty {
-        "bool" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
-        "float" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
-        "int" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
         "String" => {
             writeln!(w, r#"
             let mut __val_{arg} = {name}.as_ref();
@@ -294,7 +279,10 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
             argument_buffer[{arg}] = (&__arg_{arg}) as *const _ as *const _;
             "#, name = name, arg = arg).unwrap();
         },
-        "Vector2"
+        "bool"
+        | "float"
+        | "int"
+        | "Vector2"
         | "Vector3"
         | "Transform"
         | "Transform2D"
@@ -308,27 +296,12 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
             argument_buffer[{arg}] = (&{name}) as *const _ as *const _;
             "#, name = name, arg = arg).unwrap();
         },
-        "RID" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
-        "NodePath" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
-        "Array" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
-        "Dictionary" => {
-            writeln!(w, r#"
-            argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
-            "#, name = name, arg = arg).unwrap();
-        },
-        "Variant" => {
+        "Variant"
+        | "RID"
+        | "NodePath"
+        | "Array"
+        | "Dictionary"
+         => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
             "#, name = name, arg = arg).unwrap();
@@ -493,17 +466,9 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
     match ty {
         "void" => {
         },
-        "float" => {
-            writeln!(w, r#"
-            ret
-            "#).unwrap();
-        }
-        "int" => {
-            writeln!(w, r#"
-            ret
-            "#).unwrap();
-        }
-        "bool" => {
+        "float"
+        | "int"
+        | "bool" => {
             writeln!(w, r#"
             ret
             "#).unwrap();
