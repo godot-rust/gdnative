@@ -258,7 +258,7 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "Array" => Some("Array".into()),
         "Dictionary" => Some("Dictionary".into()),
         "PoolByteArray" => Some("PoolByteArray".into()),
-        "PoolStringArray" => None, // TODO:
+        "PoolStringArray" => Some("PoolStringArray".into()),
         "PoolVector2Array" => None, // TODO:
         "PoolVector3Array" => None, // TODO:
         "PoolIntArray" => None, // TODO:
@@ -302,6 +302,7 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
         | "Array"
         | "Dictionary"
         | "PoolByteArray"
+        | "PoolStringArray"
          => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
@@ -460,6 +461,12 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &str) {
             let ret_ptr = &mut ret as *mut _;
             "#).unwrap();
         },
+        "PoolStringArray" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_pool_string_array::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
         _ty => {
             writeln!(w, r#"
             let mut ret: *mut sys::godot_object = ptr::null_mut();
@@ -527,6 +534,11 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         "PoolByteArray" => {
             writeln!(w, r#"
             PoolByteArray(ret)
+            "#).unwrap();
+        },
+        "PoolStringArray" => {
+            writeln!(w, r#"
+            PoolStringArray(ret)
             "#).unwrap();
         },
         "Variant" => {
