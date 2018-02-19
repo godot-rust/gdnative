@@ -22,6 +22,7 @@ mod generated;
 mod node_path;
 mod string;
 mod pool_byte_array;
+mod pool_string_array;
 
 pub use internal::*;
 pub use property::*;
@@ -37,6 +38,7 @@ pub use node_path::*;
 pub use generated::*;
 pub use string::*;
 pub use pool_byte_array::*;
+pub use pool_string_array::*;
 
 #[doc(hidden)]
 pub static mut GODOT_API: Option<GodotApi> = None;

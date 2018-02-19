@@ -179,11 +179,13 @@ impl Variant {
         pub fn from_node_path(&NodePath) -> Self as sys::godot_node_path : godot_variant_new_node_path;
         /// Creates a `Variant` wrapping a `GodotString`.
         pub fn from_godot_string(&GodotString) -> Self as sys::godot_string : godot_variant_new_string;
-        /// Creates a `Variant` wrapping an array of variants.
+        /// Creates an `Variant` wrapping an array of variants.
         pub fn from_array(&Array) -> Self as sys::godot_array : godot_variant_new_array;
-        /// Creates a `Variant` wrapping an array of variants.
+        /// Creates a `Variant` wrapping a byte array.
         pub fn from_pool_byte_array(&PoolByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
-        /// Creates a `Variant` wrapping an array of variants.
+        /// Creates a `Variant` wrapping a byte array.
+        pub fn from_pool_string_array(&PoolStringArray) -> Self as sys::godot_pool_string_array : godot_variant_new_pool_string_array;
+        /// Creates a `Variant` wrapping a dictionary.
         pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
         // TODO: missing C binding?
         // /// Creates a `Variant` wrapping a `StringName`.
@@ -296,9 +298,11 @@ impl Variant {
         pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
         /// Returns `Some(Array)` if this variant is one, `None` otherwise.
         pub fn to_array(&self) -> Option<Array> : godot_variant_as_array;
-        /// Returns `Some(Array)` if this variant is one, `None` otherwise.
+        /// Returns `Some(PoolByteArray)` if this variant is one, `None` otherwise.
         pub fn to_pool_byte_array(&self) -> Option<PoolByteArray> : godot_variant_as_pool_byte_array;
-        /// Returns `Some(Array)` if this variant is one, `None` otherwise.
+        /// Returns `Some(PoolByteArray)` if this variant is one, `None` otherwise.
+        pub fn to_pool_string_array(&self) -> Option<PoolStringArray> : godot_variant_as_pool_string_array;
+        /// Returns `Some(Dictionary)` if this variant is one, `None` otherwise.
         pub fn to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
         // TODO: missing C binding?
         // /// Returns `Some(StringName)` if this variant is one, `None` otherwise.
