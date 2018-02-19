@@ -183,8 +183,12 @@ impl Variant {
         pub fn from_array(&Array) -> Self as sys::godot_array : godot_variant_new_array;
         /// Creates a `Variant` wrapping a byte array.
         pub fn from_pool_byte_array(&PoolByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
-        /// Creates a `Variant` wrapping a byte array.
+        /// Creates a `Variant` wrapping an array of godot strings.
         pub fn from_pool_string_array(&PoolStringArray) -> Self as sys::godot_pool_string_array : godot_variant_new_pool_string_array;
+        /// Creates a `Variant` wrapping an array of Vector2.
+        pub fn from_pool_vector2_array(&PoolVector2Array) -> Self as sys::godot_pool_vector2_array : godot_variant_new_pool_vector2_array;
+        /// Creates a `Variant` wrapping an array of Vector3.
+        pub fn from_pool_vector3_array(&PoolVector3Array) -> Self as sys::godot_pool_vector3_array : godot_variant_new_pool_vector3_array;
         /// Creates a `Variant` wrapping a dictionary.
         pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
         // TODO: missing C binding?
@@ -300,8 +304,12 @@ impl Variant {
         pub fn to_array(&self) -> Option<Array> : godot_variant_as_array;
         /// Returns `Some(PoolByteArray)` if this variant is one, `None` otherwise.
         pub fn to_pool_byte_array(&self) -> Option<PoolByteArray> : godot_variant_as_pool_byte_array;
-        /// Returns `Some(PoolByteArray)` if this variant is one, `None` otherwise.
+        /// Returns `Some(PoolStringArray)` if this variant is one, `None` otherwise.
         pub fn to_pool_string_array(&self) -> Option<PoolStringArray> : godot_variant_as_pool_string_array;
+        /// Returns `Some(PoolVector2Array)` if this variant is one, `None` otherwise.
+        pub fn to_pool_vector2_array(&self) -> Option<PoolVector2Array> : godot_variant_as_pool_vector2_array;
+        /// Returns `Some(PoolVector3Array)` if this variant is one, `None` otherwise.
+        pub fn to_pool_vector3_array(&self) -> Option<PoolVector3Array> : godot_variant_as_pool_vector3_array;
         /// Returns `Some(Dictionary)` if this variant is one, `None` otherwise.
         pub fn to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
         // TODO: missing C binding?

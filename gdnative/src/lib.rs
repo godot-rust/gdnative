@@ -23,6 +23,8 @@ mod node_path;
 mod string;
 mod pool_byte_array;
 mod pool_string_array;
+mod pool_vector2_array;
+mod pool_vector3_array;
 
 pub use internal::*;
 pub use property::*;
@@ -39,6 +41,8 @@ pub use generated::*;
 pub use string::*;
 pub use pool_byte_array::*;
 pub use pool_string_array::*;
+pub use pool_vector2_array::*;
+pub use pool_vector3_array::*;
 
 #[doc(hidden)]
 pub static mut GODOT_API: Option<GodotApi> = None;

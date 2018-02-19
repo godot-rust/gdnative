@@ -4,7 +4,8 @@ use sys;
 use get_api;
 use geom::*;
 use {GodotRef, GodotClass, GodotClassInfo};
-use {Variant, Array, Color, Rid, NodePath, Dictionary, PoolByteArray, PoolStringArray};
+use {Variant, Array, Color, Rid, NodePath, Dictionary};
+use {PoolByteArray, PoolStringArray, PoolVector2Array, PoolVector3Array};
 
 use std::sync::{Once, ONCE_INIT};
 use std::ops::*;
