@@ -259,8 +259,8 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "Dictionary" => Some("Dictionary".into()),
         "PoolByteArray" => Some("PoolByteArray".into()),
         "PoolStringArray" => Some("PoolStringArray".into()),
-        "PoolVector2Array" => None, // TODO:
-        "PoolVector3Array" => None, // TODO:
+        "PoolVector2Array" => Some("PoolVector2Array".into()),
+        "PoolVector3Array" => Some("PoolVector3Array".into()),
         "PoolIntArray" => None, // TODO:
         "PoolRealArray" => None, // TODO:
         "PoolColorArray" => None, // TODO:
@@ -303,6 +303,8 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
         | "Dictionary"
         | "PoolByteArray"
         | "PoolStringArray"
+        | "PoolVector2Array"
+        | "PoolVector3Array"
          => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
@@ -467,6 +469,18 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &str) {
             let ret_ptr = &mut ret as *mut _;
             "#).unwrap();
         },
+        "PoolVector2Array" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_pool_vector2_array::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
+        "PoolVector3Array" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_pool_vector3_array::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
         _ty => {
             writeln!(w, r#"
             let mut ret: *mut sys::godot_object = ptr::null_mut();
@@ -539,6 +553,16 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         "PoolStringArray" => {
             writeln!(w, r#"
             PoolStringArray(ret)
+            "#).unwrap();
+        },
+        "PoolVector2Array" => {
+            writeln!(w, r#"
+            PoolVector2Array(ret)
+            "#).unwrap();
+        },
+        "PoolVector3Array" => {
+            writeln!(w, r#"
+            PoolVector3Array(ret)
             "#).unwrap();
         },
         "Variant" => {
