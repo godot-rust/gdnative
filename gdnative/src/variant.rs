@@ -124,7 +124,7 @@ pub enum VariantType {
     Object = GODOT_VARIANT_TYPE_OBJECT as u32,
     Dictionary = GODOT_VARIANT_TYPE_DICTIONARY as u32,
     Array = GODOT_VARIANT_TYPE_ARRAY as u32,
-    ByteArray = GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
+    PoolByteArray = GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
     I64Array = GODOT_VARIANT_TYPE_POOL_INT_ARRAY as u32,
     PoolF32Array = GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
     PoolStringArray = GODOT_VARIANT_TYPE_POOL_STRING_ARRAY as u32,
@@ -181,6 +181,8 @@ impl Variant {
         pub fn from_godot_string(&GodotString) -> Self as sys::godot_string : godot_variant_new_string;
         /// Creates a `Variant` wrapping an array of variants.
         pub fn from_array(&Array) -> Self as sys::godot_array : godot_variant_new_array;
+        /// Creates a `Variant` wrapping an array of variants.
+        pub fn from_pool_byte_array(&PoolByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
         /// Creates a `Variant` wrapping an array of variants.
         pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
         // TODO: missing C binding?
@@ -294,6 +296,8 @@ impl Variant {
         pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
         /// Returns `Some(Array)` if this variant is one, `None` otherwise.
         pub fn to_array(&self) -> Option<Array> : godot_variant_as_array;
+        /// Returns `Some(Array)` if this variant is one, `None` otherwise.
+        pub fn to_pool_byte_array(&self) -> Option<PoolByteArray> : godot_variant_as_pool_byte_array;
         /// Returns `Some(Array)` if this variant is one, `None` otherwise.
         pub fn to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
         // TODO: missing C binding?
