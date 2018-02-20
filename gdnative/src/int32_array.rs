@@ -84,5 +84,5 @@ impl_basic_traits!(
 
 impl GodotType for Int32Array {
     fn to_variant(&self) -> Variant { Variant::from_int32_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_int32_array() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_int32_array() }
 }

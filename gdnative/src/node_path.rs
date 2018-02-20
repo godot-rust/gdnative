@@ -73,5 +73,5 @@ impl_basic_traits!(
 
 impl GodotType for NodePath {
     fn to_variant(&self) -> Variant { Variant::from_node_path(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_node_path() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_node_path() }
 }

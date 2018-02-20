@@ -98,5 +98,5 @@ impl_basic_traits!(
 
 impl GodotType for ByteArray {
     fn to_variant(&self) -> Variant { Variant::from_byte_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_byte_array() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_byte_array() }
 }

@@ -112,7 +112,7 @@ impl_basic_traits!(
 
 impl GodotType for Dictionary {
     fn to_variant(&self) -> Variant { Variant::from_dictionary(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_dictionary() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_dictionary() }
 }
 
 godot_test!(test_dictionary {
@@ -138,7 +138,7 @@ godot_test!(test_dictionary {
     assert!(dict_clone.contains(&foo));
     assert!(dict_clone.contains(&bar));
 
-    if let Some(dic_variant) = variant.to_dictionary() {
+    if let Some(dic_variant) = variant.try_to_dictionary() {
         assert!(dic_variant == dict);
     } else {
         panic!("variant should be a Dictionary");

@@ -86,5 +86,5 @@ impl_basic_traits!(
 
 impl GodotType for StringArray {
     fn to_variant(&self) -> Variant { Variant::from_string_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_string_array() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_string_array() }
 }
