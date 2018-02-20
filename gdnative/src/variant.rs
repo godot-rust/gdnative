@@ -56,18 +56,27 @@ macro_rules! variant_constructors_wrap {
 macro_rules! variant_to_type_transmute {
     (
         $(
-            $(#[$attr:meta])*
-            pub fn $method:ident(&self) -> Option<$Type:ident> : $gd_method:ident;
+            $(#[$to_attr:meta])*
+            pub fn $to_method:ident(&self) -> $ToType:ident : $to_gd_method:ident;
+            $(#[$try_attr:meta])*
+            pub fn $try_method:ident(&self) -> Option<$TryType:ident> : $try_gd_method:ident;
         )*
     ) => (
         $(
-            $(#[$attr])*
-            pub fn $method(&self) -> Option<$Type> {
-                if self.get_type() != VariantType::$Type {
+            $(#[$to_attr])*
+            pub fn $to_method(&self) -> $ToType {
+                unsafe {
+                    transmute((get_api().$to_gd_method)(&self.0))
+                }
+            }
+
+            $(#[$try_attr])*
+            pub fn $try_method(&self) -> Option<$TryType> {
+                if self.get_type() != VariantType::$TryType {
                     return None;
                 }
                 unsafe {
-                    Some(transmute((get_api().$gd_method)(&self.0)))
+                    Some(transmute((get_api().$try_gd_method)(&self.0)))
                 }
             }
         )*
@@ -77,18 +86,30 @@ macro_rules! variant_to_type_transmute {
 macro_rules! variant_to_type_wrap {
     (
         $(
-            $(#[$attr:meta])*
-            pub fn $method:ident(&self) -> Option<$Type:ident> : $gd_method:ident;
+            $(#[$to_attr:meta])*
+            pub fn $to_method:ident(&self) -> $ToType:ident : $to_gd_method:ident;
+            $(#[$try_attr:meta])*
+            pub fn $try_method:ident(&self) -> Option<$TryType:ident> : $try_gd_method:ident;
         )*
     ) => (
         $(
-            $(#[$attr])*
-            pub fn $method(&self) -> Option<$Type> {
-                if self.get_type() != VariantType::$Type {
+            $(#[$to_attr])*
+            pub fn $to_method(&self) -> Option<$ToType> {
+                if self.get_type() != VariantType::$ToType {
                     return None;
                 }
                 unsafe {
-                    Some($Type((get_api().$gd_method)(&self.0)))
+                    Some($ToType((get_api().$to_gd_method)(&self.0)))
+                }
+            }
+
+            $(#[$try_attr])*
+            pub fn $try_method(&self) -> Option<$TryType> {
+                if self.get_type() != VariantType::$TryType {
+                    return None;
+                }
+                unsafe {
+                    Some($TryType((get_api().$try_gd_method)(&self.0)))
                 }
             }
         )*
@@ -193,9 +214,6 @@ impl Variant {
         pub fn from_color_array(&ColorArray) -> Self as sys::godot_pool_color_array : godot_variant_new_pool_color_array;
         /// Creates a `Variant` wrapping a dictionary.
         pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
-        // TODO: missing C binding?
-        // /// Creates a `Variant` wrapping a `StringName`.
-        // pub fn from_string_name(&StringName) -> Self as sys::godot_string_name : godot_variant_new_string_name;
     );
 
     /// Creates an empty `Variant`.
@@ -265,67 +283,136 @@ impl Variant {
         }
     }
 
-
     variant_to_type_transmute!(
+        /// Do a best effort to create a `Vector2` out of the variant, possibly returning a default value.
+        pub fn to_vector2(&self) -> Vector2 : godot_variant_as_vector2;
         /// Returns `Some(Vector2)` if this variant is one, `None` otherwise.
-        pub fn to_vector2(&self) -> Option<Vector2> : godot_variant_as_vector2;
+        pub fn try_to_vector2(&self) -> Option<Vector2> : godot_variant_as_vector2;
+
+        /// Do a best effort to create a `Vector3` out of the variant, possibly returning a default value.
+        pub fn to_vector3(&self) -> Vector3 : godot_variant_as_vector3;
         /// Returns `Some(Vector3)` if this variant is one, `None` otherwise.
-        pub fn to_vector3(&self) -> Option<Vector3> : godot_variant_as_vector3;
+        pub fn try_to_vector3(&self) -> Option<Vector3> : godot_variant_as_vector3;
+
+        /// Do a best effort to create a `Quat` out of the variant, possibly returning a default value.
+        pub fn to_quat(&self) -> Quat : godot_variant_as_quat;
         /// Returns `Some(Quat)` if this variant is one, `None` otherwise.
-        pub fn to_quat(&self) -> Option<Quat> : godot_variant_as_quat;
+        pub fn try_to_quat(&self) -> Option<Quat> : godot_variant_as_quat;
+
+        /// Do a best effort to create a `Plane` out of the variant, possibly returning a default value.
+        pub fn to_plane(&self) -> Plane : godot_variant_as_plane;
         /// Returns `Some(Plane)` if this variant is one, `None` otherwise.
-        pub fn to_plane(&self) -> Option<Plane> : godot_variant_as_plane;
+        pub fn try_to_plane(&self) -> Option<Plane> : godot_variant_as_plane;
+
+        /// Do a best effort to create a `Rect2` out of the variant, possibly returning a default value.
+        pub fn to_rect2(&self) -> Rect2 : godot_variant_as_rect2;
         /// Returns `Some(Rect2)` if this variant is one, `None` otherwise.
-        pub fn to_rect2(&self) -> Option<Rect2> : godot_variant_as_rect2;
+        pub fn try_to_rect2(&self) -> Option<Rect2> : godot_variant_as_rect2;
+
+        /// Do a best effort to create a `Transform` out of the variant, possibly returning a default value.
+        pub fn to_transform(&self) -> Transform : godot_variant_as_transform;
         /// Returns `Some(Transform)` if this variant is one, `None` otherwise.
-        pub fn to_transform(&self) -> Option<Transform> : godot_variant_as_transform;
+        pub fn try_to_transform(&self) -> Option<Transform> : godot_variant_as_transform;
+
+        /// Do a best effort to create a `Transform2D` out of the variant, possibly returning a default value.
+        pub fn to_transform2d(&self) -> Transform2D : godot_variant_as_transform2d;
         /// Returns `Some(Transform2D)` if this variant is one, `None` otherwise.
-        pub fn to_transform2d(&self) -> Option<Transform2D> : godot_variant_as_transform2d;
+        pub fn try_to_transform2d(&self) -> Option<Transform2D> : godot_variant_as_transform2d;
+
+        /// Do a best effort to create a `Basis` out of the variant, possibly returning a default value.
+        pub fn to_basis(&self) -> Basis : godot_variant_as_basis;
         /// Returns `Some(Basis)` if this variant is one, `None` otherwise.
-        pub fn to_basis(&self) -> Option<Basis> : godot_variant_as_basis;
+        pub fn try_to_basis(&self) -> Option<Basis> : godot_variant_as_basis;
+
+        /// Do a best effort to create a `Color` out of the variant, possibly returning a default value.
+        pub fn to_color(&self) -> Color : godot_variant_as_color;
         /// Returns `Some(Color)` if this variant is one, `None` otherwise.
-        pub fn to_color(&self) -> Option<Color> : godot_variant_as_color;
+        pub fn try_to_color(&self) -> Option<Color> : godot_variant_as_color;
+
+        /// Do a best effort to create an `Aabb` out of the variant, possibly returning a default value.
+        pub fn to_aabb(&self) -> Aabb : godot_variant_as_aabb;
         /// Returns `Some(Aabb)` if this variant is one, `None` otherwise.
-        pub fn to_aabb(&self) -> Option<Aabb> : godot_variant_as_aabb;
+        pub fn try_to_aabb(&self) -> Option<Aabb> : godot_variant_as_aabb;
+
+        /// Do a best effort to create a `f64` out of the variant, possibly returning a default value.
+        pub fn to_f64(&self) -> F64 : godot_variant_as_real;
         /// Returns `Some(f64)` if this variant is one, `None` otherwise.
-        pub fn to_f64(&self) -> Option<F64> : godot_variant_as_real;
+        pub fn try_to_f64(&self) -> Option<F64> : godot_variant_as_real;
+
+        /// Do a best effort to create an `i64` out of the variant, possibly returning a default value.
+        pub fn to_i64(&self) -> I64 : godot_variant_as_int;
         /// Returns `Some(i64)` if this variant is one, `None` otherwise.
-        pub fn to_i64(&self) -> Option<I64> : godot_variant_as_int;
+        pub fn try_to_i64(&self) -> Option<I64> : godot_variant_as_int;
+
+        /// Do a best effort to create a `bool` out of the variant, possibly returning a default value.
+        pub fn to_bool(&self) -> Bool : godot_variant_as_bool;
         /// Returns `Some(bool)` if this variant is one, `None` otherwise.
-        pub fn to_bool(&self) -> Option<Bool> : godot_variant_as_bool;
+        pub fn try_to_bool(&self) -> Option<Bool> : godot_variant_as_bool;
     );
 
     variant_to_type_wrap!(
+        /// Do a best effort to create a `NodePath` out of the variant, possibly returning a default value.
+        pub fn to_node_path(&self) -> NodePath : godot_variant_as_node_path;
         /// Returns `Some(NodePath)` if this variant is one, `None` otherwise.
-        pub fn to_node_path(&self) -> Option<NodePath> : godot_variant_as_node_path;
+        pub fn try_to_node_path(&self) -> Option<NodePath> : godot_variant_as_node_path;
+
+        /// Do a best effort to create a `GodotString` out of the variant, possibly returning a default value.
+        pub fn to_godot_string(&self) -> GodotString : godot_variant_as_string;
         /// Returns `Some(GodotString)` if this variant is one, `None` otherwise.
-        pub fn to_godot_string(&self) -> Option<GodotString> : godot_variant_as_string;
+        pub fn try_to_godot_string(&self) -> Option<GodotString> : godot_variant_as_string;
+
+        /// Do a best effort to create a `Rid` out of the variant, possibly returning a default value.
+        pub fn to_rid(&self) -> Rid : godot_variant_as_rid;
         /// Returns `Some(Rid)` if this variant is one, `None` otherwise.
-        pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
+        pub fn try_to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
+
+        /// Do a best effort to create a `VariantArray` out of the variant, possibly returning a default value.
+        pub fn to_array(&self) -> VariantArray : godot_variant_as_array;
         /// Returns `Some(VariantArray)` if this variant is one, `None` otherwise.
-        pub fn to_array(&self) -> Option<VariantArray> : godot_variant_as_array;
+        pub fn try_to_array(&self) -> Option<VariantArray> : godot_variant_as_array;
+
+        /// Do a best effort to create a `ByteArray` out of the variant, possibly returning a default value.
+        pub fn to_byte_array(&self) -> ByteArray : godot_variant_as_pool_byte_array;
         /// Returns `Some(ByteArray)` if this variant is one, `None` otherwise.
-        pub fn to_byte_array(&self) -> Option<ByteArray> : godot_variant_as_pool_byte_array;
+        pub fn try_to_byte_array(&self) -> Option<ByteArray> : godot_variant_as_pool_byte_array;
+
+        /// Do a best effort to create an `Int32Array` out of the variant, possibly returning a default value.
+        pub fn to_int32_array(&self) -> Int32Array : godot_variant_as_pool_int_array;
         /// Returns `Some(Int32Array)` if this variant is one, `None` otherwise.
-        pub fn to_int32_array(&self) -> Option<Int32Array> : godot_variant_as_pool_int_array;
+        pub fn try_to_int32_array(&self) -> Option<Int32Array> : godot_variant_as_pool_int_array;
+
+        /// Do a best effort to create a `Float32Array` out of the variant, possibly returning a default value.
+        pub fn to_float32_array(&self) -> Float32Array : godot_variant_as_pool_real_array;
         /// Returns `Some(Float32Array)` if this variant is one, `None` otherwise.
-        pub fn to_float32_array(&self) -> Option<Float32Array> : godot_variant_as_pool_real_array;
+        pub fn try_to_float32_array(&self) -> Option<Float32Array> : godot_variant_as_pool_real_array;
+
+        /// Do a best effort to create a `StringArray` out of the variant, possibly returning a default value.
+        pub fn to_string_array(&self) -> StringArray : godot_variant_as_pool_string_array;
         /// Returns `Some(StringArray)` if this variant is one, `None` otherwise.
-        pub fn to_string_array(&self) -> Option<StringArray> : godot_variant_as_pool_string_array;
+        pub fn try_to_string_array(&self) -> Option<StringArray> : godot_variant_as_pool_string_array;
+
+        /// Do a best effort to create a `Vector2Array` out of the variant, possibly returning a default value.
+        pub fn to_vector2_array(&self) -> Vector2Array : godot_variant_as_pool_vector2_array;
         /// Returns `Some(Vector2Array)` if this variant is one, `None` otherwise.
-        pub fn to_vector2_array(&self) -> Option<Vector2Array> : godot_variant_as_pool_vector2_array;
+        pub fn try_to_vector2_array(&self) -> Option<Vector2Array> : godot_variant_as_pool_vector2_array;
+
+        /// Do a best effort to create a `Vector3Array` out of the variant, possibly returning a default value.
+        pub fn to_vector3_array(&self) -> Vector3Array : godot_variant_as_pool_vector3_array;
         /// Returns `Some(Vector3Array)` if this variant is one, `None` otherwise.
-        pub fn to_vector3_array(&self) -> Option<Vector3Array> : godot_variant_as_pool_vector3_array;
+        pub fn try_to_vector3_array(&self) -> Option<Vector3Array> : godot_variant_as_pool_vector3_array;
+
+        /// Do a best effort to create a `ColorArray` out of the variant, possibly returning a default value.
+        pub fn to_color_array(&self) -> ColorArray : godot_variant_as_pool_color_array;
         /// Returns `Some(ColorArray)` if this variant is one, `None` otherwise.
-        pub fn to_color_array(&self) -> Option<ColorArray> : godot_variant_as_pool_color_array;
+        pub fn try_to_color_array(&self) -> Option<ColorArray> : godot_variant_as_pool_color_array;
+
+        /// Do a best effort to create a `Dictionary` out of the variant, possibly returning a default value.
+        pub fn to_dictionary(&self) -> Dictionary : godot_variant_as_dictionary;
         /// Returns `Some(Dictionary)` if this variant is one, `None` otherwise.
-        pub fn to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
-        // TODO: missing C binding?
-        // /// Returns `Some(StringName)` if this variant is one, `None` otherwise.
-        // pub fn to_string_name(&self) -> Option<StringName> : godot_variant_as_string_name;
+        pub fn try_to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
     );
 
-    pub fn as_object<T>(&self) -> Option<GodotRef<T>>
+    pub fn try_to_object<T>(&self) -> Option<GodotRef<T>>
         where T: GodotClass
     {
         use sys::godot_variant_type::*;
@@ -489,13 +576,13 @@ godot_test!(
         assert_eq!(nil.get_type(), VariantType::Nil);
         assert!(nil.is_nil());
 
-        assert!(nil.to_array().is_none());
-        assert!(nil.to_rid().is_none());
-        assert!(nil.to_i64().is_none());
-        assert!(nil.to_bool().is_none());
-        assert!(nil.to_aabb().is_none());
-        assert!(nil.to_vector2().is_none());
-        assert!(nil.to_basis().is_none());
+        assert!(nil.try_to_array().is_none());
+        assert!(nil.try_to_rid().is_none());
+        assert!(nil.try_to_i64().is_none());
+        assert!(nil.try_to_bool().is_none());
+        assert!(nil.try_to_aabb().is_none());
+        assert!(nil.try_to_vector2().is_none());
+        assert!(nil.try_to_basis().is_none());
 
         assert!(!nil.has_method(&GodotString::from_str("foo")));
 
@@ -508,16 +595,16 @@ godot_test!(
         assert_eq!(v_42.get_type(), VariantType::I64);
 
         assert!(!v_42.is_nil());
-        assert_eq!(v_42.to_i64(), Some(42));
-        assert!(v_42.to_f64().is_none());
-        assert!(v_42.to_array().is_none());
+        assert_eq!(v_42.try_to_i64(), Some(42));
+        assert!(v_42.try_to_f64().is_none());
+        assert!(v_42.try_to_array().is_none());
 
         let v_m1 = Variant::from_i64(-1);
         assert_eq!(v_m1.get_type(), VariantType::I64);
 
         assert!(!v_m1.is_nil());
-        assert_eq!(v_m1.to_i64(), Some(-1));
-        assert!(v_m1.to_f64().is_none());
-        assert!(v_m1.to_array().is_none());
+        assert_eq!(v_m1.try_to_i64(), Some(-1));
+        assert!(v_m1.try_to_f64().is_none());
+        assert!(v_m1.try_to_array().is_none());
     }
 );

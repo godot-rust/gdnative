@@ -237,7 +237,7 @@ godot_test!(test_string {
     let variant2 = Variant::from_str("foo");
     assert!(variant == variant2);
 
-    if let Some(foo_variant) = variant.to_godot_string() {
+    if let Some(foo_variant) = variant.try_to_godot_string() {
         assert!(foo_variant == foo);
     } else {
         panic!("variant should be a GodotString");
