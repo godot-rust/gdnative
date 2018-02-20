@@ -1,12 +1,13 @@
 use sys;
 use get_api;
 use GodotType;
+use GodotString;
 use Variant;
 
 pub struct NodePath(pub(crate) sys::godot_node_path);
 
 impl NodePath {
-    pub fn from_str(path: &str) -> NodePath {
+    pub fn from_str(path: &str) -> Self {
         unsafe {
             let mut dest = sys::godot_node_path::default();
             let api = get_api();
@@ -14,6 +15,50 @@ impl NodePath {
             (api.godot_node_path_new)(&mut dest, &from);
             (api.godot_string_destroy)(&mut from);
             NodePath(dest)
+        }
+    }
+
+    pub fn from_godot_string(path: &GodotString) -> Self {
+        unsafe {
+            let mut dest = sys::godot_node_path::default();
+            (get_api().godot_node_path_new)(&mut dest, &path.0);
+            NodePath(dest)
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        unsafe {
+            (get_api().godot_node_path_is_empty)(&self.0)
+        }
+    }
+
+    pub fn is_absolute(&self) -> bool {
+        unsafe {
+            (get_api().godot_node_path_is_absolute)(&self.0)
+        }
+    }
+
+    pub fn subname(&self, idx: i32) -> GodotString {
+        unsafe {
+            GodotString((get_api().godot_node_path_get_subname)(&self.0, idx))
+        }
+    }
+
+    pub fn subname_count(&self) -> i32 {
+        unsafe {
+            (get_api().godot_node_path_get_subname_count)(&self.0)
+        }
+    }
+
+    pub fn concatenated_subnames(&self) -> GodotString {
+        unsafe {
+            GodotString((get_api().godot_node_path_get_concatenated_subnames)(&self.0))
+        }
+    }
+
+    pub fn to_godot_string(&self) -> GodotString {
+        unsafe {
+            GodotString((get_api().godot_node_path_as_string)(&self.0))
         }
     }
 }
