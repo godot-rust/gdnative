@@ -2,7 +2,7 @@ use sys;
 use get_api;
 use Variant;
 use GodotType;
-use Array;
+use VariantArray;
 use Vector2;
 
 use std::mem::transmute;
@@ -12,7 +12,7 @@ pub struct Vector2Array(pub(crate) sys::godot_pool_vector2_array);
 impl Vector2Array {
     pub fn new() -> Self { Vector2Array::default() }
 
-    pub fn from_array(array: &Array) -> Self {
+    pub fn from_variant_array(array: &VariantArray) -> Self {
         unsafe {
             let mut result = sys::godot_pool_vector2_array::default();
             (get_api().godot_pool_vector2_array_new_with_array)(&mut result, &array.0);

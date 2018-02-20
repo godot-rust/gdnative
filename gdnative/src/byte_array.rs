@@ -2,14 +2,14 @@ use sys;
 use get_api;
 use Variant;
 use GodotType;
-use Array;
+use VariantArray;
 
 pub struct ByteArray(pub(crate) sys::godot_pool_byte_array);
 
 impl ByteArray {
     pub fn new() -> Self { ByteArray::default() }
 
-    pub fn from_array(array: &Array) -> Self {
+    pub fn from_variant_array(array: &VariantArray) -> Self {
         unsafe {
             let mut result = sys::godot_pool_byte_array::default();
             (get_api().godot_pool_byte_array_new_with_array)(&mut result, &array.0);
@@ -17,13 +17,13 @@ impl ByteArray {
         }
     }
 
-    pub fn push_byte(&mut self, byte: u8) {
+    pub fn push(&mut self, byte: u8) {
         unsafe {
             (get_api().godot_pool_byte_array_append)(&mut self.0, byte);
         }
     }
 
-    pub fn push_byte_array(&mut self, bytes: &ByteArray) {
+    pub fn push_array(&mut self, bytes: &ByteArray) {
         unsafe {
             (get_api().godot_pool_byte_array_append_array)(&mut self.0, &bytes.0);
         }

@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use Array;
+use VariantArray;
 use GodotString;
 use GodotType;
 
@@ -34,7 +34,7 @@ impl Dictionary {
         }
     }
 
-    pub fn contains_all(&self, keys: &Array) -> bool {
+    pub fn contains_all(&self, keys: &VariantArray) -> bool {
         unsafe {
             (get_api().godot_dictionary_has_all)(&self.0, &keys.0)
         }
@@ -76,15 +76,15 @@ impl Dictionary {
         }
     }
 
-    pub fn keys(&self) -> Array {
+    pub fn keys(&self) -> VariantArray {
         unsafe {
-            Array((get_api().godot_dictionary_keys)(&self.0))
+            VariantArray((get_api().godot_dictionary_keys)(&self.0))
         }
     }
 
-    pub fn values(&self) -> Array {
+    pub fn values(&self) -> VariantArray {
         unsafe {
-            Array((get_api().godot_dictionary_values)(&self.0))
+            VariantArray((get_api().godot_dictionary_values)(&self.0))
         }
     }
 
