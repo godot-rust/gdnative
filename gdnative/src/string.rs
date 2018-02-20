@@ -120,6 +120,16 @@ impl GodotString {
         }
     }
 
+    pub fn to_utf8(&self) -> Utf8String {
+        unsafe {
+            Utf8String((get_api().godot_string_utf8)(&self.0))
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_utf8().to_string()
+    }
+
     // TODO: many missing methods.
 }
 
@@ -134,15 +144,15 @@ impl_basic_traits!(
 
 impl GodotType for GodotString {
     fn to_variant(&self) -> Variant { Variant::from_godot_string(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_godot_string() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_godot_string() }
 }
 
 pub struct Utf8String(pub(crate) sys::godot_char_string);
 
 impl Utf8String {
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> i32 {
         unsafe {
-            (get_api().godot_char_string_length)(&self.0) as usize
+            (get_api().godot_char_string_length)(&self.0)
         }
     }
 
@@ -155,7 +165,7 @@ impl Utf8String {
 
     pub fn as_bytes(&self) -> &[u8] {
         unsafe {
-            slice::from_raw_parts(self.data(), self.len())
+            slice::from_raw_parts(self.data(), self.len() as usize)
         }
     }
 

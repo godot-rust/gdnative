@@ -94,12 +94,9 @@ macro_rules! variant_to_type_wrap {
     ) => (
         $(
             $(#[$to_attr])*
-            pub fn $to_method(&self) -> Option<$ToType> {
-                if self.get_type() != VariantType::$ToType {
-                    return None;
-                }
+            pub fn $to_method(&self) -> $ToType {
                 unsafe {
-                    Some($ToType((get_api().$to_gd_method)(&self.0)))
+                    $ToType((get_api().$to_gd_method)(&self.0))
                 }
             }
 
@@ -425,6 +422,14 @@ impl Variant {
                 None
             }
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_godot_string().to_string()
+    }
+
+    pub fn try_to_string(&self) -> Option<String> {
+        self.try_to_godot_string().map(|s|{ s.to_string() })
     }
 
     /// Returns this variant's type.

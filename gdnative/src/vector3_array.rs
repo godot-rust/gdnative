@@ -101,5 +101,5 @@ impl_basic_traits!(
 
 impl GodotType for Vector3Array {
     fn to_variant(&self) -> Variant { Variant::from_vector3_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_vector3_array() }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_vector3_array() }
 }
