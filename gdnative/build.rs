@@ -183,7 +183,7 @@ impl {name} {{
 
                 if rust_ret_type.starts_with("Option") {
                     writeln!(output, r#"
-                ret.as_object()
+                ret.try_to_object()
                     "#).unwrap();
                 } else {
                     writeln!(output, r#"

@@ -5,6 +5,7 @@ use GodotType;
 use VariantArray;
 use GodotString;
 
+/// A vector of `GodotString` that uses Godot's pool allocator.
 pub struct StringArray(pub(crate) sys::godot_pool_string_array);
 
 impl StringArray {
