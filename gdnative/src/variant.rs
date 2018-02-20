@@ -554,6 +554,14 @@ variant_from_ref!(
     impl From<&Rid> : from_rid;
     impl From<&NodePath> : from_node_path;
     impl From<&GodotString> : from_godot_string;
+    impl From<&Dictionary> : from_dictionary;
+    impl From<&VariantArray> : from_array;
+    impl From<&ByteArray> : from_byte_array;
+    impl From<&Int32Array> : from_int32_array;
+    impl From<&Float32Array> : from_float32_array;
+    impl From<&Vector2Array> : from_vector2_array;
+    impl From<&Vector3Array> : from_vector3_array;
+    impl From<&ColorArray> : from_color_array;
 );
 
 impl<'l> From<&'l str> for Variant {
