@@ -4,6 +4,7 @@ use Variant;
 use VariantArray;
 use GodotString;
 use GodotType;
+use std::fmt;
 
 pub struct Dictionary(pub(crate) sys::godot_dictionary);
 
@@ -113,6 +114,12 @@ impl_basic_traits!(
 impl GodotType for Dictionary {
     fn to_variant(&self) -> Variant { Variant::from_dictionary(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_dictionary() }
+}
+
+impl fmt::Debug for Dictionary {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        self.to_json().to_string().fmt(f)
+    }
 }
 
 godot_test!(test_dictionary {

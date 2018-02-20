@@ -8,6 +8,7 @@ use std::ops::Range;
 use std::str;
 use std::slice;
 use std::mem::transmute;
+use std::fmt;
 
 pub struct GodotString(pub(crate) sys::godot_string);
 
@@ -147,6 +148,12 @@ impl GodotType for GodotString {
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_godot_string() }
 }
 
+impl fmt::Debug for GodotString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        self.to_string().fmt(f)
+    }
+}
+
 pub struct Utf8String(pub(crate) sys::godot_char_string);
 
 impl Utf8String {
@@ -186,6 +193,11 @@ impl_basic_traits!(
     }
 );
 
+impl fmt::Debug for Utf8String {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        self.to_string().fmt(f)
+    }
+}
 
 pub struct StringName(pub(crate) sys::godot_string_name);
 
@@ -230,6 +242,12 @@ impl_basic_traits! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
         Eq => godot_string_name_operator_equal;
+    }
+}
+
+impl fmt::Debug for StringName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        self.get_name().to_string().fmt(f)
     }
 }
 

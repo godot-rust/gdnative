@@ -3,6 +3,7 @@ use get_api;
 use GodotType;
 use GodotString;
 use Variant;
+use std::fmt;
 
 pub struct NodePath(pub(crate) sys::godot_node_path);
 
@@ -61,6 +62,10 @@ impl NodePath {
             GodotString((get_api().godot_node_path_as_string)(&self.0))
         }
     }
+
+    pub fn to_string(&self) -> String {
+        self.to_godot_string().to_string()
+    }
 }
 
 impl_basic_traits!(
@@ -74,4 +79,10 @@ impl_basic_traits!(
 impl GodotType for NodePath {
     fn to_variant(&self) -> Variant { Variant::from_node_path(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_node_path() }
+}
+
+impl fmt::Debug for NodePath {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "NodePath({})", self.to_string())
+    }
 }
