@@ -255,7 +255,7 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "Variant" => Some("Variant".into()),
         "AABB" => Some("Aabb".into()),
         "RID" => Some("Rid".into()),
-        "Array" => Some("Array".into()),
+        "Array" => Some("VariantArray".into()),
         "Dictionary" => Some("Dictionary".into()),
         "PoolByteArray" => Some("ByteArray".into()),
         "PoolStringArray" => Some("StringArray".into()),
@@ -544,7 +544,7 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         },
         "Array" => {
             writeln!(w, r#"
-            Array(ret)
+            VariantArray(ret)
             "#).unwrap();
         },
         "Dictionary" => {

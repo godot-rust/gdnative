@@ -3,10 +3,11 @@ use get_api;
 use Variant;
 use GodotType;
 
-pub struct Array(pub(crate) sys::godot_array);
+/// An array of `Variant`.
+pub struct VariantArray(pub(crate) sys::godot_array);
 
-impl Array {
-    pub fn new() -> Self { Array::default() }
+impl VariantArray {
+    pub fn new() -> Self { VariantArray::default() }
 
     pub fn set(&mut self, idx: i32, val: &Variant) {
         unsafe {
@@ -120,14 +121,14 @@ impl Array {
 }
 
 impl_basic_traits!(
-    for Array as godot_array {
+    for VariantArray as godot_array {
         Drop => godot_array_destroy;
         Clone => godot_array_new_copy;
         Default => godot_array_new;
     }
 );
 
-impl GodotType for Array {
+impl GodotType for VariantArray {
     fn to_variant(&self) -> Variant { Variant::from_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.to_array() }
 }
