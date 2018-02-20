@@ -1,6 +1,7 @@
 use libc;
 use sys;
 use std::ops::Deref;
+use GodotString;
 
 #[macro_export]
 #[doc(hidden)]
@@ -363,7 +364,10 @@ impl <T> GodotRef<T>
         };
         if let Some(script) = obj.get_script().and_then(|v| v.cast::<::NativeScript>()) {
             let class = script.get_class_name();
-            if class == O::godot_name() {
+            // TODO: it would be good to cache the class name as a godot string
+            // somewhere to avoid creating it every time.
+            let gd_name = GodotString::from_str(O::godot_name());
+            if class == gd_name {
                 Some(if self.reference {
                     call_bool!(self.this, Reference, reference);
                     GodotRef {
