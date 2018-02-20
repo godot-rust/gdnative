@@ -21,11 +21,11 @@ mod rid;
 mod generated;
 mod node_path;
 mod string;
-mod pool_byte_array;
-mod pool_string_array;
-mod pool_vector2_array;
-mod pool_vector3_array;
-mod pool_color_array;
+mod byte_array;
+mod string_array;
+mod vector2_array;
+mod vector3_array;
+mod color_array;
 
 pub use internal::*;
 pub use property::*;
@@ -40,11 +40,11 @@ pub use rid::*;
 pub use node_path::*;
 pub use generated::*;
 pub use string::*;
-pub use pool_byte_array::*;
-pub use pool_string_array::*;
-pub use pool_vector2_array::*;
-pub use pool_vector3_array::*;
-pub use pool_color_array::*;
+pub use byte_array::*;
+pub use string_array::*;
+pub use vector2_array::*;
+pub use vector3_array::*;
+pub use color_array::*;
 
 #[doc(hidden)]
 pub static mut GODOT_API: Option<GodotApi> = None;

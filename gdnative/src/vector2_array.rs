@@ -7,16 +7,16 @@ use Vector2;
 
 use std::mem::transmute;
 
-pub struct PoolVector2Array(pub(crate) sys::godot_pool_vector2_array);
+pub struct Vector2Array(pub(crate) sys::godot_pool_vector2_array);
 
-impl PoolVector2Array {
-    pub fn new() -> Self { PoolVector2Array::default() }
+impl Vector2Array {
+    pub fn new() -> Self { Vector2Array::default() }
 
     pub fn from_array(array: &Array) -> Self {
         unsafe {
             let mut result = sys::godot_pool_vector2_array::default();
             (get_api().godot_pool_vector2_array_new_with_array)(&mut result, &array.0);
-            PoolVector2Array(result)
+            Vector2Array(result)
         }
     }
 
@@ -26,7 +26,7 @@ impl PoolVector2Array {
         }
     }
 
-    pub fn push_array(&mut self, vectors: &PoolVector2Array) {
+    pub fn push_array(&mut self, vectors: &Vector2Array) {
         unsafe {
             (get_api().godot_pool_vector2_array_append_array)(&mut self.0, transmute(vectors));
         }
@@ -78,14 +78,14 @@ impl PoolVector2Array {
 }
 
 impl_basic_traits!(
-    for PoolVector2Array as godot_pool_vector2_array {
+    for Vector2Array as godot_pool_vector2_array {
         Drop => godot_pool_vector2_array_destroy;
         Clone => godot_pool_vector2_array_new_copy;
         Default => godot_pool_vector2_array_new;
     }
 );
 
-impl GodotType for PoolVector2Array {
-    fn to_variant(&self) -> Variant { Variant::from_pool_vector2_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_pool_vector2_array() }
+impl GodotType for Vector2Array {
+    fn to_variant(&self) -> Variant { Variant::from_vector2_array(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_vector2_array() }
 }
