@@ -121,8 +121,8 @@ pub enum VariantType {
     Dictionary = GODOT_VARIANT_TYPE_DICTIONARY as u32,
     VariantArray = GODOT_VARIANT_TYPE_ARRAY as u32,
     ByteArray = GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
-    I64Array = GODOT_VARIANT_TYPE_POOL_INT_ARRAY as u32,
-    F32Array = GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
+    Int32Array = GODOT_VARIANT_TYPE_POOL_INT_ARRAY as u32,
+    Float32Array = GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
     StringArray = GODOT_VARIANT_TYPE_POOL_STRING_ARRAY as u32,
     Vector2Array = GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY as u32,
     Vector3Array = GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY as u32,
@@ -179,6 +179,10 @@ impl Variant {
         pub fn from_array(&VariantArray) -> Self as sys::godot_array : godot_variant_new_array;
         /// Creates a `Variant` wrapping a byte array.
         pub fn from_byte_array(&ByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
+        /// Creates a `Variant` wrapping an array of 32bit signed integers.
+        pub fn from_int32_array(&Int32Array) -> Self as sys::godot_pool_int_array : godot_variant_new_pool_int_array;
+        /// Creates a `Variant` wrapping an array of 32bit floats.
+        pub fn from_float32_array(&Float32Array) -> Self as sys::godot_pool_real_array : godot_variant_new_pool_real_array;
         /// Creates a `Variant` wrapping an array of godot strings.
         pub fn from_string_array(&StringArray) -> Self as sys::godot_pool_string_array : godot_variant_new_pool_string_array;
         /// Creates a `Variant` wrapping an array of 2d vectors.
@@ -302,6 +306,10 @@ impl Variant {
         pub fn to_array(&self) -> Option<VariantArray> : godot_variant_as_array;
         /// Returns `Some(ByteArray)` if this variant is one, `None` otherwise.
         pub fn to_byte_array(&self) -> Option<ByteArray> : godot_variant_as_pool_byte_array;
+        /// Returns `Some(Int32Array)` if this variant is one, `None` otherwise.
+        pub fn to_int32_array(&self) -> Option<Int32Array> : godot_variant_as_pool_int_array;
+        /// Returns `Some(Float32Array)` if this variant is one, `None` otherwise.
+        pub fn to_float32_array(&self) -> Option<Float32Array> : godot_variant_as_pool_real_array;
         /// Returns `Some(StringArray)` if this variant is one, `None` otherwise.
         pub fn to_string_array(&self) -> Option<StringArray> : godot_variant_as_pool_string_array;
         /// Returns `Some(Vector2Array)` if this variant is one, `None` otherwise.

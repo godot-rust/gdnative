@@ -262,8 +262,8 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "PoolVector2Array" => Some("Vector2Array".into()),
         "PoolVector3Array" => Some("Vector3Array".into()),
         "PoolColorArray" => Some("ColorArray".into()),
-        "PoolIntArray" => None, // TODO:
-        "PoolRealArray" => None, // TODO:
+        "PoolIntArray" => Some("Int32Array".into()),
+        "PoolRealArray" => Some("Float32Array".into()),
         ty if ty.starts_with("enum.") => None, // TODO: Enums
         ty => {
             Some(format!("Option<GodotRef<{}>>", ty).into())
@@ -306,6 +306,8 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
         | "PoolVector2Array"
         | "PoolVector3Array"
         | "PoolColorArray"
+        | "PoolIntArray"
+        | "PoolRealArray"
          => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
@@ -488,6 +490,18 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &str) {
             let ret_ptr = &mut ret as *mut _;
             "#).unwrap();
         },
+        "PoolIntArray" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_pool_int_array::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
+        "PoolRealArray" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_pool_real_array::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
         _ty => {
             writeln!(w, r#"
             let mut ret: *mut sys::godot_object = ptr::null_mut();
@@ -575,6 +589,16 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         "PoolColorArray" => {
             writeln!(w, r#"
             ColorArray(ret)
+            "#).unwrap();
+        },
+        "PoolIntArray" => {
+            writeln!(w, r#"
+            Int32Array(ret)
+            "#).unwrap();
+        },
+        "PoolRealArray" => {
+            writeln!(w, r#"
+            Float32Array(ret)
             "#).unwrap();
         },
         "Variant" => {
