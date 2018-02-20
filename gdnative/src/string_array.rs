@@ -5,16 +5,16 @@ use GodotType;
 use Array;
 use GodotString;
 
-pub struct PoolStringArray(pub(crate) sys::godot_pool_string_array);
+pub struct StringArray(pub(crate) sys::godot_pool_string_array);
 
-impl PoolStringArray {
-    pub fn new() -> Self { PoolStringArray::default() }
+impl StringArray {
+    pub fn new() -> Self { StringArray::default() }
 
     pub fn from_array(array: &Array) -> Self {
         unsafe {
             let mut result = sys::godot_pool_string_array::default();
             (get_api().godot_pool_string_array_new_with_array)(&mut result, &array.0);
-            PoolStringArray(result)
+            StringArray(result)
         }
     }
 
@@ -24,7 +24,7 @@ impl PoolStringArray {
         }
     }
 
-    pub fn push_string_array(&mut self, strings: &PoolStringArray) {
+    pub fn push_string_array(&mut self, strings: &StringArray) {
         unsafe {
             (get_api().godot_pool_string_array_append_array)(&mut self.0, &strings.0);
         }
@@ -76,14 +76,14 @@ impl PoolStringArray {
 }
 
 impl_basic_traits!(
-    for PoolStringArray as godot_pool_string_array {
+    for StringArray as godot_pool_string_array {
         Drop => godot_pool_string_array_destroy;
         Clone => godot_pool_string_array_new_copy;
         Default => godot_pool_string_array_new;
     }
 );
 
-impl GodotType for PoolStringArray {
-    fn to_variant(&self) -> Variant { Variant::from_pool_string_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_pool_string_array() }
+impl GodotType for StringArray {
+    fn to_variant(&self) -> Variant { Variant::from_string_array(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_string_array() }
 }

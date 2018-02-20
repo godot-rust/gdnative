@@ -257,11 +257,11 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "RID" => Some("Rid".into()),
         "Array" => Some("Array".into()),
         "Dictionary" => Some("Dictionary".into()),
-        "PoolByteArray" => Some("PoolByteArray".into()),
-        "PoolStringArray" => Some("PoolStringArray".into()),
-        "PoolVector2Array" => Some("PoolVector2Array".into()),
-        "PoolVector3Array" => Some("PoolVector3Array".into()),
-        "PoolColorArray" => Some("PoolColorArray".into()),
+        "PoolByteArray" => Some("ByteArray".into()),
+        "PoolStringArray" => Some("StringArray".into()),
+        "PoolVector2Array" => Some("Vector2Array".into()),
+        "PoolVector3Array" => Some("Vector3Array".into()),
+        "PoolColorArray" => Some("ColorArray".into()),
         "PoolIntArray" => None, // TODO:
         "PoolRealArray" => None, // TODO:
         ty if ty.starts_with("enum.") => None, // TODO: Enums
@@ -554,27 +554,27 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         },
         "PoolByteArray" => {
             writeln!(w, r#"
-            PoolByteArray(ret)
+            ByteArray(ret)
             "#).unwrap();
         },
         "PoolStringArray" => {
             writeln!(w, r#"
-            PoolStringArray(ret)
+            StringArray(ret)
             "#).unwrap();
         },
         "PoolVector2Array" => {
             writeln!(w, r#"
-            PoolVector2Array(ret)
+            Vector2Array(ret)
             "#).unwrap();
         },
         "PoolVector3Array" => {
             writeln!(w, r#"
-            PoolVector3Array(ret)
+            Vector3Array(ret)
             "#).unwrap();
         },
         "PoolColorArray" => {
             writeln!(w, r#"
-            PoolColorArray(ret)
+            ColorArray(ret)
             "#).unwrap();
         },
         "Variant" => {

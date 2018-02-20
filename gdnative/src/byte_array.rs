@@ -4,16 +4,16 @@ use Variant;
 use GodotType;
 use Array;
 
-pub struct PoolByteArray(pub(crate) sys::godot_pool_byte_array);
+pub struct ByteArray(pub(crate) sys::godot_pool_byte_array);
 
-impl PoolByteArray {
-    pub fn new() -> Self { PoolByteArray::default() }
+impl ByteArray {
+    pub fn new() -> Self { ByteArray::default() }
 
     pub fn from_array(array: &Array) -> Self {
         unsafe {
             let mut result = sys::godot_pool_byte_array::default();
             (get_api().godot_pool_byte_array_new_with_array)(&mut result, &array.0);
-            PoolByteArray(result)
+            ByteArray(result)
         }
     }
 
@@ -23,7 +23,7 @@ impl PoolByteArray {
         }
     }
 
-    pub fn push_byte_array(&mut self, bytes: &PoolByteArray) {
+    pub fn push_byte_array(&mut self, bytes: &ByteArray) {
         unsafe {
             (get_api().godot_pool_byte_array_append_array)(&mut self.0, &bytes.0);
         }
@@ -75,14 +75,14 @@ impl PoolByteArray {
 }
 
 impl_basic_traits!(
-    for PoolByteArray as godot_pool_byte_array {
+    for ByteArray as godot_pool_byte_array {
         Drop => godot_pool_byte_array_destroy;
         Clone => godot_pool_byte_array_new_copy;
         Default => godot_pool_byte_array_new;
     }
 );
 
-impl GodotType for PoolByteArray {
-    fn to_variant(&self) -> Variant { Variant::from_pool_byte_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_pool_byte_array() }
+impl GodotType for ByteArray {
+    fn to_variant(&self) -> Variant { Variant::from_byte_array(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_byte_array() }
 }

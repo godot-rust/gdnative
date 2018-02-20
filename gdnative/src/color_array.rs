@@ -7,16 +7,16 @@ use Color;
 
 use std::mem::transmute;
 
-pub struct PoolColorArray(pub(crate) sys::godot_pool_color_array);
+pub struct ColorArray(pub(crate) sys::godot_pool_color_array);
 
-impl PoolColorArray {
-    pub fn new() -> Self { PoolColorArray::default() }
+impl ColorArray {
+    pub fn new() -> Self { ColorArray::default() }
 
     pub fn from_array(array: &Array) -> Self {
         unsafe {
             let mut result = sys::godot_pool_color_array::default();
             (get_api().godot_pool_color_array_new_with_array)(&mut result, &array.0);
-            PoolColorArray(result)
+            ColorArray(result)
         }
     }
 
@@ -26,7 +26,7 @@ impl PoolColorArray {
         }
     }
 
-    pub fn push_array(&mut self, array: &PoolColorArray) {
+    pub fn push_array(&mut self, array: &ColorArray) {
         unsafe {
             (get_api().godot_pool_color_array_append_array)(&mut self.0, transmute(array));
         }
@@ -78,14 +78,14 @@ impl PoolColorArray {
 }
 
 impl_basic_traits!(
-    for PoolColorArray as godot_pool_color_array {
+    for ColorArray as godot_pool_color_array {
         Drop => godot_pool_color_array_destroy;
         Clone => godot_pool_color_array_new_copy;
         Default => godot_pool_color_array_new;
     }
 );
 
-impl GodotType for PoolColorArray {
-    fn to_variant(&self) -> Variant { Variant::from_pool_color_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_pool_color_array() }
+impl GodotType for ColorArray {
+    fn to_variant(&self) -> Variant { Variant::from_color_array(self) }
+    fn from_variant(variant: &Variant) -> Option<Self> { variant.to_color_array() }
 }

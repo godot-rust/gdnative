@@ -97,10 +97,6 @@ macro_rules! variant_to_type_wrap {
 
 use sys::godot_variant_type::*;
 
-// TODO: reimplementing this enum here will let us add support for things like
-// serde and have more idiomatic names, but it might preferrable to generate
-// this directly with bindgen (if that's possible).
-
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VariantType {
@@ -124,13 +120,13 @@ pub enum VariantType {
     Object = GODOT_VARIANT_TYPE_OBJECT as u32,
     Dictionary = GODOT_VARIANT_TYPE_DICTIONARY as u32,
     Array = GODOT_VARIANT_TYPE_ARRAY as u32,
-    PoolByteArray = GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
+    ByteArray = GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
     I64Array = GODOT_VARIANT_TYPE_POOL_INT_ARRAY as u32,
-    PoolF32Array = GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
-    PoolStringArray = GODOT_VARIANT_TYPE_POOL_STRING_ARRAY as u32,
-    PoolVector2Array = GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY as u32,
-    PoolVector3Array = GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY as u32,
-    PoolColorArray = GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY as u32,
+    F32Array = GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
+    StringArray = GODOT_VARIANT_TYPE_POOL_STRING_ARRAY as u32,
+    Vector2Array = GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY as u32,
+    Vector3Array = GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY as u32,
+    ColorArray = GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY as u32,
 }
 
 fn from_godot_varianty_type(v: sys::godot_variant_type) -> VariantType {
@@ -182,15 +178,15 @@ impl Variant {
         /// Creates an `Variant` wrapping an array of variants.
         pub fn from_array(&Array) -> Self as sys::godot_array : godot_variant_new_array;
         /// Creates a `Variant` wrapping a byte array.
-        pub fn from_pool_byte_array(&PoolByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
+        pub fn from_byte_array(&ByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
         /// Creates a `Variant` wrapping an array of godot strings.
-        pub fn from_pool_string_array(&PoolStringArray) -> Self as sys::godot_pool_string_array : godot_variant_new_pool_string_array;
+        pub fn from_string_array(&StringArray) -> Self as sys::godot_pool_string_array : godot_variant_new_pool_string_array;
         /// Creates a `Variant` wrapping an array of 2d vectors.
-        pub fn from_pool_vector2_array(&PoolVector2Array) -> Self as sys::godot_pool_vector2_array : godot_variant_new_pool_vector2_array;
+        pub fn from_vector2_array(&Vector2Array) -> Self as sys::godot_pool_vector2_array : godot_variant_new_pool_vector2_array;
         /// Creates a `Variant` wrapping an array of 3d vectors.
-        pub fn from_pool_vector3_array(&PoolVector3Array) -> Self as sys::godot_pool_vector3_array : godot_variant_new_pool_vector3_array;
+        pub fn from_vector3_array(&Vector3Array) -> Self as sys::godot_pool_vector3_array : godot_variant_new_pool_vector3_array;
         /// Creates a `Variant` wrapping an array of colors.
-        pub fn from_pool_color_array(&PoolColorArray) -> Self as sys::godot_pool_color_array : godot_variant_new_pool_color_array;
+        pub fn from_color_array(&ColorArray) -> Self as sys::godot_pool_color_array : godot_variant_new_pool_color_array;
         /// Creates a `Variant` wrapping a dictionary.
         pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
         // TODO: missing C binding?
@@ -304,16 +300,16 @@ impl Variant {
         pub fn to_rid(&self) -> Option<Rid> : godot_variant_as_rid;
         /// Returns `Some(Array)` if this variant is one, `None` otherwise.
         pub fn to_array(&self) -> Option<Array> : godot_variant_as_array;
-        /// Returns `Some(PoolByteArray)` if this variant is one, `None` otherwise.
-        pub fn to_pool_byte_array(&self) -> Option<PoolByteArray> : godot_variant_as_pool_byte_array;
-        /// Returns `Some(PoolStringArray)` if this variant is one, `None` otherwise.
-        pub fn to_pool_string_array(&self) -> Option<PoolStringArray> : godot_variant_as_pool_string_array;
-        /// Returns `Some(PoolVector2Array)` if this variant is one, `None` otherwise.
-        pub fn to_pool_vector2_array(&self) -> Option<PoolVector2Array> : godot_variant_as_pool_vector2_array;
-        /// Returns `Some(PoolVector3Array)` if this variant is one, `None` otherwise.
-        pub fn to_pool_vector3_array(&self) -> Option<PoolVector3Array> : godot_variant_as_pool_vector3_array;
-        /// Returns `Some(PoolColorArray)` if this variant is one, `None` otherwise.
-        pub fn to_pool_color_array(&self) -> Option<PoolColorArray> : godot_variant_as_pool_color_array;
+        /// Returns `Some(ByteArray)` if this variant is one, `None` otherwise.
+        pub fn to_byte_array(&self) -> Option<ByteArray> : godot_variant_as_pool_byte_array;
+        /// Returns `Some(StringArray)` if this variant is one, `None` otherwise.
+        pub fn to_string_array(&self) -> Option<StringArray> : godot_variant_as_pool_string_array;
+        /// Returns `Some(Vector2Array)` if this variant is one, `None` otherwise.
+        pub fn to_vector2_array(&self) -> Option<Vector2Array> : godot_variant_as_pool_vector2_array;
+        /// Returns `Some(Vector3Array)` if this variant is one, `None` otherwise.
+        pub fn to_vector3_array(&self) -> Option<Vector3Array> : godot_variant_as_pool_vector3_array;
+        /// Returns `Some(ColorArray)` if this variant is one, `None` otherwise.
+        pub fn to_color_array(&self) -> Option<ColorArray> : godot_variant_as_pool_color_array;
         /// Returns `Some(Dictionary)` if this variant is one, `None` otherwise.
         pub fn to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
         // TODO: missing C binding?
