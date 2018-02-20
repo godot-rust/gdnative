@@ -261,9 +261,9 @@ fn godot_type_to_rust(ty: &str) -> Option<Cow<str>> {
         "PoolStringArray" => Some("PoolStringArray".into()),
         "PoolVector2Array" => Some("PoolVector2Array".into()),
         "PoolVector3Array" => Some("PoolVector3Array".into()),
+        "PoolColorArray" => Some("PoolColorArray".into()),
         "PoolIntArray" => None, // TODO:
         "PoolRealArray" => None, // TODO:
-        "PoolColorArray" => None, // TODO:
         ty if ty.starts_with("enum.") => None, // TODO: Enums
         ty => {
             Some(format!("Option<GodotRef<{}>>", ty).into())
@@ -305,6 +305,7 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &str, name: &str, arg: usi
         | "PoolStringArray"
         | "PoolVector2Array"
         | "PoolVector3Array"
+        | "PoolColorArray"
          => {
             writeln!(w, r#"
             argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;
@@ -463,6 +464,12 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &str) {
             let ret_ptr = &mut ret as *mut _;
             "#).unwrap();
         },
+        "PoolColorArray" => {
+            writeln!(w, r#"
+            let mut ret = sys::godot_pool_color_array::default();
+            let ret_ptr = &mut ret as *mut _;
+            "#).unwrap();
+        },
         "PoolStringArray" => {
             writeln!(w, r#"
             let mut ret = sys::godot_pool_string_array::default();
@@ -563,6 +570,11 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &str) {
         "PoolVector3Array" => {
             writeln!(w, r#"
             PoolVector3Array(ret)
+            "#).unwrap();
+        },
+        "PoolColorArray" => {
+            writeln!(w, r#"
+            PoolColorArray(ret)
             "#).unwrap();
         },
         "Variant" => {

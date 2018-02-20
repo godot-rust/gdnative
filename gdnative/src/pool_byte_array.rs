@@ -19,7 +19,6 @@ impl PoolByteArray {
 
     pub fn push_byte(&mut self, byte: u8) {
         unsafe {
-            // TODO: what's the difference between append and push_back.
             (get_api().godot_pool_byte_array_append)(&mut self.0, byte);
         }
     }
