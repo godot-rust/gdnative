@@ -22,7 +22,6 @@ impl PoolVector3Array {
 
     pub fn push(&mut self, vector: &Vector3) {
         unsafe {
-            // TODO: what's the difference between append and push_back.
             (get_api().godot_pool_vector3_array_append)(&mut self.0, transmute(vector));
         }
     }

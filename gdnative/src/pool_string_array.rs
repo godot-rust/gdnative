@@ -20,7 +20,6 @@ impl PoolStringArray {
 
     pub fn push(&mut self, s: &GodotString) {
         unsafe {
-            // TODO: what's the difference between append and push_back.
             (get_api().godot_pool_string_array_append)(&mut self.0, &s.0);
         }
     }
