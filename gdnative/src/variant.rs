@@ -1,6 +1,7 @@
 use super::*;
 use std::mem::{transmute, forget};
 use std::default::Default;
+use std::fmt;
 
 // TODO: implement Debug, PartialEq, etc.
 
@@ -510,6 +511,12 @@ impl_basic_traits!(
 
 impl Default for Variant {
     fn default() -> Self { Variant::new() }
+}
+
+impl fmt::Debug for Variant {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{:?}({})", self.get_type(), self.to_string())
+    }
 }
 
 macro_rules! variant_from_ref {
