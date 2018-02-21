@@ -1,6 +1,7 @@
 use super::*;
 use godot_type::GodotType;
 use std::marker::PhantomData;
+use sys::godot_property_usage_flags::*;
 
 pub struct PropertiesBuilder<C> {
     #[doc(hidden)]
@@ -58,23 +59,23 @@ pub enum PropertyHint {
 
 bitflags! {
     pub struct PropertyUsage: u32 {
-        const STORAGE = 1;
-        const EDITOR = 2;
-        const NETWORK = 4;
-        const EDITOR_HELPER = 8;
-        const CHECKABLE = 32;
-        const CHECKED = 32;
-        const INTERNATIONALIZED = 64;
-        const GROUP = 128;
-        const CATEGORY = 256;
-        const STORE_IF_NONZERO = 512;
-        const STORE_IF_NONONE = 1024;
-        const NO_INSTANCE_STATE = 2048;
-        const RESTART_IF_CHANGED = 0x1000;
-        const SCRIPT_VARIABLE  = 0x2000;
-        const STORE_IF_NULL = 0x4000;
-        const ANIMATE_AS_TRIGGER = 0x8000;
-        const UPDATE_ALL_IF_MODIFIED = 0x1_0000;
+        const STORAGE = GODOT_PROPERTY_USAGE_STORAGE as u32;
+        const EDITOR = GODOT_PROPERTY_USAGE_EDITOR as u32;
+        const NETWORK = GODOT_PROPERTY_USAGE_NETWORK as u32;
+        const EDITOR_HELPER = GODOT_PROPERTY_USAGE_EDITOR_HELPER as u32;
+        const CHECKABLE = GODOT_PROPERTY_USAGE_CHECKABLE as u32;
+        const CHECKED = GODOT_PROPERTY_USAGE_CHECKED as u32;
+        const INTERNATIONALIZED = GODOT_PROPERTY_USAGE_INTERNATIONALIZED as u32;
+        const GROUP = GODOT_PROPERTY_USAGE_GROUP as u32;
+        const CATEGORY = GODOT_PROPERTY_USAGE_CATEGORY as u32;
+        const STORE_IF_NONZERO = GODOT_PROPERTY_USAGE_STORE_IF_NONZERO as u32;
+        const STORE_IF_NONONE = GODOT_PROPERTY_USAGE_STORE_IF_NONONE as u32;
+        const NO_INSTANCE_STATE = GODOT_PROPERTY_USAGE_NO_INSTANCE_STATE as u32;
+        const RESTART_IF_CHANGED = GODOT_PROPERTY_USAGE_RESTART_IF_CHANGED as u32;
+        const SCRIPT_VARIABLE  = GODOT_PROPERTY_USAGE_SCRIPT_VARIABLE as u32;
+        const STORE_IF_NULL = GODOT_PROPERTY_USAGE_STORE_IF_NULL as u32;
+        const ANIMATE_AS_TRIGGER = GODOT_PROPERTY_USAGE_ANIMATE_AS_TRIGGER as u32;
+        const UPDATE_ALL_IF_MODIFIED = GODOT_PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED as u32;
 
         const DEFAULT = Self::STORAGE.bits | Self::EDITOR.bits | Self::NETWORK.bits;
         const DEFAULT_INTL = Self::DEFAULT.bits | Self::INTERNATIONALIZED.bits;
