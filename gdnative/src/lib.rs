@@ -56,7 +56,7 @@ pub static mut GODOT_API: Option<GodotApi> = None;
 #[doc(hidden)]
 pub fn get_api() -> &'static GodotApi {
     unsafe {
-        &GODOT_API.as_ref()
+        GODOT_API.as_ref()
             .expect("API not bound")
     }
 }
