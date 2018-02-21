@@ -70,11 +70,11 @@ bitflags! {
         const STORE_IF_NONZERO = 512;
         const STORE_IF_NONONE = 1024;
         const NO_INSTANCE_STATE = 2048;
-        const RESTART_IF_CHANGED = 4096;
-        const SCRIPT_VARIABLE  = 8192;
-        const STORE_IF_NULL = 16384;
-        const ANIMATE_AS_TRIGGER = 32768;
-        const UPDATE_ALL_IF_MODIFIED = 65536;
+        const RESTART_IF_CHANGED = 0x1000;
+        const SCRIPT_VARIABLE  = 0x2000;
+        const STORE_IF_NULL = 0x4000;
+        const ANIMATE_AS_TRIGGER = 0x8000;
+        const UPDATE_ALL_IF_MODIFIED = 0x1_0000;
 
         const DEFAULT = Self::STORAGE.bits | Self::EDITOR.bits | Self::NETWORK.bits;
         const DEFAULT_INTL = Self::DEFAULT.bits | Self::INTERNATIONALIZED.bits;
@@ -303,7 +303,7 @@ unsafe impl <F, C, T> GodotSetFunction<C, T> for F
                 let mut rust_ty = rust_ty.borrow_mut();
                 let func = &mut *(method as *mut F);
 
-                if let Some(val) = T::from_variant(&Variant::cast_ref(val)) {
+                if let Some(val) = T::from_variant(Variant::cast_ref(val)) {
                     func(&mut *rust_ty, val);
                 } else {
                     godot_error!("Incorrect type passed to property");
