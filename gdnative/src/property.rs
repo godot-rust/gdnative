@@ -2,6 +2,8 @@ use super::*;
 use godot_type::GodotType;
 use std::marker::PhantomData;
 use sys::godot_property_usage_flags::*;
+use sys::godot_property_hint::*;
+use std::mem;
 
 pub struct PropertiesBuilder<C> {
     #[doc(hidden)]
@@ -12,6 +14,7 @@ pub struct PropertiesBuilder<C> {
     pub class: PhantomData<C>,
 }
 
+// TODO: missing property hints.
 pub enum PropertyHint {
     None,
     Range {
@@ -57,6 +60,18 @@ pub enum PropertyHint {
     // PropertyOfScript,
 }
 
+impl PropertyHint {
+    fn to_sys(&self) -> sys::godot_property_hint {
+        match *self {
+            PropertyHint::None => GODOT_PROPERTY_HINT_NONE,
+            PropertyHint::Range { .. } => GODOT_PROPERTY_HINT_RANGE,
+            PropertyHint::Enum { .. } => GODOT_PROPERTY_HINT_ENUM,
+            PropertyHint::Flags { .. } => GODOT_PROPERTY_HINT_FLAGS,
+            PropertyHint::NodePathToEditedNode => GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE,
+        }
+    }
+}
+
 bitflags! {
     pub struct PropertyUsage: u32 {
         const STORAGE = GODOT_PROPERTY_USAGE_STORAGE as u32;
@@ -80,6 +95,12 @@ bitflags! {
         const DEFAULT = Self::STORAGE.bits | Self::EDITOR.bits | Self::NETWORK.bits;
         const DEFAULT_INTL = Self::DEFAULT.bits | Self::INTERNATIONALIZED.bits;
         const NOEDITOR = Self::STORAGE.bits | Self::NETWORK.bits;
+    }
+}
+
+impl PropertyUsage {
+    fn to_sys(&self) -> sys::godot_property_usage_flags {
+        unsafe { mem::transmute(*self) }
     }
 }
 
@@ -169,45 +190,35 @@ impl <'a, C, S, G, T> PropertyBuilder<'a, C, S, G, T>
     }
 
     pub fn register(self) {
-        use std::mem;
-        use sys::godot_property_hint::*;
         unsafe {
             let api = get_api();
-            let mut hint_text = None;
-            let hint = match self.hint {
-                PropertyHint::None => GODOT_PROPERTY_HINT_NONE,
+            let hint_text = match self.hint {
                 PropertyHint::Range{min, max, step, slider} => {
                     if slider {
-                        hint_text = Some(format!("{},{},{},slider", min, max, step));
+                        Some(format!("{},{},{},slider", min, max, step))
                     } else {
-                        hint_text = Some(format!("{},{},{}", min, max, step));
+                        Some(format!("{},{},{}", min, max, step))
                     }
-                    GODOT_PROPERTY_HINT_RANGE
-                },
-                PropertyHint::Enum{values} => {
-                    hint_text = Some(values.join(","));
-                    GODOT_PROPERTY_HINT_ENUM
-                },
-                PropertyHint::Flags{values} => {
-                    hint_text = Some(values.join(","));
-                    GODOT_PROPERTY_HINT_FLAGS
                 }
-                PropertyHint::NodePathToEditedNode => GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE,
+                PropertyHint::Enum { values } => { Some(values.join(",")) }
+                PropertyHint::Flags { values } => { Some(values.join(",")) }
+                PropertyHint::NodePathToEditedNode => { None }
+                PropertyHint::None => { None }
             };
             let hint_string = if let Some(text) = hint_text {
-                (api.godot_string_chars_to_utf8_with_len)(text.as_ptr() as *const _, text.len() as _)
+                GodotString::from_str(text)
             } else {
-                sys::godot_string::default()
+                GodotString::default()
             };
             let mut attr = sys::godot_property_attributes {
                 rset_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
 
                 type_: self.ty,
 
-                hint: hint,
-                hint_string: hint_string,
+                hint: self.hint.to_sys(),
+                hint_string: hint_string.forget(),
 
-                usage: mem::transmute(self.usage),
+                usage: self.usage.to_sys(),
                 default_value: self.default,
             };
             let path = ::std::ffi::CString::new(self.name).unwrap();
@@ -215,7 +226,12 @@ impl <'a, C, S, G, T> PropertyBuilder<'a, C, S, G, T>
             let set = self.setter.as_godot_function();
             let get = self.getter.as_godot_function();
 
-            (api.godot_nativescript_register_property)(self.parent.desc, self.parent.class_name, path.as_ptr() as *const _, &mut attr, set, get);
+            (api.godot_nativescript_register_property)(
+                self.parent.desc,
+                self.parent.class_name,
+                path.as_ptr() as *const _,
+                &mut attr, set, get
+            );
         }
     }
 }
