@@ -7,7 +7,7 @@ use std::ffi::CStr;
 use std::ops::Range;
 use std::str;
 use std::slice;
-use std::mem::transmute;
+use std::mem::{transmute, forget};
 use std::fmt;
 
 pub struct GodotString(pub(crate) sys::godot_string);
@@ -39,6 +39,8 @@ macro_rules! impl_methods {
 }
 
 impl GodotString {
+    pub fn new() -> Self { GodotString::default() }
+
     pub fn from_str<S>(s: S) -> Self
         where S: AsRef<str>
     {
@@ -143,6 +145,12 @@ impl GodotString {
 
     pub fn to_string(&self) -> String {
         self.to_utf8().to_string()
+    }
+
+    pub fn forget(self) -> sys::godot_string {
+        let v = self.0;
+        forget(self);
+        v
     }
 
     // TODO: many missing methods.
