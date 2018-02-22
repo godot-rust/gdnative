@@ -76,7 +76,10 @@ impl GodotString {
         pub fn to_i32(&self) -> i32 : godot_string_to_int;
         pub fn u32_hash(&self) -> u32 : godot_string_hash;
         pub fn u64_hash(&self) -> u64 : godot_string_hash64;
+        pub fn hex_to_int(&self) -> i32 : godot_string_hex_to_int;
+        pub fn hex_to_int_without_prefix(&self) -> i32 : godot_string_hex_to_int_without_prefix;
     );
+
     impl_methods!(
         pub fn camelcase_to_underscore(&self) -> Self : godot_string_camelcase_to_underscore;
         pub fn camelcase_to_underscore_lowercased(&self) -> Self : godot_string_camelcase_to_underscore_lowercased;
@@ -88,6 +91,17 @@ impl GodotString {
         pub fn simplify_path(&self) -> Self : godot_string_simplify_path;
         pub fn sha256_text(&self) -> Self : godot_string_sha256_text;
         pub fn md5_text(&self) -> Self : godot_string_md5_text;
+        pub fn c_escape(&self) -> Self : godot_string_c_escape;
+        pub fn c_escape_multiline(&self) -> Self : godot_string_c_escape_multiline;
+        pub fn c_unescape(&self) -> Self : godot_string_c_unescape;
+        pub fn http_escape(&self) -> Self : godot_string_http_escape;
+        pub fn http_unescape(&self) -> Self: godot_string_http_unescape;
+        pub fn json_escape(&self) -> Self : godot_string_json_escape;
+        pub fn xml_escape(&self) -> Self : godot_string_xml_escape;
+        pub fn xml_escape_with_quotes(&self) -> Self : godot_string_xml_escape_with_quotes;
+        pub fn xml_unescape(&self) -> Self: godot_string_xml_unescape;
+        pub fn percent_decode(&self) -> Self : godot_string_percent_decode;
+        pub fn percent_encode(&self) -> Self : godot_string_percent_encode;
     );
 
     pub fn is_valid_hex_number(&self, with_prefix: bool) -> bool {
