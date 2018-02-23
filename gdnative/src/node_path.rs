@@ -60,6 +60,13 @@ impl NodePath {
         }
     }
 
+    // TODO DOC
+    pub fn name_count(&mut self) -> i32 {
+        unsafe {
+            (get_api().godot_node_path_get_name_count)(&mut self.0)
+        }
+    }
+
     /// Returns the resource name of the specified `idx`, 0 to subname_count()
     pub fn subname(&self, idx: i32) -> GodotString {
         unsafe {
