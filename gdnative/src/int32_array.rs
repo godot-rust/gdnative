@@ -11,7 +11,7 @@ impl Int32Array {
     /// Creates an empty `Int32Array`.
     pub fn new() -> Self { Int32Array::default() }
 
-    /// Creates an array by trying to convert each variant
+    /// Creates an array by trying to convert each variant.
     ///
     /// See `Variant::to_int32_array`.
     pub fn from_variant_array(array: &VariantArray) -> Self {
@@ -22,7 +22,7 @@ impl Int32Array {
         }
     }
 
-    /// Appends an element at the end of the array
+    /// Appends an element at the end of the array.
     pub fn push(&mut self, val: i32) {
         unsafe {
             (get_api().godot_pool_int_array_append)(&mut self.0, val);
@@ -66,7 +66,7 @@ impl Int32Array {
         }
     }
 
-    /// Gets a copy of the element at the given offset.
+    /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> i32 {
         unsafe {
             (get_api().godot_pool_int_array_get)(&self.0, idx)
