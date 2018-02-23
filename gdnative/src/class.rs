@@ -244,10 +244,10 @@ class $name:ident: $parent:ty {
 
                 godot_class_build_export_methods!($name, cname, desc, $($tt)*);
 
-                let mut $builder: $crate::PropertiesBuilder<$name>  = $crate::PropertiesBuilder {
+                let $builder: $crate::PropertyBuilder<$name>  = $crate::PropertyBuilder {
                     desc: desc,
                     class_name: cname.as_ptr() as *const _,
-                    class: ::std::marker::PhantomData,
+                    _marker: ::std::marker::PhantomData,
                 };
                 $pbody
             }

@@ -10,40 +10,55 @@ godot_class! {
             rotate_speed: f64,
         }
         setup(builder) {
-            builder.property("base/rotate_speed", 0.05)
-                .hint(godot::PropertyHint::Range {
-                    min: 0.05,
-                    max: 1.0,
-                    step: 0.01,
-                    slider: true
-                })
-                .getter(|s: &mut RustTest| s.rotate_speed)
-                .setter(|s: &mut RustTest, v| s.rotate_speed = v)
-                .register();
-            // TODO: These properties seem to cause a crash in the engine (See issue #39).
-            /*
-            builder.property("test/test_enum", "Hello".to_owned())
-                .hint(godot::PropertyHint::Enum {
-                    values: vec![
-                        "Hello".to_owned(),
-                        "World".to_owned(),
-                        "Testing".to_owned()
-                    ]
-                })
-                .getter(|_s: &mut RustTest| "Hello".to_owned())
-                .register();
-            builder.property("test/test_flags", 0)
-                .hint(godot::PropertyHint::Flags {
-                    values: vec![
-                        "A".to_owned(),
-                        "B".to_owned(),
-                        "C".to_owned(),
-                        "D".to_owned()
-                    ]
-                })
-                .getter(|_s: &mut RustTest| 0)
-                .register();
-            */
+            builder.add_property(
+                godot::Property {
+                    name: "base/rotate_speed",
+                    default: 0.05,
+                    hint: godot::PropertyHint::Range {
+                        range: 0.05..1.0,
+                        step: 0.01,
+                        slider: true
+                    },
+                    getter: |this: &mut RustTest| this.rotate_speed,
+                    setter: |this: &mut RustTest, v| this.rotate_speed = v,
+                    usage: godot::PropertyUsage::DEFAULT,
+                }
+            );
+
+            builder.add_property(
+                godot::Property {
+                    name: "test/test_enum",
+                    default: godot::GodotString::from_str("Hello"),
+                    hint: godot::PropertyHint::Enum {
+                        values: vec![
+                            "Hello".to_owned(),
+                            "World".to_owned(),
+                            "Testing".to_owned()
+                        ]
+                    },
+                    getter: |_: &mut RustTest| { godot::GodotString::from_str("Hello") },
+                    setter: (),
+                    usage: godot::PropertyUsage::DEFAULT,
+                }
+            );
+
+            builder.add_property(
+                godot::Property {
+                    name: "test/test_flags",
+                    default: 0,
+                    hint: godot::PropertyHint::Flags {
+                        values: vec![
+                            "A".to_owned(),
+                            "B".to_owned(),
+                            "C".to_owned(),
+                            "D".to_owned()
+                        ]
+                    },
+                    getter: |_: &mut RustTest| 0,
+                    setter: (),
+                    usage: godot::PropertyUsage::DEFAULT,
+                }
+            );
         }
         constructor(godot_info) {
             RustTest {
