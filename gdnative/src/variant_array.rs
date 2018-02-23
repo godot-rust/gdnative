@@ -41,9 +41,10 @@ impl VariantArray {
         }
     }
 
-    pub fn is_empty(&self) {
+    /// Returns `true` if the `VariantArray` contains no elements.
+    pub fn is_empty(&self) -> bool {
         unsafe {
-            (get_api().godot_array_empty)(&self.0);
+            (get_api().godot_array_empty)(&self.0)
         }
     }
 
