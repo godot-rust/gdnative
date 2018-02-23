@@ -25,14 +25,14 @@ impl Vector2Array {
         }
     }
 
-    // Appends a vector to the end of the array.
+    /// Appends a vector to the end of the array.
     pub fn push(&mut self, vector: &Vector2) {
         unsafe {
             (get_api().godot_pool_vector2_array_append)(&mut self.0, transmute(vector));
         }
     }
 
-    // Appends each vector to the end of the array.
+    /// Appends each vector to the end of the array.
     pub fn push_array(&mut self, vectors: &Vector2Array) {
         unsafe {
             (get_api().godot_pool_vector2_array_append_array)(&mut self.0, transmute(vectors));
