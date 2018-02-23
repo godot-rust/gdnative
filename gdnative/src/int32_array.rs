@@ -52,13 +52,6 @@ impl Int32Array {
         }
     }
 
-    // TODO DOC
-    pub fn push_back(&mut self, val: i32) {
-        unsafe {
-            (get_api().godot_pool_int_array_push_back)(&mut self.0, val);
-        }
-    }
-
     /// Removes an element at the given offset.
     pub fn remove(&mut self, idx: i32) {
         unsafe {

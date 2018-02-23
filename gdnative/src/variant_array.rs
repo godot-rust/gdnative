@@ -15,12 +15,6 @@ impl VariantArray {
         }
     }
 
-    pub fn append(&mut self, val: &Variant) {
-        unsafe {
-            (get_api().godot_array_append)(&mut self.0, &val.0)
-        }
-    }
-
     pub fn get_val(&mut self, idx: i32) -> Variant {
         unsafe {
             Variant((get_api().godot_array_get)(&self.0, idx))

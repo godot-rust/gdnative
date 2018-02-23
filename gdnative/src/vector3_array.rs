@@ -55,13 +55,6 @@ impl Vector3Array {
         }
     }
 
-    // TODO DOC
-    pub fn push_back(&mut self, vector: &Vector3) {
-        unsafe {
-            (get_api().godot_pool_vector3_array_push_back)(&mut self.0, transmute(vector))
-        }
-    }
-
     /// Removes an element at the given offset.
     pub fn remove(&mut self, idx: i32) {
         unsafe {

@@ -46,13 +46,6 @@ impl ColorArray {
         }
     }
 
-    /// TODO DOC
-    pub fn push_back(&mut self, color: &Color) {
-        unsafe {
-            (get_api().godot_pool_color_array_push_back)(&mut self.0, transmute(color));
-        }
-    }
-
     pub fn remove(&mut self, idx: i32) {
         unsafe {
             (get_api().godot_pool_color_array_remove)(&mut self.0, idx);
