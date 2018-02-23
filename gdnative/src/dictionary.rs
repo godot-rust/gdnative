@@ -6,83 +6,98 @@ use GodotString;
 use GodotType;
 use std::fmt;
 
+/// A `Dictionary` of `Variant` key-value pairs.
 pub struct Dictionary(pub(crate) sys::godot_dictionary);
 
 impl Dictionary {
+    /// Creates an empty `Dictionary`.
     pub fn new() -> Self { Dictionary::default() }
 
+    /// Returns `true` if the `Dictionary` contains no elements.
     pub fn is_empty(&self) -> bool {
         unsafe {
             (get_api().godot_dictionary_empty)(&self.0)
         }
     }
 
+    /// Returns the number of elements in the `Dictionary`.
     pub fn len(&self) -> i32 {
         unsafe {
             (get_api().godot_dictionary_size)(&self.0)
         }
     }
 
+    /// Clears the `Dictionary`, removing all key-value pairs.
     pub fn clear(&mut self) {
         unsafe {
             (get_api().godot_dictionary_clear)(&mut self.0)
         }
     }
 
+    /// Returns true if the `Dictionary` contains the specified key.
     pub fn contains(&self, key: &Variant) -> bool {
         unsafe {
             (get_api().godot_dictionary_has)(&self.0, &key.0)
         }
     }
 
+    /// Returns true if the `Dictionary` has all of the keys in the given array.
     pub fn contains_all(&self, keys: &VariantArray) -> bool {
         unsafe {
             (get_api().godot_dictionary_has_all)(&self.0, &keys.0)
         }
     }
 
+    /// Erase a key-value pair in the `Dictionary` by the specified key.
     pub fn erase(&mut self, key: &Variant) {
         unsafe {
             (get_api().godot_dictionary_erase)(&mut self.0, &key.0)
         }
     }
 
+    /// Returns a copy of the value corresponding to the key.
     pub fn get(&self, key: &Variant) -> Variant {
         unsafe {
             Variant((get_api().godot_dictionary_get)(&self.0, &key.0))
         }
     }
 
+    /// Sets a value to the element corresponding to the key.
     pub fn set(&mut self, key: &Variant, val: &Variant) {
         unsafe {
             (get_api().godot_dictionary_set)(&mut self.0, &key.0, &val.0)
         }
     }
 
+    /// Returns a reference to the value corresponding to the key.
     pub fn get_ref(&self, key: &Variant) -> &Variant {
         unsafe {
             Variant::cast_ref((get_api().godot_dictionary_operator_index_const)(&self.0, &key.0))
         }
     }
 
+    /// Returns a mutable reference to the value corresponding to the key.
     pub fn get_mut_ref(&mut self, key: &Variant) -> &mut Variant {
         unsafe {
             Variant::cast_mut_ref((get_api().godot_dictionary_operator_index)(&mut self.0, &key.0))
         }
     }
 
+    /// Returns a GodotString of the `Dictionary`.
     pub fn to_json(&self) -> GodotString {
         unsafe {
             GodotString((get_api().godot_dictionary_to_json)(&self.0))
         }
     }
 
+    /// Returns an array of the keys in the `Dictionary`.
     pub fn keys(&self) -> VariantArray {
         unsafe {
             VariantArray((get_api().godot_dictionary_keys)(&self.0))
         }
     }
 
+    /// Returns an array of the values in the `Dictionary`.
     pub fn values(&self) -> VariantArray {
         unsafe {
             VariantArray((get_api().godot_dictionary_values)(&self.0))
