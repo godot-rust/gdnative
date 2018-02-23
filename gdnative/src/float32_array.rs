@@ -49,6 +49,12 @@ impl Float32Array {
         }
     }
 
+    pub fn push_back(&mut self, val: f32) {
+        unsafe {
+            (get_api().godot_pool_real_array_push_back)(&mut self.0, val);
+        }
+    }
+
     pub fn resize(&mut self, size: i32) {
         unsafe {
             (get_api().godot_pool_real_array_resize)(&mut self.0, size);

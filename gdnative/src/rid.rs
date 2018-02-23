@@ -14,6 +14,15 @@ impl Rid {
         unsafe { (get_api().godot_rid_get_id)(&self.0) }
     }
 
+    // TODO
+    // pub fn new_with_resource(&mut self, from: Type) {
+    //     unimplemented!();
+    // }
+
+    // pub fn operator_less(&mut self) -> bool {
+    //     unimplemented!();
+    // }
+
     pub fn is_valid(&self) -> bool {
         self.to_u64() != 0
     }

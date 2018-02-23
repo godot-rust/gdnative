@@ -45,6 +45,12 @@ impl StringArray {
         }
     }
 
+    pub fn push_back(&mut self, s: &GodotString) {
+        unsafe {
+            (get_api().godot_pool_string_array_push_back)(&mut self.0, &s.0);
+        }
+    }
+
     pub fn remove(&mut self, idx: i32) {
         unsafe {
             (get_api().godot_pool_string_array_remove)(&mut self.0, idx);

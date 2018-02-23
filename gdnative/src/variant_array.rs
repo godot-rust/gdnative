@@ -15,6 +15,12 @@ impl VariantArray {
         }
     }
 
+    pub fn append(&mut self, val: &Variant) {
+        unsafe {
+            (get_api().godot_array_append)(&mut self.0, &val.0)
+        }
+    }
+
     pub fn get_val(&mut self, idx: i32) -> Variant {
         unsafe {
             Variant((get_api().godot_array_get)(&self.0, idx))
@@ -35,9 +41,21 @@ impl VariantArray {
         }
     }
 
+    pub fn count(&mut self, val: &Variant) -> i32 {
+        unsafe {
+            (get_api().godot_array_count)(&mut self.0, &val.0)
+        }
+    }
+
     pub fn clear(&mut self) {
         unsafe {
             (get_api().godot_array_clear)(&mut self.0);
+        }
+    }
+
+    pub fn erase(&mut self, val: &Variant) {
+        unsafe {
+            (get_api().godot_array_erase)(&mut self.0, &val.0)
         }
     }
 
@@ -95,6 +113,18 @@ impl VariantArray {
         }
     }
 
+    pub fn remove(&mut self, idx: i32) {
+        unsafe {
+            (get_api().godot_array_remove)(&mut self.0, idx)
+        }
+    }
+
+    pub fn resize(&mut self, size: i32) {
+        unsafe {
+            (get_api().godot_array_resize)(&mut self.0, size)
+        }
+    }
+
     pub fn rfind(&self, what: &Variant, from: i32) -> i32 {
         unsafe {
             (get_api().godot_array_rfind)(&self.0, &what.0, from)
@@ -118,6 +148,25 @@ impl VariantArray {
             (get_api().godot_array_hash)(&self.0)
         }
     }
+
+    pub fn sort(&mut self) {
+        unsafe {
+            (get_api().godot_array_sort)(&mut self.0)
+        }
+    }
+
+    // TODO
+    // pub fn sort_custom(&mut self, obj: ?, s: &GodotString) {
+    //     unimplemented!()
+    // }
+
+    // pub fn bsearch(&mut self, val: &Variant, before: bool) -> i32 {
+    //     unimplemented!();
+    // }
+
+    // pub fn bsearch_custom(&mut self, val: &Variant, obj: ?, s: &GodotString, before: bool) -> i32 {
+    //     unimplemented!();
+    // }
 }
 
 impl_basic_traits!(
