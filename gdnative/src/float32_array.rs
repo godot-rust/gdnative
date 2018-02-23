@@ -22,14 +22,14 @@ impl Float32Array {
         }
     }
 
-    /// Appends an element at the end of the array
+    /// Appends an element at the end of the array.
     pub fn push(&mut self, val: f32) {
         unsafe {
             (get_api().godot_pool_real_array_append)(&mut self.0, val);
         }
     }
 
-    /// Appends an `Float32Array` at the end of this array.
+    /// Appends a `Float32Array` at the end of this array.
     pub fn push_array(&mut self, array: &Float32Array) {
         unsafe {
             (get_api().godot_pool_real_array_append_array)(&mut self.0, &array.0);
@@ -66,7 +66,7 @@ impl Float32Array {
         }
     }
 
-    /// Gets a copy of the element at the given offset.
+    /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> f32 {
         unsafe {
             (get_api().godot_pool_real_array_get)(&self.0, idx)

@@ -110,6 +110,7 @@ impl Dictionary {
         }
     }
 
+    /// Return a hashed i32 value representing the dictionary's contents.
     pub fn hash(&self) -> i32 {
         unsafe {
             (get_api().godot_dictionary_hash)(&self.0)

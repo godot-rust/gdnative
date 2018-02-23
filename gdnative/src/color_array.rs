@@ -69,7 +69,7 @@ impl ColorArray {
         }
     }
 
-    /// Gets a copy of the element at the given offset.
+    /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> Color {
         unsafe {
             transmute((get_api().godot_pool_color_array_get)(&self.0, idx))

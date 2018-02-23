@@ -23,7 +23,7 @@ impl StringArray {
         }
     }
 
-    /// Appends an element at the end of the array
+    /// Appends an element at the end of the array.
     pub fn push(&mut self, s: &GodotString) {
         unsafe {
             (get_api().godot_pool_string_array_append)(&mut self.0, &s.0);

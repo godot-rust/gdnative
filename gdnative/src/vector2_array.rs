@@ -69,7 +69,7 @@ impl Vector2Array {
         }
     }
 
-    /// Gets a copy of the element at the given offset.
+    /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> Vector2 {
         unsafe {
             transmute((get_api().godot_pool_vector2_array_get)(&self.0, idx))
