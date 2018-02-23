@@ -147,10 +147,34 @@ impl GodotString {
         self.to_utf8().to_string()
     }
 
+    pub fn find(&self, what: sys::godot_string) -> i32 {
+        unsafe {
+            (get_api().godot_string_find)(&self.0, what)
+        }
+    }
+
+    pub fn find_from(&self, what: sys::godot_string, from: i32) -> i32 {
+        unsafe {
+            (get_api().godot_string_find_from)(&self.0, what, from)
+        }
+    }
+
+    pub fn find_last(&self, what: sys::godot_string) -> i32 {
+        unsafe {
+            (get_api().godot_string_find_last)(&self.0, what)
+        }
+    }
+
     pub fn forget(self) -> sys::godot_string {
         let v = self.0;
         forget(self);
         v
+    }
+
+    pub fn bigrams(&self) -> sys::godot_array {
+        unsafe {
+            (get_api().godot_string_bigrams)(&self.0)
+        }
     }
 
     // TODO: many missing methods.
@@ -256,6 +280,12 @@ impl StringName {
     pub fn get_name(&self) -> GodotString {
         unsafe {
             GodotString((get_api().godot_string_name_get_name)(&self.0))
+        }
+    }
+
+    pub fn operator_less(&self, s: &StringName) -> bool {
+        unsafe {
+            (get_api().godot_string_name_operator_less)(&self.0, &s.0)
         }
     }
 }

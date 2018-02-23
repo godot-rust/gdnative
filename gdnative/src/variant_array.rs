@@ -150,15 +150,17 @@ impl VariantArray {
     }
 
     // TODO
-    // pub fn sort_custom(&mut self, obj: ?, s: &GodotString) {
+    // pub fn sort_custom(&mut self, obj: ?, s: ?) {
     //     unimplemented!()
     // }
 
-    // pub fn bsearch(&mut self, val: &Variant, before: bool) -> i32 {
-    //     unimplemented!();
+    // pub fn bsearch(&mut self, val: (), before: bool) -> i32 {
+    //     unsafe {
+    //         (get_api().godot_array_bsearch)(&mut self.0, val, before)
+    //     }
     // }
 
-    // pub fn bsearch_custom(&mut self, val: &Variant, obj: ?, s: &GodotString, before: bool) -> i32 {
+    // pub fn bsearch_custom(&mut self, val: ?, obj: ?, s: ?, before: bool) -> i32 {
     //     unimplemented!();
     // }
 }

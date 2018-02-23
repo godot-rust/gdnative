@@ -22,7 +22,7 @@ impl Int32Array {
         }
     }
 
-    /// Appends an element at the end of the array
+    /// Appends an element at the end of the array.
     pub fn push(&mut self, val: i32) {
         unsafe {
             (get_api().godot_pool_int_array_append)(&mut self.0, val);
