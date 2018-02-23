@@ -20,8 +20,6 @@ godot_class! {
                 .getter(|s: &mut RustTest| s.rotate_speed)
                 .setter(|s: &mut RustTest, v| s.rotate_speed = v)
                 .register();
-            // TODO: These properties seem to cause a crash in the engine (See issue #39).
-            /*
             builder.property("test/test_enum", "Hello".to_owned())
                 .hint(godot::PropertyHint::Enum {
                     values: vec![
@@ -43,7 +41,6 @@ godot_class! {
                 })
                 .getter(|_s: &mut RustTest| 0)
                 .register();
-            */
         }
         constructor(godot_info) {
             RustTest {
@@ -65,16 +62,22 @@ godot_class! {
         }
 
         export fn _physics_process(&mut self, delta: f64) {
-            use godot::{Color, SpatialMaterial, Vector3};
+            use godot::{NodePath, Color, Spatial, SpatialMaterial, Vector3};
             self.time += delta as f32;
             let p = self.godot_parent();
             p.rotate_y(self.rotate_speed);
             let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
             p.set_translation(self.start + offset);
 
+            if let Some(cap) = p.get_node(NodePath::from_str("./Cap")).and_then(|v| v.cast::<Spatial>()) {
+                cap.rotate_x(0.05);
+            }
+
             if let Some(mat) = p.get_surface_material(0) {
                 let mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
                 mat.set_albedo(Color::rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
+            } else {
+                godot_warn!("No material");
             }
         }
     }
