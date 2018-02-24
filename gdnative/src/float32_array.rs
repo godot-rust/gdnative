@@ -11,6 +11,9 @@ impl Float32Array {
     /// Creates an empty `Float32Array`.
     pub fn new() -> Self { Float32Array::default() }
 
+    /// Creates an array by trying to convert each variant.
+    ///
+    /// See `Variant::to_float32_array`.
     pub fn from_variant_array(array: &VariantArray) -> Self {
         unsafe {
             let mut result = sys::godot_pool_real_array::default();
@@ -26,7 +29,7 @@ impl Float32Array {
         }
     }
 
-    /// Appends an `Float32Array` at the end of this array.
+    /// Appends a `Float32Array` at the end of this array.
     pub fn push_array(&mut self, array: &Float32Array) {
         unsafe {
             (get_api().godot_pool_real_array_append_array)(&mut self.0, &array.0);
@@ -34,7 +37,7 @@ impl Float32Array {
     }
 
     // TODO(error handling)
-    /// Insert a new float at a given position in the array.
+    /// Insert a new f32 at a given position in the array.
     pub fn insert(&mut self, offset: i32, val: f32) -> bool {
         unsafe {
             let status = (get_api().godot_pool_real_array_insert)(&mut self.0, offset, val);
@@ -42,7 +45,7 @@ impl Float32Array {
         }
     }
 
-    /// Inverts the order of the elements in the array
+    /// Inverts the order of the elements in the array.
     pub fn invert(&mut self) {
         unsafe {
             (get_api().godot_pool_real_array_invert)(&mut self.0)
@@ -63,7 +66,7 @@ impl Float32Array {
         }
     }
 
-    /// Gets a copy of the element at the given offset.
+    /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> f32 {
         unsafe {
             (get_api().godot_pool_real_array_get)(&self.0, idx)

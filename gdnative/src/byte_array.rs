@@ -22,14 +22,14 @@ impl ByteArray {
         }
     }
 
-    // Appends a byte to the end of the array.
+    /// Appends a byte to the end of the array.
     pub fn push(&mut self, byte: u8) {
         unsafe {
             (get_api().godot_pool_byte_array_append)(&mut self.0, byte);
         }
     }
 
-    // Appends each byte to the end of the array.
+    /// Appends each byte to the end of the array.
     pub fn push_array(&mut self, bytes: &ByteArray) {
         unsafe {
             (get_api().godot_pool_byte_array_append_array)(&mut self.0, &bytes.0);
@@ -66,7 +66,7 @@ impl ByteArray {
         }
     }
 
-    /// Gets a copy of the byte at the given offset.
+    /// Returns a copy of the byte at the given offset.
     pub fn get(&self, idx: i32) -> u8 {
         unsafe {
             (get_api().godot_pool_byte_array_get)(&self.0, idx)
