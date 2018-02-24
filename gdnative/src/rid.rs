@@ -1,11 +1,10 @@
 use sys;
 use get_api;
-use libc::c_void;
-use sys::godot_rid;
+use std::cmp::Ordering;
 use std::mem::transmute;
 use std::cmp::{Eq, PartialEq};
 
-/// The RID type is used to access the unique integer ID of a resource. 
+/// The RID type is used to access the unique integer ID of a resource.
 /// They are opaque, so they do not grant access to the associated resource by themselves.
 #[derive(Copy, Clone, Debug)]
 pub struct Rid(pub(crate) sys::godot_rid);
@@ -19,12 +18,8 @@ impl Rid {
         unsafe { (get_api().godot_rid_get_id)(&self.0) }
     }
 
-    pub fn new_with_resource(&mut self, from: *mut c_void) {
-        unsafe { (get_api().godot_rid_new_with_resource)(&mut self.0, from) }
-    }
-
-    pub fn operator_less(&mut self, b: *mut godot_rid) -> bool {
-        unsafe { (get_api().godot_rid_operator_less)(&mut self.0, b) }
+    pub fn operator_less(&self, b: &Rid) -> bool {
+        unsafe { (get_api().godot_rid_operator_less)(&self.0, &b.0) }
     }
 
     pub fn is_valid(&self) -> bool {
@@ -40,5 +35,19 @@ impl_basic_traits!{
     for Rid as godot_rid {
         Eq => godot_rid_operator_equal;
         Default => godot_rid_new;
+    }
+}
+
+impl PartialOrd for Rid {
+    fn partial_cmp(&self, other: &Rid) -> Option<Ordering> {
+        unsafe {
+            let native = (get_api().godot_rid_operator_less)(&self.0, &other.0);
+
+            if native {
+                Some(Ordering::Less)
+            } else {
+                Some(Ordering::Greater)
+            }
+        }
     }
 }

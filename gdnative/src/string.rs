@@ -7,6 +7,7 @@ use std::ffi::CStr;
 use std::ops::Range;
 use std::str;
 use std::slice;
+use std::cmp::Ordering;
 use std::mem::{transmute, forget};
 use std::fmt;
 
@@ -147,21 +148,21 @@ impl GodotString {
         self.to_utf8().to_string()
     }
 
-    pub fn find(&self, what: sys::godot_string) -> i32 {
+    pub fn find(&self, what: GodotString) -> i32 {
         unsafe {
-            (get_api().godot_string_find)(&self.0, what)
+            (get_api().godot_string_find)(&self.0, what.0)
         }
     }
 
-    pub fn find_from(&self, what: sys::godot_string, from: i32) -> i32 {
+    pub fn find_from(&self, what: GodotString, from: i32) -> i32 {
         unsafe {
-            (get_api().godot_string_find_from)(&self.0, what, from)
+            (get_api().godot_string_find_from)(&self.0, what.0, from)
         }
     }
 
-    pub fn find_last(&self, what: sys::godot_string) -> i32 {
+    pub fn find_last(&self, what: GodotString) -> i32 {
         unsafe {
-            (get_api().godot_string_find_last)(&self.0, what)
+            (get_api().godot_string_find_last)(&self.0, what.0)
         }
     }
 
@@ -169,12 +170,6 @@ impl GodotString {
         let v = self.0;
         forget(self);
         v
-    }
-
-    pub fn bigrams(&self) -> sys::godot_array {
-        unsafe {
-            (get_api().godot_string_bigrams)(&self.0)
-        }
     }
 
     // TODO: many missing methods.
@@ -300,6 +295,20 @@ impl_basic_traits! {
 impl fmt::Debug for StringName {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.get_name().to_string().fmt(f)
+    }
+}
+
+impl PartialOrd for StringName {
+    fn partial_cmp(&self, other: &StringName) -> Option<Ordering> {
+        unsafe {
+            let native = (get_api().godot_string_name_operator_less)(&self.0, &other.0);
+
+            if native {
+                Some(Ordering::Less)
+            } else {
+                Some(Ordering::Greater)
+            }
+        }
     }
 }
 
