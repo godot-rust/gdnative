@@ -148,19 +148,19 @@ impl GodotString {
         self.to_utf8().to_string()
     }
 
-    pub fn find(&self, what: GodotString) -> i32 {
+    pub fn find(&self, what: &GodotString) -> i32 {
         unsafe {
             (get_api().godot_string_find)(&self.0, what.0)
         }
     }
 
-    pub fn find_from(&self, what: GodotString, from: i32) -> i32 {
+    pub fn find_from(&self, what: &GodotString, from: i32) -> i32 {
         unsafe {
             (get_api().godot_string_find_from)(&self.0, what.0, from)
         }
     }
 
-    pub fn find_last(&self, what: GodotString) -> i32 {
+    pub fn find_last(&self, what: &GodotString) -> i32 {
         unsafe {
             (get_api().godot_string_find_last)(&self.0, what.0)
         }

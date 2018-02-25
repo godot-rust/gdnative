@@ -17,7 +17,7 @@ use std::fmt;
 /// If a string is passed to `Node.get_node()`, it will be automatically converted to a `NodePath`,
 /// but `NodePath` can be parsed ahead of time with `NodePath::from_str()` or `NodePath::from_godot_string()`.
 ///
-/// A NodePath consists of node names, “subnode” (resource) names, and the name of a property in
+/// A `NodePath` consists of node names, “subnode” (resource) names, and the name of a property in
 /// the final node or resource.
 pub struct NodePath(pub(crate) sys::godot_node_path);
 

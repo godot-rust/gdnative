@@ -122,8 +122,7 @@ impl<C: GodotClass> PropertyBuilder<C> {
                         Some(format!("{},{},{}", range.start, range.end, step))
                     }
                 }
-                PropertyHint::Enum { ref values } => { Some(values.join(",")) }
-                PropertyHint::Flags { ref values } => { Some(values.join(",")) }
+                PropertyHint::Enum { ref values } | PropertyHint::Flags { ref values } => { Some(values.join(",")) }
                 PropertyHint::NodePathToEditedNode => { None }
                 PropertyHint::None => { None }
             };
@@ -159,7 +158,7 @@ impl<C: GodotClass> PropertyBuilder<C> {
         }
     }
 
-    pub fn add_signal(&self, signal: Signal) {
+    pub fn add_signal(&self, signal: &Signal) {
         use std::ptr;
         unsafe {
             let api = get_api();
