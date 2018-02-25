@@ -30,10 +30,10 @@ godot_class! {
                     name: "test/test_enum",
                     default: godot::GodotString::from_str("Hello"),
                     hint: godot::PropertyHint::Enum {
-                        values: vec![
-                            "Hello".to_owned(),
-                            "World".to_owned(),
-                            "Testing".to_owned()
+                        values: &[
+                            "Hello",
+                            "World",
+                            "Testing",
                         ]
                     },
                     getter: |_: &mut RustTest| { godot::GodotString::from_str("Hello") },
@@ -47,12 +47,7 @@ godot_class! {
                     name: "test/test_flags",
                     default: 0,
                     hint: godot::PropertyHint::Flags {
-                        values: vec![
-                            "A".to_owned(),
-                            "B".to_owned(),
-                            "C".to_owned(),
-                            "D".to_owned()
-                        ]
+                        values: &["A", "B", "C", "D" ],
                     },
                     getter: |_: &mut RustTest| 0,
                     setter: (),

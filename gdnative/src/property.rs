@@ -7,7 +7,7 @@ use std::mem;
 use std::ops::Range;
 
 // TODO: missing property hints.
-pub enum PropertyHint {
+pub enum PropertyHint<'l> {
     None,
     Range {
         range: Range<f64>,
@@ -16,14 +16,14 @@ pub enum PropertyHint {
     },
     // ExpRange,
     Enum {
-        values: Vec<String>,
+        values: &'l[&'l str],
     },
     // ExpEasing,
     // Length,
     // SpriteFrame,
     // KeyAccel,
     Flags {
-        values: Vec<String>,
+        values: &'l[&'l str],
     },
     // Layers2DRender,
     // Layers2DPhysics,
@@ -51,7 +51,7 @@ pub enum PropertyHint {
     // PropertyOfScript,
 }
 
-impl PropertyHint {
+impl<'l> PropertyHint<'l> {
     fn to_sys(&self) -> sys::godot_property_hint {
         match *self {
             PropertyHint::None => GODOT_PROPERTY_HINT_NONE,
@@ -184,7 +184,7 @@ pub struct Property<'l, T, S, G>
     pub setter: S,
     pub getter: G,
     pub default: T,
-    pub hint: PropertyHint,
+    pub hint: PropertyHint<'l>,
     pub usage: PropertyUsage,
 }
 
