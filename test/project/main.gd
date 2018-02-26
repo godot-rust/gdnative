@@ -11,6 +11,7 @@ func _ready():
             print(" -- Test run completed successfully.")
         else:
             print(" -- Test run completed with errors.")
+            OS.exit_code = 1
     else:
         print(" -- Could not load the gdnative library.")
     print(" -- exiting.")
