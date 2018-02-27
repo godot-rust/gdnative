@@ -166,10 +166,24 @@ impl GodotString {
         }
     }
 
+    /// Returns the internal ffi representation of the string and consumes
+    /// the rust object without running the destructor.
+    ///
+    /// This should be only used when certain that the receiving side is
+    /// responsible for running the destructor for the object, otherwise
+    /// it is leaked.
     pub fn forget(self) -> sys::godot_string {
         let v = self.0;
         forget(self);
         v
+    }
+
+    /// Returns a copy of the internal ffi representation of the string.
+    ///
+    /// The string remains owned by the rust wrapper and the receiver of
+    /// the ffi representation should not run its destructor.
+    pub fn to_sys(&self) -> sys::godot_string {
+        self.0
     }
 
     // TODO: many missing methods.

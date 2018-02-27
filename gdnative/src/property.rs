@@ -140,9 +140,9 @@ impl<C: GodotClass> PropertyBuilder<C> {
                 rset_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
                 type_: mem::transmute(ty),
                 hint: property.hint.to_sys(),
-                hint_string: hint_string.forget(),
+                hint_string: hint_string.to_sys(),
                 usage: property.usage.to_sys(),
-                default_value: default.forget(),
+                default_value: default.to_sys(),
             };
 
             let path = ::std::ffi::CString::new(property.name).unwrap();
@@ -163,11 +163,12 @@ impl<C: GodotClass> PropertyBuilder<C> {
         use std::ptr;
         unsafe {
             let api = get_api();
+            let name = GodotString::from_str(signal.name);
             (api.godot_nativescript_register_signal)(
                 self.desc,
                 self.class_name,
                 &sys::godot_signal {
-                    name: GodotString::from_str(signal.name).forget(),
+                    name: name.to_sys(),
                     num_args: 0,
                     args: ptr::null_mut(),
                     num_default_args: 0,
