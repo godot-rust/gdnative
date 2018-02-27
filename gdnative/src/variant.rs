@@ -148,8 +148,10 @@ pub enum VariantType {
     ColorArray = GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY as u32,
 }
 
-fn from_godot_varianty_type(v: sys::godot_variant_type) -> VariantType {
-    unsafe { transmute(v) }
+impl VariantType {
+    pub fn from_sys(v: sys::godot_variant_type) -> VariantType {
+        unsafe { transmute(v) }
+    }
 }
 
 //fn to_godot_varianty_type(v: VariantType) -> sys::godot_variant_type {
@@ -436,7 +438,7 @@ impl Variant {
     /// Returns this variant's type.
     pub fn get_type(&self) -> VariantType {
         unsafe {
-            from_godot_varianty_type(
+            VariantType::from_sys(
                 (get_api().godot_variant_get_type)(&self.0)
             )
         }
