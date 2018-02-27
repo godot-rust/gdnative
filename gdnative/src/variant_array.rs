@@ -202,3 +202,66 @@ impl GodotType for VariantArray {
     fn to_variant(&self) -> Variant { Variant::from_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_array() }
 }
+
+godot_test!(test_array {
+    let foo = Variant::from_str("foo");
+    let bar = Variant::from_str("bar");
+    let nope = Variant::from_str("nope");
+
+    let mut array = VariantArray::new(); // []
+
+    assert!(array.is_empty());
+    assert_eq!(array.len(), 0);
+
+    array.push(&foo); // [&foo]
+    array.push(&bar); // [&foo, &bar]
+
+    assert_eq!(array.len(), 2);
+
+    assert!(array.contains(&foo));
+    assert!(array.contains(&bar));
+    assert!(!array.contains(&nope));
+
+    array.set(0, &bar); // [&bar, &bar]
+    array.set(1, &foo); // [&bar, &foo]
+
+    assert_eq!(array.get_ref(0), &bar);
+    assert_eq!(array.get_ref(1), &foo);
+
+    array.pop(); // [&bar]
+    array.pop(); // []
+
+    let x = Variant::from_i64(42);
+    let y = Variant::from_i64(1337);
+    let z = Variant::from_i64(512);
+
+    array.insert(0, &x); // [&x]
+    array.insert(0, &y); // [&y, &x]
+    array.push_front(&z); // [&y, &x]
+    array.push_front(&z); // [&z, &z, &y, &x]
+
+    assert_eq!(array.find(&y, 0), 2);
+    assert_eq!(array.find_last(&z), 1);
+    assert_eq!(array.find(&nope, 0), -1);
+
+    array.invert(); // [&x, &y, &z, &z]
+
+    assert_eq!(array.get_ref(0), &x);
+
+    array.pop_front(); // [&y, &z, &z]
+    array.pop_front(); // [&z, &z]
+
+    assert_eq!(array.get_ref(0), &z);
+
+    array.resize(0); // []
+    assert!(array.is_empty());
+
+    array.push(&foo); // [&foo]
+    array.push(&bar); // [&foo, &bar]
+
+    let array_clone = array.clone();
+    assert!(array_clone.contains(&foo));
+    assert!(array_clone.contains(&bar));
+    assert!(!array_clone.contains(&nope));
+});
+
