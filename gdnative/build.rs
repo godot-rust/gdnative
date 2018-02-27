@@ -3,12 +3,17 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate heck;
+
+use heck::CamelCase;
 
 use std::fs::File;
 use std::env;
 use std::path::PathBuf;
 use std::io::Write;
 use std::fmt;
+
+use std::collections::HashMap;
 
 #[derive(Clone)]
 enum Ty {
@@ -179,6 +184,32 @@ pub struct {name} {{
         writeln!(output, r#"
 }}
 
+"#).unwrap();
+
+        for e in &class.enums {
+            // TODO: check whether the start of the variant name is
+            // equal to the end of the enum name and if so don't repeat it
+            // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
+            writeln!(output, r#"
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum {class_name}{enum_name} {{
+"#, class_name = class.name, enum_name = e.name
+            ).unwrap();
+
+            for (key, val) in &e.values {
+                let key = key.as_str().to_camel_case();
+                writeln!(output,
+r#"    {key} = {val},"#,
+                key = key.as_str().to_camel_case(), val = val).unwrap();
+            }
+            writeln!(output, r#"
+}}"#
+            ).unwrap();
+        }
+
+        writeln!(output, r#"
+
 unsafe impl GodotClass for {name} {{
     type ClassData = {name};
     type Reference = {name};
@@ -224,8 +255,8 @@ impl Deref for {name} {{
             "#, name = class.name, parent = class.base_class).unwrap();
         }
         writeln!(output, r#"
-impl {name} {{
-"#, name = class.name).unwrap();
+impl {name} {{"#, name = class.name
+        ).unwrap();
 
         if class.singleton {
             let s_name = if class.name.starts_with("_") {
@@ -573,6 +604,13 @@ struct GodotClass {
     is_reference: bool,
 
     methods: Vec<GodotMethod>,
+    enums: Vec<Enum>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Enum {
+    name: String,
+    values: HashMap<String, u32>,
 }
 
 #[derive(Deserialize, Debug)]
