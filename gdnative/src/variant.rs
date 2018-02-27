@@ -494,10 +494,24 @@ impl Variant {
         unsafe { transmute(ptr) }
     }
 
+    /// Returns the internal ffi representation of the variant and consumes
+    /// the rust object without running the destructor.
+    ///
+    /// This should be only used when certain that the receiving side is
+    /// responsible for running the destructor for the object, otherwise
+    /// it is leaked.
     pub fn forget(self) -> sys::godot_variant {
         let v = self.0;
         forget(self);
         v
+    }
+
+    /// Returns a copy of the internal ffi representation of the variant.
+    ///
+    /// The variant remains owned by the rust wrapper and the receiver of
+    /// the ffi representation should not run its destructor.
+    pub fn to_sys(&self) -> sys::godot_variant {
+        self.0
     }
 }
 

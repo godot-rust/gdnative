@@ -90,7 +90,7 @@ macro_rules! godot_class_build_export_methods {
                             return ret;
                         }
                     };
-                    <$retty as $crate::GodotType>::to_sys_variant(&rust_ret)
+                    <$retty as $crate::GodotType>::to_variant(&rust_ret).forget()
                 }
             }
             let method = $crate::sys::godot_instance_method {

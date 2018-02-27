@@ -4,9 +4,6 @@ pub trait GodotType: Sized {
     fn to_variant(&self) -> Variant;
     fn from_variant(variant: &Variant) -> Option<Self>;
 
-    fn to_sys_variant(&self) -> sys::godot_variant {
-        self.to_variant().forget()
-    }
     fn from_sys_variant(variant: &sys::godot_variant) -> Option<Self> {
         Self::from_variant(Variant::cast_ref(variant))
     }
