@@ -158,7 +158,7 @@ impl<C: GodotClass> PropertyBuilder<C> {
         }
     }
 
-    pub fn add_signal(&self, signal: &Signal) {
+    pub fn add_signal(&self, signal: Signal) {
         use std::ptr;
         unsafe {
             let api = get_api();
