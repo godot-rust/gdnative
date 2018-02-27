@@ -2,7 +2,7 @@
 
 X11.32="res://lib/libgdnative_test.so"
 X11.64="res://lib/libgdnative_test.so"
-Windows="res://lib/libgdnative_test.dll"
+Windows="res://lib/gdnative_test.dll"
 
 [dependencies]
 
