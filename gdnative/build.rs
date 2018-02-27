@@ -39,9 +39,11 @@ enum Ty {
     ColorArray,
     Int32Array,
     Float32Array,
+    Result,
     Enum(String),
     Object(String),
 }
+
 
 impl Ty {
     pub fn from_src(src: &str) -> Self {
@@ -73,6 +75,7 @@ impl Ty {
             "PoolColorArray" => Ty::ColorArray,
             "PoolIntArray" => Ty::Int32Array,
             "PoolRealArray" => Ty::Float32Array,
+            "enum.Error" => Ty::Result,
             ty if ty.starts_with("enum.") => Ty::Enum(ty[5..].into()),
             ty => {
                 Ty::Object(ty.into())
@@ -109,6 +112,7 @@ impl Ty {
             &Ty::ColorArray => Some(String::from("ColorArray")),
             &Ty::Int32Array => Some(String::from("Int32Array")),
             &Ty::Float32Array => Some(String::from("Float32Array")),
+            &Ty::Result => Some(String::from("GodotResult")),
             &Ty::Enum(_) => None, // TODO
             &Ty::Object(ref name) => Some(format!("Option<GodotRef<{}>>", name)),
         }
@@ -143,6 +147,7 @@ impl Ty {
             &Ty::ColorArray => Some(String::from("sys::godot_pool_color_array")),
             &Ty::Int32Array => Some(String::from("sys::godot_pool_int_array")),
             &Ty::Float32Array => Some(String::from("sys::godot_pool_real_array")),
+            &Ty::Result => Some(String::from("sys::godot_error")),
             &Ty::Enum(_) => None, // TODO
             &Ty::Object(_) => Some(String::from("sys::godot_object")),
         }
@@ -472,6 +477,12 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &Ty) {
             let ret_ptr = (&mut ret) as *mut _;
             "#).unwrap();
         }
+        &Ty::Result => {
+            writeln!(w, r#"
+            let mut ret: sys::godot_error = sys::godot_error::GODOT_OK;
+            let ret_ptr = (&mut ret) as *mut _;
+            "#).unwrap();
+        }
         &Ty::Enum(_) => {}
     }
 }
@@ -530,6 +541,11 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &Ty) {
             }}
             "#, name).unwrap();
         },
+        &Ty::Result => {
+            writeln!(w, r#"
+            result_from_sys(ret)
+            "#).unwrap();
+        }
         _ => {}
     }
 }
