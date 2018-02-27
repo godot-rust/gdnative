@@ -40,6 +40,7 @@ enum Ty {
     Int32Array,
     Float32Array,
     Result,
+    VariantType,
     Enum(String),
     Object(String),
 }
@@ -76,6 +77,7 @@ impl Ty {
             "PoolIntArray" => Ty::Int32Array,
             "PoolRealArray" => Ty::Float32Array,
             "enum.Error" => Ty::Result,
+            "enum.Variant::Type" => Ty::VariantType,
             ty if ty.starts_with("enum.") => Ty::Enum(ty[5..].into()),
             ty => {
                 Ty::Object(ty.into())
@@ -113,6 +115,7 @@ impl Ty {
             &Ty::Int32Array => Some(String::from("Int32Array")),
             &Ty::Float32Array => Some(String::from("Float32Array")),
             &Ty::Result => Some(String::from("GodotResult")),
+            &Ty::VariantType => Some(String::from("VariantType")),
             &Ty::Enum(_) => None, // TODO
             &Ty::Object(ref name) => Some(format!("Option<GodotRef<{}>>", name)),
         }
@@ -148,6 +151,7 @@ impl Ty {
             &Ty::Int32Array => Some(String::from("sys::godot_pool_int_array")),
             &Ty::Float32Array => Some(String::from("sys::godot_pool_real_array")),
             &Ty::Result => Some(String::from("sys::godot_error")),
+            &Ty::VariantType => Some(String::from("sys::variant_type")),
             &Ty::Enum(_) => None, // TODO
             &Ty::Object(_) => Some(String::from("sys::godot_object")),
         }
@@ -483,6 +487,12 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &Ty) {
             let ret_ptr = (&mut ret) as *mut _;
             "#).unwrap();
         }
+        &Ty::VariantType => {
+            writeln!(w, r#"
+            let mut ret: sys::godot_variant_type = sys::godot_variant_type::GODOT_VARIANT_TYPE_NIL;
+            let ret_ptr = (&mut ret) as *mut _;
+            "#).unwrap();
+        }
         &Ty::Enum(_) => {}
     }
 }
@@ -544,6 +554,11 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &Ty) {
         &Ty::Result => {
             writeln!(w, r#"
             result_from_sys(ret)
+            "#).unwrap();
+        }
+        &Ty::VariantType => {
+            writeln!(w, r#"
+            VariantType::from_sys(ret)
             "#).unwrap();
         }
         _ => {}

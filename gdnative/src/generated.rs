@@ -3,9 +3,7 @@
 use sys;
 use get_api;
 use geom::*;
-use {GodotRef, GodotClass, GodotClassInfo, GodotResult, result_from_sys};
-use {Variant, VariantArray, Color, Rid, NodePath, Dictionary, GodotString};
-use {ByteArray, Int32Array, Float32Array, StringArray, Vector2Array, Vector3Array, ColorArray};
+use super::*;
 
 use std::sync::{Once, ONCE_INIT};
 use std::ops::*;
