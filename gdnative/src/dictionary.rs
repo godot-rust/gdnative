@@ -144,14 +144,28 @@ godot_test!(test_dictionary {
     let bar = Variant::from_str("bar");
     let nope = Variant::from_str("nope");
 
+    let x = Variant::from_i64(42);
+    let y = Variant::from_i64(1337);
+
     let mut dict = Dictionary::new();
 
-    dict.set(&foo, &Variant::from_i64(42));
-    dict.set(&bar, &Variant::from_i64(1337));
+    dict.set(&foo, &x);
+    dict.set(&bar, &y);
 
     assert!(dict.contains(&foo));
     assert!(dict.contains(&bar));
     assert!(!dict.contains(&nope));
+
+    let mut keys_array = dict.keys();
+    let baz = Variant::from_str("baz");
+    keys_array.push(&baz);
+    dict.set(&baz, &x);
+
+    assert!(dict.contains_all(&keys_array));
+
+    dict.erase(&baz);
+
+    assert!(!dict.contains_all(&keys_array));
 
     let variant = Variant::from_dictionary(&dict);
     assert!(variant.get_type() == VariantType::Dictionary);
