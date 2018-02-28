@@ -265,3 +265,15 @@ godot_test!(test_array {
     assert!(!array_clone.contains(&nope));
 });
 
+// TODO: clear arrays without affecting clones
+//godot_test!(test_array_clone_clear {
+//    let foo = Variant::from_str("foo");
+//    let mut array = VariantArray::new();
+//
+//    array.push(&foo);
+//    let array_clone = array.clone();
+//    array.clear();
+//
+//    assert!(array.is_empty());
+//    assert!(!array_clone.is_empty());
+//});

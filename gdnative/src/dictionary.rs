@@ -181,3 +181,17 @@ godot_test!(test_dictionary {
         panic!("variant should be a Dictionary");
     }
 });
+
+// TODO: clear dictionaries without affecting clones
+//godot_test!(test_dictionary_clone_clear {
+//    let foo = Variant::from_str("foo");
+//    let bar = Variant::from_str("bar");
+//    let mut dict = Dictionary::new();
+//
+//    dict.set(&foo, &bar);
+//    let dict_clone = dict.clone();
+//    dict.clear();
+//
+//    assert!(dict.is_empty());
+//    assert!(!dict_clone.is_empty());
+//});
