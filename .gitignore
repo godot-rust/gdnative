@@ -3,3 +3,4 @@ target
 *.rlib
 **/Cargo.lock
 .vscode
+test/project/lib
