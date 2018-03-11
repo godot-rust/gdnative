@@ -37,6 +37,17 @@ godot --path ./project
 
 The `godot` command in the above snippet is your local installation of godot and may vary depending on how it was installed.
 
+### Automating tests
+
+If you are on a bash-compatible system, you can use the `pre-commit.sh` to automatically run your tests every time you try to commit code.  You can install it with:
+
+```sh
+$ ln -s ../../hooks/pre-commit.sh .git/hooks/pre-commit
+$ chmod +x .git/hooks/pre-commit
+```
+
+If you don't need to run tests on your commit, you can simply run `git commit --no-verify` to skip the pre-commit script.  The pre-commit script handles a few edge cases as well, by stashing all of your changes before running tests, just in case your unstashed changes mask errors in the bare commit.  This is especially useful if you've stopped working on something to make a quick patch.
+
 ## Writing tests
 
 Some types can only be used if the engine is running, in order to test them, use the `godot_test!` macro (see examples in [variant.rs](gdnative/src/variant.rs)), and explicitly invoke the test functions in [test/src/lib.rs](test/src/lib.rs).
