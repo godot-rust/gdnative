@@ -31,7 +31,7 @@ Have a look at the [issues](https://github.com/GodotNativeTools/godot-rust/issue
 ```
 cd test
 cargo build
-cp ../target/debug/libgdnative_test.so ./project/lib
+cp ../target/debug/libgdnative_test.so ./project/lib/
 godot --path ./project
 ```
 
