@@ -5,7 +5,7 @@ use GodotString;
 use Variant;
 use std::fmt;
 
-/// A relative or absolute path in a scene tree, for use with `Node.get_node()` and similar
+/// A reference-counted relative or absolute path in a scene tree, for use with `Node.get_node()` and similar
 /// functions. It can reference a node, a resource within a node, or a property of a node or
 /// resource.
 ///
@@ -98,12 +98,16 @@ impl NodePath {
     pub fn to_string(&self) -> String {
         self.to_godot_string().to_string()
     }
+
+    impl_common_methods! {
+        /// Creates a new reference to this node path.
+        pub fn new_ref(&self) -> NodePath : godot_node_path_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for NodePath as godot_node_path {
         Drop => godot_node_path_destroy;
-        Clone => godot_node_path_new_copy;
         Eq => godot_node_path_operator_equal;
     }
 );

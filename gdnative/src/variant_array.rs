@@ -3,7 +3,7 @@ use get_api;
 use Variant;
 use GodotType;
 
-/// An array of `Variant`. Godot's generic array data type.
+/// A reference-counted `Variant` vector. Godot's generic array data type.
 /// Negative indices can be used to count from the right.
 pub struct VariantArray(pub(crate) sys::godot_array);
 
@@ -188,12 +188,16 @@ impl VariantArray {
     // pub fn bsearch_custom(&mut self, val: ?, obj: ?, s: ?, before: bool) -> i32 {
     //     unimplemented!();
     // }
+
+    impl_common_methods! {
+        /// Creates a new reference to this array.
+        pub fn new_ref(&self) -> VariantArray : godot_array_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for VariantArray as godot_array {
         Drop => godot_array_destroy;
-        Clone => godot_array_new_copy;
         Default => godot_array_new;
     }
 );
@@ -259,10 +263,10 @@ godot_test!(test_array {
     array.push(&foo); // [&foo]
     array.push(&bar); // [&foo, &bar]
 
-    let array_clone = array.clone();
-    assert!(array_clone.contains(&foo));
-    assert!(array_clone.contains(&bar));
-    assert!(!array_clone.contains(&nope));
+    let array2 = array.new_ref();
+    assert!(array2.contains(&foo));
+    assert!(array2.contains(&bar));
+    assert!(!array2.contains(&nope));
 });
 
 // TODO: clear arrays without affecting clones

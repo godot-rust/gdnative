@@ -11,6 +11,7 @@ use std::cmp::Ordering;
 use std::mem::{transmute, forget};
 use std::fmt;
 
+/// Godot's reference-counted string type.
 pub struct GodotString(pub(crate) sys::godot_string);
 
 macro_rules! impl_methods {
@@ -187,12 +188,16 @@ impl GodotString {
     }
 
     // TODO: many missing methods.
+
+    impl_common_methods! {
+        /// Creates a new reference to this array.
+        pub fn new_ref(&self) -> GodotString : godot_string_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for GodotString as godot_string {
         Drop => godot_string_destroy;
-        Clone => godot_string_new_copy;
         Eq => godot_string_operator_equal;
         Default => godot_string_new;
     }
@@ -331,8 +336,8 @@ godot_test!(test_string {
     let foo = GodotString::from_str("foo");
     assert_eq!(foo.len(), 3);
 
-    let foo_clone = foo.clone();
-    assert!(foo == foo_clone);
+    let foo2 = foo.new_ref();
+    assert!(foo == foo2);
 
     let variant = Variant::from_godot_string(&foo);
     assert!(variant.get_type() == VariantType::GodotString);

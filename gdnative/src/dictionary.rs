@@ -6,7 +6,7 @@ use GodotString;
 use GodotType;
 use std::fmt;
 
-/// A `Dictionary` of `Variant` key-value pairs.
+/// A reference-counted `Dictionary` of `Variant` key-value pairs.
 pub struct Dictionary(pub(crate) sys::godot_dictionary);
 
 impl Dictionary {
@@ -116,12 +116,16 @@ impl Dictionary {
             (get_api().godot_dictionary_hash)(&self.0)
         }
     }
+
+    impl_common_methods! {
+        /// Creates a new reference to this dictionary.
+        pub fn new_ref(&self) -> Dictionary : godot_dictionary_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for Dictionary as godot_dictionary {
         Drop => godot_dictionary_destroy;
-        Clone => godot_dictionary_new_copy;
         Default => godot_dictionary_new;
         Eq => godot_dictionary_operator_equal;
     }
@@ -170,10 +174,10 @@ godot_test!(test_dictionary {
     let variant = Variant::from_dictionary(&dict);
     assert!(variant.get_type() == VariantType::Dictionary);
 
-    let dict_clone = dict.clone();
-    assert!(dict == dict_clone);
-    assert!(dict_clone.contains(&foo));
-    assert!(dict_clone.contains(&bar));
+    let dict2 = dict.new_ref();
+    assert!(dict == dict2);
+    assert!(dict2.contains(&foo));
+    assert!(dict2.contains(&bar));
 
     if let Some(dic_variant) = variant.try_to_dictionary() {
         assert!(dic_variant == dict);

@@ -4,7 +4,7 @@ use Variant;
 use GodotType;
 use VariantArray;
 
-/// A vector of bytes that uses Godot's pool allocator.
+/// A reference-counted vector of bytes that uses Godot's pool allocator.
 pub struct ByteArray(pub(crate) sys::godot_pool_byte_array);
 
 impl ByteArray {
@@ -86,12 +86,16 @@ impl ByteArray {
             (get_api().godot_pool_byte_array_size)(&self.0)
         }
     }
+
+    impl_common_methods! {
+        /// Creates a new reference to this array.
+        pub fn new_ref(& self) -> ByteArray : godot_pool_byte_array_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for ByteArray as godot_pool_byte_array {
         Drop => godot_pool_byte_array_destroy;
-        Clone => godot_pool_byte_array_new_copy;
         Default => godot_pool_byte_array_new;
     }
 );
