@@ -7,7 +7,7 @@ use Color;
 
 use std::mem::transmute;
 
-/// A vector of `ColorArray` that uses Godot's pool allocator.
+/// A reference-counted vector of `ColorArray` that uses Godot's pool allocator.
 pub struct ColorArray(pub(crate) sys::godot_pool_color_array);
 
 impl ColorArray {
@@ -89,12 +89,16 @@ impl ColorArray {
             (get_api().godot_pool_color_array_size)(&self.0)
         }
     }
+
+    impl_common_methods! {
+        /// Creates a new reference to this array.
+        pub fn new_ref(&self) -> ColorArray : godot_pool_color_array_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for ColorArray as godot_pool_color_array {
         Drop => godot_pool_color_array_destroy;
-        Clone => godot_pool_color_array_new_copy;
         Default => godot_pool_color_array_new;
     }
 );

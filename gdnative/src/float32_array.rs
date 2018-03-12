@@ -4,7 +4,7 @@ use Variant;
 use GodotType;
 use VariantArray;
 
-/// A vector of `f32` that uses Godot's pool allocator.
+/// A reference-counted vector of `f32` that uses Godot's pool allocator.
 pub struct Float32Array(pub(crate) sys::godot_pool_real_array);
 
 impl Float32Array {
@@ -86,12 +86,16 @@ impl Float32Array {
             (get_api().godot_pool_real_array_size)(&self.0)
         }
     }
+
+    impl_common_methods! {
+        /// Creates a new reference to this array.
+        pub fn new_ref(&self) -> Float32Array : godot_pool_real_array_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for Float32Array as godot_pool_real_array {
         Drop => godot_pool_real_array_destroy;
-        Clone => godot_pool_real_array_new_copy;
         Default => godot_pool_real_array_new;
     }
 );

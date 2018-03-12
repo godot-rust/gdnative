@@ -7,7 +7,7 @@ use Vector3;
 
 use std::mem::transmute;
 
-/// A vector of `Vector3` that uses Godot's pool allocator.
+/// A reference-counted vector of `Vector3` that uses Godot's pool allocator.
 pub struct Vector3Array(pub(crate) sys::godot_pool_vector3_array);
 
 impl Vector3Array {
@@ -89,12 +89,16 @@ impl Vector3Array {
             (get_api().godot_pool_vector3_array_size)(&self.0)
         }
     }
+
+    impl_common_methods! {
+        /// Creates a new reference to this array.
+        pub fn new_ref(&self) -> Vector3Array : godot_pool_vector3_array_new_copy;
+    }
 }
 
 impl_basic_traits!(
     for Vector3Array as godot_pool_vector3_array {
         Drop => godot_pool_vector3_array_destroy;
-        Clone => godot_pool_vector3_array_new_copy;
         Default => godot_pool_vector3_array_new;
     }
 );

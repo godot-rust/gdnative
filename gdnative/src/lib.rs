@@ -1,3 +1,17 @@
+//! # Rust bindings for the Godot game engine
+//!
+//! ## Reference-counting and mutability
+//!
+//! All non trivially copyable godot types exposed in this crate are
+//! internally reference-counted and allow mutable aliasing.
+//! In rust parlance this means that a type such as `gdnative::ByteArray`
+//! is functionally equivalent to a `Rc<Cell<Vec<u8>>>` rather than `Vec<u8>`.
+//!
+//! Since it is easy to expect container types to allocate a copy of their content
+//! when using the `Clone` trait, most of these types do not implement `Clone` and
+//! instead provide a `new_ref(&self) -> Self` method to create references to the
+//! same collection or object.
+
 #[doc(hidden)]
 pub extern crate libc;
 #[doc(hidden)]

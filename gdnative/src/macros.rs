@@ -159,6 +159,39 @@ macro_rules! impl_basic_traits {
     )
 }
 
+macro_rules! impl_common_method {
+    (
+        $(#[$attr:meta])*
+        pub fn new_ref(&self) -> $Type:ident : $gd_method:ident
+    ) => {
+        $(#[$attr])*
+        pub fn new_ref(&self) -> $Type {
+            unsafe {
+                let mut result = Default::default();
+                (get_api().$gd_method)(&mut result, &self.0);
+                $Type(result)
+            }
+        }
+    };
+}
+
+macro_rules! impl_common_methods {
+    (
+        $(
+            $(#[$attr:meta])*
+            pub fn $name:ident(&self $(,$pname:ident : $pty:ty)*) -> $Ty:ident : $gd_method:ident;
+        )*
+    ) => (
+        $(
+            $(#[$attr])*
+            impl_common_method!(
+                pub fn $name(&self $(,$pname : $pty)*) -> $Ty : $gd_method
+            );
+        )*
+    )
+}
+
+
 macro_rules! godot_test {
     ($($test_name:ident $body:block)*) => {
         $(
