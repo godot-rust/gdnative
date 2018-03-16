@@ -319,7 +319,7 @@ impl <T> GodotRef<T>
         GodotRef {
             this: obj,
             data: T::from_object(obj),
-            reference: reference,
+            reference,
         }
     }
 

@@ -122,9 +122,8 @@ impl<C: GodotClass> PropertyBuilder<C> {
                         Some(format!("{},{},{}", range.start, range.end, step))
                     }
                 }
-                PropertyHint::Enum { ref values } | PropertyHint::Flags { ref values } => { Some(values.join(",")) }
-                PropertyHint::NodePathToEditedNode => { None }
-                PropertyHint::None => { None }
+                PropertyHint::Enum { values } | PropertyHint::Flags { values } => { Some(values.join(",")) }
+                PropertyHint::NodePathToEditedNode | PropertyHint::None => { None }
             };
             let hint_string = if let Some(text) = hint_text {
                 GodotString::from_str(text)
