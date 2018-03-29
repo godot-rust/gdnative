@@ -421,11 +421,9 @@ impl <T> GodotRef<T>
         }
     }
 
-    pub fn free(mut self) {
+    pub unsafe fn free(self) {
         if !self.reference {
-            unsafe {
-                (::get_api().godot_object_destroy)(self.this)
-            }
+            (::get_api().godot_object_destroy)(self.this)
         }
     }
 }

@@ -173,6 +173,22 @@ fn main() {
     writeln!(output, "use std::ptr;").unwrap();
 
     for class in classes {
+        if class.is_reference {
+            writeln!(output, r#"
+/// (Reference counted)
+///
+/// The lifetime of this object should be automatically managed by `GodotRef`.
+            "#).unwrap();
+        } else {
+            writeln!(output, r#"
+/// (Manually managed)
+///
+/// Non reference counted objects such as the ones of this type are usually owned by the engine.
+/// In the cases where Rust code owns an object of this type, ownership should be either passed
+/// to the engine or the object must be manually destroyed using `GodotRef<{}>::free`."#,
+                class.name
+            ).unwrap();
+        }
         writeln!(output, r#"
 #[allow(non_camel_case_types)]
 pub struct {name} {{
@@ -278,6 +294,21 @@ impl {name} {{"#, name = class.name
         }
 
         if class.instanciable {
+            writeln!(output, r#"
+    /// Constructor."#,
+            ).unwrap();
+
+            if !class.is_reference {
+                writeln!(output, r#"
+    ///
+    /// Because this type is not reference counted, the returned GodotRef does
+    /// *not* automatically manage the lifetime of the object. Immediately after
+    /// creation, the object is owned by the caller, and can be passed to the
+    /// engine (in which case the engine will be responsible for destroying the
+    /// object) or destroyed manually using `GodotRef::free`."#
+                ).unwrap();
+            }
+
             writeln!(output, r#"
     pub fn new() -> GodotRef<Self> {{
         unsafe {{

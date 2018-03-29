@@ -36,7 +36,7 @@ fn test_constructor() -> bool {
 
     let path = Path2D::new();
     let _ = path.get_z_index();
-    path.free();
+    unsafe { path.free(); }
 
     return true;
 }
