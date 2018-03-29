@@ -19,7 +19,26 @@ pub extern "C" fn run_tests(
     status &= gdnative::test_variant_nil();
     status &= gdnative::test_variant_i64();
 
+    status &= test_constructor();
+
     gdnative::Variant::from_bool(status).forget()
+}
+
+fn test_constructor() -> bool {
+    println!(" -- test_constructor");
+
+    use gdnative::{GDNativeLibrary, Path2D};
+
+    // Just create an object and call a method as a sanity check for the
+    // generated constructors.
+    let lib = GDNativeLibrary::new();
+    let _ = lib.is_singleton();
+
+    let path = Path2D::new();
+    let _ = path.get_z_index();
+    path.free();
+
+    return true;
 }
 
 godot_init!();

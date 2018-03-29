@@ -170,6 +170,8 @@ fn main() {
 
     let mut output = File::create(out_path.join("types.rs")).unwrap();
 
+    writeln!(output, "use std::ptr;").unwrap();
+
     for class in classes {
         writeln!(output, r#"
 #[allow(non_camel_case_types)]
@@ -258,12 +260,13 @@ impl Deref for {name} {{
 impl {name} {{"#, name = class.name
         ).unwrap();
 
+        let s_name = if class.name.starts_with("_") {
+            &class.name[1..]
+        } else {
+            class.name.as_ref()
+        };
+
         if class.singleton {
-            let s_name = if class.name.starts_with("_") {
-                &class.name[1..]
-            } else {
-                class.name.as_ref()
-            };
             writeln!(output, r#"
     pub fn godot_singleton() -> GodotRef<{name}> {{
         unsafe {{
@@ -274,8 +277,34 @@ impl {name} {{"#, name = class.name
             "#, name = class.name, s_name = s_name).unwrap();
         }
 
+        if class.instanciable {
+            writeln!(output, r#"
+    pub fn new() -> GodotRef<Self> {{
+        unsafe {{
+            let ctor = (get_api().godot_get_class_constructor)(b"{s_name}\0".as_ptr() as *mut _).unwrap();
+            let obj = ctor();
+            return GodotRef::from_object(obj as *mut _);
+        }}
+    }}"#, s_name = s_name
+            ).unwrap();
+        }
+
         'method:
         for method in class.methods {
+            // GDScript and NativeScript have ::new methods but we want to reserve
+            // the name for the constructors.
+            let method_name = match method.name.as_str() {
+                "new" => "_new",
+                name => name,
+            };
+
+            if method_name == "free" {
+                // Awful hack (which the C++ bindings also do)!
+                // free is exported but doesn't actually exist and crashes the engine,
+                // so use godot_object_destroy instead in GodotRef.
+                continue 'method;
+            }
+
             let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
                 ty
             } else {
@@ -299,7 +328,6 @@ impl {name} {{"#, name = class.name
             writeln!(output, r#"
 
     pub fn {name}<{type_params}>(&self{params}) -> {rust_ret_type} {{
-        use std::ptr;
         unsafe {{
             let api = ::get_api();
             static mut METHOD_BIND: *mut sys::godot_method_bind = 0 as _;
@@ -314,7 +342,7 @@ impl {name} {{"#, name = class.name
                 debug_assert!(!METHOD_BIND.is_null());
             }});
 
-            "#, cname = class.name, name = method.name, rust_ret_type = rust_ret_type, params = params,
+            "#, cname = class.name, name = method_name, rust_ret_type = rust_ret_type, params = params,
                 type_params = type_params).unwrap();
             if method.has_varargs {
                 writeln!(output, r#"
@@ -602,10 +630,17 @@ struct GodotClass {
     base_class: String,
     singleton: bool,
     is_reference: bool,
+    instanciable: bool,
 
     methods: Vec<GodotMethod>,
     enums: Vec<Enum>,
 }
+
+//impl GodotClass {
+//    fn get_type(&self) -> Ty {
+//        Ty::from_src(&self.name)
+//    }
+//}
 
 #[derive(Deserialize, Debug)]
 struct Enum {
