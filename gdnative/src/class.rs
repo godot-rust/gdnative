@@ -420,8 +420,15 @@ impl <T> GodotRef<T>
 
         }
     }
-}
 
+    pub fn free(mut self) {
+        if !self.reference {
+            unsafe {
+                (::get_api().godot_object_destroy)(self.this)
+            }
+        }
+    }
+}
 
 impl <T> Deref for GodotRef<T>
     where T: GodotClass
