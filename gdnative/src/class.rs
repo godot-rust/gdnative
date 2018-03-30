@@ -1,5 +1,7 @@
 use libc;
 use sys;
+use std::ffi::CString;
+use std::ptr;
 use std::ops::Deref;
 use GodotString;
 use GodotObject;
@@ -380,5 +382,183 @@ godot_class! {
         export fn _ready(&mut self) {
             godot_print!("hello, world.");
         }
+    }
+}
+
+// Class builder
+
+pub type GodotScriptMethodFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void,
+    *mut libc::c_void,
+    libc::c_int,
+    *mut *mut sys::godot_variant
+) -> sys::godot_variant;
+
+pub type GodotScriptConstructorFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void
+) -> *mut libc::c_void;
+
+pub type GodotScriptDestructorFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void,
+    *mut libc::c_void
+) -> ();
+
+pub enum GodotRpcMode {
+    Disabled,
+    Remote,
+    Sync,
+    Mater,
+    Slave
+}
+
+pub struct GodotScriptMethodAttributes {
+    pub rpc_mode: GodotRpcMode
+}
+
+pub struct GodotScriptMethod<'l> {
+    pub name: &'l str,
+    pub method_ptr: Option<GodotScriptMethodFn>,
+    pub attributes: GodotScriptMethodAttributes,
+
+    pub method_data: *mut libc::c_void,
+    pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
+}
+
+pub struct GodotScriptClassBuilder<'l> {
+
+    is_tool: bool,
+
+    class_name: &'l str,
+    base_class_name: &'l str,
+
+    constructor: Option<GodotScriptConstructorFn>,
+    destructor: Option<GodotScriptDestructorFn>,
+
+    methods: Vec<GodotScriptMethod<'l>>,
+    _properties: Vec<(String)>,
+    _signals: Vec<(String)>,
+
+}
+
+impl<'l> GodotScriptClassBuilder<'l> {
+    pub fn new() -> Self {
+        GodotScriptClassBuilder {
+            is_tool: false,
+
+            class_name: "",
+            base_class_name: "",
+
+            constructor: None,
+            destructor: None,
+
+            methods: vec![],
+            _properties: vec![],
+            _signals: vec![],
+        }
+    }
+
+    pub fn set_tool(mut self, is_tool: bool) -> Self {
+        self.is_tool = is_tool;
+        self
+    }
+
+    pub fn set_class_name(mut self, name: &'l str) -> Self {
+        self.class_name = name;
+        self
+    }
+
+    pub fn set_base_class_name(mut self, name: &'l str) -> Self {
+        self.base_class_name = name;
+        self
+    }
+
+    pub fn add_method_advanced(mut self, method: GodotScriptMethod<'l>) -> Self {
+        self.methods.push(method);
+        self
+    }
+
+    pub fn add_method(mut self, name: &'l str, method: GodotScriptMethodFn) -> Self {
+
+        let method = GodotScriptMethod {
+            name: name,
+            method_ptr: Some(method),
+            attributes: GodotScriptMethodAttributes {
+                rpc_mode: GodotRpcMode::Disabled
+            },
+            method_data: ptr::null_mut(),
+            free_func: None
+        };
+        self.methods.push(method);
+        self
+    }
+
+    pub fn set_constructor(mut self, constructor: Option<GodotScriptConstructorFn>) -> Self {
+        self.constructor = constructor;
+        self
+    }
+
+    pub fn set_destructor(mut self, destructor: Option<GodotScriptDestructorFn>) -> Self {
+        self.destructor = destructor;
+        self
+    }
+
+    pub fn build(&mut self, handle: *mut libc::c_void) {
+        let api = get_api();
+
+        // register class
+
+        unsafe {
+            let name = CString::new(self.class_name).unwrap();
+            let base_name = CString::new(self.base_class_name).unwrap();
+
+            let create = sys::godot_instance_create_func {
+                create_func: self.constructor,
+                method_data: ptr::null_mut(),
+                free_func: None,
+            };
+
+            let destroy = sys::godot_instance_destroy_func {
+                destroy_func: self.destructor,
+                method_data: ptr::null_mut(),
+                free_func: None,
+            };
+
+            (api.godot_nativescript_register_class)(
+                handle as *mut _,
+                name.as_ptr() as *const _,
+                base_name.as_ptr() as *const _,
+                create,
+                destroy
+            );
+
+
+            // register methods
+            for method in self.methods.iter() {
+                let method_name = CString::new(method.name).unwrap();
+
+                let attr = sys::godot_method_attributes {
+                    rpc_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED
+                };
+
+                let method_desc = sys::godot_instance_method {
+                    method: method.method_ptr,
+                    method_data: method.method_data,
+                    free_func: method.free_func
+                };
+
+                (api.godot_nativescript_register_method)(
+                    handle as *mut _,
+                    name.as_ptr() as *const _,
+                    method_name.as_ptr() as *const _,
+                    attr,
+                    method_desc
+                );
+            }
+        }
+
+
     }
 }
