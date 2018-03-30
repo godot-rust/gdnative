@@ -6,7 +6,6 @@ members = [
     "gdnative",
     "geom",
     "test",
-    "example",
     "examples/hello_world",
     "examples/misc_mesh_playground"
 ]
