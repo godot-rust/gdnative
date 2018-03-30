@@ -37,6 +37,19 @@ macro_rules! godot_init {
 }
 
 #[macro_export]
+macro_rules! godot_print {
+    ($($args:tt)*) => ({
+        let msg = format!($($args)*);
+
+        #[allow(unused_unsafe)]
+        unsafe {
+            let msg = $crate::GodotString::from_str(msg);
+            ($crate::get_api().godot_print)(&msg.to_sys() as *const _);
+        }
+    });
+}
+
+#[macro_export]
 macro_rules! godot_warn {
     ($($args:tt)*) => ({
         let msg = format!($($args)*);
