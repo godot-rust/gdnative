@@ -6,5 +6,6 @@ members = [
     "gdnative",
     "geom",
     "test",
-    "example"
+    "example",
+    "examples/hello_world"
 ]
