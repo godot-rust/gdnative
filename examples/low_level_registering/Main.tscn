@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://low_level_registering_library.gdnlib" type="GDNativeLibrary" id=1]
+
+[sub_resource type="NativeScript" id=1]
+
+resource_name = "Test"
+class_name = "Test"
+library = ExtResource( 1 )
+
+[sub_resource type="GDScript" id=2]
+
+script/source = "extends Node
+
+func _ready():
+	yield(get_tree().create_timer(1.0), \"timeout\")
+	$\"..\".queue_free()
+"
+
+[node name="Node" type="Node" index="0"]
+
+script = SubResource( 1 )
+
+[node name="Node" type="Node" parent="." index="0"]
+
+script = SubResource( 2 )
+
+

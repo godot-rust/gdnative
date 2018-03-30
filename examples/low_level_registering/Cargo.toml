@@ -1,0 +1,10 @@
+[package]
+name = "low_level_registering"
+version = "0.1.0"
+authors = ["karroffel <therzog@mail.de>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../../gdnative" }
