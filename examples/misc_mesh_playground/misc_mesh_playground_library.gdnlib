@@ -1,0 +1,14 @@
+[entry]
+
+X11.64="../../target/debug/libmisc_mesh_playground.so"
+
+[dependencies]
+
+X11.64=[  ]
+
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true
