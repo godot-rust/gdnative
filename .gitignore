@@ -4,3 +4,4 @@ target
 **/Cargo.lock
 .vscode
 test/project/lib
+**/.import/*
