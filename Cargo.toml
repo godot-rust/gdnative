@@ -7,5 +7,6 @@ members = [
     "geom",
     "test",
     "example",
-    "examples/hello_world"
+    "examples/hello_world",
+    "examples/misc_mesh_playground"
 ]
