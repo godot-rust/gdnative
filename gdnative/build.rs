@@ -122,7 +122,7 @@ impl Ty {
             &Ty::Result => Some(String::from("GodotResult")),
             &Ty::VariantType => Some(String::from("VariantType")),
             &Ty::Enum(_) => None, // TODO
-            &Ty::Object(ref name) => Some(format!("Option<GodotRef<{}>>", name)),
+            &Ty::Object(ref name) => Some(format!("Option<{}>", name)),
         }
     }
 
@@ -172,13 +172,14 @@ fn main() {
 
     writeln!(output, "use std::ptr;").unwrap();
     writeln!(output, "use std::mem;").unwrap();
+    writeln!(output, "use object;").unwrap();
 
     for class in classes {
         if class.is_reference {
             writeln!(output, r#"
 /// (Reference counted)
 ///
-/// The lifetime of this object should be automatically managed by `GodotRef`.
+/// The lifetime of this object is automatically managed.
             "#).unwrap();
         } else {
             writeln!(output, r#"
@@ -186,7 +187,7 @@ fn main() {
 ///
 /// Non reference counted objects such as the ones of this type are usually owned by the engine.
 /// In the cases where Rust code owns an object of this type, ownership should be either passed
-/// to the engine or the object must be manually destroyed using `GodotRef<{}>::free`."#,
+/// to the engine or the object must be manually destroyed using `{}::free`."#,
                 class.name
             ).unwrap();
         }
@@ -229,7 +230,11 @@ pub struct {name}MethodTable {{
         ).unwrap();
 
         for method in &class.methods {
-            writeln!(output, "    pub {}: *mut sys::godot_method_bind,", method.get_name()).unwrap();
+            let method_name = method.get_name();
+            if skip_method(&method_name) {
+                continue;
+            }
+            writeln!(output, "    pub {}: *mut sys::godot_method_bind,", method_name).unwrap();
         }
         writeln!(output, r#"
 }}
@@ -240,13 +245,17 @@ impl {name}MethodTable {{
             class_constructor: None,"#,
             name = class.name
         ).unwrap();
-    for method in &class.methods {
-        writeln!(output,
+        for method in &class.methods {
+            let method_name = method.get_name();
+            if skip_method(&method_name) {
+                continue;
+            }
+            writeln!(output,
 "            {}: 0 as *mut sys::godot_method_bind,",
-            method.get_name()
-        ).unwrap();
-    }
-    writeln!(output, r#"
+                method.get_name()
+            ).unwrap();
+        }
+        writeln!(output, r#"
         }};
 
         &mut TABLE
@@ -276,9 +285,14 @@ impl {name}MethodTable {{
                 name = class.name
             ).unwrap();
         for method in &class.methods {
+            let method_name = method.get_name();
+            if skip_method(&method_name) {
+                continue;
+            }
+
             writeln!(output,
 r#"            table.{method_name} = (api.godot_method_bind_get_method)(class_name, "{method_name}\0".as_ptr() as *const i8 );"#,
-                method_name = method.get_name()
+                method_name = method_name
             ).unwrap();
         }
 
@@ -316,9 +330,36 @@ unsafe impl GodotClass for {name} {{
             this: obj,
         }}
     }}
-}}"#,
+"#,
+
             name = class.name
         ).unwrap();
+
+        if class.is_reference {
+            writeln!(output,
+r#"
+    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
+        object::add_ref(obj);
+
+        Self {{
+            this: obj,
+        }}
+    }}
+"#,
+            ).unwrap();
+        } else {
+            writeln!(output,
+r#"
+    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
+        Self {{
+            this: obj,
+        }}
+    }}
+"#,
+            ).unwrap();
+        }
+
+        writeln!(output, "}}").unwrap();
 
         if class.base_class != "" {
             writeln!(output, r#"
@@ -360,51 +401,88 @@ impl {name} {{"#, name = class.name
 
         if class.singleton {
             writeln!(output, r#"
-    pub fn godot_singleton() -> GodotRef<{name}> {{
+    pub fn godot_singleton() -> Self {{
         unsafe {{
-            let obj = (get_api().godot_global_get_singleton)(b"{s_name}\0".as_ptr() as *mut _);
-            GodotRef::from_raw(obj as *mut _)
+            let this = (get_api().godot_global_get_singleton)(b"{s_name}\0".as_ptr() as *mut _);
+
+            {name} {{
+                this
+            }}
         }}
     }}
             "#, name = class.name, s_name = s_name).unwrap();
         }
 
         if class.instanciable {
-            writeln!(output, r#"
-    /// Constructor."#,
-            ).unwrap();
 
-            if !class.is_reference {
+            if class.is_reference {
                 writeln!(output,
-r#"    ///
-    /// Because this type is not reference counted, the returned GodotRef does
-    /// *not* automatically manage the lifetime of the object. Immediately after
-    /// creation, the object is owned by the caller, and can be passed to the
-    /// engine (in which case the engine will be responsible for destroying the
-    /// object) or destroyed manually using `GodotRef::free`."#
-                ).unwrap();
-            }
-
-            writeln!(output,
-r#"    pub fn new() -> GodotRef<Self> {{
+r#"
+    // Constructor
+    pub fn new() -> Self {{
         unsafe {{
             let api = get_api();
             let ctor = {name}MethodTable::get(api).class_constructor.unwrap();
             let obj = ctor();
-            return GodotRef::from_object(obj as *mut _);
+            object::init_ref_count(obj);
+
+            {name} {{
+                this: obj
+            }}
         }}
-    }}"#, name = class.name
-            ).unwrap();
+    }}
+
+    /// Creates a new reference to the same object.
+    pub fn new_ref(&self) -> Self {{
+        unsafe {{
+            object::add_ref(self.this);
+
+            Self {{
+                this: self.this,
+            }}
+        }}
+    }}
+"#,
+                    name = class.name
+                ).unwrap();
+            } else {
+
+                writeln!(output,
+r#"
+    /// Constructor.
+    ///
+    /// Because this type is not reference counted, the lifetime of the returned object
+    /// is *not* automatically managed.
+    /// Immediately after creation, the object is owned by the caller, and can be
+    /// passed to the engine (in which case the engine will be responsible for
+    /// destroying the object) or destroyed manually using `{name}::free`.
+    pub fn new() -> Self {{
+        unsafe {{
+            let api = get_api();
+            let ctor = {name}MethodTable::get(api).class_constructor.unwrap();
+            let this = ctor();
+
+            {name} {{
+                this
+            }}
+        }}
+    }}
+
+    /// Manually deallocate the object.
+    pub unsafe fn free(self) {{
+        (get_api().godot_object_destroy)(self.this);
+    }}
+"#,
+                    name = class.name
+                ).unwrap();
+            }
         }
 
         'method:
         for method in class.methods {
             let method_name = method.get_name();
 
-            if method_name == "free" {
-                // Awful hack (which the C++ bindings also do)!
-                // free is exported but doesn't actually exist and crashes the engine,
-                // so use godot_object_destroy instead in GodotRef.
+            if skip_method(&method_name) {
                 continue 'method;
             }
 
@@ -414,7 +492,6 @@ r#"    pub fn new() -> GodotRef<Self> {{
                 continue
             };
 
-            let mut type_params = String::new();
             let mut params = String::new();
             for argument in &method.arguments {
                 if let Some(ty) = argument.get_type().to_rust() {
@@ -430,13 +507,15 @@ r#"    pub fn new() -> GodotRef<Self> {{
 
             writeln!(output, r#"
 
-    pub fn {name}<{type_params}>(&self{params}) -> {rust_ret_type} {{
+    pub fn {name}(&self{params}) -> {rust_ret_type} {{
         unsafe {{
             let api = ::get_api();
 
             let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(api).{name};"#,
-                cname = class.name, name = method_name, rust_ret_type = rust_ret_type, params = params,
-                type_params = type_params
+                cname = class.name,
+                name = method_name,
+                rust_ret_type = rust_ret_type,
+                params = params,
             ).unwrap();
             if method.has_varargs {
                 writeln!(output,
@@ -510,8 +589,36 @@ r#"        }}
     }}"#).unwrap();
         }
 
+        writeln!(output,
+r#"
+    pub fn cast<T: GodotClass>(&self) -> Option<T> {{
+        object::godot_cast::<T>(self.this)
+    }}
+"#      ).unwrap();
+
         writeln!(output, r#"}}"#).unwrap();
+
+        if class.is_reference && class.instanciable {
+            writeln!(output,
+r#"
+impl Drop for {name} {{
+    fn drop(&mut self) {{
+        unsafe {{
+            if object::unref(self.this) {{
+                (::get_api().godot_object_destroy)(self.this);
+            }}
+        }}
+    }}
+}}
+"#,
+                name = class.name
+            ).unwrap();
+        }
     }
+}
+
+fn skip_method(name: &str) -> bool {
+    name == "free"
 }
 
 fn rust_safe_name(name: &str) -> &str {
@@ -711,7 +818,7 @@ r#"            {rust_ty}(ret)"#, rust_ty = ty.to_rust().unwrap()
             if ret.is_null() {{
                 None
             }} else {{
-                Some(GodotRef::<{}>::from_object(ret))
+                Some({}::from_sys(ret))
             }}"#,
                 name
             ).unwrap();

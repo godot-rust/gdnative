@@ -2,6 +2,7 @@ use libc;
 use sys;
 use std::ops::Deref;
 use GodotString;
+use object;
 
 #[macro_export]
 #[doc(hidden)]
@@ -251,6 +252,10 @@ class $name:ident: $parent:ty {
                 };
                 $pbody
             }
+
+            unsafe fn from_sys(_obj: *mut $crate::sys::godot_object) -> Self {
+                unimplemented!();
+            }
         }
     )
 }
@@ -264,6 +269,8 @@ pub unsafe trait GodotClass {
     unsafe fn from_object(obj: *mut sys::godot_object) -> Self::ClassData;
     unsafe fn register_class(desc: *mut libc::c_void);
     unsafe fn reference(this: *mut sys::godot_object, data: &Self::ClassData) -> &Self::Reference;
+
+    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self;
 }
 
 pub struct GodotClassInfo {
@@ -357,12 +364,14 @@ impl <T> GodotRef<T>
     pub fn cast_native<O>(&self) -> Option<GodotRef<O>>
         where O: GodotClass
     {
+        use NativeScript;
+
         let obj: GodotRef<::Object> = GodotRef {
             this: self.this,
             data: unsafe { ::Object::from_object(self.this) },
             reference: false,
         };
-        if let Some(script) = obj.get_script().and_then(|v| v.cast::<::NativeScript>()) {
+        if let Some(script) = obj.get_script().and_then(|v| v.cast::<NativeScript>()) {
             let class = script.get_class_name();
             // TODO: it would be good to cache the class name as a godot string
             // somewhere to avoid creating it every time.
@@ -443,27 +452,10 @@ impl <T> Deref for GodotRef<T>
 impl <T: GodotClass> Drop for GodotRef<T> {
     fn drop(&mut self) {
         unsafe {
-            if self.reference && unref_object(self.this) {
+            if self.reference && object::unref(self.this) {
                 (::get_api().godot_object_destroy)(self.this);
             }
         }
     }
 }
 
-// This function assumes the godot_object is reference counted.
-unsafe fn unref_object(obj: *mut sys::godot_object) -> bool {
-    use ReferenceMethodTable;
-    use std::ptr;
-    let unref_method = ReferenceMethodTable::unchecked_get().unreference;
-    let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
-    let mut last_reference = false;
-    let ret_ptr = &mut last_reference as *mut bool;
-    (::get_api().godot_method_bind_ptrcall)(
-        unref_method,
-        obj,
-        argument_buffer.as_mut_ptr() as *mut _,
-        ret_ptr as *mut _
-    );
-
-    last_reference
-}

@@ -179,5 +179,13 @@ unsafe impl GodotClass for Nothing {
     unsafe fn reference(_this: *mut sys::godot_object, data: &Self::ClassData) -> &Self::Reference {
         data
     }
+
+    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {
+        Nothing {
+            info: GodotClassInfo {
+                this: obj,
+            },
+        }
+    }
 }
 
