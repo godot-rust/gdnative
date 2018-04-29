@@ -24,6 +24,7 @@ pub extern crate gdnative_geom as geom;
 mod macros;
 #[macro_use]
 mod class;
+mod object;
 mod internal;
 mod property;
 mod godot_type;
