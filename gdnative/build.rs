@@ -5,7 +5,7 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate heck;
 
-use heck::CamelCase;
+use heck::{CamelCase, SnakeCase};
 
 use std::fs::File;
 use std::env;
@@ -193,17 +193,11 @@ fn main() {
         writeln!(output, r#"
 #[allow(non_camel_case_types)]
 pub struct {name} {{
-    info: GodotClassInfo,
-"#, name = class.name).unwrap();
-        if class.base_class != "" {
-            writeln!(output, r#"
-    parent: {parent},
-            "#, parent = class.base_class).unwrap();
-        }
-        writeln!(output, r#"
+    this: *mut sys::godot_object,
 }}
-
-"#).unwrap();
+"#,
+            name = class.name
+        ).unwrap();
 
         for e in &class.enums {
             // TODO: check whether the start of the variant name is
@@ -310,37 +304,38 @@ unsafe impl GodotClass for {name} {{
     }}
 
     fn godot_info(&self) -> &GodotClassInfo {{
-        &self.info
+        unsafe {{
+            mem::transmute(self)
+        }}
     }}
     unsafe fn reference(_this: *mut sys::godot_object, data: &Self::ClassData) -> &Self::Reference {{
         data
     }}
     unsafe fn from_object(obj: *mut sys::godot_object) -> Self {{
         {name} {{
-            info: GodotClassInfo {{
-                this: obj,
-            }},
-"#, name = class.name).unwrap();
-        if class.base_class != "" {
-            writeln!(output, r#"
-            parent: {parent}::from_object(obj),
-            "#, parent = class.base_class).unwrap();
-        }
-        writeln!(output, r#"
+            this: obj,
         }}
     }}
-}}
-"#).unwrap();
+}}"#,
+            name = class.name
+        ).unwrap();
+
         if class.base_class != "" {
             writeln!(output, r#"
 impl Deref for {name} {{
     type Target = {parent};
     fn deref(&self) -> &Self::Target {{
-        &self.parent
+        unsafe {{
+            mem::transmute(self)
+        }}
     }}
 }}
-            "#, name = class.name, parent = class.base_class).unwrap();
+"#,             name = class.name,
+                parent = class.base_class
+            ).unwrap();
         }
+
+
         writeln!(output, r#"
 impl {name} {{"#, name = class.name
         ).unwrap();
@@ -350,6 +345,18 @@ impl {name} {{"#, name = class.name
         } else {
             class.name.as_ref()
         };
+
+        if class.base_class != "" {
+            writeln!(output, r#"
+    /// Up-cast.
+    pub fn as_{parent_sc}(&self) -> {parent} {{
+        unsafe {{ {parent}::from_object(self.this) }}
+    }}
+            "#,
+                parent = class.base_class,
+                parent_sc = class.base_class.to_snake_case()
+            ).unwrap();
+        }
 
         if class.singleton {
             writeln!(output, r#"
@@ -467,7 +474,7 @@ r#"            argument_buffer.push(&{name}.0); "#,
             for arg in varargs {{
                 argument_buffer.push(&arg.0 as *const _);
             }}
-            let ret = Variant((api.godot_method_bind_call)(method_bind, self.info.this, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
+            let ret = Variant((api.godot_method_bind_call)(method_bind, self.this, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
                 ).unwrap();
 
                 if rust_ret_type.starts_with("Option") {
@@ -492,7 +499,7 @@ r#"                ret.into()"#
                 godot_handle_return_pre(&mut output, &method.get_return_type());
 
                 writeln!(output, r#"
-            (api.godot_method_bind_ptrcall)(method_bind, self.info.this, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
+            (api.godot_method_bind_ptrcall)(method_bind, self.this, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
                 ).unwrap();
 
                 godot_handle_return_post(&mut output, &method.get_return_type());
