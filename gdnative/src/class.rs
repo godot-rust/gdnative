@@ -442,10 +442,28 @@ impl <T> Deref for GodotRef<T>
 
 impl <T: GodotClass> Drop for GodotRef<T> {
     fn drop(&mut self) {
-        if self.reference && call_bool!(self.this, Reference, unreference) {
-            unsafe {
+        unsafe {
+            if self.reference && unref_object(self.this) {
                 (::get_api().godot_object_destroy)(self.this);
             }
         }
     }
+}
+
+// This function assumes the godot_object is reference counted.
+unsafe fn unref_object(obj: *mut sys::godot_object) -> bool {
+    use ReferenceMethodTable;
+    use std::ptr;
+    let unref_method = ReferenceMethodTable::unchecked_get().unreference;
+    let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
+    let mut last_reference = false;
+    let ret_ptr = &mut last_reference as *mut bool;
+    (::get_api().godot_method_bind_ptrcall)(
+        unref_method,
+        obj,
+        argument_buffer.as_mut_ptr() as *mut _,
+        ret_ptr as *mut _
+    );
+
+    last_reference
 }

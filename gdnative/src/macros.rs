@@ -12,6 +12,11 @@ macro_rules! godot_init {
         pub extern "C" fn godot_gdnative_init(options: *mut $crate::sys::godot_gdnative_init_options) {
             unsafe {
                 $crate::GODOT_API = Some($crate::GodotApi::from_raw((*options).api_struct));
+                let api = $crate::get_api();
+                // Force the initialization of the method table of common types. This way we can
+                // assume that if the api object is alive we can fetch the method of these types
+                // without checking for initialization.
+                $crate::ReferenceMethodTable::get(api);
             }
         }
 
