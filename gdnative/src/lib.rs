@@ -64,6 +64,7 @@ pub use string_array::*;
 pub use vector2_array::*;
 pub use vector3_array::*;
 pub use color_array::*;
+pub use object::GodotObject;
 
 use std::mem;
 
