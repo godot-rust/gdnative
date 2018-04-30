@@ -55,9 +55,9 @@ godot_class! {
                 }
             );
         }
-        constructor(godot_info) {
+        constructor(header) {
             RustTest {
-                godot_info: godot_info,
+                header,
                 start: godot::Vector3::new(0.0, 0.0, 0.0),
                 time: 0.0,
                 rotate_speed: 0.05,
@@ -65,7 +65,7 @@ godot_class! {
         }
 
         export fn _ready(&mut self) {
-            let p = self.godot_parent();
+            let p = self.as_parent();
             p.set_physics_process(true);
             self.start = p.get_translation();
             godot_warn!("Start: {:?}", self.start);
@@ -77,7 +77,7 @@ godot_class! {
         export fn _physics_process(&mut self, delta: f64) {
             use godot::{Color, SpatialMaterial, Vector3};
             self.time += delta as f32;
-            let p = self.godot_parent();
+            let p = self.as_parent();
             p.rotate_y(self.rotate_speed);
             let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
             p.set_translation(self.start + offset);

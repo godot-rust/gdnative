@@ -34,7 +34,7 @@ macro_rules! godot_init {
         pub extern "C" fn godot_nativescript_init(desc: *mut $crate::libc::c_void) {
             unsafe {
                 $(
-                    <$class as $crate::GodotClass>::register_class(desc);
+                    <$class as $crate::NativeClass>::register_class(desc);
                 )*
             }
         }
