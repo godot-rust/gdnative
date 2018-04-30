@@ -9,9 +9,9 @@ godot_class! {
 		setup(_builder) {
 		}
 
-		constructor(godot_info) {
+		constructor(header) {
 			HelloWorld {
-				godot_info: godot_info
+				header,
 			}
 		}
 

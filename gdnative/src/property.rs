@@ -104,7 +104,7 @@ pub struct PropertyBuilder<C> {
     pub _marker: PhantomData<C>,
 }
 
-impl<C: GodotClass> PropertyBuilder<C> {
+impl<C: NativeClass> PropertyBuilder<C> {
     pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
     where
         T: GodotType,
@@ -201,11 +201,11 @@ pub struct Signal<'l> {
     //pub args: &'l [SignalArgument],
 }
 
-pub unsafe trait PropertySetter<C: GodotClass, T: GodotType> {
+pub unsafe trait PropertySetter<C: NativeClass, T: GodotType> {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func;
 }
 
-pub unsafe trait PropertyGetter<C: GodotClass, T: GodotType> {
+pub unsafe trait PropertyGetter<C: NativeClass, T: GodotType> {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func;
 }
 
@@ -226,7 +226,7 @@ extern "C" fn empty_getter(
 
 extern "C" fn empty_free_func(_data: *mut libc::c_void) {}
 
-unsafe impl <C: GodotClass, T: GodotType> PropertySetter<C, T> for () {
+unsafe impl <C: NativeClass, T: GodotType> PropertySetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
         set.set_func = Some(empty_setter);
@@ -235,7 +235,7 @@ unsafe impl <C: GodotClass, T: GodotType> PropertySetter<C, T> for () {
     }
 }
 
-unsafe impl <C: GodotClass, T: GodotType> PropertyGetter<C, T> for () {
+unsafe impl <C: NativeClass, T: GodotType> PropertyGetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
         get.get_func = Some(empty_getter);
@@ -245,7 +245,7 @@ unsafe impl <C: GodotClass, T: GodotType> PropertyGetter<C, T> for () {
 }
 
 unsafe impl <F, C, T> PropertySetter<C, T> for F
-    where C: GodotClass,
+    where C: NativeClass,
           T: GodotType,
           F: Fn(&mut C, T),
 {
@@ -256,7 +256,7 @@ unsafe impl <F, C, T> PropertySetter<C, T> for F
         set.method_data = Box::into_raw(data) as *mut _;
 
         extern "C" fn invoke<C, F, T>(_this: *mut sys::godot_object, method: *mut libc::c_void, class: *mut libc::c_void, val: *mut sys::godot_variant)
-            where C: GodotClass,
+            where C: NativeClass,
                 T: GodotType,
                 F: Fn(&mut C, T),
 
@@ -287,7 +287,7 @@ unsafe impl <F, C, T> PropertySetter<C, T> for F
 }
 
 unsafe impl <F, C, T> PropertyGetter<C, T> for F
-    where C: GodotClass,
+    where C: NativeClass,
           T: GodotType,
           F: Fn(&mut C) -> T,
 {
@@ -298,7 +298,7 @@ unsafe impl <F, C, T> PropertyGetter<C, T> for F
         get.method_data = Box::into_raw(data) as *mut _;
 
         extern "C" fn invoke<C, F, T>(_this: *mut sys::godot_object, method: *mut libc::c_void, class: *mut libc::c_void) -> sys::godot_variant
-            where C: GodotClass,
+            where C: NativeClass,
                 T: GodotType,
                 F: Fn(&mut C) -> T,
 
