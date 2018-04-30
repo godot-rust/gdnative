@@ -1,8 +1,16 @@
 use std::ptr;
 use libc;
 use sys;
-use GodotClass;
 use ObjectMethodTable;
+
+/// Internal details.
+pub unsafe trait GodotObject {
+    fn class_name() -> &'static str;
+    #[doc(hidden)]
+    unsafe fn to_sys(&self) -> *mut sys::godot_object;
+    #[doc(hidden)]
+    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self;
+}
 
 // This function assumes the godot_object is reference counted.
 pub(crate) unsafe fn add_ref(obj: *mut sys::godot_object) {
@@ -67,13 +75,13 @@ pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
         let api = ::get_api();
         let method_bind = ObjectMethodTable::get(api).is_class;
 
-        let mut godot_name = (api.godot_string_chars_to_utf8_with_len)(
+        let mut class_name = (api.godot_string_chars_to_utf8_with_len)(
             class_name.as_ptr() as *const _,
             class_name.len() as _
         );
 
         let mut argument_buffer = [ptr::null() as *const libc::c_void; 1];
-        argument_buffer[0] = (&godot_name) as *const _ as *const _;
+        argument_buffer[0] = (&class_name) as *const _ as *const _;
 
         let mut ret = false;
         let ret_ptr = &mut ret as *mut _;
@@ -84,7 +92,7 @@ pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
             ret_ptr as *mut _
         );
 
-        (api.godot_string_destroy)(&mut godot_name);
+        (api.godot_string_destroy)(&mut class_name);
 
         ret
     }
@@ -92,10 +100,10 @@ pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
 
 pub fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T>
 where
-    T: GodotClass,
+    T: GodotObject,
 {
     unsafe {
-        if !is_class(from, T::godot_name()) {
+        if !is_class(from, T::class_name()) {
             return None;
         }
 

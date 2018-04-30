@@ -305,61 +305,25 @@ r#"            table.{method_name} = (api.godot_method_bind_get_method)(class_na
 
         writeln!(output, r#"
 
-unsafe impl GodotClass for {name} {{
-    type ClassData = {name};
-    type Reference = {name};
-
-    fn godot_name() -> &'static str {{
+unsafe impl GodotObject for {name} {{
+    fn class_name() -> &'static str {{
         "{name}"
     }}
 
-    unsafe fn register_class(_desc: *mut libc::c_void) {{
-        panic!("Can't register");
+    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
+        {addref_if_reference}
+        Self {{ this: obj, }}
     }}
 
-    fn godot_info(&self) -> &GodotClassInfo {{
-        unsafe {{
-            mem::transmute(self)
-        }}
+    unsafe fn to_sys(&self) -> *mut sys::godot_object {{
+        self.this
     }}
-    unsafe fn reference(_this: *mut sys::godot_object, data: &Self::ClassData) -> &Self::Reference {{
-        data
-    }}
-    unsafe fn from_object(obj: *mut sys::godot_object) -> Self {{
-        {name} {{
-            this: obj,
-        }}
-    }}
+}}
+
 "#,
-
-            name = class.name
+            name = class.name,
+            addref_if_reference = if class.is_reference { "object::add_ref(obj);" } else { "" }
         ).unwrap();
-
-        if class.is_reference {
-            writeln!(output,
-r#"
-    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
-        object::add_ref(obj);
-
-        Self {{
-            this: obj,
-        }}
-    }}
-"#,
-            ).unwrap();
-        } else {
-            writeln!(output,
-r#"
-    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
-        Self {{
-            this: obj,
-        }}
-    }}
-"#,
-            ).unwrap();
-        }
-
-        writeln!(output, "}}").unwrap();
 
         if class.base_class != "" {
             writeln!(output, r#"
@@ -391,9 +355,8 @@ impl {name} {{"#, name = class.name
             writeln!(output, r#"
     /// Up-cast.
     pub fn as_{parent_sc}(&self) -> {parent} {{
-        unsafe {{ {parent}::from_object(self.this) }}
-    }}
-            "#,
+        unsafe {{ {parent}::from_sys(self.this) }}
+    }}"#,
                 parent = class.base_class,
                 parent_sc = class.base_class.to_snake_case()
             ).unwrap();
@@ -591,7 +554,7 @@ r#"        }}
 
         writeln!(output,
 r#"
-    pub fn cast<T: GodotClass>(&self) -> Option<T> {{
+    pub fn cast<T: GodotObject>(&self) -> Option<T> {{
         object::godot_cast::<T>(self.this)
     }}
 "#      ).unwrap();
@@ -848,12 +811,6 @@ struct GodotClass {
     methods: Vec<GodotMethod>,
     enums: Vec<Enum>,
 }
-
-//impl GodotClass {
-//    fn get_type(&self) -> Ty {
-//        Ty::from_src(&self.name)
-//    }
-//}
 
 #[derive(Deserialize, Debug)]
 struct Enum {

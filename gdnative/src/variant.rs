@@ -149,6 +149,7 @@ pub enum VariantType {
 }
 
 impl VariantType {
+    #[doc(hidden)]
     pub fn from_sys(v: sys::godot_variant_type) -> VariantType {
         unsafe { transmute(v) }
     }
@@ -243,12 +244,12 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a Godot object.
     pub fn from_object<T>(val: T) -> Variant
-        where T: GodotClass
+        where T: GodotObject
     {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
-            (api.godot_variant_new_object)(&mut dest, val.godot_info().this);
+            (api.godot_variant_new_object)(&mut dest, val.to_sys());
             Variant(dest)
         }
     }
@@ -413,7 +414,7 @@ impl Variant {
     );
 
     pub fn try_to_object<T>(&self) -> Option<T>
-        where T: GodotClass
+        where T: GodotObject
     {
         use sys::godot_variant_type::*;
         unsafe {
@@ -507,10 +508,11 @@ impl Variant {
         v
     }
 
-    /// Returns a copy of the internal ffi representation of the variant.
-    ///
-    /// The variant remains owned by the rust wrapper and the receiver of
-    /// the ffi representation should not run its destructor.
+    // Returns a copy of the internal ffi representation of the variant.
+    //
+    // The variant remains owned by the rust wrapper and the receiver of
+    // the ffi representation should not run its destructor.
+    #[doc(hidden)]
     pub fn to_sys(&self) -> sys::godot_variant {
         self.0
     }
@@ -598,7 +600,7 @@ impl<'l> From<&'l str> for Variant {
 }
 
 impl <T> From<T> for Variant
-    where T: GodotClass
+    where T: GodotObject
 {
     fn from(val: T) -> Variant {
         Variant::from_object(val)
