@@ -339,6 +339,14 @@ impl Deref for {name} {{
         }}
     }}
 }}
+
+impl DerefMut for {name} {{
+    fn deref_mut(&mut self) -> &mut Self::Target {{
+        unsafe {{
+            mem::transmute(self)
+        }}
+    }}
+}}
 "#,             name = class.name,
                 parent = class.base_class
             ).unwrap();
@@ -472,9 +480,15 @@ r#"
                 params.push_str(", varargs: &[Variant]");
             }
 
+            let self_param = if method.is_const {
+                "&self"
+            } else {
+                "&mut self"
+            };
+
             writeln!(output, r#"
 
-    pub fn {name}(&self{params}) -> {rust_ret_type} {{
+    pub fn {name}({self_param}{params}) -> {rust_ret_type} {{
         unsafe {{
             let api = ::get_api();
 
@@ -483,6 +497,7 @@ r#"
                 name = method_name,
                 rust_ret_type = rust_ret_type,
                 params = params,
+                self_param = self_param,
             ).unwrap();
             if method.has_varargs {
                 writeln!(output,
