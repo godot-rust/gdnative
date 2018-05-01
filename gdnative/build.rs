@@ -206,6 +206,7 @@ pub struct {name} {{
             // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
             writeln!(output, r#"
 #[repr(u32)]
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum {class_name}{enum_name} {{
 "#, class_name = class.name, enum_name = e.name
@@ -215,7 +216,9 @@ pub enum {class_name}{enum_name} {{
                 let key = key.as_str().to_camel_case();
                 writeln!(output,
 r#"    {key} = {val},"#,
-                key = key.as_str().to_camel_case(), val = val).unwrap();
+                    key = key,
+                    val = val
+                ).unwrap();
             }
             writeln!(output, r#"
 }}"#
@@ -224,6 +227,7 @@ r#"    {key} = {val},"#,
 
         writeln!(output, r#"
 #[doc(hidden)]
+#[allow(non_camel_case_types)]
 pub struct {name}MethodTable {{
     pub class_constructor: sys::godot_class_constructor,"#,
             name = class.name
@@ -358,7 +362,7 @@ impl {name} {{"#, name = class.name
         unsafe {{ {parent}::from_sys(self.this) }}
     }}"#,
                 parent = class.base_class,
-                parent_sc = class.base_class.to_snake_case()
+                parent_sc = class_name_to_snake_case(&class.base_class)
             ).unwrap();
         }
 
@@ -861,5 +865,23 @@ struct GodotArgument {
 impl GodotArgument {
     fn get_type(&self) -> Ty {
         Ty::from_src(&self.ty)
+    }
+}
+
+fn class_name_to_snake_case(name: &str) -> String {
+    // TODO: this is a quick-n-dirty band-aid, it'd be better to
+    // programmatically do the right conversion, but to_snale_case
+    // currently translates "Node2D" into "node2_d".
+    match name {
+        "SpriteBase3D" => "sprite_base_3d".to_string(),
+        "Node2D" => "node_2d".to_string(),
+        "CollisionObject2D" => "collision_object_2d".to_string(),
+        "PhysicsBody2D" => "physics_body_2d".to_string(),
+        "VisibilityNotifier2D" => "visibility_notifier_2d".to_string(),
+        "Joint2D" => "joint_2d".to_string(),
+        "Shape2D" => "shape_2d".to_string(),
+        "Physics2DServer" => "physics_2d_server".to_string(),
+        "Physics2DDirectBodyState" => "physics_2d_direct_body_state".to_string(),
+        _ => name.to_snake_case(),
     }
 }
