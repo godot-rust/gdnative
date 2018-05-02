@@ -175,24 +175,54 @@ fn main() {
     writeln!(output, "use object;").unwrap();
 
     for class in classes {
-        if class.is_reference {
+        let has_parent = class.base_class != "";
+        let singleton_str = if class.singleton { "singleton " } else { "" } ;
+        let ownership_type = if class.is_reference { "reference counted" } else { "manually managed" };
+        if has_parent {
             writeln!(output, r#"
-/// (Reference counted)
-///
-/// The lifetime of this object is automatically managed.
-            "#).unwrap();
+/// `{api_type} {singleton}class {name} : {base_class}` ({ownership_type})"#,
+                api_type = class.api_type,
+                name = class.name,
+                base_class = class.base_class,
+                ownership_type = ownership_type,
+                singleton = singleton_str
+            ).unwrap();
         } else {
             writeln!(output, r#"
-/// (Manually managed)
-///
+/// `{api_type} {singleton}class {name}` ({ownership_type})"#,
+                api_type = class.api_type,
+                name = class.name,
+                ownership_type = ownership_type,
+                singleton = singleton_str
+            ).unwrap();
+        }
+
+        if class.base_class != "" {
+            writeln!(output,
+r#"///
+/// {name} inherits [{base_class}](struct.{base_class}.html) and all of its methods."#,
+                name = class.name,
+                base_class = class.base_class
+            ).unwrap();
+        }
+
+        if class.is_reference {
+            writeln!(output,
+r#"///
+/// The lifetime of this object is automatically managed."#
+            ).unwrap();
+        } else if class.instanciable {
+            writeln!(output,
+r#"///
 /// Non reference counted objects such as the ones of this type are usually owned by the engine.
 /// In the cases where Rust code owns an object of this type, ownership should be either passed
 /// to the engine or the object must be manually destroyed using `{}::free`."#,
                 class.name
             ).unwrap();
         }
-        writeln!(output, r#"
-#[allow(non_camel_case_types)]
+
+        writeln!(output,
+r#"#[allow(non_camel_case_types)]
 pub struct {name} {{
     this: *mut sys::godot_object,
 }}
@@ -823,6 +853,7 @@ r#"            VariantType::from_sys(ret)"#
 struct GodotClass {
     name: String,
     base_class: String,
+    api_type: String,
     singleton: bool,
     is_reference: bool,
     instanciable: bool,
