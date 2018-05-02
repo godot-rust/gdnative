@@ -200,6 +200,8 @@ fn main() {
         if class.base_class != "" {
             writeln!(output,
 r#"///
+/// ## Base class
+///
 /// {name} inherits [{base_class}](struct.{base_class}.html) and all of its methods."#,
                 name = class.name,
                 base_class = class.base_class
@@ -209,15 +211,28 @@ r#"///
         if class.is_reference {
             writeln!(output,
 r#"///
-/// The lifetime of this object is automatically managed."#
+/// ## Memory management
+///
+/// The lifetime of this object is automatically managed through reference counting."#
             ).unwrap();
         } else if class.instanciable {
             writeln!(output,
 r#"///
+/// ## Memory management
+///
 /// Non reference counted objects such as the ones of this type are usually owned by the engine.
 /// In the cases where Rust code owns an object of this type, ownership should be either passed
 /// to the engine or the object must be manually destroyed using `{}::free`."#,
                 class.name
+            ).unwrap();
+        }
+
+        if class.api_type == "tools" {
+            writeln!(output,
+r#"///
+/// ## Tool
+///
+/// This class is used to interact with godot's editor."#,
             ).unwrap();
         }
 
