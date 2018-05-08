@@ -1,6 +1,10 @@
 [package]
 name = "gdnative_geom"
-version = "0.2.0"
+authors = ["The godot-rust developers"]
+description = "Math primitives for the Godot game engine's gdnative bindings (See the gdnative crate)."
+documentation = "https://docs.rs/crate/gdnative-geom"
+repository = "https://github.com/GodotNativeTools/godot-rust"
+version = "0.3.0"
 license = "MIT"
 workspace = ".."
 

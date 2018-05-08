@@ -1,6 +1,10 @@
 [package]
 name = "gdnative"
-version = "0.2.0"
+authors = ["The godot-rust developers"]
+description = "The Godot game engine's gdnative bindings."
+documentation = "https://docs.rs/crate/gdnative"
+repository = "https://github.com/GodotNativeTools/godot-rust"
+version = "0.3.0"
 license = "MIT"
 workspace = ".."
 
@@ -8,8 +12,8 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative-sys = { path = "../sys" }
-gdnative_geom = { path = "../geom" }
+gdnative-sys = { path = "../sys", version = "0.3.0" }
+gdnative_geom = { path = "../geom", version = "0.3.0" }
 libc = "0.2"
 bitflags = "1.0"
 
