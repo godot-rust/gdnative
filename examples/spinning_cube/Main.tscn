@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://misc_mesh_playground_library.gdnlib" type="GDNativeLibrary" id=1]
+[ext_resource path="res://spinning_cube_library.gdnlib" type="GDNativeLibrary" id=1]
 
 [sub_resource type="CubeMesh" id=1]
 

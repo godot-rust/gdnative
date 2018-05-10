@@ -1,6 +1,6 @@
 [entry]
 
-X11.64="../../target/debug/libmisc_mesh_playground.so"
+X11.64="../../target/debug/libspinning_cube.so"
 
 [dependencies]
 

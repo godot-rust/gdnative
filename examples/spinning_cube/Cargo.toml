@@ -1,5 +1,5 @@
 [package]
-name = "misc_mesh_playground"
+name = "spinning_cube"
 version = "0.1.0"
 authors = ["karroffel <therzog@mail.de>"]
 

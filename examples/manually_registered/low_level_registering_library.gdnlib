@@ -1,6 +1,6 @@
 [entry]
 
-X11.64="../../target/debug/liblow_level_registering.so"
+X11.64="../../target/debug/libmanually_registered.so"
 
 [dependencies]
 

@@ -1,5 +1,5 @@
 [package]
-name = "low_level_registering"
+name = "manually_registered"
 version = "0.1.0"
 authors = ["karroffel <therzog@mail.de>"]
 

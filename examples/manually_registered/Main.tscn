@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://low_level_registering_library.gdnlib" type="GDNativeLibrary" id=1]
+[ext_resource path="res://manually_registered_library.gdnlib" type="GDNativeLibrary" id=1]
 
 [sub_resource type="NativeScript" id=1]
 
