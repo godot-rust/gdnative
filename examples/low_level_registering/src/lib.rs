@@ -46,7 +46,9 @@ impl NativeClass for MyClass {
     }
 }
 
-fn init(gdnative_init: InitHandle) {
+fn init(gdnative_init: init::InitHandle) {
+    use godot::init::*;
+
     let constructor = godot_wrap_constructor!(MyClass, MyClass::new);
     let destructor  = godot_wrap_destructor!(MyClass);
 
@@ -55,11 +57,11 @@ fn init(gdnative_init: InitHandle) {
         fn _ready(&mut self) -> ()
     );
 
-    let ready_method = GodotScriptMethod {
+    let ready_method = ScriptMethod {
         name: "_ready",
         method_ptr: Some(ready_method),
-        attributes: GodotScriptMethodAttributes {
-            rpc_mode: GodotRpcMode::Disabled
+        attributes: ScriptMethodAttributes {
+            rpc_mode: RpcMode::Disabled
         },
         method_data: std::ptr::null_mut(),
         free_func: None
