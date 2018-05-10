@@ -3,13 +3,14 @@
 
 #[macro_export]
 macro_rules! godot_gdnative_init {
-    ($name:ident) => {
-        godot_gdnative_init!($name, |_| {});
+    () => {
+        fn godot_gdnative_init_null(_options: *mut $crate::sys::godot_gdnative_init_options) {}
+        godot_gdnative_init!(godot_gdnative_init_null);
     };
-    ($name:ident, $fun:expr) => {
+    ($fun:expr) => {
         #[no_mangle]
         #[doc(hidden)]
-        pub extern "C" fn $name(options: *mut $crate::sys::godot_gdnative_init_options) {
+        pub extern "C" fn godot_gdnative_init(options: *mut $crate::sys::godot_gdnative_init_options) {
             unsafe {
                 $crate::GODOT_API = Some($crate::GodotApi::from_raw((*options).api_struct));
             }
@@ -44,14 +45,17 @@ macro_rules! godot_gdnative_terminate {
 
 #[macro_export]
 macro_rules! godot_nativescript_init {
-    ($name:ident) => {
-        godot_nativescript_init!($name, |_| {});
+    () => {
+        fn godot_nativescript_init_null(_init: $crate::InitHandle) {}
+        godot_nativescript_init!(godot_nativescript_init_null);
     };
-    ($name:ident, $fun:expr) => {
+    ($init_fn:ident) => {
         #[no_mangle]
         #[doc(hidden)]
-        pub extern "C" fn $name(handle: *mut $crate::libc::c_void) {
-            $fun(handle);
+        pub extern "C" fn godot_nativescript_init(handle: *mut $crate::libc::c_void) {
+            unsafe {
+                $init_fn($crate::InitHandle::new(handle));
+            }
         }
     };
 }
@@ -87,10 +91,10 @@ macro_rules! godot_init {
         #[no_mangle]
         #[doc(hidden)]
         #[allow(unused_unsafe, unused_variables)]
-        pub extern "C" fn godot_nativescript_init(desc: *mut $crate::libc::c_void) {
+        pub extern "C" fn godot_nativescript_init(handle: *mut $crate::libc::c_void) {
             unsafe {
                 $(
-                    <$class as $crate::NativeClass>::register_class(desc);
+                    <$class>::register_class($crate::InitHandle::new(handle));
                 )*
             }
         }
@@ -366,12 +370,10 @@ macro_rules! godot_wrap_method {
                 use std::panic::{self, AssertUnwindSafe};
 
                 let num_params = godot_wrap_method_parameter_count!($($pname,)*);
-
                 if num_args != num_params {
                     godot_error!("Incorrect number of parameters: expected {} but got {}", num_params, num_args);
                     return $crate::Variant::new().to_sys();
                 }
-
 
                 let mut offset = 0;
                 $(

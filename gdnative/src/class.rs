@@ -5,6 +5,8 @@ use std::ptr;
 use std::ops::Deref;
 use GodotString;
 use GodotObject;
+use GodotType;
+use Variant;
 use Object;
 use NativeScript;
 use object;
@@ -12,15 +14,16 @@ use std::marker::PhantomData;
 use std::cell::RefCell;
 use std::mem;
 use get_api;
+use property::*;
 
 /// Godot native class implementation detail that must be stored
-/// instances.
+/// in each instance.
 pub struct NativeInstanceHeader {
     #[doc(hidden)]
     pub this: *mut sys::godot_object,
 }
 
-pub unsafe trait NativeClass {
+pub trait NativeClass {
     fn class_name() -> &'static str;
 
     fn get_header(&self) -> &NativeInstanceHeader;
@@ -30,8 +33,6 @@ pub unsafe trait NativeClass {
             mem::transmute(self.get_header())
         }
     }
-
-    unsafe fn register_class(desc: *mut libc::c_void);
 }
 
 /// A reference to a rust native script.
@@ -118,117 +119,42 @@ impl <T: NativeClass> Drop for NativeRef<T> {
     }
 }
 
-
-#[macro_export]
-#[doc(hidden)]
-macro_rules! godot_class_count_params {
-    () => (0);
-    ($name:ident, $($other:ident,)*) => (
-        1 + godot_class_count_params!($($other,)*)
-    )
-}
-
 #[macro_export]
 #[doc(hidden)]
 macro_rules! godot_class_build_export_methods {
-    ($classty:ty, $class:ident, $desc:ident,) => ();
-    ($classty:ty, $class:ident, $desc:ident,
+    ($classty:ty, $builder:ident,) => ();
+
+    ($classty:ty, $builder:ident,
         export fn $name:ident(
             &mut self
             $(,$pname:ident : $pty:ty)*
         ) $body:block
         $($tt:tt)*
     ) => (
-        godot_class_build_export_methods!($classty, $class, $desc,
+        godot_class_build_export_methods!($classty, $builder,
             export fn $name(&mut self $(,$pname : $pty)*) -> () $body
             $($tt)*
         );
     );
-    ($classty:ty, $class:ident, $desc:ident,
+
+    ($classty:ty, $builder:ident,
         export fn $name:ident(
             &mut self
             $(,$pname:ident : $pty:ty)*
         ) -> $retty:ty $body:block
         $($tt:tt)*
     ) => (
-        {
-            #[allow(unused_assignments, unused_unsafe, dead_code, unused_variables, unused_mut)]
-            extern "C" fn godot_invoke(
-                _obj: *mut $crate::sys::godot_object,
-                _md: *mut $crate::libc::c_void,
-                ud: *mut $crate::libc::c_void,
-                num_args: $crate::libc::c_int,
-                args: *mut *mut $crate::sys::godot_variant
-            ) -> $crate::sys::godot_variant {
-                use std::cell::RefCell;
-                use std::panic::{self, AssertUnwindSafe};
-                unsafe {
-                    let api = $crate::get_api();
-
-                    let num_params = godot_class_count_params!($($pname,)*);
-                    if num_args < num_params {
-                        godot_error!("Incorrect number of parameters: got {} and wanted {}", num_args, num_params);
-                        let mut ret = $crate::sys::godot_variant::default();
-                        (api.godot_variant_new_nil)(&mut ret);
-                        return ret;
-                    }
-                    let mut offset = 0;
-                    $(
-                        let $pname = if let Some(val) = <$pty as $crate::GodotType>::from_sys_variant(&mut *(*args).offset(offset)) {
-                            val
-                        } else {
-                            godot_error!("Incorrect parameter type for parameter {}", offset);
-                            let mut ret = $crate::sys::godot_variant::default();
-                            (api.godot_variant_new_nil)(&mut ret);
-                            return ret;
-                        };
-                        offset += 1;
-                    )*
-                    let __rust_ty = &*(ud as *mut RefCell<$classty>);
-                    let mut __rust_ty = __rust_ty.borrow_mut();
-                    let rust_ret = match panic::catch_unwind(AssertUnwindSafe(|| {
-                        __rust_ty.$name($(
-                            $pname
-                        ),*);
-                    })) {
-                        Ok(val) => val,
-                        Err(err) => {
-                            let err = if let Some(err) = err.downcast_ref::<&str>() {
-                                (*err).to_owned()
-                            } else if let Some(err) = err.downcast_ref::<String>() {
-                                (*err).clone()
-                            } else {
-                                "Unknown".to_owned()
-                            };
-                            godot_error!("Method call failed, everything may be in an invalid state: {:?}", err);
-                            let mut ret = $crate::sys::godot_variant::default();
-                            (api.godot_variant_new_nil)(&mut ret);
-                            return ret;
-                        }
-                    };
-                    <$retty as $crate::GodotType>::to_variant(&rust_ret).forget()
-                }
-            }
-            let method = $crate::sys::godot_instance_method {
-                method: Some(godot_invoke),
-                method_data: ::std::ptr::null_mut(),
-                free_func: None,
-            };
-            let attr = $crate::sys::godot_method_attributes {
-                rpc_type: $crate::sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED,
-            };
-            let name = CString::new(stringify!($name)).unwrap();
-            ($crate::get_api().godot_nativescript_register_method)(
-                $desc as *mut _,
-                $class.as_ptr() as *const _,
-                name.as_ptr() as *const _,
-                attr,
-                method
-            );
-        }
-        godot_class_build_export_methods!($classty, $class, $desc, $($tt)*);
-    )
+        $builder.add_method(
+            stringify!($name),
+            godot_wrap_method!(
+                $classty,
+                fn $name(&mut self $(,$pname : $pty)* ) -> $retty
+            ),
+        );
+        godot_class_build_export_methods!($classty, $builder, $($tt)*);
+    );
 }
+
 #[macro_export]
 #[doc(hidden)]
 macro_rules! godot_class_build_methods {
@@ -291,20 +217,17 @@ class $name:ident: $parent:ty {
                     <$parent as $crate::GodotObject>::from_sys(self.header.this)
                 }
             }
-        }
 
-        unsafe impl $crate::NativeClass for $name {
-
-            unsafe fn register_class(desc: *mut $crate::libc::c_void) {
+            pub unsafe fn register_class(init_handle: $crate::InitHandle) {
                 use $crate::sys;
-                use std::ffi::CString;
-                use std::ptr;
+
                 fn constructor($header : $crate::NativeInstanceHeader) -> $name {
                     $construct
                 }
 
                 extern "C" fn godot_create(this: *mut sys::godot_object, _data: *mut $crate::libc::c_void) -> *mut $crate::libc::c_void {
                     use std::cell::RefCell;
+
                     let val = constructor($crate::NativeInstanceHeader {
                         this: this,
                     });
@@ -317,48 +240,24 @@ class $name:ident: $parent:ty {
                     drop(wrapper);
                 }
 
-                let cname = CString::new(stringify!($name)).unwrap();
-                let pname = CString::new(
-                    <$parent as $crate::GodotObject>::class_name()
-                ).unwrap();
-
-                let create = sys::godot_instance_create_func {
-                    create_func: Some(godot_create),
-                    method_data: ptr::null_mut(),
-                    free_func: None,
-                };
-
-                let destroy = sys::godot_instance_destroy_func {
-                    destroy_func: Some(godot_free),
-                    method_data: ptr::null_mut(),
-                    free_func: None,
-                };
-
-                ($crate::get_api().godot_nativescript_register_class)(
-                    desc as *mut _,
-                    cname.as_ptr() as *const _,
-                    pname.as_ptr() as *const _,
-                    create,
-                    destroy
+                let $builder = init_handle.add_class::<Self>(
+                    $crate::ClassDescriptor {
+                        name: stringify!($name),
+                        base_class: <$parent as $crate::GodotObject>::class_name(),
+                        constructor: Some(godot_create),
+                        destructor: Some(godot_free),
+                    }
                 );
 
-                godot_class_build_export_methods!($name, cname, desc, $($tt)*);
+                godot_class_build_export_methods!($name, $builder, $($tt)*);
 
-                let $builder: $crate::PropertyBuilder<$name>  = $crate::PropertyBuilder {
-                    desc: desc,
-                    class_name: cname.as_ptr() as *const _,
-                    _marker: ::std::marker::PhantomData,
-                };
                 $pbody
             }
+        }
 
-            fn class_name() -> &'static str {
-                stringify!($name)
-            }
-
-            fn get_header(&self) -> &$crate::NativeInstanceHeader {
-                &self.header
-            }
+        impl $crate::NativeClass for $name {
+            fn class_name() -> &'static str { stringify!($name) }
+            fn get_header(&self) -> &$crate::NativeInstanceHeader { &self.header }
         }
     )
 }
@@ -427,138 +326,169 @@ pub struct GodotScriptMethod<'l> {
     pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
 }
 
-pub struct GodotScriptClassBuilder<'l> {
-
-    is_tool: bool,
-
-    class_name: &'l str,
-    base_class_name: &'l str,
-
-    constructor: Option<GodotScriptConstructorFn>,
-    destructor: Option<GodotScriptDestructorFn>,
-
-    methods: Vec<GodotScriptMethod<'l>>,
-    _properties: Vec<(String)>,
-    _signals: Vec<(String)>,
-
+pub struct ClassDescriptor<'l> {
+    pub name: &'l str,
+    pub base_class: &'l str,
+    pub constructor: Option<GodotScriptConstructorFn>,
+    pub destructor: Option<GodotScriptDestructorFn>,
 }
 
-impl<'l> GodotScriptClassBuilder<'l> {
-    pub fn new() -> Self {
-        GodotScriptClassBuilder {
-            is_tool: false,
+pub struct InitHandle {
+    #[doc(hidden)]
+    pub handle: *mut libc::c_void,
+}
 
-            class_name: "",
-            base_class_name: "",
+impl InitHandle {
+    #[doc(hidden)]
+    pub unsafe fn new(handle: *mut libc::c_void) -> Self { InitHandle { handle } }
 
-            constructor: None,
-            destructor: None,
-
-            methods: vec![],
-            _properties: vec![],
-            _signals: vec![],
-        }
-    }
-
-    pub fn set_tool(mut self, is_tool: bool) -> Self {
-        self.is_tool = is_tool;
-        self
-    }
-
-    pub fn set_class_name(mut self, name: &'l str) -> Self {
-        self.class_name = name;
-        self
-    }
-
-    pub fn set_base_class_name(mut self, name: &'l str) -> Self {
-        self.base_class_name = name;
-        self
-    }
-
-    pub fn add_method_advanced(mut self, method: GodotScriptMethod<'l>) -> Self {
-        self.methods.push(method);
-        self
-    }
-
-    pub fn add_method(mut self, name: &'l str, method: GodotScriptMethodFn) -> Self {
-
-        let method = GodotScriptMethod {
-            name: name,
-            method_ptr: Some(method),
-            attributes: GodotScriptMethodAttributes {
-                rpc_mode: GodotRpcMode::Disabled
-            },
-            method_data: ptr::null_mut(),
-            free_func: None
-        };
-        self.methods.push(method);
-        self
-    }
-
-    pub fn set_constructor(mut self, constructor: Option<GodotScriptConstructorFn>) -> Self {
-        self.constructor = constructor;
-        self
-    }
-
-    pub fn set_destructor(mut self, destructor: Option<GodotScriptDestructorFn>) -> Self {
-        self.destructor = destructor;
-        self
-    }
-
-    pub fn build(&mut self, handle: *mut libc::c_void) {
-        let api = get_api();
-
-        // register class
-
+    pub fn add_class<C>(&self, desc: ClassDescriptor) -> ClassBuilder<C>
+    where C: NativeClass {
         unsafe {
-            let name = CString::new(self.class_name).unwrap();
-            let base_name = CString::new(self.base_class_name).unwrap();
+            let class_name = CString::new(desc.name).unwrap();
+            let base_name = CString::new(desc.base_class).unwrap();
 
             let create = sys::godot_instance_create_func {
-                create_func: self.constructor,
+                create_func: desc.constructor,
                 method_data: ptr::null_mut(),
                 free_func: None,
             };
 
             let destroy = sys::godot_instance_destroy_func {
-                destroy_func: self.destructor,
+                destroy_func: desc.destructor,
                 method_data: ptr::null_mut(),
                 free_func: None,
             };
 
-            (api.godot_nativescript_register_class)(
-                handle as *mut _,
-                name.as_ptr() as *const _,
+            (get_api().godot_nativescript_register_class)(
+                self.handle as *mut _,
+                class_name.as_ptr() as *const _,
                 base_name.as_ptr() as *const _,
                 create,
                 destroy
             );
 
-
-            // register methods
-            for method in self.methods.iter() {
-                let method_name = CString::new(method.name).unwrap();
-
-                let attr = sys::godot_method_attributes {
-                    rpc_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED
-                };
-
-                let method_desc = sys::godot_instance_method {
-                    method: method.method_ptr,
-                    method_data: method.method_data,
-                    free_func: method.free_func
-                };
-
-                (api.godot_nativescript_register_method)(
-                    handle as *mut _,
-                    name.as_ptr() as *const _,
-                    method_name.as_ptr() as *const _,
-                    attr,
-                    method_desc
-                );
+            ClassBuilder {
+                init_handle: self.handle,
+                class_name,
+                _marker: PhantomData,
             }
         }
+    }
+}
 
+pub struct ClassBuilder<C: NativeClass> {
+    #[doc(hidden)]
+    pub init_handle: *mut libc::c_void,
+    class_name: CString,
+    _marker: PhantomData<C>,
+}
 
+impl<C: NativeClass> ClassBuilder<C> {
+
+    pub fn add_method_advanced(&self, method: GodotScriptMethod) {
+        let method_name = CString::new(method.name).unwrap();
+        let attr = sys::godot_method_attributes {
+            rpc_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED
+        };
+
+        let method_desc = sys::godot_instance_method {
+            method: method.method_ptr,
+            method_data: method.method_data,
+            free_func: method.free_func
+        };
+
+        unsafe {
+            (get_api().godot_nativescript_register_method)(
+                self.init_handle,
+                self.class_name.as_ptr() as *const _,
+                method_name.as_ptr() as *const _,
+                attr,
+                method_desc
+            );
+        }
+    }
+
+    pub fn add_method(&self, name: &str, method: GodotScriptMethodFn) {
+        self.add_method_advanced(
+            GodotScriptMethod {
+                name: name,
+                method_ptr: Some(method),
+                attributes: GodotScriptMethodAttributes {
+                    rpc_mode: GodotRpcMode::Disabled
+                },
+                method_data: ptr::null_mut(),
+                free_func: None
+            },
+        );
+    }
+
+    pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
+    where
+        T: GodotType,
+        S: PropertySetter<C, T>,
+        G: PropertyGetter<C, T>,
+    {
+        unsafe {
+            let hint_text = match property.hint {
+                PropertyHint::Range { ref range, step, slider } => {
+
+                    if slider {
+                        Some(format!("{},{},{},slider", range.start, range.end, step))
+                    } else {
+                        Some(format!("{},{},{}", range.start, range.end, step))
+                    }
+                }
+                PropertyHint::Enum { values } | PropertyHint::Flags { values } => { Some(values.join(",")) }
+                PropertyHint::NodePathToEditedNode | PropertyHint::None => { None }
+            };
+            let hint_string = if let Some(text) = hint_text {
+                GodotString::from_str(text)
+            } else {
+                GodotString::default()
+            };
+
+            let default: Variant = property.default.to_variant();
+            let ty = default.get_type();
+
+            let mut attr = sys::godot_property_attributes {
+                rset_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
+                type_: mem::transmute(ty),
+                hint: property.hint.to_sys(),
+                hint_string: hint_string.to_sys(),
+                usage: property.usage.to_sys(),
+                default_value: default.to_sys(),
+            };
+
+            let path = ::std::ffi::CString::new(property.name).unwrap();
+
+            let set = property.setter.as_godot_function();
+            let get = property.getter.as_godot_function();
+
+            (get_api().godot_nativescript_register_property)(
+                self.init_handle,
+                self.class_name.as_ptr(),
+                path.as_ptr() as *const _,
+                &mut attr, set, get
+            );
+        }
+    }
+
+    pub fn add_signal(&self, signal: Signal) {
+        use std::ptr;
+        unsafe {
+            let name = GodotString::from_str(signal.name);
+            (get_api().godot_nativescript_register_signal)(
+                self.init_handle,
+                self.class_name.as_ptr(),
+                &sys::godot_signal {
+                    name: name.to_sys(),
+                    num_args: 0,
+                    args: ptr::null_mut(),
+                    num_default_args: 0,
+                    default_args: ptr::null_mut(),
+                }
+            );
+        }
     }
 }
