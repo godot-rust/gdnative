@@ -52,7 +52,7 @@ pub enum PropertyHint<'l> {
 }
 
 impl<'l> PropertyHint<'l> {
-    fn to_sys(&self) -> sys::godot_property_hint {
+    pub fn to_sys(&self) -> sys::godot_property_hint {
         match *self {
             PropertyHint::None => GODOT_PROPERTY_HINT_NONE,
             PropertyHint::Range { .. } => GODOT_PROPERTY_HINT_RANGE,
@@ -90,7 +90,7 @@ bitflags! {
 }
 
 impl PropertyUsage {
-    fn to_sys(&self) -> sys::godot_property_usage_flags {
+    pub fn to_sys(&self) -> sys::godot_property_usage_flags {
         unsafe { mem::transmute(*self) }
     }
 }
