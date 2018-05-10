@@ -2,6 +2,7 @@ use sys;
 use get_api;
 use std::mem::transmute;
 
+/// RGBA color with 32 bits floating point components.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {

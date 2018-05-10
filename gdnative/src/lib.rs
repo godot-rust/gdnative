@@ -1,16 +1,29 @@
 //! # Rust bindings for the Godot game engine
 //!
-//! ## Reference-counting and mutability
+//! This crate contains high-level wrappers around the Godot game engine's gdnaive API.
+//! Some of the types were automatically generated from the engine's JSON API description,
+//! and some other types are hand made wrappers around the core C types.
 //!
-//! All non trivially copyable godot types exposed in this crate are
-//! internally reference-counted and allow mutable aliasing.
-//! In rust parlance this means that a type such as `gdnative::ByteArray`
-//! is functionally equivalent to a `Rc<Cell<Vec<u8>>>` rather than `Vec<u8>`.
+//! ## Memory management
 //!
-//! Since it is easy to expect container types to allocate a copy of their content
-//! when using the `Clone` trait, most of these types do not implement `Clone` and
-//! instead provide a `new_ref(&self) -> Self` method to create references to the
+//! ### Reference counting
+//!
+//! A lot of the types provided by the engine are internally reference counted and
+//! allow mutable aliasing.
+//! In rust parlance this means that a type such as `gdnative::ConcavePolygonShape2D`
+//! is functionally equivalent to a `Rc<Cell<Something>>` rather than `Rc<Something>`.
+//!
+//! Since it is easy to expect containers and other types to allocate a copy of their
+//! content when using the `Clone` trait, most of these types do not implement `Clone`
+//! and instead provide a `new_ref(&self) -> Self` method to create references to the
 //! same collection or object.
+//!
+//! ### Manually managed objects
+//!
+//! Some types are manually managed. This means that ownership can be passed to the
+//! engine or the object must be carfeully deallocated using the object's `free`  method.
+//!
+
 
 #[doc(hidden)]
 pub extern crate libc;

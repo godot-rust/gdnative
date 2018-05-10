@@ -41,4 +41,6 @@ fn test_constructor() -> bool {
     return true;
 }
 
-godot_init!();
+godot_gdnative_init!();
+godot_nativescript_init!();
+godot_gdnative_terminate!();

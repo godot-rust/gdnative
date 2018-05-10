@@ -179,6 +179,46 @@ macro_rules! godot_class_build_methods {
     )
 }
 
+/// Convenience macro to declare a native class.
+///
+/// ## Example
+///
+/// ```ignore
+/// godot_class! {
+///    class HelloWorld: godot::Node {
+///        fields {
+///            x: f32,
+///        }
+///
+///        setup(builder) {
+///            builder.add_property(
+///                Property {
+///                    name: "base/x",
+///                    default: 1.0,
+///                    hint: PropertyHint::Range {
+///                        range: 0.0..1.0,
+///                        step: 0.01,
+///                        slider: true
+///                    },
+///                    getter: |this: &mut RustTest| this.x,
+///                    setter: |this: &mut RustTest, v| this.x = v,
+///                    usage: PropertyUsage::DEFAULT,
+///                }
+///            );
+///        }
+///
+///        constructor(header) {
+///            HelloWorld {
+///                header,
+///            }
+///        }
+///
+///        export fn _ready(&mut self) {
+///            godot_print!("hello, world.");
+///        }
+///    }
+/// }
+/// ```
 #[macro_export]
 macro_rules! godot_class {
     (
@@ -212,7 +252,7 @@ class $name:ident: $parent:ty {
                 }
             }
 
-            pub unsafe fn register_class(init_handle: $crate::init::InitHandle) {
+            pub fn register_class(init_handle: $crate::init::InitHandle) {
                 use $crate::sys;
 
                 fn constructor($header : $crate::NativeInstanceHeader) -> $name {

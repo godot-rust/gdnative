@@ -92,5 +92,5 @@ fn init(gdnative_init: init::InitHandle) {
 
 godot_gdnative_init!();
 godot_nativescript_init!(init);
-godot_gdnative_terminate!(godot_rust_gdnative_terminate);
+godot_gdnative_terminate!();
 

@@ -1,16 +1,31 @@
 #![macro_use]
 
-
+/// Declare the API endpoint to initialize the gdnative API on startup.
+///
+/// By default this declares an extern function named `godot_gdnative_init`.
+/// This can be overridden, for example:
+///
+/// ```ignore
+/// // Declares an extern function named custom_gdnative_init instead of
+/// // godot_gdnative_init.
+/// godot_gdnative_init!(my_init_callback as custom_gdnative_init);
+/// ```
+///
+/// Overriding the default entry point names can be useful if several gdnative
+/// libraries are linked statically  to avoid name clashes.
 #[macro_export]
 macro_rules! godot_gdnative_init {
     () => {
-        fn godot_gdnative_init_null(_options: *mut $crate::sys::godot_gdnative_init_options) {}
-        godot_gdnative_init!(godot_gdnative_init_null);
+        fn godot_gdnative_init_empty(_options: *mut $crate::sys::godot_gdnative_init_options) {}
+        godot_gdnative_init!(godot_gdnative_init_empty);
     };
-    ($fun:expr) => {
+    ($callback:ident) => {
+        godot_gdnative_init!($callback as godot_gdnative_init);
+    };
+    ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
-        pub extern "C" fn godot_gdnative_init(options: *mut $crate::sys::godot_gdnative_init_options) {
+        pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
             unsafe {
                 $crate::GODOT_API = Some($crate::GodotApi::from_raw((*options).api_struct));
             }
@@ -20,21 +35,38 @@ macro_rules! godot_gdnative_init {
             // without checking for initialization.
             $crate::ReferenceMethodTable::get(api);
 
-            $fun(options);
+            $callback(options);
         }
     };
 }
 
+/// Declare the API endpoint invoked during shutdown.
+///
+/// By default this declares an extern function named `godot_gdnative_terminate`.
+/// This can be overridden, for example:
+///
+/// ```ignore
+/// // Declares an extern function named custom_gdnative_terminate instead of
+/// // godot_gdnative_terminate.
+/// godot_gdnative_terminate!(my_shutdown_callback as custom_gdnative_terminate);
+/// ```
+///
+/// Overriding the default entry point names can be useful if several gdnative
+/// libraries are linked statically  to avoid name clashes.
 #[macro_export]
 macro_rules! godot_gdnative_terminate {
-    ($name:ident) => {
-        godot_gdnative_terminate!($name, |_| {});
+    () => {
+        fn godot_gdnative_terminate_empty(_options: *mut $crate::sys::godot_gdnative_terminate_options) {}
+        godot_gdnative_terminate!(godot_gdnative_terminate_empty);
     };
-    ($name:ident, $fun:expr) => {
+    ($callback:ident) => {
+        godot_gdnative_terminate!($callback as godot_gdnative_terminate);
+    };
+    ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
-        pub extern "C" fn $name(options: *mut $crate::sys::godot_gdnative_terminate_options) {
-            $fun(options);
+        pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_terminate_options) {
+            $callback(options);
 
             unsafe {
                 $crate::GODOT_API = None;
@@ -43,64 +75,40 @@ macro_rules! godot_gdnative_terminate {
     };
 }
 
+/// Declare the API endpoint to initialize nativescript classes on startup.
+///
+/// By default this declares an extern function named `godot_nativescript_init`.
+/// This can be overridden, for example:
+///
+/// ```ignore
+/// // Declares an extern function named custom_nativescript_init instead of
+/// // godot_nativescript_init.
+/// godot_gdnative_terminate!(my_registration_callback as custom_nativescript_init);
+/// ```
+///
+/// Overriding the default entry point names can be useful if several gdnative
+/// libraries are linked statically  to avoid name clashes.
 #[macro_export]
 macro_rules! godot_nativescript_init {
     () => {
-        fn godot_nativescript_init_null(_init: $crate::init::InitHandle) {}
-        godot_nativescript_init!(godot_nativescript_init_null);
+        fn godot_nativescript_init_empty(_init: $crate::init::InitHandle) {}
+        godot_nativescript_init!(godot_nativescript_init_empty);
     };
-    ($init_fn:ident) => {
+    ($callback:ident) => {
+        godot_nativescript_init!($callback as godot_nativescript_init);
+    };
+    ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
-        pub extern "C" fn godot_nativescript_init(handle: *mut $crate::libc::c_void) {
+        pub extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
             unsafe {
-                $init_fn($crate::init::InitHandle::new(handle));
+                $callback($crate::init::InitHandle::new(handle));
             }
         }
     };
 }
 
-#[macro_export]
-macro_rules! godot_init {
-    (
-        $(
-            $class:ty
-        ),*
-    ) => (
-        #[no_mangle]
-        #[doc(hidden)]
-        pub extern "C" fn godot_gdnative_init(options: *mut $crate::sys::godot_gdnative_init_options) {
-            unsafe {
-                $crate::GODOT_API = Some($crate::GodotApi::from_raw((*options).api_struct));
-                let api = $crate::get_api();
-                // Force the initialization of the method table of common types. This way we can
-                // assume that if the api object is alive we can fetch the method of these types
-                // without checking for initialization.
-                $crate::ReferenceMethodTable::get(api);
-            }
-        }
-
-        #[no_mangle]
-        #[doc(hidden)]
-        pub extern "C" fn godot_gdnative_terminate(_options: *mut $crate::sys::godot_gdnative_terminate_options) {
-            unsafe {
-                $crate::GODOT_API = None;
-            }
-        }
-
-        #[no_mangle]
-        #[doc(hidden)]
-        #[allow(unused_unsafe, unused_variables)]
-        pub extern "C" fn godot_nativescript_init(handle: *mut $crate::libc::c_void) {
-            unsafe {
-                $(
-                    <$class>::register_class($crate::init::InitHandle::new(handle));
-                )*
-            }
-        }
-    )
-}
-
+/// Print a message using the engine's logging system (visible in the editor).
 #[macro_export]
 macro_rules! godot_print {
     ($($args:tt)*) => ({
@@ -114,6 +122,7 @@ macro_rules! godot_print {
     });
 }
 
+/// Print a warning using the engine's logging system (visible in the editor).
 #[macro_export]
 macro_rules! godot_warn {
     ($($args:tt)*) => ({
@@ -135,6 +144,7 @@ macro_rules! godot_warn {
     })
 }
 
+/// Print an error using the engine's logging system (visible in the editor).
 #[macro_export]
 macro_rules! godot_error {
     ($($args:tt)*) => ({
@@ -292,7 +302,8 @@ macro_rules! godot_test {
     }
 }
 
-
+/// Convenience macro to wrap an object's constructor into a function pointer
+/// that can be passed to the engine when registering a class.
 #[macro_export]
 macro_rules! godot_wrap_constructor {
     ($_name:ty, $c:expr) => {
@@ -315,6 +326,8 @@ macro_rules! godot_wrap_constructor {
     }
 }
 
+/// Convenience macro to wrap an object's destructor into a function pointer
+/// that can be passed to the engine when registering a class.
 #[macro_export]
 macro_rules! godot_wrap_destructor {
     ($name:ty) => {
@@ -337,6 +350,7 @@ macro_rules! godot_wrap_destructor {
     }
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! godot_wrap_method_parameter_count {
     () => {
@@ -347,6 +361,8 @@ macro_rules! godot_wrap_method_parameter_count {
     }
 }
 
+/// Convenience macro to wrap an object's method into a function pointer
+/// that can be passed to the engine when registering a class.
 #[macro_export]
 macro_rules! godot_wrap_method {
     (

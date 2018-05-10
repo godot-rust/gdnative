@@ -93,6 +93,10 @@ godot_class! {
     }
 }
 
-godot_init! {
-    RustTest
+fn init(handle: godot::init::InitHandle) {
+    RustTest::register_class(handle);
 }
+
+godot_gdnative_init!();
+godot_nativescript_init!(init);
+godot_gdnative_terminate!();
