@@ -1,4 +1,25 @@
 //! Types and functionalities to declare and initialize gdnative classes.
+//!
+//! ## API endpoints
+//!
+//! Three endpoints are automatically invoked by the engine during startup and shutdown:
+//!
+//! - [`godot_gdnative_init`](macro.godot_gdnative_init.html),
+//! - [`godot_nativescript_init`](macro.godot_nativescript_init.html),
+//! - [`godot_gdnative_terminate`](macro.godot_gdnative_terminate.html),
+//!
+//! All three must be present.
+//!
+//! ## Registering a class using the `godot_class` macro
+//!
+//! See the [spinning_cube example](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube)
+//! in the repositiory.
+//!
+//! ## Registering a class manually
+//!
+//! See the [manually_registered example](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/manually_registered)
+//! in the repositiory.
+//!
 
 use super::*;
 use get_api;
@@ -14,15 +35,23 @@ use std::marker::PhantomData;
 use std::ptr;
 use libc;
 
+/// A handle that can register new classes to the engine during initialization.
+///
+/// See [`godot_nativescript_init`](macro.godot_nativescript_init.html).
+#[derive(Copy, Clone)]
 pub struct InitHandle {
     #[doc(hidden)]
-    pub handle: *mut libc::c_void,
+    handle: *mut libc::c_void,
 }
 
 impl InitHandle {
     #[doc(hidden)]
     pub unsafe fn new(handle: *mut libc::c_void) -> Self { InitHandle { handle } }
 
+    /// Registers a new class to the engine.
+    ///
+    /// The return `ClassBuilder` can be used to add methods, signals and properties
+    /// to the class.
     pub fn add_class<C>(&self, desc: ClassDescriptor) -> ClassBuilder<C>
     where C: NativeClass {
         unsafe {

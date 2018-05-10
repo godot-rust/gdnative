@@ -2,25 +2,29 @@
 extern crate gdnative as godot;
 
 godot_class! {
-	class HelloWorld: godot::Node {
-		fields {
-		}
+    class HelloWorld: godot::Node {
+        fields {
+        }
 
-		setup(_builder) {
-		}
+        setup(_builder) {
+        }
 
-		constructor(header) {
-			HelloWorld {
-				header,
-			}
-		}
+        constructor(header) {
+            HelloWorld {
+                header,
+            }
+        }
 
-		export fn _ready(&mut self) {
-			godot_print!("hello, world.");
-		}
-	}
+        export fn _ready(&mut self) {
+            godot_print!("hello, world.");
+        }
+    }
 }
 
-godot_init! {
-	HelloWorld
+fn init(handle: godot::init::InitHandle) {
+    HelloWorld::register_class(handle);
 }
+
+godot_gdnative_init!();
+godot_nativescript_init!(init);
+godot_gdnative_terminate!();
