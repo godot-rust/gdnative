@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate gdnative as godot;
 
+use godot::init::{Property, PropertyHint, PropertyUsage};
+use godot::GodotString;
 
 godot_class! {
     class RustTest: godot::MeshInstance {
@@ -11,47 +13,47 @@ godot_class! {
         }
         setup(builder) {
             builder.add_property(
-                godot::Property {
+                Property {
                     name: "base/rotate_speed",
                     default: 0.05,
-                    hint: godot::PropertyHint::Range {
+                    hint: PropertyHint::Range {
                         range: 0.05..1.0,
                         step: 0.01,
                         slider: true
                     },
                     getter: |this: &mut RustTest| this.rotate_speed,
                     setter: |this: &mut RustTest, v| this.rotate_speed = v,
-                    usage: godot::PropertyUsage::DEFAULT,
+                    usage: PropertyUsage::DEFAULT,
                 }
             );
 
             builder.add_property(
-                godot::Property {
+                Property {
                     name: "test/test_enum",
-                    default: godot::GodotString::from_str("Hello"),
-                    hint: godot::PropertyHint::Enum {
+                    default: GodotString::from_str("Hello"),
+                    hint: PropertyHint::Enum {
                         values: &[
                             "Hello",
                             "World",
                             "Testing",
                         ]
                     },
-                    getter: |_: &mut RustTest| { godot::GodotString::from_str("Hello") },
+                    getter: |_: &mut RustTest| { GodotString::from_str("Hello") },
                     setter: (),
-                    usage: godot::PropertyUsage::DEFAULT,
+                    usage: PropertyUsage::DEFAULT,
                 }
             );
 
             builder.add_property(
-                godot::Property {
+                Property {
                     name: "test/test_flags",
                     default: 0,
-                    hint: godot::PropertyHint::Flags {
+                    hint: PropertyHint::Flags {
                         values: &["A", "B", "C", "D" ],
                     },
                     getter: |_: &mut RustTest| 0,
                     setter: (),
-                    usage: godot::PropertyUsage::DEFAULT,
+                    usage: PropertyUsage::DEFAULT,
                 }
             );
         }

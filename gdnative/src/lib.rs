@@ -26,7 +26,6 @@ mod macros;
 mod class;
 mod object;
 mod internal;
-mod property;
 mod godot_type;
 mod color;
 mod variant;
@@ -43,9 +42,9 @@ mod string_array;
 mod vector2_array;
 mod vector3_array;
 mod color_array;
+pub mod init;
 
 pub use internal::*;
-pub use property::*;
 pub use class::*;
 pub use godot_type::*;
 pub use variant::*;

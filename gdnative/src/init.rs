@@ -1,10 +1,225 @@
+//! Types and functionalities to declare and initialize gdnative classes.
+
 use super::*;
-use godot_type::GodotType;
-use std::marker::PhantomData;
+use get_api;
+use Variant;
+use GodotType;
+use NativeClass;
 use sys::godot_property_usage_flags::*;
 use sys::godot_property_hint::*;
 use std::mem;
 use std::ops::Range;
+use std::ffi::CString;
+use std::marker::PhantomData;
+use std::ptr;
+use libc;
+
+pub struct InitHandle {
+    #[doc(hidden)]
+    pub handle: *mut libc::c_void,
+}
+
+impl InitHandle {
+    #[doc(hidden)]
+    pub unsafe fn new(handle: *mut libc::c_void) -> Self { InitHandle { handle } }
+
+    pub fn add_class<C>(&self, desc: ClassDescriptor) -> ClassBuilder<C>
+    where C: NativeClass {
+        unsafe {
+            let class_name = CString::new(desc.name).unwrap();
+            let base_name = CString::new(desc.base_class).unwrap();
+
+            let create = sys::godot_instance_create_func {
+                create_func: desc.constructor,
+                method_data: ptr::null_mut(),
+                free_func: None,
+            };
+
+            let destroy = sys::godot_instance_destroy_func {
+                destroy_func: desc.destructor,
+                method_data: ptr::null_mut(),
+                free_func: None,
+            };
+
+            (get_api().godot_nativescript_register_class)(
+                self.handle as *mut _,
+                class_name.as_ptr() as *const _,
+                base_name.as_ptr() as *const _,
+                create,
+                destroy
+            );
+
+            ClassBuilder {
+                init_handle: self.handle,
+                class_name,
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
+pub type ScriptMethodFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void,
+    *mut libc::c_void,
+    libc::c_int,
+    *mut *mut sys::godot_variant
+) -> sys::godot_variant;
+
+pub type ScriptConstructorFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void
+) -> *mut libc::c_void;
+
+pub type ScriptDestructorFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void,
+    *mut libc::c_void
+) -> ();
+
+pub enum RpcMode {
+    Disabled,
+    Remote,
+    Sync,
+    Mater,
+    Slave
+}
+
+pub struct ScriptMethodAttributes {
+    pub rpc_mode: RpcMode
+}
+
+pub struct ScriptMethod<'l> {
+    pub name: &'l str,
+    pub method_ptr: Option<ScriptMethodFn>,
+    pub attributes: ScriptMethodAttributes,
+
+    pub method_data: *mut libc::c_void,
+    pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
+}
+
+pub struct ClassDescriptor<'l> {
+    pub name: &'l str,
+    pub base_class: &'l str,
+    pub constructor: Option<ScriptConstructorFn>,
+    pub destructor: Option<ScriptDestructorFn>,
+}
+
+pub struct ClassBuilder<C: NativeClass> {
+    #[doc(hidden)]
+    pub init_handle: *mut libc::c_void,
+    class_name: CString,
+    _marker: PhantomData<C>,
+}
+
+impl<C: NativeClass> ClassBuilder<C> {
+
+    pub fn add_method_advanced(&self, method: ScriptMethod) {
+        let method_name = CString::new(method.name).unwrap();
+        let attr = sys::godot_method_attributes {
+            rpc_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED
+        };
+
+        let method_desc = sys::godot_instance_method {
+            method: method.method_ptr,
+            method_data: method.method_data,
+            free_func: method.free_func
+        };
+
+        unsafe {
+            (get_api().godot_nativescript_register_method)(
+                self.init_handle,
+                self.class_name.as_ptr() as *const _,
+                method_name.as_ptr() as *const _,
+                attr,
+                method_desc
+            );
+        }
+    }
+
+    pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
+        self.add_method_advanced(
+            ScriptMethod {
+                name: name,
+                method_ptr: Some(method),
+                attributes: ScriptMethodAttributes {
+                    rpc_mode: RpcMode::Disabled
+                },
+                method_data: ptr::null_mut(),
+                free_func: None
+            },
+        );
+    }
+
+    pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
+    where
+        T: GodotType,
+        S: PropertySetter<C, T>,
+        G: PropertyGetter<C, T>,
+    {
+        unsafe {
+            let hint_text = match property.hint {
+                PropertyHint::Range { ref range, step, slider } => {
+
+                    if slider {
+                        Some(format!("{},{},{},slider", range.start, range.end, step))
+                    } else {
+                        Some(format!("{},{},{}", range.start, range.end, step))
+                    }
+                }
+                PropertyHint::Enum { values } | PropertyHint::Flags { values } => { Some(values.join(",")) }
+                PropertyHint::NodePathToEditedNode | PropertyHint::None => { None }
+            };
+            let hint_string = if let Some(text) = hint_text {
+                GodotString::from_str(text)
+            } else {
+                GodotString::default()
+            };
+
+            let default: Variant = property.default.to_variant();
+            let ty = default.get_type();
+
+            let mut attr = sys::godot_property_attributes {
+                rset_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
+                type_: mem::transmute(ty),
+                hint: property.hint.to_sys(),
+                hint_string: hint_string.to_sys(),
+                usage: property.usage.to_sys(),
+                default_value: default.to_sys(),
+            };
+
+            let path = ::std::ffi::CString::new(property.name).unwrap();
+
+            let set = property.setter.as_godot_function();
+            let get = property.getter.as_godot_function();
+
+            (get_api().godot_nativescript_register_property)(
+                self.init_handle,
+                self.class_name.as_ptr(),
+                path.as_ptr() as *const _,
+                &mut attr, set, get
+            );
+        }
+    }
+
+    pub fn add_signal(&self, signal: Signal) {
+        use std::ptr;
+        unsafe {
+            let name = GodotString::from_str(signal.name);
+            (get_api().godot_nativescript_register_signal)(
+                self.init_handle,
+                self.class_name.as_ptr(),
+                &sys::godot_signal {
+                    name: name.to_sys(),
+                    num_args: 0,
+                    args: ptr::null_mut(),
+                    num_default_args: 0,
+                    default_args: ptr::null_mut(),
+                }
+            );
+        }
+    }
+}
 
 // TODO: missing property hints.
 pub enum PropertyHint<'l> {
@@ -92,88 +307,6 @@ bitflags! {
 impl PropertyUsage {
     pub fn to_sys(&self) -> sys::godot_property_usage_flags {
         unsafe { mem::transmute(*self) }
-    }
-}
-
-pub struct PropertyBuilder<C> {
-    #[doc(hidden)]
-    pub desc: *mut libc::c_void,
-    #[doc(hidden)]
-    pub class_name: *const libc::c_char,
-    #[doc(hidden)]
-    pub _marker: PhantomData<C>,
-}
-
-impl<C: NativeClass> PropertyBuilder<C> {
-    pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
-    where
-        T: GodotType,
-        S: PropertySetter<C, T>,
-        G: PropertyGetter<C, T>,
-    {
-        unsafe {
-            let api = get_api();
-            let hint_text = match property.hint {
-                PropertyHint::Range { ref range, step, slider } => {
-
-                    if slider {
-                        Some(format!("{},{},{},slider", range.start, range.end, step))
-                    } else {
-                        Some(format!("{},{},{}", range.start, range.end, step))
-                    }
-                }
-                PropertyHint::Enum { values } | PropertyHint::Flags { values } => { Some(values.join(",")) }
-                PropertyHint::NodePathToEditedNode | PropertyHint::None => { None }
-            };
-            let hint_string = if let Some(text) = hint_text {
-                GodotString::from_str(text)
-            } else {
-                GodotString::default()
-            };
-
-            let default: Variant = property.default.to_variant();
-            let ty = default.get_type();
-
-            let mut attr = sys::godot_property_attributes {
-                rset_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
-                type_: mem::transmute(ty),
-                hint: property.hint.to_sys(),
-                hint_string: hint_string.to_sys(),
-                usage: property.usage.to_sys(),
-                default_value: default.to_sys(),
-            };
-
-            let path = ::std::ffi::CString::new(property.name).unwrap();
-
-            let set = property.setter.as_godot_function();
-            let get = property.getter.as_godot_function();
-
-            (api.godot_nativescript_register_property)(
-                self.desc,
-                self.class_name,
-                path.as_ptr() as *const _,
-                &mut attr, set, get
-            );
-        }
-    }
-
-    pub fn add_signal(&self, signal: Signal) {
-        use std::ptr;
-        unsafe {
-            let api = get_api();
-            let name = GodotString::from_str(signal.name);
-            (api.godot_nativescript_register_signal)(
-                self.desc,
-                self.class_name,
-                &sys::godot_signal {
-                    name: name.to_sys(),
-                    num_args: 0,
-                    args: ptr::null_mut(),
-                    num_default_args: 0,
-                    default_args: ptr::null_mut(),
-                }
-            );
-        }
     }
 }
 

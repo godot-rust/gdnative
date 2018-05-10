@@ -46,7 +46,7 @@ macro_rules! godot_gdnative_terminate {
 #[macro_export]
 macro_rules! godot_nativescript_init {
     () => {
-        fn godot_nativescript_init_null(_init: $crate::InitHandle) {}
+        fn godot_nativescript_init_null(_init: $crate::init::InitHandle) {}
         godot_nativescript_init!(godot_nativescript_init_null);
     };
     ($init_fn:ident) => {
@@ -54,7 +54,7 @@ macro_rules! godot_nativescript_init {
         #[doc(hidden)]
         pub extern "C" fn godot_nativescript_init(handle: *mut $crate::libc::c_void) {
             unsafe {
-                $init_fn($crate::InitHandle::new(handle));
+                $init_fn($crate::init::InitHandle::new(handle));
             }
         }
     };
@@ -94,7 +94,7 @@ macro_rules! godot_init {
         pub extern "C" fn godot_nativescript_init(handle: *mut $crate::libc::c_void) {
             unsafe {
                 $(
-                    <$class>::register_class($crate::InitHandle::new(handle));
+                    <$class>::register_class($crate::init::InitHandle::new(handle));
                 )*
             }
         }
