@@ -407,7 +407,7 @@ macro_rules! godot_wrap_method {
                 let mut __rust_val = __rust_val.borrow_mut();
 
                 let rust_ret = match panic::catch_unwind(AssertUnwindSafe(|| {
-                    __rust_val.$method_name($($pname,)*);
+                    __rust_val.$method_name($($pname,)*)
                 })) {
                     Ok(val) => val,
                     Err(err) => {
