@@ -90,7 +90,7 @@ fn init(gdnative_init: init::InitHandle) {
     class.add_method("_exit_tree", exit_tree_method);
 }
 
-godot_gdnative_init!();
-godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+godot_nativescript_init!(init as godot_rust_nativescript_init);
+godot_gdnative_init!(_ as godot_rust_gdnative_init);
+godot_gdnative_terminate!(_ as godot_rust_gdnative_terminate);
 

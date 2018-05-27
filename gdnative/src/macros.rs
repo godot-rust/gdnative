@@ -19,6 +19,10 @@ macro_rules! godot_gdnative_init {
         fn godot_gdnative_init_empty(_options: *mut $crate::sys::godot_gdnative_init_options) {}
         godot_gdnative_init!(godot_gdnative_init_empty);
     };
+    (_ as $fn_name:ident) => {
+        fn godot_gdnative_init_empty(_options: *mut $crate::sys::godot_gdnative_init_options) {}
+        godot_gdnative_init!(godot_gdnative_init_empty as $fn_name);
+    };
     ($callback:ident) => {
         godot_gdnative_init!($callback as godot_gdnative_init);
     };
@@ -62,6 +66,10 @@ macro_rules! godot_gdnative_terminate {
     ($callback:ident) => {
         godot_gdnative_terminate!($callback as godot_gdnative_terminate);
     };
+    (_ as $fn_name:ident) => {
+        fn godot_gdnative_terminate_empty(_options: *mut $crate::sys::godot_gdnative_terminate_options) {}
+        godot_gdnative_terminate!(godot_gdnative_terminate_empty as $fn_name);
+    };
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
@@ -96,6 +104,10 @@ macro_rules! godot_nativescript_init {
     };
     ($callback:ident) => {
         godot_nativescript_init!($callback as godot_nativescript_init);
+    };
+    (_ as $fn_name:ident) => {
+        fn godot_nativescript_init_empty(_init: $crate::init::InitHandle) {}
+        godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
