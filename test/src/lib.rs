@@ -23,6 +23,10 @@ pub extern "C" fn run_tests(
     status &= gdnative::test_vector2_equality();
     status &= gdnative::test_vector2_inequality();
 
+    status &= gdnative::test_vector3_variants();
+    status &= gdnative::test_vector3_equality();
+    status &= gdnative::test_vector3_inequality();
+
     status &= test_constructor();
 
     gdnative::Variant::from_bool(status).forget()
