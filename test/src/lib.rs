@@ -20,12 +20,8 @@ pub extern "C" fn run_tests(
     status &= gdnative::test_variant_i64();
 
     status &= gdnative::test_vector2_variants();
-    status &= gdnative::test_vector2_equality();
-    status &= gdnative::test_vector2_inequality();
 
     status &= gdnative::test_vector3_variants();
-    status &= gdnative::test_vector3_equality();
-    status &= gdnative::test_vector3_inequality();
 
     status &= test_constructor();
 

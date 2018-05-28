@@ -20,19 +20,25 @@ godot_test!(
 
         assert_eq!(vector, vector_from_variant);
     }
+    );
 
-    test_vector2_equality {
+#[cfg(test)]
+mod tests {
+    use super::Vector2;
+
+    #[test]
+    fn it_supports_equality() {
         assert_eq!(
             Vector2::new(1.0, 2.0),
             Vector2::new(1.0, 2.0)
             );
     }
 
-    test_vector2_inequality {
+    #[test]
+    fn it_supports_inequality() {
         assert_ne!(
             Vector2::new(1.0, 10.0),
             Vector2::new(1.0, 2.0)
             );
-
     }
-    );
+}
