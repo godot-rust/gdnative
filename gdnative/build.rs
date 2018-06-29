@@ -170,6 +170,7 @@ fn main() {
 
     let mut output = File::create(out_path.join("types.rs")).unwrap();
 
+    writeln!(output, "use std::os::raw::c_char;").unwrap();
     writeln!(output, "use std::ptr;").unwrap();
     writeln!(output, "use std::mem;").unwrap();
     writeln!(output, "use object;").unwrap();
@@ -329,7 +330,7 @@ impl {name}MethodTable {{
     #[inline(never)]
     fn init(table: &mut Self, api: &GodotApi) {{
         unsafe {{
-            let class_name = b"{name}\0".as_ptr() as *const i8;
+            let class_name = b"{name}\0".as_ptr() as *const c_char;
             table.class_constructor = (api.godot_get_class_constructor)(class_name);"#,
                 name = class.name
             ).unwrap();
@@ -340,7 +341,7 @@ impl {name}MethodTable {{
             }
 
             writeln!(output,
-r#"            table.{method_name} = (api.godot_method_bind_get_method)(class_name, "{method_name}\0".as_ptr() as *const i8 );"#,
+r#"            table.{method_name} = (api.godot_method_bind_get_method)(class_name, "{method_name}\0".as_ptr() as *const c_char );"#,
                 method_name = method_name
             ).unwrap();
         }
