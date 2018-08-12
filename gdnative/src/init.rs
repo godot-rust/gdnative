@@ -235,13 +235,28 @@ impl<C: NativeClass> ClassBuilder<C> {
         use std::ptr;
         unsafe {
             let name = GodotString::from_str(signal.name);
+            let mut args = signal.args
+                .iter()
+                .map(|arg| {
+                    let arg_name = GodotString::from_str(arg.name);
+                    let hint_string = GodotString::new();
+                    sys::godot_signal_argument {
+                        name: arg_name.to_sys(),
+                        type_: arg.default.get_type() as i32,
+                        hint: arg.hint.to_sys(),
+                        hint_string: hint_string.to_sys(),
+                        usage: arg.usage.to_sys(),
+                        default_value: arg.default.to_sys(),
+                    }
+                })
+                .collect::<Vec<_>>();
             (get_api().godot_nativescript_register_signal)(
                 self.init_handle,
                 self.class_name.as_ptr(),
                 &sys::godot_signal {
                     name: name.to_sys(),
-                    num_args: 0,
-                    args: ptr::null_mut(),
+                    num_args: args.len() as i32,
+                    args: args.as_mut_ptr(),
                     num_default_args: 0,
                     default_args: ptr::null_mut(),
                 }
@@ -349,18 +364,16 @@ pub struct Property<'l, T, S, G>
     pub usage: PropertyUsage,
 }
 
-// TODO: Signal arguments.
-
-//pub struct SignalArgument<'l> {
-//    pub name: &'str,
-//    pub default: Variant,
-//    pub hint: PropertyHint,
-//    pub usage: PropertyUsage,
-//}
+pub struct SignalArgument<'l> {
+    pub name: &'l str,
+    pub default: Variant,
+    pub hint: PropertyHint<'l>,
+    pub usage: PropertyUsage,
+}
 
 pub struct Signal<'l> {
     pub name: &'l str,
-    //pub args: &'l [SignalArgument],
+    pub args: &'l [SignalArgument<'l>],
 }
 
 pub unsafe trait PropertySetter<C: NativeClass, T: GodotType> {
