@@ -4,7 +4,7 @@ authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.3.0"
+version = "0.4.0"
 license = "MIT"
 workspace = ".."
 
