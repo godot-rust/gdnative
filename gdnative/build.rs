@@ -315,12 +315,12 @@ impl {name}MethodTable {{
         Self::get_mut()
     }}
 
-    pub fn get(api: &GodotApi) -> &'static Self {{
+    pub fn get(gd_api: &GodotApi) -> &'static Self {{
         unsafe {{
             let table = Self::get_mut();
             static INIT: Once = ONCE_INIT;
             INIT.call_once(|| {{
-                {name}MethodTable::init(table, api);
+                {name}MethodTable::init(table, gd_api);
             }});
 
             table
@@ -328,10 +328,10 @@ impl {name}MethodTable {{
     }}
 
     #[inline(never)]
-    fn init(table: &mut Self, api: &GodotApi) {{
+    fn init(table: &mut Self, gd_api: &GodotApi) {{
         unsafe {{
             let class_name = b"{name}\0".as_ptr() as *const c_char;
-            table.class_constructor = (api.godot_get_class_constructor)(class_name);"#,
+            table.class_constructor = (gd_api.godot_get_class_constructor)(class_name);"#,
                 name = class.name
             ).unwrap();
         for method in &class.methods {
@@ -341,7 +341,7 @@ impl {name}MethodTable {{
             }
 
             writeln!(output,
-r#"            table.{method_name} = (api.godot_method_bind_get_method)(class_name, "{method_name}\0".as_ptr() as *const c_char );"#,
+r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class_name, "{method_name}\0".as_ptr() as *const c_char );"#,
                 method_name = method_name
             ).unwrap();
         }
@@ -442,8 +442,8 @@ r#"
     // Constructor
     pub fn new() -> Self {{
         unsafe {{
-            let api = get_api();
-            let ctor = {name}MethodTable::get(api).class_constructor.unwrap();
+            let gd_api = ::get_api();
+            let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
             let obj = ctor();
             object::init_ref_count(obj);
 
@@ -479,8 +479,8 @@ r#"
     /// destroying the object) or destroyed manually using `{name}::free`.
     pub fn new() -> Self {{
         unsafe {{
-            let api = get_api();
-            let ctor = {name}MethodTable::get(api).class_constructor.unwrap();
+            let gd_api = ::get_api();
+            let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
             let this = ctor();
 
             {name} {{
@@ -536,9 +536,9 @@ r#"
 
     pub fn {name}({self_param}{params}) -> {rust_ret_type} {{
         unsafe {{
-            let api = ::get_api();
+            let gd_api = ::get_api();
 
-            let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(api).{name};"#,
+            let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
                 cname = class.name,
                 name = method_name,
                 rust_ret_type = rust_ret_type,
@@ -581,7 +581,7 @@ r#"            argument_buffer.push(&{name}.0); "#,
             for arg in varargs {{
                 argument_buffer.push(&arg.0 as *const _);
             }}
-            let ret = Variant((api.godot_method_bind_call)(method_bind, self.this, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
+            let ret = Variant((gd_api.godot_method_bind_call)(method_bind, self.this, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
                 ).unwrap();
 
                 if rust_ret_type.starts_with("Option") {
@@ -606,7 +606,7 @@ r#"                ret.into()"#
                 godot_handle_return_pre(&mut output, &method.get_return_type());
 
                 writeln!(output, r#"
-            (api.godot_method_bind_ptrcall)(method_bind, self.this, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
+            (gd_api.godot_method_bind_ptrcall)(method_bind, self.this, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
                 ).unwrap();
 
                 godot_handle_return_post(&mut output, &method.get_return_type());
@@ -820,7 +820,7 @@ r#"             mem::transmute(ret)"#
         &Ty::Rid => {
             writeln!(w,
 r#"            let mut rid = Rid::default();
-            (api.godot_rid_new_with_resource)(&mut rid.0, ret);
+            (gd_api.godot_rid_new_with_resource)(&mut rid.0, ret);
             rid "#
             ).unwrap();
         },
@@ -932,7 +932,7 @@ impl GodotArgument {
 
 fn class_name_to_snake_case(name: &str) -> String {
     // TODO: this is a quick-n-dirty band-aid, it'd be better to
-    // programmatically do the right conversion, but to_snale_case
+    // programmatically do the right conversion, but to_snake_case
     // currently translates "Node2D" into "node2_d".
     match name {
         "SpriteBase3D" => "sprite_base_3d".to_string(),
