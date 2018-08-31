@@ -3,6 +3,7 @@
 #define GODOT_GDNATIVE_API_STRUCT_H
 
 #include <gdnative/gdnative.h>
+#include <android/godot_android.h>
 #include <arvr/godot_arvr.h>
 #include <nativescript/godot_nativescript.h>
 #include <pluginscript/godot_pluginscript.h>
@@ -11,15 +12,19 @@
 	extern const godot_gdnative_core_api_struct *_gdnative_wrapper_api_struct;  \
 	extern const godot_gdnative_ext_nativescript_api_struct *_gdnative_wrapper_nativescript_api_struct;  \
 	extern const godot_gdnative_ext_pluginscript_api_struct *_gdnative_wrapper_pluginscript_api_struct;  \
+	extern const godot_gdnative_ext_android_api_struct *_gdnative_wrapper_android_api_struct;  \
 	extern const godot_gdnative_ext_arvr_api_struct *_gdnative_wrapper_arvr_api_struct;  \
 	_gdnative_wrapper_api_struct = options->api_struct;  \
-	for (int i = 0; i < _gdnative_wrapper_api_struct->num_extensions; i++) {   \
+	for (unsigned int i = 0; i < _gdnative_wrapper_api_struct->num_extensions; i++) {   \
 		switch (_gdnative_wrapper_api_struct->extensions[i]->type) {  \
 			case GDNATIVE_EXT_NATIVESCRIPT:  \
 				_gdnative_wrapper_nativescript_api_struct = (godot_gdnative_ext_nativescript_api_struct *) _gdnative_wrapper_api_struct->extensions[i];  \
 				break;  \
 			case GDNATIVE_EXT_PLUGINSCRIPT:  \
 				_gdnative_wrapper_pluginscript_api_struct = (godot_gdnative_ext_pluginscript_api_struct *) _gdnative_wrapper_api_struct->extensions[i];  \
+				break;  \
+			case GDNATIVE_EXT_ANDROID:  \
+				_gdnative_wrapper_android_api_struct = (godot_gdnative_ext_android_api_struct *) _gdnative_wrapper_api_struct->extensions[i];  \
 				break;  \
 			case GDNATIVE_EXT_ARVR:  \
 				_gdnative_wrapper_arvr_api_struct = (godot_gdnative_ext_arvr_api_struct *) _gdnative_wrapper_api_struct->extensions[i];  \
@@ -36,8 +41,27 @@ enum GDNATIVE_API_TYPES {
 	GDNATIVE_CORE,
 	GDNATIVE_EXT_NATIVESCRIPT,
 	GDNATIVE_EXT_PLUGINSCRIPT,
+	GDNATIVE_EXT_ANDROID,
 	GDNATIVE_EXT_ARVR,
 };
+
+typedef struct godot_gdnative_ext_nativescript_1_1_api_struct {
+	unsigned int type;
+	godot_gdnative_api_version version;
+	const godot_gdnative_api_struct *next;
+	void (*godot_nativescript_set_method_argument_information)(void *p_gdnative_handle, const char *p_name, const char *p_function_name, int p_num_args, const godot_method_arg *p_args);
+	void (*godot_nativescript_set_class_documentation)(void *p_gdnative_handle, const char *p_name, godot_string p_documentation);
+	void (*godot_nativescript_set_method_documentation)(void *p_gdnative_handle, const char *p_name, const char *p_function_name, godot_string p_documentation);
+	void (*godot_nativescript_set_property_documentation)(void *p_gdnative_handle, const char *p_name, const char *p_path, godot_string p_documentation);
+	void (*godot_nativescript_set_signal_documentation)(void *p_gdnative_handle, const char *p_name, const char *p_signal_name, godot_string p_documentation);
+	void (*godot_nativescript_set_global_type_tag)(int p_idx, const char *p_name, const void *p_type_tag);
+	const void *(*godot_nativescript_get_global_type_tag)(int p_idx, const char *p_name);
+	void (*godot_nativescript_set_type_tag)(void *p_gdnative_handle, const char *p_name, const void *p_type_tag);
+	const void *(*godot_nativescript_get_type_tag)(const godot_object *p_object);
+	int (*godot_nativescript_register_instance_binding_data_functions)(godot_instance_binding_functions p_binding_functions);
+	void (*godot_nativescript_unregister_instance_binding_data_functions)(int p_idx);
+	void *(*godot_nativescript_get_instance_binding_data)(int p_idx, godot_object *p_object);
+} godot_gdnative_ext_nativescript_1_1_api_struct;
 
 typedef struct godot_gdnative_ext_nativescript_api_struct {
 	unsigned int type;
@@ -57,6 +81,14 @@ typedef struct godot_gdnative_ext_pluginscript_api_struct {
 	const godot_gdnative_api_struct *next;
 	void (*godot_pluginscript_register_language)(const godot_pluginscript_language_desc *language_desc);
 } godot_gdnative_ext_pluginscript_api_struct;
+
+typedef struct godot_gdnative_ext_android_api_struct {
+	unsigned int type;
+	godot_gdnative_api_version version;
+	const godot_gdnative_api_struct *next;
+	JNIEnv*(*godot_android_get_env)();
+	jobject (*godot_android_get_activity)();
+} godot_gdnative_ext_android_api_struct;
 
 typedef struct godot_gdnative_ext_arvr_api_struct {
 	unsigned int type;
@@ -591,7 +623,7 @@ typedef struct godot_gdnative_core_api_struct {
 	godot_variant_type (*godot_variant_get_type)(const godot_variant *p_v);
 	void (*godot_variant_new_copy)(godot_variant *r_dest, const godot_variant *p_src);
 	void (*godot_variant_new_nil)(godot_variant *r_dest);
-	void (*godot_variant_new_bool)(godot_variant *p_v, const godot_bool p_b);
+	void (*godot_variant_new_bool)(godot_variant *r_dest, const godot_bool p_b);
 	void (*godot_variant_new_uint)(godot_variant *r_dest, const uint64_t p_i);
 	void (*godot_variant_new_int)(godot_variant *r_dest, const int64_t p_i);
 	void (*godot_variant_new_real)(godot_variant *r_dest, const double p_r);
