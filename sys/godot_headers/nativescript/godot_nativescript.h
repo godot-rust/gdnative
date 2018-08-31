@@ -43,6 +43,9 @@ typedef enum {
 	GODOT_METHOD_RPC_MODE_SYNC,
 	GODOT_METHOD_RPC_MODE_MASTER,
 	GODOT_METHOD_RPC_MODE_SLAVE,
+	GODOT_METHOD_RPC_MODE_REMOTESYNC,
+	GODOT_METHOD_RPC_MODE_MASTERSYNC,
+	GODOT_METHOD_RPC_MODE_SLAVESYNC,
 } godot_method_rpc_mode;
 
 typedef enum {
@@ -50,7 +53,7 @@ typedef enum {
 	GODOT_PROPERTY_HINT_RANGE, ///< hint_text = "min,max,step,slider; //slider is optional"
 	GODOT_PROPERTY_HINT_EXP_RANGE, ///< hint_text = "min,max,step", exponential edit
 	GODOT_PROPERTY_HINT_ENUM, ///< hint_text= "val1,val2,val3,etc"
-	GODOT_PROPERTY_HINT_EXP_EASING, /// exponential easing funciton (Math::ease)
+	GODOT_PROPERTY_HINT_EXP_EASING, /// exponential easing function (Math::ease)
 	GODOT_PROPERTY_HINT_LENGTH, ///< hint_text= "length" (as integer)
 	GODOT_PROPERTY_HINT_SPRITE_FRAME,
 	GODOT_PROPERTY_HINT_KEY_ACCEL, ///< hint_text= "length" (as integer)
@@ -184,6 +187,55 @@ typedef struct {
 void GDAPI godot_nativescript_register_signal(void *p_gdnative_handle, const char *p_name, const godot_signal *p_signal);
 
 void GDAPI *godot_nativescript_get_userdata(godot_object *p_instance);
+
+/*
+ *
+ *
+ * NativeScript 1.1
+ *
+ *
+ */
+
+// method registering with argument names
+
+typedef struct {
+	godot_string name;
+
+	godot_variant_type type;
+	godot_property_hint hint;
+	godot_string hint_string;
+} godot_method_arg;
+
+void GDAPI godot_nativescript_set_method_argument_information(void *p_gdnative_handle, const char *p_name, const char *p_function_name, int p_num_args, const godot_method_arg *p_args);
+
+// documentation
+
+void GDAPI godot_nativescript_set_class_documentation(void *p_gdnative_handle, const char *p_name, godot_string p_documentation);
+void GDAPI godot_nativescript_set_method_documentation(void *p_gdnative_handle, const char *p_name, const char *p_function_name, godot_string p_documentation);
+void GDAPI godot_nativescript_set_property_documentation(void *p_gdnative_handle, const char *p_name, const char *p_path, godot_string p_documentation);
+void GDAPI godot_nativescript_set_signal_documentation(void *p_gdnative_handle, const char *p_name, const char *p_signal_name, godot_string p_documentation);
+
+// type tag API
+
+void GDAPI godot_nativescript_set_global_type_tag(int p_idx, const char *p_name, const void *p_type_tag);
+const void GDAPI *godot_nativescript_get_global_type_tag(int p_idx, const char *p_name);
+
+void GDAPI godot_nativescript_set_type_tag(void *p_gdnative_handle, const char *p_name, const void *p_type_tag);
+const void GDAPI *godot_nativescript_get_type_tag(const godot_object *p_object);
+
+// instance binding API
+
+typedef struct {
+	GDCALLINGCONV void *(*alloc_instance_binding_data)(void *, const void *, godot_object *);
+	GDCALLINGCONV void (*free_instance_binding_data)(void *, void *);
+	void *data;
+	GDCALLINGCONV void (*free_func)(void *);
+} godot_instance_binding_functions;
+
+int GDAPI godot_nativescript_register_instance_binding_data_functions(godot_instance_binding_functions p_binding_functions);
+void GDAPI godot_nativescript_unregister_instance_binding_data_functions(int p_idx);
+
+void GDAPI *godot_nativescript_get_instance_binding_data(int p_idx, godot_object *p_object);
 
 #ifdef __cplusplus
 }
