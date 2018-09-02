@@ -399,6 +399,117 @@ impl DerefMut for {name} {{
         }
 
 
+        'method_def:
+        for method in &class.methods {
+            let method_name = method.get_name();
+
+            if skip_method(&method_name) {
+                continue;
+            }
+
+            let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
+                ty
+            } else {
+                continue;
+            };
+
+            let mut params = String::new();
+            for argument in &method.arguments {
+                if let Some(ty) = argument.get_type().to_rust() {
+                    fmt::Write::write_fmt(&mut params, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
+                } else {
+                    continue 'method_def;
+                }
+            }
+
+            if method.has_varargs {
+                params.push_str(", varargs: &[Variant]");
+            }
+
+            writeln!(output, r#"
+
+unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
+    let gd_api = ::get_api();
+
+    let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
+                cname = class.name,
+                name = method_name,
+                rust_ret_type = rust_ret_type,
+                params = params,
+            ).unwrap();
+            if method.has_varargs {
+                writeln!(output,
+r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity({arg_count} + varargs.len());"#,
+                    arg_count = method.arguments.len()
+                ).unwrap();
+
+                for argument in &method.arguments {
+                    let ty = argument.get_type().to_rust().unwrap();
+                    if ty.starts_with("Option") {
+                        writeln!(output,
+r#"    let {name}: Variant = if let Some(o) = {name} {{
+           o.into()
+       }} else {{ Variant::new() }};"#,
+                            name = rust_safe_name(&argument.name)
+                        ).unwrap();
+                    } else if ty == "GodotString" {
+                        writeln!(output,
+r#"    let {name}: Variant = Variant::from_godot_string(&{name});"#,
+                            name = rust_safe_name(&argument.name)
+                        ).unwrap();
+                    } else {
+                        writeln!(output, r#"
+       let {name}: Variant = {name}.into();"#,
+                            name = rust_safe_name(&argument.name)
+                        ).unwrap();
+                    }
+                    writeln!(output,
+r#"    argument_buffer.push(&{name}.0); "#,
+                        name = rust_safe_name(&argument.name)
+                    ).unwrap();
+                }
+
+                writeln!(output, r#"
+    for arg in varargs {{
+        argument_buffer.push(&arg.0 as *const _);
+    }}
+    let ret = Variant((gd_api.godot_method_bind_call)(method_bind, obj_ptr, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
+                ).unwrap();
+
+                if rust_ret_type.starts_with("Option") {
+                    writeln!(output,
+r#"    ret.try_to_object()"#
+                    ).unwrap();
+                } else {
+                    writeln!(output,
+r#"    ret.into()"#
+                    ).unwrap();
+                }
+
+            } else {
+                writeln!(output, r#"
+    let mut argument_buffer = [ptr::null() as *const libc::c_void; {arg_count}];"#,
+                    arg_count = method.arguments.len()).unwrap();
+
+                for (idx, argument) in method.arguments.iter().enumerate() {
+                    godot_handle_argument_pre(&mut output, &argument.get_type(), rust_safe_name(&argument.name), idx);
+                }
+
+                godot_handle_return_pre(&mut output, &method.get_return_type());
+
+                writeln!(output, r#"
+    (gd_api.godot_method_bind_ptrcall)(method_bind, obj_ptr, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
+                ).unwrap();
+
+                godot_handle_return_post(&mut output, &method.get_return_type());
+            }
+
+            writeln!(output,
+r#"}}"#
+            ).unwrap();
+        }
+
+
         writeln!(output, r#"
 impl {name} {{"#, name = class.name
         ).unwrap();
@@ -513,108 +624,38 @@ r#"
                 continue
             };
 
-            let mut params = String::new();
+            let mut params_decl = String::new();
+            let mut params_use = String::new();
             for argument in &method.arguments {
                 if let Some(ty) = argument.get_type().to_rust() {
-                    fmt::Write::write_fmt(&mut params, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
+                    fmt::Write::write_fmt(&mut params_decl, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
+                    fmt::Write::write_fmt(&mut params_use, format_args!(", {}", rust_safe_name(&argument.name))).unwrap();
                 } else {
                     continue 'method;
                 }
             }
 
             if method.has_varargs {
-                params.push_str(", varargs: &[Variant]");
+                params_decl.push_str(", varargs: &[Variant]");
+                params_use.push_str(", varargs");
             }
 
-            let self_param = if method.is_const {
-                "&self"
-            } else {
-                "&mut self"
-            };
+            let self_param = if method.is_const { "&self" } else { "&mut self" };
 
             writeln!(output, r#"
 
-    pub fn {name}({self_param}{params}) -> {rust_ret_type} {{
+    pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         unsafe {{
-            let gd_api = ::get_api();
-
-            let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
+            {cname}_{name}(self.this{params_use})
+        }}
+    }}"#,
                 cname = class.name,
                 name = method_name,
                 rust_ret_type = rust_ret_type,
-                params = params,
+                params_decl = params_decl,
+                params_use = params_use,
                 self_param = self_param,
             ).unwrap();
-            if method.has_varargs {
-                writeln!(output,
-r#"            let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity({arg_count} + varargs.len());"#,
-                    arg_count = method.arguments.len()
-                ).unwrap();
-
-                for argument in &method.arguments {
-                    let ty = argument.get_type().to_rust().unwrap();
-                    if ty.starts_with("Option") {
-                        writeln!(output,
-r#"             let {name}: Variant = if let Some(o) = {name} {{
-                    o.into()
-                }} else {{ Variant::new() }};"#,
-                            name = rust_safe_name(&argument.name)
-                        ).unwrap();
-                    } else if ty == "GodotString" {
-                        writeln!(output,
-r#"             let {name}: Variant = Variant::from_godot_string(&{name});"#,
-                            name = rust_safe_name(&argument.name)
-                        ).unwrap();
-                    } else {
-                        writeln!(output, r#"
-                let {name}: Variant = {name}.into();"#,
-                            name = rust_safe_name(&argument.name)
-                        ).unwrap();
-                    }
-                    writeln!(output,
-r#"            argument_buffer.push(&{name}.0); "#,
-                        name = rust_safe_name(&argument.name)
-                    ).unwrap();
-                }
-
-                writeln!(output, r#"
-            for arg in varargs {{
-                argument_buffer.push(&arg.0 as *const _);
-            }}
-            let ret = Variant((gd_api.godot_method_bind_call)(method_bind, self.this, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
-                ).unwrap();
-
-                if rust_ret_type.starts_with("Option") {
-                    writeln!(output,
-r#"                ret.try_to_object()"#
-                    ).unwrap();
-                } else {
-                    writeln!(output,
-r#"                ret.into()"#
-                    ).unwrap();
-                }
-
-            } else {
-                writeln!(output, r#"
-            let mut argument_buffer = [ptr::null() as *const libc::c_void; {arg_count}];
-                "#, arg_count = method.arguments.len()).unwrap();
-
-                for (idx, argument) in method.arguments.iter().enumerate() {
-                    godot_handle_argument_pre(&mut output, &argument.get_type(), rust_safe_name(&argument.name), idx);
-                }
-
-                godot_handle_return_pre(&mut output, &method.get_return_type());
-
-                writeln!(output, r#"
-            (gd_api.godot_method_bind_ptrcall)(method_bind, self.this, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
-                ).unwrap();
-
-                godot_handle_return_post(&mut output, &method.get_return_type());
-            }
-
-            writeln!(output,
-r#"        }}
-    }}"#).unwrap();
         }
 
         writeln!(output,
@@ -678,7 +719,7 @@ fn godot_handle_argument_pre<W: Write>(w: &mut W, ty: &Ty, name: &str, arg: usiz
         | &Ty::Color
         => {
             writeln!(w,
-r#"            argument_buffer[{arg}] = (&{name}) as *const _ as *const _;"#,
+r#"    argument_buffer[{arg}] = (&{name}) as *const _ as *const _;"#,
             name = name, arg = arg).unwrap();
         },
         &Ty::Variant
@@ -696,18 +737,20 @@ r#"            argument_buffer[{arg}] = (&{name}) as *const _ as *const _;"#,
         | &Ty::Float32Array
         => {
             writeln!(w,
-r#"            argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;"#,
+r#"    argument_buffer[{arg}] = (&{name}.0) as *const _ as *const _;"#,
                 name = name, arg = arg
             ).unwrap();
         },
         &Ty::Object(_) => {
             writeln!(w, r#"
-            argument_buffer[{arg}] = if let Some(arg) = {name} {{
-                arg.this as *const _ as *const _
-            }} else {{
-                ptr::null()
-            }};
-            "#, name = name, arg = arg).unwrap();
+    argument_buffer[{arg}] = if let Some(arg) = {name} {{
+        arg.this as *const _ as *const _
+    }} else {{
+        ptr::null()
+    }};"#,
+                name = name,
+                arg = arg
+            ).unwrap();
         },
         _ => {}
     }
@@ -717,26 +760,24 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &Ty) {
     match ty {
         &Ty::Void => {
             writeln!(w, r#"
-            let ret_ptr = ptr::null_mut();"#
-            ).unwrap();
-
+    let ret_ptr = ptr::null_mut();"#).unwrap();
         },
         &Ty::F64 => {
             writeln!(w, r#"
-            let mut ret = 0.0f64;
-            let ret_ptr = &mut ret as *mut _;"#
+    let mut ret = 0.0f64;
+    let ret_ptr = &mut ret as *mut _;"#
             ).unwrap();
         },
         &Ty::I64 => {
             writeln!(w, r#"
-            let mut ret = 0i64;
-            let ret_ptr = &mut ret as *mut _;"#
+    let mut ret = 0i64;
+    let ret_ptr = &mut ret as *mut _;"#
             ).unwrap();
         },
         &Ty::Bool => {
             writeln!(w, r#"
-            let mut ret = false;
-            let ret_ptr = &mut ret as *mut _;"#
+    let mut ret = false;
+    let ret_ptr = &mut ret as *mut _;"#
             ).unwrap();
         },
         &Ty::String
@@ -763,28 +804,28 @@ fn godot_handle_return_pre<W: Write>(w: &mut W, ty: &Ty) {
         | &Ty::Float32Array
         => {
             writeln!(w, r#"
-            let mut ret = {sys_ty}::default();
-            let ret_ptr = &mut ret as *mut _;"#,
+    let mut ret = {sys_ty}::default();
+    let ret_ptr = &mut ret as *mut _;"#,
                 sys_ty = ty.to_sys().unwrap()
             ).unwrap();
         }
         &Ty::Object(_) // TODO: double check
         | &Ty::Rid => {
             writeln!(w, r#"
-            let mut ret: *mut sys::godot_object = ptr::null_mut();
-            let ret_ptr = (&mut ret) as *mut _;"#
+    let mut ret: *mut sys::godot_object = ptr::null_mut();
+    let ret_ptr = (&mut ret) as *mut _;"#
             ).unwrap();
         }
         &Ty::Result => {
             writeln!(w, r#"
-            let mut ret: sys::godot_error = sys::godot_error::GODOT_OK;
-            let ret_ptr = (&mut ret) as *mut _;"#
+    let mut ret: sys::godot_error = sys::godot_error::GODOT_OK;
+    let ret_ptr = (&mut ret) as *mut _;"#
             ).unwrap();
         }
         &Ty::VariantType => {
             writeln!(w, r#"
-            let mut ret: sys::godot_variant_type = sys::godot_variant_type::GODOT_VARIANT_TYPE_NIL;
-            let ret_ptr = (&mut ret) as *mut _;"#
+    let mut ret: sys::godot_variant_type = sys::godot_variant_type::GODOT_VARIANT_TYPE_NIL;
+    let ret_ptr = (&mut ret) as *mut _;"#
             ).unwrap();
         }
         &Ty::Enum(_) => {}
@@ -798,9 +839,7 @@ fn godot_handle_return_post<W: Write>(w: &mut W, ty: &Ty) {
         | &Ty::I64
         | &Ty::Bool
         => {
-            writeln!(w,
-r#"            ret"#
-            ).unwrap();
+            writeln!(w, r#"    ret"#).unwrap();
         }
         &Ty::Vector2
         | &Ty::Vector3
@@ -813,15 +852,13 @@ r#"            ret"#
         | &Ty::Plane
         | &Ty::Color
         => {
-            writeln!(w,
-r#"             mem::transmute(ret)"#
-            ).unwrap();
+            writeln!(w, r#"    mem::transmute(ret)"#).unwrap();
         },
         &Ty::Rid => {
-            writeln!(w,
-r#"            let mut rid = Rid::default();
-            (gd_api.godot_rid_new_with_resource)(&mut rid.0, ret);
-            rid "#
+            writeln!(w, r#"
+    let mut rid = Rid::default();
+    (gd_api.godot_rid_new_with_resource)(&mut rid.0, ret);
+    rid"#
             ).unwrap();
         },
         &Ty::String
@@ -838,28 +875,24 @@ r#"            let mut rid = Rid::default();
         | &Ty::Variant
         => {
             writeln!(w,
-r#"            {rust_ty}(ret)"#, rust_ty = ty.to_rust().unwrap()
+r#"    {rust_ty}(ret)"#, rust_ty = ty.to_rust().unwrap()
             ).unwrap();
         }
         &Ty::Object(ref name) => {
             writeln!(w, r#"
-            if ret.is_null() {{
-                None
-            }} else {{
-                Some({}::from_sys(ret))
-            }}"#,
+    if ret.is_null() {{
+        None
+    }} else {{
+        Some({}::from_sys(ret))
+    }}"#,
                 name
             ).unwrap();
         },
         &Ty::Result => {
-            writeln!(w,
-r#"            result_from_sys(ret)"#
-            ).unwrap();
+            writeln!(w, r#"    result_from_sys(ret)"#).unwrap();
         }
         &Ty::VariantType => {
-            writeln!(w,
-r#"            VariantType::from_sys(ret)"#
-            ).unwrap();
+            writeln!(w, r#"    VariantType::from_sys(ret)"#).unwrap();
         }
         _ => {}
     }
