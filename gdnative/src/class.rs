@@ -38,15 +38,15 @@ pub struct NativeRef<T: NativeClass> {
 impl<T: NativeClass> NativeRef<T> {
     /// Try to down-cast from a `NativeScript` reference.
     pub fn from_native_script(script: &NativeScript) -> Option<Self> {
-        // TODO: There's gotta be a better way.
-        let class = script.get_class_name();
-        let gd_name = GodotString::from_str(T::class_name());
-
-        if class != gd_name {
-            return None;
-        }
-
         unsafe {
+            // TODO: There's gotta be a better way.
+            let class = script.get_class_name();
+            let gd_name = GodotString::from_str(T::class_name());
+
+            if class != gd_name {
+                return None;
+            }
+
             let this = script.to_sys();
             object::add_ref(this);
 
@@ -55,7 +55,7 @@ impl<T: NativeClass> NativeRef<T> {
     }
 
     /// Try to down-cast from an `Object` reference.
-    pub fn from_object(&self, obj: &Object) -> Option<Self> {
+    pub unsafe fn from_object(&self, obj: &Object) -> Option<Self> {
         if let Some(script) = obj.get_script().and_then(|v| v.cast::<NativeScript>()) {
             return Self::from_native_script(&script)
         }

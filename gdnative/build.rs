@@ -614,7 +614,7 @@ r#"
         }
 
         'method:
-        for method in class.methods {
+        for method in &class.methods {
             let method_name = method.get_name();
 
             if skip_method(&method_name) {
@@ -645,20 +645,33 @@ r#"
 
             let self_param = if method.is_const { "&self" } else { "&mut self" };
 
-            writeln!(output, r#"
-
+            if class.is_pointer_safe() {
+                writeln!(output, r#"
     pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         unsafe {{
             {cname}_{name}(self.this{params_use})
         }}
     }}"#,
-                cname = class.name,
-                name = method_name,
-                rust_ret_type = rust_ret_type,
-                params_decl = params_decl,
-                params_use = params_use,
-                self_param = self_param,
-            ).unwrap();
+                    cname = class.name,
+                    name = method_name,
+                    rust_ret_type = rust_ret_type,
+                    params_decl = params_decl,
+                    params_use = params_use,
+                    self_param = self_param,
+                ).unwrap();
+            } else {
+                writeln!(output, r#"
+    pub unsafe fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
+        {cname}_{name}(self.this{params_use})
+    }}"#,
+                    cname = class.name,
+                    name = method_name,
+                    rust_ret_type = rust_ret_type,
+                    params_decl = params_decl,
+                    params_use = params_use,
+                    self_param = self_param,
+                ).unwrap();
+            }
         }
 
         writeln!(output,
@@ -908,6 +921,10 @@ struct GodotClass {
 
     methods: Vec<GodotMethod>,
     enums: Vec<Enum>,
+}
+
+impl GodotClass {
+    fn is_pointer_safe(&self) -> bool { self.is_reference || self.singleton }
 }
 
 #[derive(Deserialize, Debug)]
