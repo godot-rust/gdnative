@@ -237,8 +237,13 @@ r#"///
             ).unwrap();
         }
 
+        if !class.is_reference {
+            writeln!(output, "#[derive(Copy, Clone)]").unwrap();
+        }
+
         writeln!(output,
 r#"#[allow(non_camel_case_types)]
+#[derive(Debug)]
 pub struct {name} {{
     this: *mut sys::godot_object,
 }}
