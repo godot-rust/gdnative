@@ -39,7 +39,7 @@ fn test_constructor() -> bool {
     let _ = lib.is_singleton();
 
     let path = Path2D::new();
-    let _ = path.get_z_index();
+    let _ = unsafe { path.get_z_index() };
     unsafe { path.free(); }
 
     return true;

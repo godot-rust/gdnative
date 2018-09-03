@@ -67,27 +67,31 @@ godot_class! {
         }
 
         export fn _ready(&mut self) {
-            let mut parent = self.as_parent();
-            parent.set_physics_process(true);
-            self.start = parent.get_translation();
-            godot_warn!("Start: {:?}", self.start);
-            godot_warn!(
-                "Parent name: {:?}",
-                parent.get_parent().expect("Missing parent").get_name()
-            );
+            unsafe {
+                let mut parent = self.as_parent();
+                parent.set_physics_process(true);
+                self.start = parent.get_translation();
+                godot_warn!("Start: {:?}", self.start);
+                godot_warn!(
+                    "Parent name: {:?}",
+                    parent.get_parent().expect("Missing parent").get_name()
+                );
+            }
         }
 
         export fn _physics_process(&mut self, delta: f64) {
             use godot::{Color, SpatialMaterial, Vector3};
-            self.time += delta as f32;
-            let mut parent = self.as_parent();
-            parent.rotate_y(self.rotate_speed);
-            let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
-            parent.set_translation(self.start + offset);
+            unsafe {
+                self.time += delta as f32;
+                let mut parent = self.as_parent();
+                parent.rotate_y(self.rotate_speed);
+                let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
+                parent.set_translation(self.start + offset);
 
-            if let Some(mat) = parent.get_surface_material(0) {
-                let mut mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
-                mat.set_albedo(Color::rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
+                if let Some(mat) = parent.get_surface_material(0) {
+                    let mut mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
+                    mat.set_albedo(Color::rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
+                }
             }
         }
     }
