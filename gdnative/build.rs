@@ -12,8 +12,7 @@ use std::env;
 use std::path::PathBuf;
 use std::io::Write;
 use std::fmt;
-
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Clone)]
 enum Ty {
@@ -175,13 +174,17 @@ fn main() {
     writeln!(output, "use std::mem;").unwrap();
     writeln!(output, "use object;").unwrap();
 
-    for class in classes {
+    for class in &classes {
         let has_parent = class.base_class != "";
         let singleton_str = if class.singleton { "singleton " } else { "" } ;
-        let ownership_type = if class.is_reference { "reference counted" } else { "manually managed" };
-        if has_parent {
+        let ownership_type = if class.is_refcounted() { "reference counted" } else { "manually managed" };
+        if &class.name == "Reference" {
+            writeln!(output, "/// Base class of all reference-counted types. Inherits `Object`.").unwrap();
+        } else if &class.name == "Object" {
+            writeln!(output, "/// The base class of most Godot classes.").unwrap();
+        } else if has_parent {
             writeln!(output, r#"
-/// `{api_type} {singleton}class {name} : {base_class}` ({ownership_type})"#,
+/// `{api_type} {singleton}class {name}` inherits `{base_class}` ({ownership_type})."#,
                 api_type = class.api_type,
                 name = class.name,
                 base_class = class.base_class,
@@ -190,7 +193,7 @@ fn main() {
             ).unwrap();
         } else {
             writeln!(output, r#"
-/// `{api_type} {singleton}class {name}` ({ownership_type})"#,
+/// `{api_type} {singleton}class {name}` ({ownership_type})."#,
                 api_type = class.api_type,
                 name = class.name,
                 ownership_type = ownership_type,
@@ -198,18 +201,7 @@ fn main() {
             ).unwrap();
         }
 
-        if class.base_class != "" {
-            writeln!(output,
-r#"///
-/// ## Base class
-///
-/// {name} inherits [{base_class}](struct.{base_class}.html) and all of its methods."#,
-                name = class.name,
-                base_class = class.base_class
-            ).unwrap();
-        }
-
-        if class.is_reference {
+        if class.is_refcounted() {
             writeln!(output,
 r#"///
 /// ## Memory management
@@ -222,10 +214,30 @@ r#"///
 /// ## Memory management
 ///
 /// Non reference counted objects such as the ones of this type are usually owned by the engine.
-/// In the cases where Rust code owns an object of this type, ownership should be either passed
-/// to the engine or the object must be manually destroyed using `{}::free`."#,
-                class.name
+///
+/// `{name}` is an unsafe pointer, and all of its methods are unsafe.
+///
+/// In the cases where Rust code owns an object of this type, for example if the object was just
+/// created on the Rust side and not passed to the engine yet, ownership should be either given
+/// to the engine or the object must be manually destroyed using `{name}::free`."#,
+                name = class.name
             ).unwrap();
+        }
+
+        if class.base_class != "" {
+            writeln!(output,
+r#"///
+/// ## Class hierarchy
+///
+/// {name} inherits methods from:"#,
+                name = class.name,
+            ).unwrap();
+
+            list_base_classes(
+                &mut output,
+                &classes,
+                &class.base_class,
+            );
         }
 
         if class.api_type == "tools" {
@@ -233,11 +245,11 @@ r#"///
 r#"///
 /// ## Tool
 ///
-/// This class is used to interact with godot's editor."#,
+/// This class is used to interact with Godot's editor."#,
             ).unwrap();
         }
 
-        if !class.is_reference {
+        if !class.is_refcounted() {
             writeln!(output, "#[derive(Copy, Clone)]").unwrap();
         }
 
@@ -377,32 +389,10 @@ unsafe impl GodotObject for {name} {{
 
 "#,
             name = class.name,
-            addref_if_reference = if class.is_reference { "object::add_ref(obj);" } else { "" }
+            addref_if_reference = if class.is_refcounted() { "object::add_ref(obj);" } else { "" }
         ).unwrap();
 
-        if class.base_class != "" {
-            writeln!(output, r#"
-impl Deref for {name} {{
-    type Target = {parent};
-    fn deref(&self) -> &Self::Target {{
-        unsafe {{
-            mem::transmute(self)
-        }}
-    }}
-}}
-
-impl DerefMut for {name} {{
-    fn deref_mut(&mut self) -> &mut Self::Target {{
-        unsafe {{
-            mem::transmute(self)
-        }}
-    }}
-}}
-"#,             name = class.name,
-                parent = class.base_class
-            ).unwrap();
-        }
-
+        // Generate method implementations.
 
         'method_def:
         for method in &class.methods {
@@ -528,17 +518,6 @@ impl {name} {{"#, name = class.name
             class.name.as_ref()
         };
 
-        if class.base_class != "" {
-            writeln!(output, r#"
-    /// Up-cast.
-    pub fn as_{parent_sc}(&self) -> {parent} {{
-        unsafe {{ {parent}::from_sys(self.this) }}
-    }}"#,
-                parent = class.base_class,
-                parent_sc = class_name_to_snake_case(&class.base_class)
-            ).unwrap();
-        }
-
         if class.singleton {
             writeln!(output, r#"
     pub fn godot_singleton() -> Self {{
@@ -555,7 +534,7 @@ impl {name} {{"#, name = class.name
 
         if class.instanciable {
 
-            if class.is_reference {
+            if class.is_refcounted() {
                 writeln!(output,
 r#"
     // Constructor
@@ -572,7 +551,7 @@ r#"
         }}
     }}
 
-    /// Creates a new reference to the same object.
+    /// Creates a new reference to the same reference-counted object.
     pub fn new_ref(&self) -> Self {{
         unsafe {{
             object::add_ref(self.this);
@@ -618,19 +597,82 @@ r#"
             }
         }
 
+        let mut method_set = HashSet::default();
+
+        write_methods(
+            &mut output,
+            &classes,
+            &mut method_set,
+            &class.name,
+            class.is_pointer_safe(),
+        );
+
+        write_upcast(
+            &mut output,
+            &classes,
+            &class.base_class,
+            class.is_pointer_safe(),
+        );
+
+        writeln!(output,
+r#"
+    /// Generic dynamic cast.
+    pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
+        object::godot_cast::<T>(self.this)
+    }}
+"#,
+            maybe_unsafe = if class.is_pointer_safe() { "" } else { "unsafe " },
+        ).unwrap();
+
+        writeln!(output, r#"}}"#).unwrap();
+
+        if class.is_refcounted() && class.instanciable {
+            writeln!(output,
+r#"
+impl Drop for {name} {{
+    fn drop(&mut self) {{
+        unsafe {{
+            if object::unref(self.this) {{
+                (::get_api().godot_object_destroy)(self.this);
+            }}
+        }}
+    }}
+}}
+"#,
+                name = class.name
+            ).unwrap();
+        }
+    }
+}
+
+fn write_methods<W: Write>(
+    output: &mut W,
+    classes: &[GodotClass],
+    method_set: &mut HashSet<String>,
+    class_name: &str,
+    is_safe: bool,
+) {
+    if let Some(class) = find_class(classes, class_name) {
         'method:
         for method in &class.methods {
             let method_name = method.get_name();
 
             if skip_method(&method_name) {
-                continue 'method;
+                continue;
             }
 
             let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
                 ty
             } else {
-                continue
+                continue;
             };
+
+            // Ensure that methods are not injected several times.
+            let method_name_string = method_name.to_string();
+            if method_set.contains(&method_name_string) {
+                continue;
+            }
+            method_set.insert(method_name_string);
 
             let mut params_decl = String::new();
             let mut params_use = String::new();
@@ -650,8 +692,9 @@ r#"
 
             let self_param = if method.is_const { "&self" } else { "&mut self" };
 
-            if class.is_pointer_safe() {
+            if is_safe {
                 writeln!(output, r#"
+    /// Inherited from {cname}.
     pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         unsafe {{
             {cname}_{name}(self.this{params_use})
@@ -666,6 +709,7 @@ r#"
                 ).unwrap();
             } else {
                 writeln!(output, r#"
+    /// Inherited from {cname}.
     pub unsafe fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         {cname}_{name}(self.this{params_use})
     }}"#,
@@ -679,30 +723,78 @@ r#"
             }
         }
 
-        writeln!(output,
-r#"
-    pub fn cast<T: GodotObject>(&self) -> Option<T> {{
-        object::godot_cast::<T>(self.this)
-    }}
-"#      ).unwrap();
+        if &class.base_class != "" {
+            write_methods(
+                output,
+                classes,
+                method_set,
+                &class.base_class,
+                is_safe,
+            );
+        }
+    }
+}
 
-        writeln!(output, r#"}}"#).unwrap();
-
-        if class.is_reference && class.instanciable {
+fn write_upcast<W: Write>(
+    output: &mut W,
+    classes: &[GodotClass],
+    parent_name: &str,
+    is_safe: bool,
+) {
+    if let Some(parent) = find_class(classes, parent_name) {
+        let snake_name = class_name_to_snake_case(&parent_name);
+        if is_safe {
             writeln!(output,
-r#"
-impl Drop for {name} {{
-    fn drop(&mut self) {{
-        unsafe {{
-            if object::unref(self.this) {{
-                (::get_api().godot_object_destroy)(self.this);
-            }}
-        }}
+r#"    /// Up-cast.
+    pub fn to_{snake_name}(&self) -> {name} {{
+        {addref_if_reference}
+        {name} {{ this: self.this }}
     }}
-}}
 "#,
-                name = class.name
+                name = parent.name,
+                snake_name = snake_name,
+                addref_if_reference = if parent.is_refcounted() {
+                    "unsafe {{ object::add_ref(self.this); }}"
+                } else { "" },
             ).unwrap();
+        } else {
+            writeln!(output,
+r#"    /// Up-cast.
+    pub unsafe fn to_{snake_name}(&self) -> {name} {{
+        {addref_if_reference}
+        {name} {{ this: self.this }}
+    }}
+"#,
+                name = parent.name,
+                snake_name = snake_name,
+                addref_if_reference = if parent.is_refcounted() {
+                    "object::add_ref(self.this);"
+                } else { "" },
+            ).unwrap();
+        }
+
+        write_upcast(
+            output,
+            classes,
+            &parent.base_class,
+            is_safe,
+        );
+    }
+}
+
+fn list_base_classes<W: Write>(
+    output: &mut W,
+    classes: &[GodotClass],
+    parent_name: &str,
+) {
+    if let Some(parent) = find_class(classes, parent_name) {
+        writeln!(output,
+            "/// - [{base_class}](struct.{base_class}.html)",
+            base_class = parent_name,
+        ).unwrap();
+
+        if parent.base_class != "" {
+            list_base_classes(output, classes, &parent.base_class);
         }
     }
 }
@@ -929,7 +1021,8 @@ struct GodotClass {
 }
 
 impl GodotClass {
-    fn is_pointer_safe(&self) -> bool { self.is_reference || self.singleton }
+    fn is_refcounted(&self) -> bool { self.is_reference || &self.name == "Reference" }
+    fn is_pointer_safe(&self) -> bool { self.is_refcounted() || self.singleton }
 }
 
 #[derive(Deserialize, Debug)]
@@ -1000,4 +1093,14 @@ fn class_name_to_snake_case(name: &str) -> String {
         "Physics2DDirectBodyState" => "physics_2d_direct_body_state".to_string(),
         _ => name.to_snake_case(),
     }
+}
+
+fn find_class<'a, 'b>(classes: &'a[GodotClass], name: &'b str) -> Option<&'a GodotClass> {
+    for class in classes {
+        if &class.name == name {
+            return Some(class);
+        }
+    }
+
+    None
 }
