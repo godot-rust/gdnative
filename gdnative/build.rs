@@ -520,6 +520,7 @@ impl {name} {{"#, name = class.name
 
         if class.singleton {
             writeln!(output, r#"
+    #[inline]
     pub fn godot_singleton() -> Self {{
         unsafe {{
             let this = (get_api().godot_global_get_singleton)(b"{s_name}\0".as_ptr() as *mut _);
@@ -588,6 +589,7 @@ r#"
     }}
 
     /// Manually deallocate the object.
+    #[inline]
     pub unsafe fn free(self) {{
         (get_api().godot_object_destroy)(self.this);
     }}
@@ -695,6 +697,7 @@ fn write_methods<W: Write>(
             if is_safe {
                 writeln!(output, r#"
     /// Inherited from {cname}.
+    #[inline]
     pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         unsafe {{
             {cname}_{name}(self.this{params_use})
@@ -710,6 +713,7 @@ fn write_methods<W: Write>(
             } else {
                 writeln!(output, r#"
     /// Inherited from {cname}.
+    #[inline]
     pub unsafe fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         {cname}_{name}(self.this{params_use})
     }}"#,
@@ -746,6 +750,7 @@ fn write_upcast<W: Write>(
         if is_safe {
             writeln!(output,
 r#"    /// Up-cast.
+    #[inline]
     pub fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
         {name} {{ this: self.this }}
@@ -760,6 +765,7 @@ r#"    /// Up-cast.
         } else {
             writeln!(output,
 r#"    /// Up-cast.
+    #[inline]
     pub unsafe fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
         {name} {{ this: self.this }}
