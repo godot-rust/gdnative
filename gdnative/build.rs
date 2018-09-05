@@ -298,7 +298,7 @@ pub struct {name}MethodTable {{
 
         for method in &class.methods {
             let method_name = method.get_name();
-            if skip_method(&method_name) {
+            if method_name == "free" {
                 continue;
             }
             writeln!(output, "    pub {}: *mut sys::godot_method_bind,", method_name).unwrap();
@@ -314,7 +314,7 @@ impl {name}MethodTable {{
         ).unwrap();
         for method in &class.methods {
             let method_name = method.get_name();
-            if skip_method(&method_name) {
+            if method_name == "free" {
                 continue;
             }
             writeln!(output,
@@ -353,7 +353,7 @@ impl {name}MethodTable {{
             ).unwrap();
         for method in &class.methods {
             let method_name = method.get_name();
-            if skip_method(&method_name) {
+            if method_name == "free" {
                 continue;
             }
 
@@ -806,7 +806,7 @@ fn list_base_classes<W: Write>(
 }
 
 fn skip_method(name: &str) -> bool {
-    name == "free"
+    name == "free" || name == "reference" || name == "unreference"
 }
 
 fn rust_safe_name(name: &str) -> &str {
