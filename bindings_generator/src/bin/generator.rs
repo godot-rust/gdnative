@@ -6,11 +6,13 @@ use std::env;
 use std::fs::File;
 
 fn main() {
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let mut output = File::create(out_path.join("types.rs")).unwrap();
+    let in_path = env::args().nth(1).unwrap();
+    let out_path = env::args().nth(2).unwrap();
+
+    let mut output = File::create(&out_path).unwrap();
 
     generate_bindings(
-        File::open("api.json").unwrap(),
+        File::open(&in_path).unwrap(),
         &mut output,
     );
 }

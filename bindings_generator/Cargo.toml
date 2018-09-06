@@ -1,0 +1,10 @@
+[package]
+name = "gdnative_bindings_generator"
+version = "0.1.0"
+authors = ["Nicolas Silva <nical@fastmail.com>"]
+
+[dependencies]
+serde = "1.0.15"
+serde_json = "1.0.3"
+serde_derive = "1.0.15"
+heck = "0.3.0"
