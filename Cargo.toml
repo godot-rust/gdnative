@@ -6,6 +6,7 @@ members = [
     "gdnative",
     "geom",
     "test",
+    "bindings_generator",
     "examples/hello_world",
     "examples/spinning_cube",
     "examples/manually_registered",
