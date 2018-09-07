@@ -4,6 +4,19 @@ use std::io::Write;
 
 use find_class;
 
+pub fn class_doc_link(class: &GodotClass) -> String {
+    // TODO: link the correct crate
+    // let subcrate = get_crate(class);
+    format!("[{name}](struct.{name}.html)", name = class.name)
+}
+
+pub fn official_doc_url(class: &GodotClass) -> String {
+    format!(
+        "https://godot.readthedocs.io/en/3.0/classes/class_{lower_case}.html",
+        lower_case = class.name.to_lowercase(),
+    )
+}
+
 pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], class: &GodotClass) {
         let has_parent = class.base_class != "";
         let singleton_str = if class.singleton { "singleton " } else { "" } ;
@@ -30,6 +43,14 @@ pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], c
                 singleton = singleton_str
             ).unwrap();
         }
+
+        writeln!(output,
+r#"///
+/// ## Official documentation
+///
+/// See the [documentation of this class]({url}) in the Godot engine's official documentation."#,
+            url = official_doc_url(class),
+        ).unwrap();
 
         if class.is_refcounted() {
             writeln!(output,
@@ -86,10 +107,9 @@ fn list_base_classes(
     parent_name: &str,
 ) {
     if let Some(parent) = find_class(classes, parent_name) {
-        writeln!(output,
-            "/// - [{base_class}](struct.{base_class}.html)",
-            base_class = parent_name,
-        ).unwrap();
+        let class_link = class_doc_link(&parent);
+
+        writeln!(output, "/// - {}", class_link).unwrap();
 
         if parent.base_class != "" {
             list_base_classes(output, classes, &parent.base_class);

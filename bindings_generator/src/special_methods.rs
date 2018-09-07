@@ -90,7 +90,11 @@ unsafe impl GodotObject for {name} {{
 
 "#,
         name = class.name,
-        addref_if_reference = if class.is_refcounted() { "object::add_ref(obj);" } else { "" }
+        addref_if_reference = if class.is_refcounted() {
+            "object::add_ref(obj);"
+        } else {
+            "// Not reference-counted."
+        }
     ).unwrap();
 }
 
@@ -111,8 +115,7 @@ pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) {
                 this
             }}
         }}
-    }}
-            "#,
+    }}"#,
         name = class.name,
         s_name = s_name
     ).unwrap();
@@ -152,7 +155,9 @@ r#"    /// Up-cast.
                 snake_name = snake_name,
                 addref_if_reference = if parent.is_refcounted() {
                     "unsafe {{ object::add_ref(self.this); }}"
-                } else { "" },
+                } else {
+                    "// Not reference-counted."
+                },
             ).unwrap();
         } else {
             writeln!(output,
@@ -167,7 +172,9 @@ r#"    /// Up-cast.
                 snake_name = snake_name,
                 addref_if_reference = if parent.is_refcounted() {
                     "object::add_ref(self.this);"
-                } else { "" },
+                } else {
+                    "// Not reference-counted."
+                },
             ).unwrap();
         }
 

@@ -1,7 +1,6 @@
 use json::*;
 use std::fs::File;
 use std::io::Write;
-use std::fmt;
 
 use heck::CamelCase;
 
@@ -11,11 +10,11 @@ pub fn generate_class_struct(output: &mut File, class: &GodotClass) {
     }
 
     writeln!(output,
-r#"
-#[allow(non_camel_case_types)]
+r#"#[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub struct {name} {{
-    this: *mut sys::godot_object,
+    #[doc(hidden)]
+    pub this: *mut sys::godot_object,
 }}
 "#,
         name = class.name

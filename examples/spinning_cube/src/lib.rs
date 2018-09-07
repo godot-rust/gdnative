@@ -80,7 +80,7 @@ godot_class! {
         }
 
         export fn _physics_process(&mut self, delta: f64) {
-            use godot::{Color, SpatialMaterial, Vector3};
+            use godot::{Color, Vector3, SpatialMaterial};
             unsafe {
                 self.time += delta as f32;
                 let mut parent = self.as_parent();
