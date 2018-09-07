@@ -1,6 +1,7 @@
 use {find_class, rust_safe_name};
 
 use json::*;
+use documentation::class_doc_link;
 
 use std::fmt;
 use std::io::Write;
@@ -122,7 +123,8 @@ pub fn generate_method_impl(output: &mut File, class: &GodotClass, method: &Godo
 
     writeln!(output, r#"
 
-unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
+#[doc(hidden)]
+pub unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
     let gd_api = ::get_api();
 
     let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
@@ -158,16 +160,16 @@ r#"    let {name}: Variant = Variant::from_godot_string(&{name});"#,
                 ).unwrap();
             }
             writeln!(output,
-r#"    argument_buffer.push(&{name}.0); "#,
+r#"    argument_buffer.push({name}.sys()); "#,
                 name = rust_safe_name(&argument.name)
             ).unwrap();
         }
 
         writeln!(output, r#"
     for arg in varargs {{
-        argument_buffer.push(&arg.0 as *const _);
+        argument_buffer.push(arg.sys() as *const _);
     }}
-    let ret = Variant((gd_api.godot_method_bind_call)(method_bind, obj_ptr, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
+    let ret = Variant::from_sys((gd_api.godot_method_bind_call)(method_bind, obj_ptr, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
         ).unwrap();
 
         if rust_ret_type.starts_with("Option") {
@@ -214,6 +216,7 @@ pub fn generate_methods(
     method_set: &mut HashSet<String>,
     class_name: &str,
     is_safe: bool,
+    is_leaf: bool,
 ) {
     if let Some(class) = find_class(classes, class_name) {
         'method:
@@ -255,15 +258,19 @@ pub fn generate_methods(
 
             let self_param = if method.is_const { "&self" } else { "&mut self" };
 
+            if !is_leaf {
+                writeln!(output,
+"    /// Inherited from {}.", class_doc_link(class)
+                ).unwrap();
+            }
+
             if is_safe {
-                writeln!(output, r#"
-    /// Inherited from {cname}.
-    #[inline]
+                writeln!(output,
+r#"    #[inline]
     pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
-        unsafe {{
-            {cname}_{name}(self.this{params_use})
-        }}
-    }}"#,
+        unsafe {{ {cname}_{name}(self.this{params_use}) }}
+    }}
+"#,
                     cname = class.name,
                     name = method_name,
                     rust_ret_type = rust_ret_type,
@@ -272,12 +279,12 @@ pub fn generate_methods(
                     self_param = self_param,
                 ).unwrap();
             } else {
-                writeln!(output, r#"
-    /// Inherited from {cname}.
-    #[inline]
+                writeln!(output,
+r#"    #[inline]
     pub unsafe fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
         {cname}_{name}(self.this{params_use})
-    }}"#,
+    }}
+"#,
                     cname = class.name,
                     name = method_name,
                     rust_ret_type = rust_ret_type,
@@ -295,6 +302,7 @@ pub fn generate_methods(
                 method_set,
                 &class.base_class,
                 is_safe,
+                false,
             );
         }
     }
@@ -332,7 +340,7 @@ fn generate_argument_pre(w: &mut File, ty: &Ty, name: &str) {
         | &Ty::Int32Array
         | &Ty::Float32Array
         => {
-            writeln!(w, r#"        (&{name}.0) as *const _ as *const _,"#, name = name).unwrap();
+            writeln!(w, r#"        {name}.sys() as *const _ as *const _,"#, name = name).unwrap();
         },
         &Ty::Object(_) => {
             writeln!(w, r#"        if let Some(arg) = {name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
@@ -446,7 +454,7 @@ fn generate_return_post(w: &mut File, ty: &Ty) {
         &Ty::Rid => {
             writeln!(w, r#"
     let mut rid = Rid::default();
-    (gd_api.godot_rid_new_with_resource)(&mut rid.0, ret);
+    (gd_api.godot_rid_new_with_resource)(rid.mut_sys(), ret);
 
     rid"#
             ).unwrap();
@@ -465,7 +473,7 @@ fn generate_return_post(w: &mut File, ty: &Ty) {
         | &Ty::Variant
         => {
             writeln!(w,r#"
-    {rust_ty}(ret)"#, rust_ty = ty.to_rust().unwrap()
+    {rust_ty}::from_sys(ret)"#, rust_ty = ty.to_rust().unwrap()
             ).unwrap();
         }
         &Ty::Object(ref name) => {

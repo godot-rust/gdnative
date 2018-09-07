@@ -12,8 +12,17 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative-sys = { path = "../sys", version = "0.3.0" }
-gdnative_geom = { path = "../geom", version = "0.3.0" }
+gdnative_core = { path = "../core", version = "0.4.0" }
+gdnative_graphics = { path = "../graphics", version = "0.4.0" }
+gdnative_audio = { path = "../audio", version = "0.4.0" }
+gdnative_video = { path = "../video", version = "0.4.0" }
+gdnative_animation = { path = "../animation", version = "0.4.0" }
+gdnative_network = { path = "../network", version = "0.4.0" }
+gdnative_editor = { path = "../editor", version = "0.4.0" }
+gdnative_visual_script = { path = "../visual_script", version = "0.4.0" }
+gdnative_input = { path = "../input", version = "0.4.0" }
+gdnative_ui = { path = "../ui", version = "0.4.0" }
+gdnative_arvr = { path = "../arvr", version = "0.4.0" }
 libc = "0.2"
 bitflags = "1.0"
 

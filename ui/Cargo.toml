@@ -1,0 +1,21 @@
+[package]
+name = "gdnative_ui"
+authors = ["The godot-rust developers"]
+description = "The Godot game engine's gdnative UI bindings."
+documentation = "https://docs.rs/crate/gdnative"
+repository = "https://github.com/GodotNativeTools/godot-rust"
+version = "0.4.0"
+license = "MIT"
+workspace = ".."
+
+[features]
+gd_test = []
+
+[dependencies]
+gdnative_core = { path = "../core", version = "0.4.0" }
+gdnative_video = { path = "../video", version = "0.4.0" }
+libc = "0.2"
+bitflags = "1.0"
+
+[build-dependencies]
+gdnative_bindings_generator = { path = "../bindings_generator" }
