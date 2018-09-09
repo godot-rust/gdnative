@@ -25,20 +25,21 @@ pub fn generate_enum(output: &mut File, class: &GodotClass, e: &Enum) {
     // TODO: check whether the start of the variant name is
     // equal to the end of the enum name and if so don't repeat it
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
-    writeln!(output, r#"
-#[repr(u32)]
+
+    let mut values: Vec<(&String, &u32)> = e.values.iter().collect();
+    values.sort_by(|a, b|{ a.1.cmp(&b.1) });
+
+    writeln!(output,
+r#"#[repr(u32)]
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum {class_name}{enum_name} {{
-"#,
+pub enum {class_name}{enum_name} {{"#,
         class_name = class.name, enum_name = e.name
     ).unwrap();
 
-    for (key, val) in &e.values {
+    for &(key, val) in &values {
         let key = key.as_str().to_camel_case();
         writeln!(output, r#"    {key} = {val},"#, key = key, val = val).unwrap();
     }
-    writeln!(output, r#"
-}}"#
-    ).unwrap();
+    writeln!(output, "}}").unwrap();
 }
