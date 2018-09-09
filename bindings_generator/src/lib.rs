@@ -36,19 +36,6 @@ pub enum Crate {
     VisualScript,
 }
 
-impl Crate {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "core" => Some(Crate::Core),
-            "audio" => Some(Crate::Audio),
-            "graphics" => Some(Crate::Graphics),
-            "editor" => Some(Crate::Editor),
-            "visual-script" => Some(Crate::VisualScript),
-            _ => None,
-        }
-    }
-}
-
 pub fn generate_bindings(
     api_description: File,
     output: &mut File,

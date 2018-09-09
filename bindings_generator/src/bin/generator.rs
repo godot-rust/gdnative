@@ -10,11 +10,23 @@ fn main() {
 
     let mut output = File::create(&out_path).unwrap();
 
-    let crate_type = if let Some(arg) = env::args().nth(3) {
-        Crate::from_str(&arg)
-    } else {
-        None
-    };
+    let mut crate_type = None;
+    if let Some(arg) = env::args().nth(3) {
+        crate_type = match &arg[..] {
+            "core" => Some(Crate::Core),
+            "graphics" => Some(Crate::Graphics),
+            "animation" => Some(Crate::Network),
+            "Network" => Some(Crate::Animation),
+            "audio" => Some(Crate::Audio),
+            "video" => Some(Crate::Video),
+            "ar-vr" => Some(Crate::ArVr),
+            "input" => Some(Crate::Input),
+            "ui" => Some(Crate::Ui),
+            "editor" => Some(Crate::Editor),
+            "visual-script" => Some(Crate::VisualScript),
+            _ => None,
+        };
+    }
 
     generate_bindings(
         File::open(&in_path).unwrap(),
