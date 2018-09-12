@@ -33,6 +33,9 @@ pub fn print_dependencies(
         println!("class {} ({:?})", class_name, namespaces[class_name]);
         println!("Depends on:");
         let mut deps: HashSet<String> = HashSet::default();
+        if class.base_class != "" {
+            deps.insert(class.base_class.clone());
+        }
         for method in &class.methods {
             for arg in &method.arguments {
                 deps.insert(arg.ty.clone());
@@ -55,6 +58,15 @@ pub fn print_dependencies(
         for class in &classes {
             if class.name == class_name {
                 continue;
+            }
+
+            if class.base_class == class_name {
+                if namespaces.contains_key(&class.name) {
+                    println!(" - {} ({:?})", class.name, namespaces[&class.name]);
+                } else {
+                    println!(" - {}", class.name);
+                }
+                continue 'class_loop;
             }
 
             for method in &class.methods {
