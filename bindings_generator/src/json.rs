@@ -1,4 +1,3 @@
-use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Debug)]
@@ -18,26 +17,6 @@ impl GodotClass {
     pub fn is_refcounted(&self) -> bool { self.is_reference || &self.name == "Reference" }
 
     pub fn is_pointer_safe(&self) -> bool { self.is_refcounted() || self.singleton }
-
-    pub fn get_crate(&self) -> Crate {
-        if self.name.contains("VisualServer") || self.name.contains("Shader") {
-            return Crate::Rendering;
-        }
-
-        if self.name.contains("VisualScript") {
-            return Crate::VisualScript;
-        }
-
-        if self.name.contains("Audio") {
-            return Crate::Audio;
-        }
-
-        if self.api_type == "tools" {
-            return Crate::Editor;
-        }
-
-        Crate::Core
-    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -90,14 +69,6 @@ impl GodotArgument {
     pub fn get_type(&self) -> Ty {
         Ty::from_src(&self.ty)
     }
-}
-
-pub enum Crate {
-    Core,
-    Audio,
-    Rendering,
-    Editor,
-    VisualScript,
 }
 
 #[derive(Clone)]

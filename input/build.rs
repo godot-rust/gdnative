@@ -11,7 +11,8 @@ fn main() {
 
     generate_bindings(
         File::open("../bindings_generator/api.json").unwrap(),
+        File::open("../bindings_generator/namespaces.json").unwrap(),
         &mut output,
-        Some(Crate::Input),
-    );
+        Crate::Input,
+    ).unwrap();
 }

@@ -1,6 +1,7 @@
 use json::*;
 use std::fs::File;
 use std::io::Write;
+use GeneratorResult;
 
 use find_class;
 
@@ -17,14 +18,14 @@ pub fn official_doc_url(class: &GodotClass) -> String {
     )
 }
 
-pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], class: &GodotClass) {
+pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], class: &GodotClass) -> GeneratorResult {
         let has_parent = class.base_class != "";
         let singleton_str = if class.singleton { "singleton " } else { "" } ;
         let ownership_type = if class.is_refcounted() { "reference counted" } else { "manually managed" };
         if &class.name == "Reference" {
-            writeln!(output, "/// Base class of all reference-counted types. Inherits `Object`.").unwrap();
+            writeln!(output, "/// Base class of all reference-counted types. Inherits `Object`.")?;
         } else if &class.name == "Object" {
-            writeln!(output, "/// The base class of most Godot classes.").unwrap();
+            writeln!(output, "/// The base class of most Godot classes.")?;
         } else if has_parent {
             writeln!(output, r#"
 /// `{api_type} {singleton}class {name}` inherits `{base_class}` ({ownership_type})."#,
@@ -33,7 +34,7 @@ pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], c
                 base_class = class.base_class,
                 ownership_type = ownership_type,
                 singleton = singleton_str
-            ).unwrap();
+            )?;
         } else {
             writeln!(output, r#"
 /// `{api_type} {singleton}class {name}` ({ownership_type})."#,
@@ -41,7 +42,7 @@ pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], c
                 name = class.name,
                 ownership_type = ownership_type,
                 singleton = singleton_str
-            ).unwrap();
+            )?;
         }
 
         writeln!(output,
@@ -50,7 +51,7 @@ r#"///
 ///
 /// See the [documentation of this class]({url}) in the Godot engine's official documentation."#,
             url = official_doc_url(class),
-        ).unwrap();
+        )?;
 
         if class.is_refcounted() {
             writeln!(output,
@@ -58,7 +59,7 @@ r#"///
 /// ## Memory management
 ///
 /// The lifetime of this object is automatically managed through reference counting."#
-            ).unwrap();
+            )?;
         } else if class.instanciable {
             writeln!(output,
 r#"///
@@ -72,7 +73,7 @@ r#"///
 /// created on the Rust side and not passed to the engine yet, ownership should be either given
 /// to the engine or the object must be manually destroyed using `{name}::free`."#,
                 name = class.name
-            ).unwrap();
+            )?;
         }
 
         if class.base_class != "" {
@@ -82,13 +83,13 @@ r#"///
 ///
 /// {name} inherits methods from:"#,
                 name = class.name,
-            ).unwrap();
+            )?;
 
             list_base_classes(
                 output,
                 &classes,
                 &class.base_class,
-            );
+            )?;
         }
 
         if class.api_type == "tools" {
@@ -97,22 +98,26 @@ r#"///
 /// ## Tool
 ///
 /// This class is used to interact with Godot's editor."#,
-            ).unwrap();
+            )?;
         }
+
+        Ok(())
 }
 
 fn list_base_classes(
     output: &mut File,
     classes: &[GodotClass],
     parent_name: &str,
-) {
+) -> GeneratorResult {
     if let Some(parent) = find_class(classes, parent_name) {
         let class_link = class_doc_link(&parent);
 
-        writeln!(output, "/// - {}", class_link).unwrap();
+        writeln!(output, "/// - {}", class_link)?;
 
         if parent.base_class != "" {
-            list_base_classes(output, classes, &parent.base_class);
+            list_base_classes(output, classes, &parent.base_class)?;
         }
     }
+
+    Ok(())
 }
