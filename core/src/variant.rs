@@ -155,6 +155,45 @@ impl VariantType {
     }
 }
 
+// TODO: Looks like this is missing from the godot_headers bindings.
+// It's risky to redefine it here and count on the fact that the integer
+// constants will be the same.
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum VariantOperator {
+        //comparison
+        Equal, // = OP_EQUAL,
+        NotEqual, // = OP_NOT_EQUAL,
+        Less, // = OP_LESS,
+        LessEqual, // =  OP_LESS_EQUAL,
+        Greater, // =  OP_GREATER,
+        GreaterEqual, // =  OP_GREATER_EQUAL,
+        //mathematic
+        Add, // = OP_ADD,
+        Subtact, // = OP_SUBTRACT,
+        Multiply, // = OP_MULTIPLY,
+        Divide, // = OP_DIVIDE,
+        Negate, // = OP_NEGATE,
+        Positive, // = OP_POSITIVE,
+        Module, // = OP_MODULE,
+        Concat, // = OP_STRING_CONCAT,
+        //bitwise
+        ShiftLeft, // = OP_SHIFT_LEFT,
+        ShiftRight, // = OP_SHIFT_RIGHT,
+        BitAnd, // = OP_BIT_AND,
+        BitOr, // = OP_BIT_OR,
+        BitXor, // = OP_BIT_XOR,
+        BitNegate, // = OP_BIT_NEGATE,
+        //logic
+        And, // = OP_AND,
+        Or, // = OP_OR,
+        Xor, // = OP_XOR,
+        Not, // = OP_NOT,
+        //containment
+        In, // = OP_IN,
+        Max, // = OP_MAX
+}
+
 //fn to_godot_varianty_type(v: VariantType) -> sys::godot_variant_type {
 //    unsafe { transmute(v) }
 //}

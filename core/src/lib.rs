@@ -146,6 +146,14 @@ pub enum GodotError {
     PrinterOnFire = sys::godot_error::GODOT_ERR_PRINTER_ON_FIRE as u32,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(u32)]
+pub enum Vector3Axis {
+    X = sys::godot_vector3_axis::GODOT_VECTOR3_AXIS_X as u32,
+    Y = sys::godot_vector3_axis::GODOT_VECTOR3_AXIS_Y as u32,
+    Z = sys::godot_vector3_axis::GODOT_VECTOR3_AXIS_Z as u32,
+}
+
 pub type GodotResult = Result<(), GodotError>;
 
 pub fn result_from_sys(err: sys::godot_error) -> GodotResult {

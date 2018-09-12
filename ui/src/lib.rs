@@ -10,7 +10,6 @@ use video::*;
 
 use std::sync::{Once, ONCE_INIT};
 use std::ops::*;
-use std::mem;
 use libc;
 
 include!(concat!(env!("OUT_DIR"), "/ui_types.rs"));
