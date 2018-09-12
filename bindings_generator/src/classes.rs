@@ -1,12 +1,12 @@
 use json::*;
 use std::fs::File;
 use std::io::Write;
-
+use GeneratorResult;
 use heck::CamelCase;
 
-pub fn generate_class_struct(output: &mut File, class: &GodotClass) {
+pub fn generate_class_struct(output: &mut File, class: &GodotClass) -> GeneratorResult {
     if !class.is_refcounted() {
-        writeln!(output, "#[derive(Copy, Clone)]").unwrap();
+        writeln!(output, "#[derive(Copy, Clone)]")?;
     }
 
     writeln!(output,
@@ -18,10 +18,12 @@ pub struct {name} {{
 }}
 "#,
         name = class.name
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
-pub fn generate_enum(output: &mut File, class: &GodotClass, e: &Enum) {
+pub fn generate_enum(output: &mut File, class: &GodotClass, e: &Enum) -> GeneratorResult {
     // TODO: check whether the start of the variant name is
     // equal to the end of the enum name and if so don't repeat it
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
@@ -35,11 +37,13 @@ r#"#[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum {class_name}{enum_name} {{"#,
         class_name = class.name, enum_name = e.name
-    ).unwrap();
+    )?;
 
     for &(key, val) in &values {
         let key = key.as_str().to_camel_case();
-        writeln!(output, r#"    {key} = {val},"#, key = key, val = val).unwrap();
+        writeln!(output, r#"    {key} = {val},"#, key = key, val = val)?;
     }
-    writeln!(output, "}}").unwrap();
+    writeln!(output, "}}")?;
+
+    Ok(())
 }

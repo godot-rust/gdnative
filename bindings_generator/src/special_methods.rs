@@ -1,12 +1,13 @@
 use json::*;
 use std::fs::File;
 use std::io::Write;
+use GeneratorResult;
 
 use find_class;
 
 use heck::SnakeCase;
 
-pub fn generate_refreference_ctor(output: &mut File, class: &GodotClass) {
+pub fn generate_refreference_ctor(output: &mut File, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     // Constructor
@@ -35,10 +36,12 @@ r#"
     }}
 "#,
         name = class.name
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
-pub fn generate_non_refreference_ctor(output: &mut File, class: &GodotClass) {
+pub fn generate_non_refreference_ctor(output: &mut File, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     /// Constructor.
@@ -67,10 +70,12 @@ r#"
     }}
 "#,
         name = class.name
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
-pub fn generate_godot_object_impl(output: &mut File, class: &GodotClass) {
+pub fn generate_godot_object_impl(output: &mut File, class: &GodotClass) -> GeneratorResult {
     writeln!(output, r#"
 
 unsafe impl GodotObject for {name} {{
@@ -95,10 +100,12 @@ unsafe impl GodotObject for {name} {{
         } else {
             "// Not reference-counted."
         }
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
-pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) {
+pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) -> GeneratorResult {
     let s_name = if class.name.starts_with("_") {
         &class.name[1..]
     } else {
@@ -118,10 +125,12 @@ pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) {
     }}"#,
         name = class.name,
         s_name = s_name
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
-pub fn generate_dynamic_cast(output: &mut File, class: &GodotClass) {
+pub fn generate_dynamic_cast(output: &mut File, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     /// Generic dynamic cast.
@@ -130,7 +139,9 @@ r#"
     }}
 "#,
         maybe_unsafe = if class.is_pointer_safe() { "" } else { "unsafe " },
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
 
@@ -139,7 +150,7 @@ pub fn generate_upcast(
     classes: &[GodotClass],
     base_class_name: &str,
     is_pointer_safe: bool,
-) {
+) -> GeneratorResult {
     if let Some(parent) = find_class(classes, &base_class_name) {
         let snake_name = class_name_to_snake_case(&base_class_name);
         if is_pointer_safe {
@@ -158,7 +169,7 @@ r#"    /// Up-cast.
                 } else {
                     "// Not reference-counted."
                 },
-            ).unwrap();
+            )?;
         } else {
             writeln!(output,
 r#"    /// Up-cast.
@@ -175,7 +186,7 @@ r#"    /// Up-cast.
                 } else {
                     "// Not reference-counted."
                 },
-            ).unwrap();
+            )?;
         }
 
         generate_upcast(
@@ -183,11 +194,13 @@ r#"    /// Up-cast.
             classes,
             &parent.base_class,
             is_pointer_safe,
-        );
+        )?;
     }
+
+    Ok(())
 }
 
-pub fn generate_drop(output: &mut File, class: &GodotClass) {
+pub fn generate_drop(output: &mut File, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
 impl Drop for {name} {{
@@ -201,7 +214,9 @@ impl Drop for {name} {{
 }}
 "#,
         name = class.name
-    ).unwrap();
+    )?;
+
+    Ok(())
 }
 
 pub fn class_name_to_snake_case(name: &str) -> String {
