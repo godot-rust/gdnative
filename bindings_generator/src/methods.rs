@@ -438,7 +438,13 @@ fn generate_return_pre(w: &mut File, ty: &Ty) -> GeneratorResult {
     let ret_ptr = (&mut ret) as *mut _;"#
             )?;
         }
-        &Ty::Enum(_) => {}
+        &Ty::Enum(ref name) => {
+            writeln!(w, r#"
+    let mut ret: {} = mem::transmute(0);
+    let ret_ptr = (&mut ret) as *mut _;"#,
+                name
+            )?;
+        }
     }
 
     Ok(())
@@ -508,12 +514,16 @@ fn generate_return_post(w: &mut File, ty: &Ty) -> GeneratorResult {
     result_from_sys(ret)"#
             )?;
         }
+        &Ty::Enum(_) => {
+            writeln!(w, r#"
+    ret"#,
+            )?;
+        }
         &Ty::VariantType => {
             writeln!(w, r#"
     VariantType::from_sys(ret)"#
             )?;
         }
-        _ => {}
     }
 
     Ok(())

@@ -138,7 +138,12 @@ impl Ty {
             "PoolRealArray" => Ty::Float32Array,
             "enum.Error" => Ty::Result,
             "enum.Variant::Type" => Ty::VariantType,
-            ty if ty.starts_with("enum.") => Ty::Enum(ty[5..].into()),
+            ty if ty.starts_with("enum.") => {
+                let mut split = ty[5..].split("::");
+                let class = split.next().unwrap();
+                let name = split.next().unwrap();
+                Ty::Enum(format!("{}{}", class, name))
+            }
             ty => {
                 Ty::Object(ty.into())
             },
@@ -176,7 +181,7 @@ impl Ty {
             &Ty::Float32Array => Some(String::from("Float32Array")),
             &Ty::Result => Some(String::from("GodotResult")),
             &Ty::VariantType => Some(String::from("VariantType")),
-            &Ty::Enum(_) => None, // TODO
+            &Ty::Enum(ref name) => Some(String::from(name.clone())),
             &Ty::Object(ref name) => Some(format!("Option<{}>", name)),
         }
     }

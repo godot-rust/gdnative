@@ -61,6 +61,7 @@ pub fn generate_bindings(
 
     writeln!(output, "use std::os::raw::c_char;")?;
     writeln!(output, "use std::ptr;")?;
+    writeln!(output, "use std::mem;")?;
     writeln!(output, "use object;")?;
 
     for class in &api.classes {
