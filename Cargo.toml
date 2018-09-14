@@ -5,6 +5,7 @@ members = [
     "sys",
     "gdnative",
     "core",
+    "physics",
     "graphics",
     "animation",
     "audio",

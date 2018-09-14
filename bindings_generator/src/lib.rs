@@ -29,6 +29,7 @@ pub enum Crate {
     Core,
     Graphics,
     Animation,
+    Physics,
     Network,
     Audio,
     Video,
@@ -191,90 +192,6 @@ pub fn class_inherits(classes: &[GodotClass], class: &GodotClass, base_class_nam
     return false;
 }
 
-
-pub fn get_crate(classes: &[GodotClass], class: &GodotClass) -> Crate {
-    match &class.name[..] {
-        "Shader"
-        | "Texture"
-        | "Viewport"
-        | "InputEvent" | "InputEventKey" | "InputEventWithModifiers"
-        | "NetworkedMultiplayerPeer" | "PacketPeer"
-        | "Material" => {
-            return Crate::Core;
-        }
-        _ => {}
-    }
-
-    if class.name.contains("VideoStream") {
-        return Crate::Video;
-    }
-
-    if class.name.contains("PhysicsMaterial") {
-        return Crate::Core;
-    }
-
-    if class.name.contains("ARVR") {
-        return Crate::ArVr;
-    }
-
-    if class.name.contains("Audio") {
-        return Crate::Audio;
-    }
-
-    if class.name.contains("Animation") || class.name.contains("Tween") {
-        return Crate::Animation;
-    }
-
-    if class.name.contains("VisualScript") {
-        return Crate::VisualScript;
-    }
-
-    if class.name.contains("InputEvent") {
-        return Crate::Input;
-    }
-
-    if class.api_type == "tools" {
-        return Crate::Editor;
-    }
-
-    if class.name.contains("Stream")
-        || class.name.contains("WebSocket")
-        || class.name.contains("Peer")
-        || class.name.contains("HTTP")
-        || class.name.contains("TCP")
-        || class.name.contains("Network") {
-        return Crate::Network;
-    }
-
-    if class.name.contains("VisualServer")
-        || class.name.contains("Shader")
-        || class.name.contains("Tile")
-        || class.name.contains("Sprite")
-        || class.name.contains("Material")
-        || class.name.contains("Particle")
-        || class.name.contains("CSG")
-        || class.name.contains("GIProbe")
-        || class.name.contains("Light")
-        || class.name.contains("CubeMap")
-        || class.name.contains("CubeMesh")
-        //|| class.name.contains("Texture")
-        //|| class.name.contains("Sky")
-    {
-        return Crate::Graphics;
-    }
-
-    if class_inherits(classes, class, "Control")
-        || class_inherits(classes, class, "Popup")
-        || class_inherits(classes, class, "Button")
-        || class.name.contains("Button")
-        || class.name == "GraphEdit" {
-        return Crate::Ui;
-    }
-
-    Crate::Core
-}
-
-
 pub fn get_crate_namespace_opt(crate_type: Option<Crate>) -> &'static str {
     match crate_type {
         Some(ty) => get_crate_namespace(ty),
@@ -287,6 +204,7 @@ pub fn get_crate_namespace(crate_type: Crate) -> &'static str {
         Crate::Core => "core",
         Crate::Graphics => "graphics",
         Crate::Animation => "animation",
+        Crate::Physics => "physics",
         Crate::Network => "Network",
         Crate::Audio => "audio",
         Crate::Video => "video",
