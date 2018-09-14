@@ -38259,7 +38259,7 @@
 			},
 			{
 				"name": "get_direct_space_state",
-				"return_type": "PhysicsDirectSpaceState",
+				"return_type": "Object",
 				"is_editor": false,
 				"is_noscript": false,
 				"is_const": false,
@@ -38337,7 +38337,7 @@
 			},
 			{
 				"name": "get_direct_space_state",
-				"return_type": "Physics2DDirectSpaceState",
+				"return_type": "Object",
 				"is_editor": false,
 				"is_noscript": false,
 				"is_const": false,

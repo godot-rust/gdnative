@@ -7,15 +7,12 @@ use std::fs::File;
 
 fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let mut output = File::create(out_path.join("core_types.rs")).unwrap();
-
-    println!("cargo:rerun-if-changed=../bindings_generator/api.json");
-    println!("cargo:rerun-if-changed=../bindings_generator/namespaces.json");
+    let mut output = File::create(out_path.join("physics_types.rs")).unwrap();
 
     generate_bindings(
         File::open("../bindings_generator/api.json").unwrap(),
         File::open("../bindings_generator/namespaces.json").unwrap(),
         &mut output,
-        Crate::Core,
+        Crate::Physics,
     ).unwrap();
 }

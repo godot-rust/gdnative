@@ -14,6 +14,7 @@ gd_test = []
 [dependencies]
 gdnative_core = { path = "../core", version = "0.4.0" }
 gdnative_graphics = { path = "../graphics", version = "0.4.0" }
+gdnative_physics = { path = "../physics", version = "0.4.0" }
 gdnative_audio = { path = "../audio", version = "0.4.0" }
 gdnative_video = { path = "../video", version = "0.4.0" }
 gdnative_animation = { path = "../animation", version = "0.4.0" }
