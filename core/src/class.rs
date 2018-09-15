@@ -6,7 +6,7 @@ use sys;
 use GodotString;
 use GodotObject;
 use Object;
-use NativeScript;
+//use NativeScript;
 use object;
 use get_api;
 
@@ -36,6 +36,8 @@ pub struct NativeRef<T: NativeClass> {
 }
 
 impl<T: NativeClass> NativeRef<T> {
+
+/* TODO!
     /// Try to down-cast from a `NativeScript` reference.
     pub fn from_native_script(script: &NativeScript) -> Option<Self> {
         unsafe {
@@ -53,7 +55,6 @@ impl<T: NativeClass> NativeRef<T> {
             return Some(NativeRef { this, _marker: PhantomData, });
         }
     }
-
     /// Try to down-cast from an `Object` reference.
     pub unsafe fn from_object(&self, obj: &Object) -> Option<Self> {
         if let Some(script) = obj.get_script().and_then(|v| v.cast::<NativeScript>()) {
@@ -69,6 +70,7 @@ impl<T: NativeClass> NativeRef<T> {
             NativeScript::from_sys(self.this)
         }
     }
+*/
 
     /// Try to cast into a godot object reference.
     pub fn cast<O>(&self) -> Option<O> where O: GodotObject {

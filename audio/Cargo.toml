@@ -12,9 +12,7 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative_core = { path = "../core", version = "0.4.0" }
-libc = "0.2"
-bitflags = "1.0"
+gdnative_common = { path = "../common", version = "0.4.0" }
 
 [build-dependencies]
 gdnative_bindings_generator = { path = "../bindings_generator" }
