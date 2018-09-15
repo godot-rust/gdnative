@@ -7,4 +7,4 @@ authors = ["karroffel <therzog@mail.de>"]
 crate-type = ["cdylib"]
 
 [dependencies]
-gdnative = { path = "../../gdnative" }
+gdnative = { path = "../../gdnative", features = ["graphics"] }

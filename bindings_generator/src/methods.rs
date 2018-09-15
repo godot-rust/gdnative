@@ -131,7 +131,7 @@ pub fn generate_method_impl(output: &mut File, class: &GodotClass, method: &Godo
 
 #[doc(hidden)]
 pub unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
-    let gd_api = ::get_api();
+    let gd_api = get_api();
 
     let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
         cname = class.name,

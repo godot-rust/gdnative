@@ -28,6 +28,7 @@ pub type GeneratorResult = Result<(), io::Error>;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize)]
 pub enum Crate {
     core,
+    common,
     graphics,
     animation,
     physics,
@@ -64,7 +65,6 @@ pub fn generate_bindings(
     writeln!(output, "use std::os::raw::c_char;")?;
     writeln!(output, "use std::ptr;")?;
     writeln!(output, "use std::mem;")?;
-    writeln!(output, "use object;")?;
 
     for class in &api.classes {
         if api.namespaces[&class.name] != crate_type {
@@ -203,6 +203,7 @@ pub fn get_crate_namespace_opt(crate_type: Option<Crate>) -> &'static str {
 pub fn get_crate_namespace(crate_type: Crate) -> &'static str {
     match crate_type {
         Crate::core => "core",
+        Crate::common => "common",
         Crate::graphics => "graphics",
         Crate::animation => "animation",
         Crate::physics => "physics",

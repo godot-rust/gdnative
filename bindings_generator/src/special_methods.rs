@@ -13,7 +13,7 @@ r#"
     // Constructor
     pub fn new() -> Self {{
         unsafe {{
-            let gd_api = ::get_api();
+            let gd_api = get_api();
             let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
             let obj = ctor();
             object::init_ref_count(obj);
@@ -53,7 +53,7 @@ r#"
     /// destroying the object) or destroyed manually using `{name}::free`.
     pub fn new() -> Self {{
         unsafe {{
-            let gd_api = ::get_api();
+            let gd_api = get_api();
             let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
             let this = ctor();
 
@@ -207,7 +207,7 @@ impl Drop for {name} {{
     fn drop(&mut self) {{
         unsafe {{
             if object::unref(self.this) {{
-                (::get_api().godot_object_destroy)(self.this);
+                (get_api().godot_object_destroy)(self.this);
             }}
         }}
     }}

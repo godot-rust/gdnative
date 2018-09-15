@@ -7,4 +7,4 @@ workspace = ".."
 crate-type = ["cdylib"]
 
 [dependencies]
-gdnative_core = { path = "../core", features = ["gd_test"] }
+gdnative = { path = "../gdnative", features = ["gd_test"] }

@@ -7,12 +7,12 @@ use std::fs::File;
 
 fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let mut output = File::create(out_path.join("core_types.rs")).unwrap();
+    let mut output = File::create(out_path.join("common_types.rs")).unwrap();
 
     generate_bindings(
         File::open("../bindings_generator/api.json").unwrap(),
         File::open("../bindings_generator/namespaces.json").unwrap(),
         &mut output,
-        Crate::core,
+        Crate::common,
     ).unwrap();
 }
