@@ -3,10 +3,8 @@ use std::marker::PhantomData;
 use std::cell::RefCell;
 use std::mem;
 use sys;
-use GodotString;
 use GodotObject;
 use Object;
-//use NativeScript;
 use object;
 use get_api;
 
@@ -37,41 +35,6 @@ pub struct NativeRef<T: NativeClass> {
 
 impl<T: NativeClass> NativeRef<T> {
 
-/* TODO!
-    /// Try to down-cast from a `NativeScript` reference.
-    pub fn from_native_script(script: &NativeScript) -> Option<Self> {
-        unsafe {
-            // TODO: There's gotta be a better way.
-            let class = script.get_class_name();
-            let gd_name = GodotString::from_str(T::class_name());
-
-            if class != gd_name {
-                return None;
-            }
-
-            let this = script.to_sys();
-            object::add_ref(this);
-
-            return Some(NativeRef { this, _marker: PhantomData, });
-        }
-    }
-    /// Try to down-cast from an `Object` reference.
-    pub unsafe fn from_object(&self, obj: &Object) -> Option<Self> {
-        if let Some(script) = obj.get_script().and_then(|v| v.cast::<NativeScript>()) {
-            return Self::from_native_script(&script)
-        }
-
-        None
-    }
-
-    /// Up-cast to a `NativeScript` reference.
-    pub fn to_native_script(&self) -> NativeScript {
-        unsafe {
-            NativeScript::from_sys(self.this)
-        }
-    }
-*/
-
     /// Try to cast into a godot object reference.
     pub fn cast<O>(&self) -> Option<O> where O: GodotObject {
         object::godot_cast::<O>(self.this)
@@ -94,6 +57,21 @@ impl<T: NativeClass> NativeRef<T> {
             let api = get_api();
             let ud = (api.godot_nativescript_get_userdata)(self.this);
             &*(ud as *const _ as *const RefCell<T>)
+        }
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn sys(&self) -> *mut sys::godot_object {
+        self.this
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn from_sys(ptr: *mut sys::godot_object) -> Self {
+        object::add_ref(ptr);
+
+        NativeRef {
+            this: ptr,
+            _marker: PhantomData,
         }
     }
 }
@@ -300,7 +278,7 @@ class $name:ident: $parent:ty {
 
 #[cfg(test)]
 godot_class! {
-    class TestClass: super::Node {
+    class TestClass: super::Object {
         fields {
             a: u32,
         }
