@@ -11,21 +11,22 @@ fn main() {
     let out_path = env::args().nth(3).unwrap();
     let mut output = File::create(&out_path).unwrap();
 
-    let mut crate_type = Crate::Unknown;
+    let mut crate_type = Crate::unknown;
     if let Some(arg) = env::args().nth(4) {
         crate_type = match &arg[..] {
-            "core" => Crate::Core,
-            "graphics" => Crate::Graphics,
-            "animation" => Crate::Network,
-            "Network" => Crate::Animation,
-            "audio" => Crate::Audio,
-            "video" => Crate::Video,
-            "ar-vr" => Crate::ArVr,
-            "input" => Crate::Input,
-            "ui" => Crate::Ui,
-            "editor" => Crate::Editor,
-            "visual-script" => Crate::VisualScript,
-            _ => Crate::Unknown,
+            "core" => Crate::core,
+            "graphics" => Crate::graphics,
+            "animation" => Crate::animation,
+            "physics" => Crate::physics,
+            "Network" => Crate::animation,
+            "audio" => Crate::audio,
+            "video" => Crate::video,
+            "arvr" => Crate::arvr,
+            "input" => Crate::input,
+            "ui" => Crate::ui,
+            "editor" => Crate::editor,
+            "visual_script" => Crate::visual_script,
+            _ => Crate::unknown,
         };
     }
 

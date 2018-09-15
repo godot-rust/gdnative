@@ -24,21 +24,22 @@ use documentation::*;
 use std::io;
 pub type GeneratorResult = Result<(), io::Error>;
 
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize)]
 pub enum Crate {
-    Core,
-    Graphics,
-    Animation,
-    Physics,
-    Network,
-    Audio,
-    Video,
-    ArVr,
-    Input,
-    Ui,
-    Editor,
-    VisualScript,
-    Unknown,
+    core,
+    graphics,
+    animation,
+    physics,
+    network,
+    audio,
+    video,
+    arvr,
+    input,
+    ui,
+    editor,
+    visual_script,
+    unknown,
 }
 
 pub struct Api {
@@ -135,7 +136,7 @@ pub fn generate_bindings(
 //        api.sub_crate
 //    ).unwrap();
 //
-//    if api.sub_crate != Crate::Core {
+//    if api.sub_crate != Crate::core {
 //        writeln!(output, "use gdnative_core::*;").unwrap();
 //    } else{
 //        writeln!(output, "use super::*;").unwrap();
@@ -201,19 +202,19 @@ pub fn get_crate_namespace_opt(crate_type: Option<Crate>) -> &'static str {
 
 pub fn get_crate_namespace(crate_type: Crate) -> &'static str {
     match crate_type {
-        Crate::Core => "core",
-        Crate::Graphics => "graphics",
-        Crate::Animation => "animation",
-        Crate::Physics => "physics",
-        Crate::Network => "Network",
-        Crate::Audio => "audio",
-        Crate::Video => "video",
-        Crate::ArVr => "arvr",
-        Crate::Input => "input",
-        Crate::Ui => "ui",
-        Crate::Editor => "editor",
-        Crate::VisualScript => "visual_script",
-        Crate::Unknown => "unknown",
+        Crate::core => "core",
+        Crate::graphics => "graphics",
+        Crate::animation => "animation",
+        Crate::physics => "physics",
+        Crate::network => "network",
+        Crate::audio => "audio",
+        Crate::video => "video",
+        Crate::arvr => "arvr",
+        Crate::input => "input",
+        Crate::ui => "ui",
+        Crate::editor => "editor",
+        Crate::visual_script => "visual_script",
+        Crate::unknown => "unknown",
     }
 }
 

@@ -16,6 +16,6 @@ fn main() {
         File::open("../bindings_generator/api.json").unwrap(),
         File::open("../bindings_generator/namespaces.json").unwrap(),
         &mut output,
-        Crate::Core,
+        Crate::core,
     ).unwrap();
 }
