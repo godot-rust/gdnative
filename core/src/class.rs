@@ -202,7 +202,7 @@ macro_rules! godot_class_build_methods {
 #[macro_export]
 macro_rules! godot_class {
     (
-class $name:ident: $parent:ty {
+class $name:ident: $owner:ty {
     fields {
         $(
             $(#[$fattr:meta])*
@@ -226,9 +226,9 @@ class $name:ident: $parent:ty {
         impl $name {
             godot_class_build_methods!($($tt)*);
 
-            pub fn as_parent(&self) -> $parent {
+            pub fn get_owner(&self) -> $owner {
                 unsafe {
-                    <$parent as $crate::GodotObject>::from_sys(self.header.this)
+                    <$owner as $crate::GodotObject>::from_sys(self.header.this)
                 }
             }
 
@@ -257,7 +257,7 @@ class $name:ident: $parent:ty {
                 let $builder = init_handle.add_class::<Self>(
                     $crate::init::ClassDescriptor {
                         name: stringify!($name),
-                        base_class: <$parent as $crate::GodotObject>::class_name(),
+                        base_class: <$owner as $crate::GodotObject>::class_name(),
                         constructor: Some(godot_create),
                         destructor: Some(godot_free),
                     }
