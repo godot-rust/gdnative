@@ -68,7 +68,7 @@ godot_class! {
 
         export fn _ready(&mut self) {
             unsafe {
-                let mut owner = self.get_owner();
+                let owner = self.get_owner();
                 owner.set_physics_process(true);
                 self.start = owner.get_translation();
                 godot_warn!("Start: {:?}", self.start);
@@ -83,7 +83,7 @@ godot_class! {
             use godot::{Color, Vector3, SpatialMaterial};
             unsafe {
                 self.time += delta as f32;
-                let mut owner = self.get_owner();
+                let owner = self.get_owner();
                 owner.rotate_y(self.rotate_speed);
                 let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
                 owner.set_translation(self.start + offset);

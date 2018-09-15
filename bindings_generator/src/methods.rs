@@ -263,8 +263,6 @@ pub fn generate_methods(
                 params_use.push_str(", varargs");
             }
 
-            let self_param = if method.is_const { "&self" } else { "&mut self" };
-
             if !is_leaf {
                 writeln!(output,
 "    /// Inherited from {}.", class_doc_link(class)
@@ -277,7 +275,7 @@ pub fn generate_methods(
             if is_safe {
                 writeln!(output,
 r#"    #[inline]
-    pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
+    pub fn {name}(&self{params_decl}) -> {rust_ret_type} {{
         unsafe {{ {namespace}{cname}_{name}(self.this{params_use}) }}
     }}
 "#,
@@ -287,12 +285,11 @@ r#"    #[inline]
                     rust_ret_type = rust_ret_type,
                     params_decl = params_decl,
                     params_use = params_use,
-                    self_param = self_param,
                 )?;
             } else {
                 writeln!(output,
 r#"    #[inline]
-    pub unsafe fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
+    pub unsafe fn {name}(&self{params_decl}) -> {rust_ret_type} {{
         {namespace}{cname}_{name}(self.this{params_use})
     }}
 "#,
@@ -302,7 +299,6 @@ r#"    #[inline]
                     rust_ret_type = rust_ret_type,
                     params_decl = params_decl,
                     params_use = params_use,
-                    self_param = self_param,
                 )?;
             }
         }
