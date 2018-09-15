@@ -20,6 +20,10 @@ pub struct {name} {{
         name = class.name
     )?;
 
+    if !class.is_pointer_safe() {
+        writeln!(output, r#"unsafe impl UnsafeObject for {name} {{}}"#, name = class.name)?;
+    }
+
     Ok(())
 }
 
