@@ -38,5 +38,5 @@ gdnative_input = { optional = true, path = "../input", version = "0.4.0" }
 gdnative_ui = { optional = true, path = "../ui", version = "0.4.0" }
 gdnative_arvr = { optional = true, path = "../arvr", version = "0.4.0" }
 
-[build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator" }
+[package.metadata.docs.rs]
+all-features = true
