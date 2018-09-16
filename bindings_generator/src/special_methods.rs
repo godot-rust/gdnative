@@ -179,11 +179,12 @@ r#"    /// Up-cast.
     #[inline]
     pub unsafe fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
-        {name} {{ this: self.this }}
+        {pointer_name}::from_sys(self.this)
     }}
 "#,
-                name = parent.name,
+                name = if parent.is_pointer_safe() { parent.name.clone() } else { format!("Unsafe<{}>", parent.name) },
                 snake_name = snake_name,
+                pointer_name = if !parent.is_pointer_safe() { "Unsafe" } else { &parent.name },
                 addref_if_reference = if parent.is_refcounted() {
                     "object::add_ref(self.this);"
                 } else {
