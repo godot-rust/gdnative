@@ -40,10 +40,30 @@ pub enum {class_name}{enum_name} {{"#,
     )?;
 
     for &(key, val) in &values {
-        let key = key.as_str().to_camel_case();
+        // Use lowercase to test because of different CamelCase conventions (Msaa/MSAA, etc.).
+        let enum_name_without_mode = if e.name.ends_with("Mode") {
+            e.name[0..(e.name.len() - 4)].to_lowercase()
+        } else {
+            e.name[..].to_lowercase()
+        };
+        let mut key = key.as_str().to_camel_case();
+        if let Some(new_key) = try_remove_prefix(&key, &e.name) {
+            key = new_key;
+        } else if let Some(new_key) = try_remove_prefix(&key, &enum_name_without_mode) {
+            key = new_key;
+        }
         writeln!(output, r#"    {key} = {val},"#, key = key, val = val)?;
     }
     writeln!(output, "}}")?;
 
     Ok(())
+}
+
+fn try_remove_prefix(key: &str, prefix: &str) -> Option<String> {
+    let key_lower = key.to_lowercase();
+    if key_lower.starts_with(prefix) && !key.chars().nth(prefix.len()).map_or(true, |c| c.is_numeric()) {
+        return Some(key[prefix.len()..].to_string());
+    }
+
+    None
 }
