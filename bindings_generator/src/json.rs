@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use Api;
+use find_class;
 
 #[derive(Deserialize, Debug)]
 pub struct GodotClass {
@@ -150,39 +152,46 @@ impl Ty {
         }
     }
 
-    pub fn to_rust(&self) -> Option<String> {
+    pub fn to_rust(&self, api: &Api) -> String {
         match self {
-            &Ty::Void => Some(String::from("()")),
-            &Ty::String => Some(String::from("GodotString")),
-            &Ty::F64 => Some(String::from("f64")),
-            &Ty::I64 => Some(String::from("i64")),
-            &Ty::Bool => Some(String::from("bool")),
-            &Ty::Vector2 => Some(String::from("Vector2")),
-            &Ty::Vector3 => Some(String::from("Vector3")),
-            &Ty::Quat => Some(String::from("Quat")),
-            &Ty::Transform => Some(String::from("Transform")),
-            &Ty::Transform2D => Some(String::from("Transform2D")),
-            &Ty::Rect2 => Some(String::from("Rect2")),
-            &Ty::Plane => Some(String::from("Plane")),
-            &Ty::Basis => Some(String::from("Basis")),
-            &Ty::Color => Some(String::from("Color")),
-            &Ty::NodePath => Some(String::from("NodePath")),
-            &Ty::Variant => Some(String::from("Variant")),
-            &Ty::Aabb => Some(String::from("Aabb")),
-            &Ty::Rid => Some(String::from("Rid")),
-            &Ty::VariantArray => Some(String::from("VariantArray")),
-            &Ty::Dictionary => Some(String::from("Dictionary")),
-            &Ty::ByteArray => Some(String::from("ByteArray")),
-            &Ty::StringArray => Some(String::from("StringArray")),
-            &Ty::Vector2Array => Some(String::from("Vector2Array")),
-            &Ty::Vector3Array => Some(String::from("Vector3Array")),
-            &Ty::ColorArray => Some(String::from("ColorArray")),
-            &Ty::Int32Array => Some(String::from("Int32Array")),
-            &Ty::Float32Array => Some(String::from("Float32Array")),
-            &Ty::Result => Some(String::from("GodotResult")),
-            &Ty::VariantType => Some(String::from("VariantType")),
-            &Ty::Enum(ref name) => Some(String::from(name.clone())),
-            &Ty::Object(ref name) => Some(format!("Option<{}>", name)),
+            &Ty::Void => String::from("()"),
+            &Ty::String => String::from("GodotString"),
+            &Ty::F64 => String::from("f64"),
+            &Ty::I64 => String::from("i64"),
+            &Ty::Bool => String::from("bool"),
+            &Ty::Vector2 => String::from("Vector2"),
+            &Ty::Vector3 => String::from("Vector3"),
+            &Ty::Quat => String::from("Quat"),
+            &Ty::Transform => String::from("Transform"),
+            &Ty::Transform2D => String::from("Transform2D"),
+            &Ty::Rect2 => String::from("Rect2"),
+            &Ty::Plane => String::from("Plane"),
+            &Ty::Basis => String::from("Basis"),
+            &Ty::Color => String::from("Color"),
+            &Ty::NodePath => String::from("NodePath"),
+            &Ty::Variant => String::from("Variant"),
+            &Ty::Aabb => String::from("Aabb"),
+            &Ty::Rid => String::from("Rid"),
+            &Ty::VariantArray => String::from("VariantArray"),
+            &Ty::Dictionary => String::from("Dictionary"),
+            &Ty::ByteArray => String::from("ByteArray"),
+            &Ty::StringArray => String::from("StringArray"),
+            &Ty::Vector2Array => String::from("Vector2Array"),
+            &Ty::Vector3Array => String::from("Vector3Array"),
+            &Ty::ColorArray => String::from("ColorArray"),
+            &Ty::Int32Array => String::from("Int32Array"),
+            &Ty::Float32Array => String::from("Float32Array"),
+            &Ty::Result => String::from("GodotResult"),
+            &Ty::VariantType => String::from("VariantType"),
+            &Ty::Enum(ref name) => String::from(name.clone()),
+            &Ty::Object(ref name) => {
+                let class = find_class(&api.classes, &name).unwrap();
+                if !class.is_pointer_safe() {
+                    format!("Option<Unsafe<{}>>", name)
+                } else {
+                    format!("Option<{}>", name)
+                }
+            }
         }
     }
 

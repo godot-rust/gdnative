@@ -69,12 +69,13 @@ godot_class! {
         export fn _ready(&mut self) {
             unsafe {
                 let owner = self.get_owner();
+                let owner = owner.get();
                 owner.set_physics_process(true);
                 self.start = owner.get_translation();
                 godot_warn!("Start: {:?}", self.start);
                 godot_warn!(
                     "Parent name: {:?}",
-                    owner.get_parent().expect("Missing parent").get_name()
+                    owner.get_parent().expect("Missing parent").get().get_name()
                 );
             }
         }
@@ -84,6 +85,7 @@ godot_class! {
             unsafe {
                 self.time += delta as f32;
                 let owner = self.get_owner();
+                let owner = owner.get();
                 owner.rotate_y(self.rotate_speed);
                 let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
                 owner.set_translation(self.start + offset);

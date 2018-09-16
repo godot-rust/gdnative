@@ -79,18 +79,18 @@ pub fn generate_godot_object_impl(output: &mut File, class: &GodotClass) -> Gene
     writeln!(output, r#"
 
 unsafe impl GodotObject for {name} {{
+    type PointerType = {pointer_type};
+
     fn class_name() -> &'static str {{
         "{name}"
     }}
 
-    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
+    unsafe fn obj_from_sys(obj: *mut sys::godot_object) -> Self {{
         {addref_if_reference}
         Self {{ this: obj, }}
     }}
 
-    unsafe fn to_sys(&self) -> *mut sys::godot_object {{
-        self.this
-    }}
+    unsafe fn obj_to_sys(&self) -> *mut sys::godot_object {{ self.this }}
 }}
 
 "#,
@@ -99,7 +99,12 @@ unsafe impl GodotObject for {name} {{
             "object::add_ref(obj);"
         } else {
             "// Not reference-counted."
-        }
+        },
+        pointer_type = if class.is_pointer_safe() {
+            class.name.clone()
+        } else {
+            format!("Unsafe<{}>", class.name)
+        },
     )?;
 
     Ok(())
@@ -134,7 +139,7 @@ pub fn generate_dynamic_cast(output: &mut File, class: &GodotClass) -> Generator
     writeln!(output,
 r#"
     /// Generic dynamic cast.
-    pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
+    pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T::PointerType> {{
         object::godot_cast::<T>(self.this)
     }}
 "#,

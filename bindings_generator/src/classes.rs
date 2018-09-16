@@ -22,6 +22,19 @@ pub struct {name} {{
 
     if !class.is_pointer_safe() {
         writeln!(output, r#"unsafe impl UnsafeObject for {name} {{}}"#, name = class.name)?;
+    } else {
+        writeln!(output,
+r#"unsafe impl PointerType for {name} {{
+    type Target = Self;
+
+    #[doc(hidden)]
+    unsafe fn to_sys(&self) -> *mut sys::godot_object {{ self.this }}
+
+    #[doc(hidden)]
+    unsafe fn from_sys(this: *mut sys::godot_object) -> Self {{ {name} {{ this }} }}
+}}"#,
+            name = class.name
+        )?;
     }
 
     Ok(())

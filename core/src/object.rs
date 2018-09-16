@@ -5,7 +5,18 @@ use ObjectMethodTable;
 
 /// Internal details.
 pub unsafe trait GodotObject {
+    type PointerType: PointerType;
+
     fn class_name() -> &'static str;
+    #[doc(hidden)]
+    unsafe fn obj_to_sys(&self) -> *mut sys::godot_object;
+    #[doc(hidden)]
+    unsafe fn obj_from_sys(obj: *mut sys::godot_object) -> Self;
+}
+
+pub unsafe trait PointerType {
+    type Target: GodotObject;
+
     #[doc(hidden)]
     unsafe fn to_sys(&self) -> *mut sys::godot_object;
     #[doc(hidden)]
@@ -98,7 +109,7 @@ pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     }
 }
 
-pub fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T>
+pub fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T::PointerType>
 where
     T: GodotObject,
 {
@@ -107,6 +118,6 @@ where
             return None;
         }
 
-        Some(T::from_sys(from))
+        Some(T::PointerType::from_sys(from))
     }
 }

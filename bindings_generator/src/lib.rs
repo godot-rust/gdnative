@@ -150,7 +150,7 @@ pub fn generate_bindings(
         generate_method_table(output, class)?;
 
         for method in &class.methods {
-            generate_method_impl(output, class, method)?;
+            generate_method_impl(output, &api, class, method)?;
         }
     }
 

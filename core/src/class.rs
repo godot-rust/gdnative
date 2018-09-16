@@ -36,7 +36,7 @@ pub struct NativeRef<T: NativeClass> {
 impl<T: NativeClass> NativeRef<T> {
 
     /// Try to cast into a godot object reference.
-    pub fn cast<O>(&self) -> Option<O> where O: GodotObject {
+    pub fn cast<O>(&self) -> Option<O::PointerType> where O: GodotObject {
         object::godot_cast::<O>(self.this)
     }
 
@@ -226,9 +226,9 @@ class $name:ident: $owner:ty {
         impl $name {
             godot_class_build_methods!($($tt)*);
 
-            pub fn get_owner(&self) -> $owner {
+            pub fn get_owner(&self) -> <$owner as $crate::GodotObject>::PointerType {
                 unsafe {
-                    <$owner as $crate::GodotObject>::from_sys(self.header.this)
+                    <$owner as $crate::GodotObject>::PointerType::from_sys(self.header.this)
                 }
             }
 

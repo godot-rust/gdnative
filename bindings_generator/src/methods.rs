@@ -99,28 +99,19 @@ r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class
     Ok(())
 }
 
-pub fn generate_method_impl(output: &mut File, class: &GodotClass, method: &GodotMethod) -> GeneratorResult {
+pub fn generate_method_impl(output: &mut File, api: &Api, class: &GodotClass, method: &GodotMethod) -> GeneratorResult {
     let method_name = method.get_name();
 
     if skip_method(&method_name) {
         return Ok(());
     }
 
-    let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
-        ty
-    } else {
-        writeln!(output, "// TODO: missing method {}", method_name)?;
-        return Ok(());
-    };
+    let rust_ret_type = method.get_return_type().to_rust(api);
 
     let mut params = String::new();
     for argument in &method.arguments {
-        if let Some(ty) = argument.get_type().to_rust() {
-            fmt::Write::write_fmt(&mut params, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
-        } else {
-            writeln!(output, "// TODO: missing method {}", method_name)?;
-            return Ok(());
-        }
+        let ty = argument.get_type().to_rust(api);
+        fmt::Write::write_fmt(&mut params, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
     }
 
     if method.has_varargs {
@@ -146,7 +137,7 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
         )?;
 
         for argument in &method.arguments {
-            let ty = argument.get_type().to_rust().unwrap();
+            let ty = argument.get_type().to_rust(api);
             if ty.starts_with("Option") {
                 writeln!(output,
 r#"    let {name}: Variant = if let Some(o) = {name} {{
@@ -180,7 +171,7 @@ r#"    argument_buffer.push({name}.sys()); "#,
 
         if rust_ret_type.starts_with("Option") {
             writeln!(output,
-r#"    ret.try_to_object()"#
+r#"    ret.try_to_object::<{}>()"#, method.return_type
             )?;
         } else {
             writeln!(output,
@@ -206,7 +197,7 @@ r#"    ret.into()"#
     (gd_api.godot_method_bind_ptrcall)(method_bind, obj_ptr, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
         )?;
 
-        generate_return_post(output, &method.get_return_type())?;
+        generate_return_post(output, api, &method.get_return_type())?;
     }
 
     writeln!(output,
@@ -234,11 +225,7 @@ pub fn generate_methods(
                 continue;
             }
 
-            let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
-                ty
-            } else {
-                continue;
-            };
+            let rust_ret_type = method.get_return_type().to_rust(api);
 
             // Ensure that methods are not injected several times.
             let method_name_string = method_name.to_string();
@@ -250,12 +237,9 @@ pub fn generate_methods(
             let mut params_decl = String::new();
             let mut params_use = String::new();
             for argument in &method.arguments {
-                if let Some(ty) = argument.get_type().to_rust() {
-                    fmt::Write::write_fmt(&mut params_decl, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
-                    fmt::Write::write_fmt(&mut params_use, format_args!(", {}", rust_safe_name(&argument.name))).unwrap();
-                } else {
-                    continue 'method;
-                }
+                let ty = argument.get_type().to_rust(api);
+                fmt::Write::write_fmt(&mut params_decl, format_args!(", {}: {}", rust_safe_name(&argument.name), ty)).unwrap();
+                fmt::Write::write_fmt(&mut params_use, format_args!(", {}", rust_safe_name(&argument.name))).unwrap();
             }
 
             if method.has_varargs {
@@ -352,7 +336,7 @@ fn generate_argument_pre(w: &mut File, ty: &Ty, name: &str) -> GeneratorResult {
             writeln!(w, r#"        {name}.sys() as *const _ as *const _,"#, name = name)?;
         },
         &Ty::Object(_) => {
-            writeln!(w, r#"        if let Some(arg) = {name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
+            writeln!(w, r#"        if let Some(arg) = {name} {{ arg.to_sys() as *const _ as *const _ }} else {{ ptr::null() }},"#,
                 name = name,
             )?;
         },
@@ -446,7 +430,7 @@ fn generate_return_pre(w: &mut File, ty: &Ty) -> GeneratorResult {
     Ok(())
 }
 
-fn generate_return_post(w: &mut File, ty: &Ty) -> GeneratorResult {
+fn generate_return_post(w: &mut File, api: &Api, ty: &Ty) -> GeneratorResult {
     match ty {
         &Ty::Void => {},
         &Ty::F64
@@ -492,17 +476,18 @@ fn generate_return_post(w: &mut File, ty: &Ty) -> GeneratorResult {
         | &Ty::Variant
         => {
             writeln!(w,r#"
-    {rust_ty}::from_sys(ret)"#, rust_ty = ty.to_rust().unwrap()
+    {rust_ty}::from_sys(ret)"#, rust_ty = ty.to_rust(api)
             )?;
         }
         &Ty::Object(ref name) => {
+            let class = find_class(&api.classes, &name).unwrap();
             writeln!(w, r#"
     if ret.is_null() {{
         None
     }} else {{
         Some({}::from_sys(ret))
     }}"#,
-                name
+                if !class.is_pointer_safe() { "Unsafe" } else { &name }
             )?;
         },
         &Ty::Result => {

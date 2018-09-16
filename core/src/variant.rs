@@ -283,7 +283,7 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a Godot object.
     pub fn from_object<T>(val: T) -> Variant
-        where T: GodotObject
+        where T: PointerType
     {
         unsafe {
             let api = get_api();
@@ -452,7 +452,7 @@ impl Variant {
         pub fn try_to_dictionary(&self) -> Option<Dictionary> : godot_variant_as_dictionary;
     );
 
-    pub fn try_to_object<T>(&self) -> Option<T>
+    pub fn try_to_object<T>(&self) -> Option<T::PointerType>
         where T: GodotObject
     {
         use sys::godot_variant_type::*;
@@ -461,8 +461,8 @@ impl Variant {
             if (api.godot_variant_get_type)(&self.0) != GODOT_VARIANT_TYPE_OBJECT {
                 return None;
             }
-            let obj = Object::from_sys((api.godot_variant_as_object)(&self.0));
-            obj.cast::<T>()
+            let obj: Unsafe<Object> = Unsafe::from_sys((api.godot_variant_as_object)(&self.0));
+            obj.get().cast::<T>()
         }
     }
 
@@ -649,10 +649,10 @@ impl<'l> From<&'l str> for Variant {
 }
 
 impl <T> From<T> for Variant
-    where T: GodotObject
+    where T: PointerType
 {
     fn from(val: T) -> Variant {
-        Variant::from_object(val)
+        Variant::from_object::<T>(val)
     }
 }
 

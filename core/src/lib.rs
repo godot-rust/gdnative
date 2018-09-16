@@ -57,7 +57,7 @@ pub use vector2_array::*;
 pub use vector3::*;
 pub use vector3_array::*;
 pub use color_array::*;
-pub use object::GodotObject;
+pub use object::{GodotObject, PointerType};
 
 use std::mem;
 
