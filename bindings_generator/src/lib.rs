@@ -92,6 +92,7 @@ pub fn generate_bindings(
             if class.is_refcounted() {
                 generate_refreference_ctor(output, class)?;
             } else {
+                assert!(!class.singleton);
                 generate_non_refreference_ctor(output, class)?;
             }
         }

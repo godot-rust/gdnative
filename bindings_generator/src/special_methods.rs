@@ -51,15 +51,13 @@ r#"
     /// Immediately after creation, the object is owned by the caller, and can be
     /// passed to the engine (in which case the engine will be responsible for
     /// destroying the object) or destroyed manually using `{name}::free`.
-    pub fn new() -> Self {{
+    pub fn new() -> Owned<Self> {{
         unsafe {{
             let gd_api = get_api();
             let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
             let this = ctor();
 
-            {name} {{
-                this
-            }}
+            Owned::from_sys(this)
         }}
     }}
 

@@ -38,6 +38,11 @@ impl<T> Owned<T> where T: UnsafeObject {
             ptr: other.ptr
         }
     }
+
+    #[doc(hidden)]
+    pub unsafe fn from_sys(ptr: *mut sys::godot_object) -> Self {
+        Owned { ptr: T::obj_from_sys(ptr) }
+    }
 }
 
 impl<T: UnsafeObject> Drop for Owned<T> {
