@@ -107,6 +107,30 @@ impl ToVariant for {name} {{
     Ok(())
 }
 
+pub fn generate_free_impl(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
+    if class.instanciable && !class.is_pointer_safe() {
+        writeln!(output,
+r#"impl Free for {name} {{
+    unsafe fn godot_free(self) {{ self.free() }}
+}}
+"#,
+            name = class.name,
+        )?;
+    }
+
+    if class.name == "Node" || api.class_inherits(&class, "Node") {
+        writeln!(output,
+r#"impl QueueFree for {name} {{
+    unsafe fn godot_queue_free(&mut self) {{ self.queue_free() }}
+}}
+"#,
+            name = class.name,
+        )?;
+    }
+
+    Ok(())
+}
+
 pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) -> GeneratorResult {
     let s_name = if class.name.starts_with("_") {
         &class.name[1..]

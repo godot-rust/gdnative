@@ -31,17 +31,16 @@ pub extern "C" fn run_tests(
 fn test_constructor() -> bool {
     println!(" -- test_constructor");
 
-    use gdnative::{GDNativeLibrary, Path2D};
+    use gdnative::{GDNativeLibrary, Path2D, FreeOnDrop};
 
     // Just create an object and call a method as a sanity check for the
     // generated constructors.
     let lib = GDNativeLibrary::new();
     let _ = lib.is_singleton();
 
-    let path = Path2D::new();
     unsafe {
+        let path = FreeOnDrop::new(Path2D::new());
         let _ =  path.get_z_index();
-        path.free();
     }
 
     return true;

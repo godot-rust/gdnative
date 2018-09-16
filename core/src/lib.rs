@@ -37,6 +37,7 @@ pub extern crate gdnative_geom as geom;
 mod macros;
 #[macro_use]
 mod class;
+mod free_on_drop;
 mod internal;
 mod color;
 mod variant;
@@ -61,6 +62,7 @@ pub mod object;
 
 pub use internal::*;
 pub use class::*;
+pub use free_on_drop::*;
 pub use variant::*;
 pub use variant_array::*;
 pub use dictionary::*;
