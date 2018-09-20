@@ -342,9 +342,13 @@ impl PartialOrd for StringName {
     }
 }
 
+impl<S> From<S> for GodotString where S: AsRef<str> {
+    fn from(s: S) -> GodotString { GodotString::from_str(s) }
+}
+
 godot_test!(test_string {
     use VariantType;
-    let foo = GodotString::from_str("foo");
+    let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
 
     let foo2 = foo.new_ref();
@@ -353,7 +357,7 @@ godot_test!(test_string {
     let variant = Variant::from_godot_string(&foo);
     assert!(variant.get_type() == VariantType::GodotString);
 
-    let variant2 = Variant::from_str("foo");
+    let variant2: Variant = "foo".into();
     assert!(variant == variant2);
 
     if let Some(foo_variant) = variant.try_to_godot_string() {
@@ -361,4 +365,6 @@ godot_test!(test_string {
     } else {
         panic!("variant should be a GodotString");
     }
+
+    assert_eq!(foo.to_utf8().as_str(), "foo");
 });
