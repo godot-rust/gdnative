@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 
 use std::ffi::CStr;
 use std::ops::Range;
@@ -214,7 +214,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for GodotString {
+impl ToVariant for GodotString {
     fn to_variant(&self) -> Variant { Variant::from_godot_string(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_godot_string() }
 }

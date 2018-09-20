@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 use VariantArray;
 use Vector3;
 
@@ -113,7 +113,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for Vector3Array {
+impl ToVariant for Vector3Array {
     fn to_variant(&self) -> Variant { Variant::from_vector3_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_vector3_array() }
 }

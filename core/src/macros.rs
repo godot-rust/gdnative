@@ -405,7 +405,8 @@ macro_rules! godot_wrap_method {
 
                 let mut offset = 0;
                 $(
-                    let $pname = if let Some(val) = <$pty as $crate::GodotType>::from_sys_variant(&mut *(*args).offset(offset)) {
+                    let _variant: &$crate::Variant = ::std::mem::transmute(&mut *(*args).offset(offset));
+                    let $pname = if let Some(val) = <$pty as $crate::ToVariant>::from_variant(_variant) {
                         val
                     } else {
                         godot_error!("Incorrect argument type for argument {}", offset);
@@ -427,7 +428,7 @@ macro_rules! godot_wrap_method {
                     }
                 };
 
-                <$retty as $crate::GodotType>::to_variant(&rust_ret).forget()
+                <$retty as $crate::ToVariant>::to_variant(&rust_ret).forget()
             }
 
             method

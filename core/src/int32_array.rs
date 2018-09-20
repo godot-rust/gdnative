@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 use VariantArray;
 
 /// A reference-counted vector of `i32` that uses Godot's pool allocator.
@@ -110,7 +110,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for Int32Array {
+impl ToVariant for Int32Array {
     fn to_variant(&self) -> Variant { Variant::from_int32_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_int32_array() }
 }
