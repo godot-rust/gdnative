@@ -3,7 +3,7 @@ use get_api;
 use Variant;
 use VariantArray;
 use GodotString;
-use GodotType;
+use ToVariant;
 use std::fmt;
 
 /// A reference-counted `Dictionary` of `Variant` key-value pairs.
@@ -141,7 +141,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for Dictionary {
+impl ToVariant for Dictionary {
     fn to_variant(&self) -> Variant { Variant::from_dictionary(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_dictionary() }
 }

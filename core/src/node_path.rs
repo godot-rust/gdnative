@@ -1,6 +1,6 @@
 use sys;
 use get_api;
-use GodotType;
+use ToVariant;
 use GodotString;
 use Variant;
 use std::fmt;
@@ -122,7 +122,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for NodePath {
+impl ToVariant for NodePath {
     fn to_variant(&self) -> Variant { Variant::from_node_path(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_node_path() }
 }

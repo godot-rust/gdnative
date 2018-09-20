@@ -1,8 +1,8 @@
-use GodotType;
+use ToVariant;
 use Variant;
 use Vector3;
 
-impl GodotType for Vector3 {
+impl ToVariant for Vector3 {
     fn to_variant(&self) -> Variant {
         Variant::from_vector3(self)
     }

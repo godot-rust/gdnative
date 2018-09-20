@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 use VariantArray;
 
 /// A reference-counted vector of bytes that uses Godot's pool allocator.
@@ -110,7 +110,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for ByteArray {
+impl ToVariant for ByteArray {
     fn to_variant(&self) -> Variant { Variant::from_byte_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_byte_array() }
 }

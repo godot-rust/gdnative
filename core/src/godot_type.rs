@@ -1,15 +1,12 @@
 use super::*;
 
-pub trait GodotType: Sized {
+/// Types that can be converted to and from a `Variant`.
+pub trait ToVariant: Sized {
     fn to_variant(&self) -> Variant;
     fn from_variant(variant: &Variant) -> Option<Self>;
-
-    fn from_sys_variant(variant: &sys::godot_variant) -> Option<Self> {
-        Self::from_variant(Variant::cast_ref(variant))
-    }
 }
 
-impl GodotType for () {
+impl ToVariant for () {
     fn to_variant(&self) -> Variant {
         Variant::new()
     }
@@ -25,7 +22,7 @@ impl GodotType for () {
 
 macro_rules! godot_int_impl {
     ($ty:ty) => (
-        impl GodotType for $ty {
+        impl ToVariant for $ty {
             fn to_variant(&self) -> Variant {
                 unsafe {
                     let mut ret = sys::godot_variant::default();
@@ -55,7 +52,7 @@ godot_int_impl!(i64);
 
 macro_rules! godot_uint_impl {
     ($ty:ty) => (
-        impl GodotType for $ty {
+        impl ToVariant for $ty {
             fn to_variant(&self) -> Variant {
                 unsafe {
                     let mut ret = sys::godot_variant::default();
@@ -84,7 +81,7 @@ godot_uint_impl!(u32);
 godot_uint_impl!(u64);
 
 
-impl GodotType for f32 {
+impl ToVariant for f32 {
     fn to_variant(&self) -> Variant {
         unsafe {
             let mut ret = sys::godot_variant::default();
@@ -105,7 +102,7 @@ impl GodotType for f32 {
     }
 }
 
-impl GodotType for f64 {
+impl ToVariant for f64 {
     fn to_variant(&self) -> Variant {
         unsafe {
             let mut ret = sys::godot_variant::default();
@@ -126,7 +123,7 @@ impl GodotType for f64 {
     }
 }
 
-impl GodotType for String {
+impl ToVariant for String {
     fn to_variant(&self) -> Variant {
         Variant::from_str(&self)
     }

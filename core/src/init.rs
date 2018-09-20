@@ -24,7 +24,7 @@
 use super::*;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 use NativeClass;
 use sys::godot_property_usage_flags::*;
 use sys::godot_property_hint::*;
@@ -182,7 +182,7 @@ impl<C: NativeClass> ClassBuilder<C> {
 
     pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
     where
-        T: GodotType,
+        T: ToVariant,
         S: PropertySetter<C, T>,
         G: PropertyGetter<C, T>,
     {
@@ -376,11 +376,11 @@ pub struct Signal<'l> {
     pub args: &'l [SignalArgument<'l>],
 }
 
-pub unsafe trait PropertySetter<C: NativeClass, T: GodotType> {
+pub unsafe trait PropertySetter<C: NativeClass, T: ToVariant> {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func;
 }
 
-pub unsafe trait PropertyGetter<C: NativeClass, T: GodotType> {
+pub unsafe trait PropertyGetter<C: NativeClass, T: ToVariant> {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func;
 }
 
@@ -401,7 +401,7 @@ extern "C" fn empty_getter(
 
 extern "C" fn empty_free_func(_data: *mut libc::c_void) {}
 
-unsafe impl <C: NativeClass, T: GodotType> PropertySetter<C, T> for () {
+unsafe impl <C: NativeClass, T: ToVariant> PropertySetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
         set.set_func = Some(empty_setter);
@@ -410,7 +410,7 @@ unsafe impl <C: NativeClass, T: GodotType> PropertySetter<C, T> for () {
     }
 }
 
-unsafe impl <C: NativeClass, T: GodotType> PropertyGetter<C, T> for () {
+unsafe impl <C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
         get.get_func = Some(empty_getter);
@@ -421,7 +421,7 @@ unsafe impl <C: NativeClass, T: GodotType> PropertyGetter<C, T> for () {
 
 unsafe impl <F, C, T> PropertySetter<C, T> for F
     where C: NativeClass,
-          T: GodotType,
+          T: ToVariant,
           F: Fn(&mut C, T),
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
@@ -432,7 +432,7 @@ unsafe impl <F, C, T> PropertySetter<C, T> for F
 
         extern "C" fn invoke<C, F, T>(_this: *mut sys::godot_object, method: *mut libc::c_void, class: *mut libc::c_void, val: *mut sys::godot_variant)
             where C: NativeClass,
-                T: GodotType,
+                T: ToVariant,
                 F: Fn(&mut C, T),
 
         {
@@ -463,7 +463,7 @@ unsafe impl <F, C, T> PropertySetter<C, T> for F
 
 unsafe impl <F, C, T> PropertyGetter<C, T> for F
     where C: NativeClass,
-          T: GodotType,
+          T: ToVariant,
           F: Fn(&mut C) -> T,
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
@@ -474,7 +474,7 @@ unsafe impl <F, C, T> PropertyGetter<C, T> for F
 
         extern "C" fn invoke<C, F, T>(_this: *mut sys::godot_object, method: *mut libc::c_void, class: *mut libc::c_void) -> sys::godot_variant
             where C: NativeClass,
-                T: GodotType,
+                T: ToVariant,
                 F: Fn(&mut C) -> T,
 
         {

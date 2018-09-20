@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 use VariantArray;
 use GodotString;
 
@@ -111,7 +111,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for StringArray {
+impl ToVariant for StringArray {
     fn to_variant(&self) -> Variant { Variant::from_string_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_string_array() }
 }

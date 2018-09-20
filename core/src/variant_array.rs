@@ -1,7 +1,7 @@
 use sys;
 use get_api;
 use Variant;
-use GodotType;
+use ToVariant;
 
 /// A reference-counted `Variant` vector. Godot's generic array data type.
 /// Negative indices can be used to count from the right.
@@ -212,7 +212,7 @@ impl_basic_traits!(
     }
 );
 
-impl GodotType for VariantArray {
+impl ToVariant for VariantArray {
     fn to_variant(&self) -> Variant { Variant::from_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_array() }
 }
