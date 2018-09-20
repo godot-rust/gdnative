@@ -282,7 +282,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a Godot object.
-    pub fn from_object<T>(val: T) -> Variant
+    pub fn from_object<T>(val: &T) -> Variant
         where T: GodotObject
     {
         unsafe {
@@ -652,7 +652,7 @@ impl <T> From<T> for Variant
     where T: GodotObject
 {
     fn from(val: T) -> Variant {
-        Variant::from_object(val)
+        Variant::from_object(&val)
     }
 }
 
