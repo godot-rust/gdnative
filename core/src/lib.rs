@@ -38,7 +38,6 @@ mod macros;
 #[macro_use]
 mod class;
 mod internal;
-mod godot_type;
 mod color;
 mod variant;
 mod variant_array;
@@ -62,7 +61,6 @@ pub mod object;
 
 pub use internal::*;
 pub use class::*;
-pub use godot_type::*;
 pub use variant::*;
 pub use variant_array::*;
 pub use dictionary::*;

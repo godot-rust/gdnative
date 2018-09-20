@@ -9,13 +9,3 @@ use std::ops::*;
 use libc;
 
 include!(concat!(env!("OUT_DIR"), "/core_types.rs"));
-
-impl ToVariant for Object {
-    fn to_variant(&self) -> Variant {
-        Variant::from_object(self)
-    }
-
-    fn from_variant(variant: &Variant) -> Option<Self> {
-        variant.try_to_object()
-    }
-}
