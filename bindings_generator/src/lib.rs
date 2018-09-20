@@ -81,6 +81,8 @@ pub fn generate_bindings(
 
         generate_godot_object_impl(output, class)?;
 
+        generate_to_variant_impl(output, &api, class)?;
+
         writeln!(output, "impl {} {{", class.name)?;
 
         if class.singleton {

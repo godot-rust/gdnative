@@ -2,6 +2,8 @@ use json::*;
 use std::fs::File;
 use std::io::Write;
 use GeneratorResult;
+use Api;
+use class_inherits;
 
 use find_class;
 
@@ -104,6 +106,23 @@ unsafe impl GodotObject for {name} {{
 
     Ok(())
 }
+
+pub fn generate_to_variant_impl(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
+    if class_inherits(&api.classes, class, "Object") || class.name == "Object" {
+        writeln!(output,
+r#"
+impl ToVariant for {name} {{
+    fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
+    fn from_variant(variant: &Variant) -> Option<Self> {{ variant.try_to_object::<Self>() }}
+}}
+"#,
+            name = class.name,
+        )?;
+    }
+
+    Ok(())
+}
+
 
 pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) -> GeneratorResult {
     let s_name = if class.name.starts_with("_") {
