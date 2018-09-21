@@ -19,7 +19,7 @@ pub fn official_doc_url(class: &GodotClass) -> String {
 pub fn generate_class_documentation(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
         let has_parent = class.base_class != "";
         let singleton_str = if class.singleton { "singleton " } else { "" } ;
-        let ownership_type = if class.is_refcounted() { "reference counted" } else { "manually managed" };
+        let ownership_type = if class.is_refcounted() { "reference counted" } else { "unsafe" };
         if &class.name == "Reference" {
             writeln!(output, "/// Base class of all reference-counted types. Inherits `Object`.")?;
         } else if &class.name == "Object" {
@@ -71,6 +71,18 @@ r#"///
 /// created on the Rust side and not passed to the engine yet, ownership should be either given
 /// to the engine or the object must be manually destroyed using `{name}::free`."#,
                 name = class.name
+            )?;
+        }
+
+        let feature = api.namespaces[&class.name];
+        if feature != Crate::core {
+            writeln!(output,
+r#"///
+/// ## Feature flag
+///
+/// This type is behind the gdnative crate's `{feature:?}` feature flag.
+"#,
+                feature = feature,
             )?;
         }
 

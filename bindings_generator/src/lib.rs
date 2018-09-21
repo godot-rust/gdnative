@@ -13,7 +13,7 @@ mod documentation;
 
 use std::fs::File;
 use std::io::Write;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 pub use json::*;
 use classes::*;

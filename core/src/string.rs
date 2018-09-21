@@ -141,6 +141,7 @@ impl GodotString {
         }
     }
 
+    #[doc(hidden)]
     pub fn to_utf8(&self) -> Utf8String {
         unsafe {
             Utf8String((get_api().godot_string_utf8)(&self.0))
@@ -225,6 +226,9 @@ impl fmt::Debug for GodotString {
     }
 }
 
+// TODO: Is it useful to expose this type?
+// Could just make it an internal detail of how to convert to a rust string.
+#[doc(hidden)]
 pub struct Utf8String(pub(crate) sys::godot_char_string);
 
 impl Utf8String {
