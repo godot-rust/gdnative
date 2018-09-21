@@ -1,3 +1,5 @@
+//! Geometric types.
+
 pub extern crate euclid;
 
 mod plane;

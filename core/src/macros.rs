@@ -296,6 +296,7 @@ macro_rules! godot_test {
     ($($test_name:ident $body:block)*) => {
         $(
             #[cfg(feature = "gd_test")]
+            #[doc(hidden)]
             pub fn $test_name() -> bool {
                 let str_name = stringify!($test_name);
                 println!("   -- {}", str_name);

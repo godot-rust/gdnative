@@ -1,5 +1,6 @@
 use Vector3;
 
+/// Plane in hessian form.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Plane {
