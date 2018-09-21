@@ -2,10 +2,6 @@ use json::*;
 use std::fs::File;
 use std::io::Write;
 use GeneratorResult;
-use Api;
-use class_inherits;
-
-use find_class;
 
 use heck::SnakeCase;
 
@@ -78,8 +74,8 @@ r#"
 }
 
 pub fn generate_godot_object_impl(output: &mut File, class: &GodotClass) -> GeneratorResult {
-    writeln!(output, r#"
-
+    writeln!(output,
+r#"
 unsafe impl GodotObject for {name} {{
     fn class_name() -> &'static str {{
         "{name}"
@@ -95,6 +91,10 @@ unsafe impl GodotObject for {name} {{
     }}
 }}
 
+impl ToVariant for {name} {{
+    fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
+    fn from_variant(variant: &Variant) -> Option<Self> {{ variant.try_to_object::<Self>() }}
+}}
 "#,
         name = class.name,
         addref_if_reference = if class.is_refcounted() {
@@ -106,23 +106,6 @@ unsafe impl GodotObject for {name} {{
 
     Ok(())
 }
-
-pub fn generate_to_variant_impl(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
-    if class_inherits(&api.classes, class, "Object") || class.name == "Object" {
-        writeln!(output,
-r#"
-impl ToVariant for {name} {{
-    fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
-    fn from_variant(variant: &Variant) -> Option<Self> {{ variant.try_to_object::<Self>() }}
-}}
-"#,
-            name = class.name,
-        )?;
-    }
-
-    Ok(())
-}
-
 
 pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) -> GeneratorResult {
     let s_name = if class.name.starts_with("_") {
@@ -163,14 +146,13 @@ r#"
     Ok(())
 }
 
-
 pub fn generate_upcast(
     output: &mut File,
-    classes: &[GodotClass],
+    api: &Api,
     base_class_name: &str,
     is_pointer_safe: bool,
 ) -> GeneratorResult {
-    if let Some(parent) = find_class(classes, &base_class_name) {
+    if let Some(parent) = api.find_class(&base_class_name) {
         let snake_name = class_name_to_snake_case(&base_class_name);
         if is_pointer_safe {
             writeln!(output,
@@ -210,7 +192,7 @@ r#"    /// Up-cast.
 
         generate_upcast(
             output,
-            classes,
+            api,
             &parent.base_class,
             is_pointer_safe,
         )?;

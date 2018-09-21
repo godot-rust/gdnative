@@ -3,8 +3,6 @@ use std::fs::File;
 use std::io::Write;
 use GeneratorResult;
 
-use find_class;
-
 pub fn class_doc_link(class: &GodotClass) -> String {
     // TODO: link the correct crate
     // let subcrate = get_crate(class);
@@ -18,7 +16,7 @@ pub fn official_doc_url(class: &GodotClass) -> String {
     )
 }
 
-pub fn generate_class_documentation(output: &mut File, classes: &[GodotClass], class: &GodotClass) -> GeneratorResult {
+pub fn generate_class_documentation(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
         let has_parent = class.base_class != "";
         let singleton_str = if class.singleton { "singleton " } else { "" } ;
         let ownership_type = if class.is_refcounted() { "reference counted" } else { "manually managed" };
@@ -87,7 +85,7 @@ r#"///
 
             list_base_classes(
                 output,
-                &classes,
+                api,
                 &class.base_class,
             )?;
         }
@@ -106,16 +104,16 @@ r#"///
 
 fn list_base_classes(
     output: &mut File,
-    classes: &[GodotClass],
+    api: &Api,
     parent_name: &str,
 ) -> GeneratorResult {
-    if let Some(parent) = find_class(classes, parent_name) {
+    if let Some(parent) = api.find_class(parent_name) {
         let class_link = class_doc_link(&parent);
 
         writeln!(output, "/// - {}", class_link)?;
 
         if parent.base_class != "" {
-            list_base_classes(output, classes, &parent.base_class)?;
+            list_base_classes(output, api, &parent.base_class)?;
         }
     }
 
