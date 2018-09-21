@@ -1,4 +1,63 @@
 use std::collections::HashMap;
+use std::fs::File;
+use serde_json;
+
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize)]
+pub enum Crate {
+    core,
+    common,
+    graphics,
+    animation,
+    physics,
+    network,
+    audio,
+    video,
+    arvr,
+    input,
+    ui,
+    editor,
+    visual_script,
+    unknown,
+}
+
+pub struct Api {
+    pub classes: Vec<GodotClass>,
+    pub namespaces: HashMap<String, Crate>,
+    pub sub_crate: Crate,
+}
+
+impl Api {
+    pub fn new(api_description: File, api_namespaces: File, sub_crate: Crate) -> Self {
+        Api {
+            classes: serde_json::from_reader(api_description).expect("Failed to parse the API description"),
+            namespaces: serde_json::from_reader(api_namespaces).expect("Failed to parse the API namespaces"),
+            sub_crate,
+        }
+    }
+
+    pub fn find_class<'a, 'b>(&'a self, name: &'b str) -> Option<&'a GodotClass> {
+        for class in &self.classes {
+            if &class.name == name {
+                return Some(class);
+            }
+        }
+
+        None
+    }
+
+    pub fn class_inherits(&self, class: &GodotClass, base_class_name: &str) -> bool {
+        if class.base_class == base_class_name {
+            return true;
+        }
+
+        if let Some(parent) = self.find_class(&class.base_class) {
+            return self.class_inherits(parent, base_class_name);
+        }
+
+        return false;
+    }
+}
 
 #[derive(Deserialize, Debug)]
 pub struct GodotClass {

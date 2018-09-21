@@ -1,13 +1,9 @@
 extern crate gdnative_bindings_generator;
-extern crate serde;
-extern crate serde_json;
 
 use gdnative_bindings_generator::*;
-use gdnative_bindings_generator::json::*;
 use std::env;
 use std::fs::File;
-use std::collections::{HashMap, HashSet};
-use Crate;
+use std::collections::HashSet;
 
 fn main() {
     let api_path = env::args().nth(1).unwrap();
@@ -26,11 +22,10 @@ pub fn print_dependencies(
     api_namespaces: File,
     class_name: &str,
 ) {
-    let classes: Vec<GodotClass> = serde_json::from_reader(api_description).expect("Failed to parse the API description");
-    let namespaces: HashMap<String, Crate> = serde_json::from_reader(api_namespaces).expect("Failed to parse the API namespaces");
+    let api = Api::new(api_description, api_namespaces, Crate::unknown);
 
-    if let Some(class) = find_class(&classes, class_name) {
-        println!("class {} ({:?})", class_name, namespaces[class_name]);
+    if let Some(class) = api.find_class(class_name) {
+        println!("class {} ({:?})", class_name, api.namespaces[class_name]);
         println!("Depends on:");
         let mut deps: HashSet<String> = HashSet::default();
         if class.base_class != "" {
@@ -46,8 +41,8 @@ pub fn print_dependencies(
         let mut deps: Vec<String> = deps.into_iter().collect();
         deps.sort();
         for dep in deps {
-            if namespaces.contains_key(&dep) {
-                println!(" - {} ({:?})", dep, namespaces[&dep]);
+            if api.namespaces.contains_key(&dep) {
+                println!(" - {} ({:?})", dep, api.namespaces[&dep]);
             } else {
                 println!(" - {}", dep);
             }
@@ -55,14 +50,14 @@ pub fn print_dependencies(
 
         println!("Is a dependency of:");
         'class_loop:
-        for class in &classes {
+        for class in &api.classes {
             if class.name == class_name {
                 continue;
             }
 
             if class.base_class == class_name {
-                if namespaces.contains_key(&class.name) {
-                    println!(" - {} ({:?})", class.name, namespaces[&class.name]);
+                if api.namespaces.contains_key(&class.name) {
+                    println!(" - {} ({:?})", class.name, api.namespaces[&class.name]);
                 } else {
                     println!(" - {}", class.name);
                 }
@@ -72,8 +67,8 @@ pub fn print_dependencies(
             for method in &class.methods {
                 for arg in &method.arguments {
                     if arg.ty == class_name {
-                        if namespaces.contains_key(&class.name) {
-                            println!(" - {} ({:?})", class.name, namespaces[&class.name]);
+                        if api.namespaces.contains_key(&class.name) {
+                            println!(" - {} ({:?})", class.name, api.namespaces[&class.name]);
                         } else {
                             println!(" - {}", class.name);
                         }
@@ -81,8 +76,8 @@ pub fn print_dependencies(
                     }
                 }
                 if method.return_type == class_name {
-                    if namespaces.contains_key(&class.name) {
-                        println!(" - {} ({:?})", class.name, namespaces[&class.name]);
+                    if api.namespaces.contains_key(&class.name) {
+                        println!(" - {} ({:?})", class.name, api.namespaces[&class.name]);
                     } else {
                         println!(" - {}", class.name);
                     }

@@ -15,39 +15,15 @@ use std::fs::File;
 use std::io::Write;
 use std::collections::{HashMap, HashSet};
 
-use json::*;
+pub use json::*;
 use classes::*;
 use methods::*;
 use special_methods::*;
 use documentation::*;
 
 use std::io;
+
 pub type GeneratorResult = Result<(), io::Error>;
-
-#[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize)]
-pub enum Crate {
-    core,
-    common,
-    graphics,
-    animation,
-    physics,
-    network,
-    audio,
-    video,
-    arvr,
-    input,
-    ui,
-    editor,
-    visual_script,
-    unknown,
-}
-
-pub struct Api {
-    pub classes: Vec<GodotClass>,
-    pub namespaces: HashMap<String, Crate>,
-    pub sub_crate: Crate,
-}
 
 pub fn generate_bindings(
     api_description: File,
@@ -56,11 +32,7 @@ pub fn generate_bindings(
     crate_type: Crate,
 ) -> GeneratorResult {
 
-    let api = Api {
-        classes: serde_json::from_reader(api_description).expect("Failed to parse the API description"),
-        namespaces: serde_json::from_reader(api_namespaces).expect("Failed to parse the API namespaces"),
-        sub_crate: crate_type,
-    };
+    let api = Api::new(api_description, api_namespaces, crate_type);
 
     writeln!(output, "use std::os::raw::c_char;")?;
     writeln!(output, "use std::ptr;")?;
@@ -71,7 +43,7 @@ pub fn generate_bindings(
             continue;
         }
 
-        generate_class_documentation(output, &api.classes, class)?;
+        generate_class_documentation(output, &api, class)?;
 
         generate_class_struct(output, class)?;
 
@@ -80,8 +52,6 @@ pub fn generate_bindings(
         }
 
         generate_godot_object_impl(output, class)?;
-
-        generate_to_variant_impl(output, &api, class)?;
 
         writeln!(output, "impl {} {{", class.name)?;
 
@@ -111,7 +81,7 @@ pub fn generate_bindings(
 
         generate_upcast(
             output,
-            &api.classes,
+            &api,
             &class.base_class,
             class.is_pointer_safe(),
         )?;
@@ -171,28 +141,6 @@ fn rust_safe_name(name: &str) -> &str {
         "where" => "_where",
         name => name,
     }
-}
-
-pub fn find_class<'a, 'b>(classes: &'a[GodotClass], name: &'b str) -> Option<&'a GodotClass> {
-    for class in classes {
-        if &class.name == name {
-            return Some(class);
-        }
-    }
-
-    None
-}
-
-pub fn class_inherits(classes: &[GodotClass], class: &GodotClass, base_class_name: &str) -> bool {
-    if class.base_class == base_class_name {
-        return true;
-    }
-
-    if let Some(parent) = find_class(classes, &class.base_class) {
-        return class_inherits(classes, parent, base_class_name);
-    }
-
-    return false;
 }
 
 pub fn get_crate_namespace_opt(crate_type: Option<Crate>) -> &'static str {

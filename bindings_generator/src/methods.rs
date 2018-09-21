@@ -1,9 +1,7 @@
-use {find_class, rust_safe_name};
-
 use json::*;
 use documentation::class_doc_link;
 use GeneratorResult;
-use Api;
+use rust_safe_name;
 
 use std::fmt;
 use std::io::Write;
@@ -225,7 +223,7 @@ pub fn generate_methods(
     is_safe: bool,
     is_leaf: bool,
 ) -> GeneratorResult {
-    if let Some(class) = find_class(&api.classes, class_name) {
+    if let Some(class) = api.find_class(class_name) {
         'method:
         for method in &class.methods {
             let method_name = method.get_name();
