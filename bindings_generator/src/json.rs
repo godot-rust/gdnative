@@ -29,11 +29,15 @@ pub struct Api {
 
 impl Api {
     pub fn new(api_description: File, api_namespaces: File, sub_crate: Crate) -> Self {
-        Api {
+        let mut api = Api {
             classes: serde_json::from_reader(api_description).expect("Failed to parse the API description"),
             namespaces: serde_json::from_reader(api_namespaces).expect("Failed to parse the API namespaces"),
             sub_crate,
-        }
+        };
+
+        api.strip_leading_underscores();
+
+        api
     }
 
     pub fn find_class<'a, 'b>(&'a self, name: &'b str) -> Option<&'a GodotClass> {
@@ -56,6 +60,24 @@ impl Api {
         }
 
         return false;
+    }
+
+    fn strip_leading_underscores(&mut self) {
+        for class in &mut self.classes {
+            if class.name.starts_with('_') {
+                class.name = class.name[1..].to_string();
+            }
+            for method in &mut class.methods {
+                if method.return_type.starts_with('_') {
+                    method.return_type = method.return_type[1..].to_string();
+                }
+                for arg in &mut method.arguments {
+                    if arg.ty.starts_with('_') {
+                        arg.ty = arg.ty[1..].to_string();
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -199,7 +221,10 @@ impl Ty {
             "enum.Variant::Type" => Ty::VariantType,
             ty if ty.starts_with("enum.") => {
                 let mut split = ty[5..].split("::");
-                let class = split.next().unwrap();
+                let mut class = split.next().unwrap();
+                if class.starts_with('_') {
+                    class = &class[1..];
+                }
                 let name = split.next().unwrap();
                 Ty::Enum(format!("{}{}", class, name))
             }
