@@ -4,7 +4,7 @@ authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative core bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.4.0"
+version = "0.5.0"
 license = "MIT"
 workspace = ".."
 
@@ -12,8 +12,8 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative-sys = { path = "../sys", version = "0.3.0" }
-gdnative_geom = { path = "../geom", version = "0.3.0" }
+gdnative-sys = { path = "../sys", version = "0.5.0" }
+gdnative_geom = { path = "../geom", version = "0.5.0" }
 libc = "0.2"
 bitflags = "1.0"
 

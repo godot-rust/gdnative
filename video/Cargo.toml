@@ -4,7 +4,7 @@ authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative video bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.4.0"
+version = "0.5.0"
 license = "MIT"
 workspace = ".."
 
@@ -12,7 +12,7 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative_common = { path = "../common", version = "0.4.0" }
+gdnative_common = { path = "../common", version = "0.5.0" }
 
 [build-dependencies]
 gdnative_bindings_generator = { path = "../bindings_generator" }

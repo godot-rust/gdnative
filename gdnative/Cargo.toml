@@ -4,7 +4,7 @@ authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.4.0"
+version = "0.5.0"
 license = "MIT"
 workspace = ".."
 
@@ -24,19 +24,19 @@ ui = ["gdnative_ui", "video"]
 arvr = ["gdnative_arvr"]
 
 [dependencies]
-gdnative_core = { path = "../core", version = "0.4.0" }
-gdnative_common = { path = "../common", version = "0.4.0" }
-gdnative_graphics = { optional = true, path = "../graphics", version = "0.4.0" }
-gdnative_physics = { optional = true, path = "../physics", version = "0.4.0" }
-gdnative_audio = { optional = true, path = "../audio", version = "0.4.0" }
-gdnative_video = { optional = true, path = "../video", version = "0.4.0" }
-gdnative_animation = { optional = true, path = "../animation", version = "0.4.0" }
-gdnative_network = { optional = true, path = "../network", version = "0.4.0" }
-gdnative_editor = { optional = true, path = "../editor", version = "0.4.0" }
-gdnative_visual_script = { optional = true, path = "../visual_script", version = "0.4.0" }
-gdnative_input = { optional = true, path = "../input", version = "0.4.0" }
-gdnative_ui = { optional = true, path = "../ui", version = "0.4.0" }
-gdnative_arvr = { optional = true, path = "../arvr", version = "0.4.0" }
+gdnative_core = { path = "../core", version = "0.5.0" }
+gdnative_common = { path = "../common", version = "0.5.0" }
+gdnative_graphics = { optional = true, path = "../graphics", version = "0.5.0" }
+gdnative_physics = { optional = true, path = "../physics", version = "0.5.0" }
+gdnative_audio = { optional = true, path = "../audio", version = "0.5.0" }
+gdnative_video = { optional = true, path = "../video", version = "0.5.0" }
+gdnative_animation = { optional = true, path = "../animation", version = "0.5.0" }
+gdnative_network = { optional = true, path = "../network", version = "0.5.0" }
+gdnative_editor = { optional = true, path = "../editor", version = "0.5.0" }
+gdnative_visual_script = { optional = true, path = "../visual_script", version = "0.5.0" }
+gdnative_input = { optional = true, path = "../input", version = "0.5.0" }
+gdnative_ui = { optional = true, path = "../ui", version = "0.5.0" }
+gdnative_arvr = { optional = true, path = "../arvr", version = "0.5.0" }
 
 [package.metadata.docs.rs]
 all-features = true
