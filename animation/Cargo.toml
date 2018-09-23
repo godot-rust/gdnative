@@ -15,4 +15,4 @@ gd_test = []
 gdnative_common = { path = "../common", version = "0.5.0" }
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator" }
+gdnative_bindings_generator = { path = "../bindings_generator", version = "0.1.0" }

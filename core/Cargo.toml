@@ -18,4 +18,4 @@ libc = "0.2"
 bitflags = "1.0"
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator" }
+gdnative_bindings_generator = { path = "../bindings_generator", version = "0.1.0" }
