@@ -4,7 +4,7 @@ authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative editor bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.4.0"
+version = "0.5.0"
 license = "MIT"
 workspace = ".."
 
@@ -12,9 +12,9 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative_common = { path = "../common", version = "0.4.0" }
-gdnative_ui = { path = "../ui", version = "0.4.0" }
-gdnative_animation = { path = "../animation", version = "0.4.0" }
+gdnative_common = { path = "../common", version = "0.5.0" }
+gdnative_ui = { path = "../ui", version = "0.5.0" }
+gdnative_animation = { path = "../animation", version = "0.5.0" }
 
 
 [build-dependencies]
