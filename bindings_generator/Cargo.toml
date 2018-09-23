@@ -1,7 +1,10 @@
 [package]
 name = "gdnative_bindings_generator"
+description = "Generates bindings for the Godot engine's gdnative classes from a json api description file."
+repository = "https://github.com/GodotNativeTools/godot-rust"
+license = "MIT"
 version = "0.1.0"
-authors = ["Nicolas Silva <nical@fastmail.com>"]
+authors = ["The godot-rust developers"]
 
 [dependencies]
 serde = "1.0.15"
