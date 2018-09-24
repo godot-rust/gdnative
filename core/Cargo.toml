@@ -1,5 +1,5 @@
 [package]
-name = "gdnative_core"
+name = "gdnative-core"
 authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative core bindings."
 documentation = "https://docs.rs/crate/gdnative"

@@ -1,5 +1,5 @@
 [package]
-name = "gdnative_editor"
+name = "gdnative-editor"
 authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative editor bindings."
 documentation = "https://docs.rs/crate/gdnative"
@@ -12,9 +12,9 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative_common = { path = "../common", version = "0.5.0" }
-gdnative_ui = { path = "../ui", version = "0.5.0" }
-gdnative_animation = { path = "../animation", version = "0.5.0" }
+gdnative-common = { path = "../common", version = "0.5.0" }
+gdnative-ui = { path = "../ui", version = "0.5.0" }
+gdnative-animation = { path = "../animation", version = "0.5.0" }
 
 
 [build-dependencies]

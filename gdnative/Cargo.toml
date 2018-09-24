@@ -9,34 +9,34 @@ license = "MIT"
 workspace = ".."
 
 [features]
-gd_test = ["gdnative_core/gd_test"]
+gd_test = ["gdnative-core/gd_test"]
 
-graphics = ["gdnative_graphics"]
-physics = ["gdnative_physics"]
-audio = ["gdnative_audio"]
-video = ["gdnative_video"]
-animation = ["gdnative_animation"]
-network = ["gdnative_network"]
-editor = ["gdnative_editor", "ui", "animation"]
-visual_script = ["gdnative_visual_script"]
-input = ["gdnative_input"]
-ui = ["gdnative_ui", "video"]
-arvr = ["gdnative_arvr"]
+graphics = ["gdnative-graphics"]
+physics = ["gdnative-physics"]
+audio = ["gdnative-audio"]
+video = ["gdnative-video"]
+animation = ["gdnative-animation"]
+network = ["gdnative-network"]
+editor = ["gdnative-editor", "ui", "animation"]
+visual_script = ["gdnative-visual_script"]
+input = ["gdnative-input"]
+ui = ["gdnative-ui", "video"]
+arvr = ["gdnative-arvr"]
 
 [dependencies]
-gdnative_core = { path = "../core", version = "0.5.0" }
-gdnative_common = { path = "../common", version = "0.5.0" }
-gdnative_graphics = { optional = true, path = "../graphics", version = "0.5.0" }
-gdnative_physics = { optional = true, path = "../physics", version = "0.5.0" }
-gdnative_audio = { optional = true, path = "../audio", version = "0.5.0" }
-gdnative_video = { optional = true, path = "../video", version = "0.5.0" }
-gdnative_animation = { optional = true, path = "../animation", version = "0.5.0" }
-gdnative_network = { optional = true, path = "../network", version = "0.5.0" }
-gdnative_editor = { optional = true, path = "../editor", version = "0.5.0" }
-gdnative_visual_script = { optional = true, path = "../visual_script", version = "0.5.0" }
-gdnative_input = { optional = true, path = "../input", version = "0.5.0" }
-gdnative_ui = { optional = true, path = "../ui", version = "0.5.0" }
-gdnative_arvr = { optional = true, path = "../arvr", version = "0.5.0" }
+gdnative-core = { path = "../core", version = "0.5.0" }
+gdnative-common = { path = "../common", version = "0.5.0" }
+gdnative-graphics = { optional = true, path = "../graphics", version = "0.5.0" }
+gdnative-physics = { optional = true, path = "../physics", version = "0.5.0" }
+gdnative-audio = { optional = true, path = "../audio", version = "0.5.0" }
+gdnative-video = { optional = true, path = "../video", version = "0.5.0" }
+gdnative-animation = { optional = true, path = "../animation", version = "0.5.0" }
+gdnative-network = { optional = true, path = "../network", version = "0.5.0" }
+gdnative-editor = { optional = true, path = "../editor", version = "0.5.0" }
+gdnative-visual_script = { optional = true, path = "../visual_script", version = "0.5.0" }
+gdnative-input = { optional = true, path = "../input", version = "0.5.0" }
+gdnative-ui = { optional = true, path = "../ui", version = "0.5.0" }
+gdnative-arvr = { optional = true, path = "../arvr", version = "0.5.0" }
 
 [package.metadata.docs.rs]
 all-features = true

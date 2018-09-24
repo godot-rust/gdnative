@@ -1,5 +1,5 @@
 [package]
-name = "gdnative_graphics"
+name = "gdnative-graphics"
 authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative graphics bindings."
 documentation = "https://docs.rs/crate/gdnative"
@@ -12,7 +12,7 @@ workspace = ".."
 gd_test = []
 
 [dependencies]
-gdnative_common = { path = "../common", version = "0.5.0" }
+gdnative-common = { path = "../common", version = "0.5.0" }
 
 [build-dependencies]
 gdnative_bindings_generator = { path = "../bindings_generator", version = "0.2.0" }
