@@ -16,4 +16,4 @@ gdnative_common = { path = "../common", version = "0.5.0" }
 gdnative_video = { path = "../video", version = "0.5.0" }
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator", version = "0.1.0" }
+gdnative_bindings_generator = { path = "../bindings_generator", version = "0.2.0" }
