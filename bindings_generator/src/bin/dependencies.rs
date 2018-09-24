@@ -6,23 +6,12 @@ use std::fs::File;
 use std::collections::HashSet;
 
 fn main() {
-    let api_path = env::args().nth(1).unwrap();
-    let namespace_path = env::args().nth(2).unwrap();
-    let class_name = env::args().nth(3).unwrap();
-
-    print_dependencies(
-        File::open(&api_path).unwrap(),
-        File::open(&namespace_path).unwrap(),
-        &class_name,
-    );
+    let class_name = env::args().nth(1).unwrap();
+    print_dependencies(&class_name);
 }
 
-pub fn print_dependencies(
-    api_description: File,
-    api_namespaces: File,
-    class_name: &str,
-) {
-    let api = Api::new(api_description, api_namespaces, Crate::unknown);
+pub fn print_dependencies(class_name: &str) {
+    let api = Api::new(Crate::unknown);
 
     if let Some(class) = api.find_class(class_name) {
         println!("class {} ({:?})", class_name, api.namespaces[class_name]);
