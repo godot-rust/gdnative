@@ -5,7 +5,7 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate heck;
 
-pub mod json;
+pub mod api;
 mod classes;
 mod methods;
 mod special_methods;
@@ -15,7 +15,7 @@ use std::fs::File;
 use std::io::Write;
 use std::collections::HashSet;
 
-pub use json::*;
+pub use api::*;
 use classes::*;
 use methods::*;
 use special_methods::*;
@@ -26,13 +26,11 @@ use std::io;
 pub type GeneratorResult = Result<(), io::Error>;
 
 pub fn generate_bindings(
-    api_description: File,
-    api_namespaces: File,
     output: &mut File,
     crate_type: Crate,
 ) -> GeneratorResult {
 
-    let api = Api::new(api_description, api_namespaces, crate_type);
+    let api = Api::new(crate_type);
 
     writeln!(output, "use std::os::raw::c_char;")?;
     writeln!(output, "use std::ptr;")?;

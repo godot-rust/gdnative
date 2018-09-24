@@ -9,10 +9,5 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let mut output = File::create(out_path.join("network_types.rs")).unwrap();
 
-    generate_bindings(
-        File::open("../bindings_generator/api.json").unwrap(),
-        File::open("../bindings_generator/namespaces.json").unwrap(),
-        &mut output,
-        Crate::network,
-    ).unwrap();
+    generate_bindings(&mut output, Crate::network).unwrap();
 }

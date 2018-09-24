@@ -28,10 +28,10 @@ pub struct Api {
 }
 
 impl Api {
-    pub fn new(api_description: File, api_namespaces: File, sub_crate: Crate) -> Self {
+    pub fn new(sub_crate: Crate) -> Self {
         let mut api = Api {
-            classes: serde_json::from_reader(api_description).expect("Failed to parse the API description"),
-            namespaces: serde_json::from_reader(api_namespaces).expect("Failed to parse the API namespaces"),
+            classes: serde_json::from_slice(get_api_json()).expect("Failed to parse the API description"),
+            namespaces: serde_json::from_slice(get_namespaces_json()).expect("Failed to parse the API namespaces"),
             sub_crate,
         };
 
@@ -306,3 +306,7 @@ impl Ty {
         }
     }
 }
+
+pub fn get_api_json() -> &'static [u8] { include_bytes!("../api.json") }
+
+pub fn get_namespaces_json() -> &'static [u8] { include_bytes!("../namespaces.json") }

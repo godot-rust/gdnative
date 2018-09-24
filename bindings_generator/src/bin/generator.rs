@@ -5,14 +5,11 @@ use std::env;
 use std::fs::File;
 
 fn main() {
-    let in_api = env::args().nth(1).unwrap();
-    let in_namespaces = env::args().nth(2).unwrap();
-
-    let out_path = env::args().nth(3).unwrap();
+    let out_path = env::args().nth(1).unwrap();
     let mut output = File::create(&out_path).unwrap();
 
     let mut crate_type = Crate::unknown;
-    if let Some(arg) = env::args().nth(4) {
+    if let Some(arg) = env::args().nth(2) {
         crate_type = match &arg[..] {
             "core" => Crate::core,
             "graphics" => Crate::graphics,
@@ -30,10 +27,5 @@ fn main() {
         };
     }
 
-    generate_bindings(
-        File::open(&in_api).unwrap(),
-        File::open(&in_namespaces).unwrap(),
-        &mut output,
-        crate_type,
-    ).unwrap();
+    generate_bindings(&mut output, crate_type).unwrap();
 }
