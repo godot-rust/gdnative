@@ -1,10 +1,12 @@
 [entry]
 
 X11.64="../../target/debug/libhello_world.so"
+OSX.64="../../target/debug/libhello_world.dylib"
 
 [dependencies]
 
 X11.64=[  ]
+OSX.64=[  ]
 
 [general]
 
