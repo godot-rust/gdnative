@@ -1,10 +1,12 @@
 [entry]
 
 X11.64="../../target/debug/libmanually_registered.so"
+OSX.64="../../target/debug/libmanually_registered.dylib"
 
 [dependencies]
 
 X11.64=[  ]
+OSX.64=[  ]
 
 [general]
 
