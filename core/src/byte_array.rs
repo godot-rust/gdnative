@@ -87,6 +87,13 @@ impl ByteArray {
         }
     }
 
+    pub fn iter(&self) -> ByteArrayIter {
+        ByteArrayIter {
+            counter: 0,
+            array: self,
+        }
+    }
+
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_pool_byte_array {
         &self.0
@@ -113,4 +120,23 @@ impl_basic_traits!(
 impl ToVariant for ByteArray {
     fn to_variant(&self) -> Variant { Variant::from_byte_array(self) }
     fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_byte_array() }
+}
+
+pub struct ByteArrayIter<'a> {
+    counter: i32,
+    array: &'a ByteArray
+}
+
+impl<'a> Iterator for ByteArrayIter<'a> {
+    type Item = u8;
+    
+    fn next(&mut self) -> Option<u8> {
+        if self.counter >= self.array.len() {
+            None
+        } else {
+            let b = self.array.get(self.counter);
+            self.counter += 1;
+            return Some(b);
+        }
+    }
 }
