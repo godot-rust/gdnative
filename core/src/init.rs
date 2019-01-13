@@ -197,7 +197,7 @@ impl<C: NativeClass> ClassBuilder<C> {
                     }
                 }
                 PropertyHint::Enum { values } | PropertyHint::Flags { values } => { Some(values.join(",")) }
-                PropertyHint::NodePathToEditedNode | PropertyHint::None => { None }
+                _ => { None }
             };
             let hint_string = if let Some(text) = hint_text {
                 GodotString::from_str(text)
@@ -288,7 +288,7 @@ pub enum PropertyHint<'l> {
     // Layers2DPhysics,
     // Layers3DRender,
     // Layers3DPhysics,
-    // File,
+    File,
     // Dir,
     // GlobalFile,
     // GlobalDir,
@@ -318,6 +318,7 @@ impl<'l> PropertyHint<'l> {
             PropertyHint::Enum { .. } => GODOT_PROPERTY_HINT_ENUM,
             PropertyHint::Flags { .. } => GODOT_PROPERTY_HINT_FLAGS,
             PropertyHint::NodePathToEditedNode => GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE,
+            PropertyHint::File => GODOT_PROPERTY_HINT_FILE,
         }
     }
 }
