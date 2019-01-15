@@ -114,38 +114,36 @@ macro_rules! variant_to_type_wrap {
     )
 }
 
-use sys::godot_variant_type::*;
-
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VariantType {
-    Nil = GODOT_VARIANT_TYPE_NIL as u32,
-    Bool = GODOT_VARIANT_TYPE_BOOL as u32,
-    I64 = GODOT_VARIANT_TYPE_INT as u32,
-    F64 = GODOT_VARIANT_TYPE_REAL as u32,
-    GodotString = GODOT_VARIANT_TYPE_STRING as u32,
-    Vector2 = GODOT_VARIANT_TYPE_VECTOR2 as u32,
-    Rect2 = GODOT_VARIANT_TYPE_RECT2 as u32,
-    Vector3 = GODOT_VARIANT_TYPE_VECTOR3 as u32,
-    Transform2D = GODOT_VARIANT_TYPE_TRANSFORM2D as u32,
-    Plane = GODOT_VARIANT_TYPE_PLANE as u32,
-    Quat = GODOT_VARIANT_TYPE_QUAT as u32,
-    Aabb = GODOT_VARIANT_TYPE_AABB as u32,
-    Basis = GODOT_VARIANT_TYPE_BASIS as u32,
-    Transform = GODOT_VARIANT_TYPE_TRANSFORM as u32,
-    Color = GODOT_VARIANT_TYPE_COLOR as u32,
-    NodePath = GODOT_VARIANT_TYPE_NODE_PATH as u32,
-    Rid = GODOT_VARIANT_TYPE_RID as u32,
-    Object = GODOT_VARIANT_TYPE_OBJECT as u32,
-    Dictionary = GODOT_VARIANT_TYPE_DICTIONARY as u32,
-    VariantArray = GODOT_VARIANT_TYPE_ARRAY as u32,
-    ByteArray = GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
-    Int32Array = GODOT_VARIANT_TYPE_POOL_INT_ARRAY as u32,
-    Float32Array = GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
-    StringArray = GODOT_VARIANT_TYPE_POOL_STRING_ARRAY as u32,
-    Vector2Array = GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY as u32,
-    Vector3Array = GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY as u32,
-    ColorArray = GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY as u32,
+    Nil = sys::godot_variant_type_GODOT_VARIANT_TYPE_NIL,
+    Bool = sys::godot_variant_type_GODOT_VARIANT_TYPE_BOOL,
+    I64 = sys::godot_variant_type_GODOT_VARIANT_TYPE_INT,
+    F64 = sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL,
+    GodotString = sys::godot_variant_type_GODOT_VARIANT_TYPE_STRING,
+    Vector2 = sys::godot_variant_type_GODOT_VARIANT_TYPE_VECTOR2,
+    Rect2 = sys::godot_variant_type_GODOT_VARIANT_TYPE_RECT2,
+    Vector3 = sys::godot_variant_type_GODOT_VARIANT_TYPE_VECTOR3,
+    Transform2D = sys::godot_variant_type_GODOT_VARIANT_TYPE_TRANSFORM2D,
+    Plane = sys::godot_variant_type_GODOT_VARIANT_TYPE_PLANE,
+    Quat = sys::godot_variant_type_GODOT_VARIANT_TYPE_QUAT,
+    Aabb = sys::godot_variant_type_GODOT_VARIANT_TYPE_AABB,
+    Basis = sys::godot_variant_type_GODOT_VARIANT_TYPE_BASIS,
+    Transform = sys::godot_variant_type_GODOT_VARIANT_TYPE_TRANSFORM,
+    Color = sys::godot_variant_type_GODOT_VARIANT_TYPE_COLOR,
+    NodePath = sys::godot_variant_type_GODOT_VARIANT_TYPE_NODE_PATH,
+    Rid = sys::godot_variant_type_GODOT_VARIANT_TYPE_RID,
+    Object = sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT,
+    Dictionary = sys::godot_variant_type_GODOT_VARIANT_TYPE_DICTIONARY,
+    VariantArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_ARRAY,
+    ByteArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY,
+    Int32Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_INT_ARRAY,
+    Float32Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_REAL_ARRAY,
+    StringArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_STRING_ARRAY,
+    Vector2Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY,
+    Vector3Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY,
+    ColorArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY,
 }
 
 impl VariantType {
@@ -455,10 +453,9 @@ impl Variant {
     pub fn try_to_object<T>(&self) -> Option<T>
         where T: GodotObject
     {
-        use sys::godot_variant_type::*;
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&self.0) != GODOT_VARIANT_TYPE_OBJECT {
+            if (api.godot_variant_get_type)(&self.0) != sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT {
                 return None;
             }
             let obj = Object::from_sys((api.godot_variant_as_object)(&self.0));
@@ -519,7 +516,7 @@ impl Variant {
                 );
             }
 
-            if err.error == sys::godot_variant_call_error_error::GODOT_CALL_ERROR_CALL_OK {
+            if err.error == sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_OK {
                 Ok(())
             } else {
                 Err(())
@@ -730,7 +727,7 @@ macro_rules! impl_to_variant_for_int {
             fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
-                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_INT {
+                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_INT {
                         Some((api.godot_variant_as_int)(&variant.0) as Self)
                     } else {
                         None
@@ -760,7 +757,7 @@ macro_rules! godot_uint_impl {
             fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
-                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_INT {
+                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_INT {
                         Some((api.godot_variant_as_uint)(&variant.0) as Self)
                     } else {
                         None
@@ -789,7 +786,7 @@ impl ToVariant for f32 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_REAL {
+            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL {
                 Some((api.godot_variant_as_real)(&variant.0) as Self)
             } else {
                 None
@@ -810,7 +807,7 @@ impl ToVariant for f64 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_REAL {
+            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL {
                 Some((api.godot_variant_as_real)(&variant.0) as Self)
             } else {
                 None
@@ -827,7 +824,7 @@ impl ToVariant for String {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type::GODOT_VARIANT_TYPE_STRING {
+            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_STRING {
                 let mut gd_variant = (api.godot_variant_as_string)(&variant.0);
                 let tmp = (api.godot_string_utf8)(&gd_variant);
                 let ret = ::std::ffi::CStr::from_ptr((api.godot_char_string_get_data)(&tmp) as *const _)

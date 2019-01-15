@@ -32,14 +32,14 @@ impl GodotApi {
         for i in 0 .. api.num_extensions {
             let ext = api.extensions.offset(i as _);
             $(
-                if (**ext).type_ == GDNATIVE_API_TYPES::$ty_key as u32 {
+                if (**ext).type_ == $ty_key as u32 {
                     $sub = Some(&*((*ext) as *const $st));
                 }
             )*
         }
 
         $(
-            if GDNATIVE_API_TYPES::GDNATIVE_CORE == GDNATIVE_API_TYPES::$ty_key {
+            if GDNATIVE_API_TYPES_GDNATIVE_CORE == $ty_key {
                 $sub = Some(&*(api_raw as *const $st));
             }
         )*
@@ -61,7 +61,7 @@ impl GodotApi {
 
 def_api! {
 struct GodotApi {
-    core(GDNATIVE_CORE, godot_gdnative_core_api_struct) {
+    core(GDNATIVE_API_TYPES_GDNATIVE_CORE, godot_gdnative_core_api_struct) {
         pub godot_color_new_rgba: ::std::option::Option<unsafe extern "C" fn(r_dest:
                                                                                 *mut godot_color,
                                                                             p_r:
@@ -3361,7 +3361,7 @@ struct GodotApi {
         pub godot_print: ::std::option::Option<unsafe extern "C" fn(p_message:
                                                                         *const godot_string)>,
     }
-    native_script(GDNATIVE_EXT_NATIVESCRIPT, godot_gdnative_ext_nativescript_api_struct) {
+    native_script(GDNATIVE_API_TYPES_GDNATIVE_EXT_NATIVESCRIPT, godot_gdnative_ext_nativescript_api_struct) {
         pub godot_nativescript_register_class: ::std::option::Option<unsafe extern "C" fn(p_gdnative_handle:
                                                                                             *mut libc::c_void,
                                                                                         p_name:

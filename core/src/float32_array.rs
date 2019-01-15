@@ -41,7 +41,7 @@ impl Float32Array {
     pub fn insert(&mut self, offset: i32, val: f32) -> bool {
         unsafe {
             let status = (get_api().godot_pool_real_array_insert)(&mut self.0, offset, val);
-            status != sys::godot_error::GODOT_OK
+            status != sys::godot_error_GODOT_OK
         }
     }
 
