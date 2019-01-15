@@ -26,8 +26,6 @@ use get_api;
 use Variant;
 use ToVariant;
 use NativeClass;
-use sys::godot_property_usage_flags::*;
-use sys::godot_property_hint::*;
 use std::mem;
 use std::ops::Range;
 use std::ffi::CString;
@@ -146,7 +144,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     pub fn add_method_advanced(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
         let attr = sys::godot_method_attributes {
-            rpc_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED
+            rpc_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED
         };
 
         let method_desc = sys::godot_instance_method {
@@ -209,7 +207,7 @@ impl<C: NativeClass> ClassBuilder<C> {
             let ty = default.get_type();
 
             let mut attr = sys::godot_property_attributes {
-                rset_type: sys::godot_method_rpc_mode::GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
+                rset_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
                 type_: mem::transmute(ty),
                 hint: property.hint.to_sys(),
                 hint_string: hint_string.to_sys(),
@@ -313,34 +311,34 @@ pub enum PropertyHint<'l> {
 impl<'l> PropertyHint<'l> {
     pub fn to_sys(&self) -> sys::godot_property_hint {
         match *self {
-            PropertyHint::None => GODOT_PROPERTY_HINT_NONE,
-            PropertyHint::Range { .. } => GODOT_PROPERTY_HINT_RANGE,
-            PropertyHint::Enum { .. } => GODOT_PROPERTY_HINT_ENUM,
-            PropertyHint::Flags { .. } => GODOT_PROPERTY_HINT_FLAGS,
-            PropertyHint::NodePathToEditedNode => GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE,
+            PropertyHint::None => sys::godot_property_hint_GODOT_PROPERTY_HINT_NONE,
+            PropertyHint::Range { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_RANGE,
+            PropertyHint::Enum { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_ENUM,
+            PropertyHint::Flags { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_FLAGS,
+            PropertyHint::NodePathToEditedNode => sys::godot_property_hint_GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE,
         }
     }
 }
 
 bitflags! {
     pub struct PropertyUsage: u32 {
-        const STORAGE = GODOT_PROPERTY_USAGE_STORAGE as u32;
-        const EDITOR = GODOT_PROPERTY_USAGE_EDITOR as u32;
-        const NETWORK = GODOT_PROPERTY_USAGE_NETWORK as u32;
-        const EDITOR_HELPER = GODOT_PROPERTY_USAGE_EDITOR_HELPER as u32;
-        const CHECKABLE = GODOT_PROPERTY_USAGE_CHECKABLE as u32;
-        const CHECKED = GODOT_PROPERTY_USAGE_CHECKED as u32;
-        const INTERNATIONALIZED = GODOT_PROPERTY_USAGE_INTERNATIONALIZED as u32;
-        const GROUP = GODOT_PROPERTY_USAGE_GROUP as u32;
-        const CATEGORY = GODOT_PROPERTY_USAGE_CATEGORY as u32;
-        const STORE_IF_NONZERO = GODOT_PROPERTY_USAGE_STORE_IF_NONZERO as u32;
-        const STORE_IF_NONONE = GODOT_PROPERTY_USAGE_STORE_IF_NONONE as u32;
-        const NO_INSTANCE_STATE = GODOT_PROPERTY_USAGE_NO_INSTANCE_STATE as u32;
-        const RESTART_IF_CHANGED = GODOT_PROPERTY_USAGE_RESTART_IF_CHANGED as u32;
-        const SCRIPT_VARIABLE  = GODOT_PROPERTY_USAGE_SCRIPT_VARIABLE as u32;
-        const STORE_IF_NULL = GODOT_PROPERTY_USAGE_STORE_IF_NULL as u32;
-        const ANIMATE_AS_TRIGGER = GODOT_PROPERTY_USAGE_ANIMATE_AS_TRIGGER as u32;
-        const UPDATE_ALL_IF_MODIFIED = GODOT_PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED as u32;
+        const STORAGE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORAGE;
+        const EDITOR = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR;
+        const NETWORK = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_NETWORK;
+        const EDITOR_HELPER = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR_HELPER;
+        const CHECKABLE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_CHECKABLE;
+        const CHECKED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_CHECKED;
+        const INTERNATIONALIZED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_INTERNATIONALIZED;
+        const GROUP = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_GROUP;
+        const CATEGORY = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_CATEGORY;
+        const STORE_IF_NONZERO = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORE_IF_NONZERO;
+        const STORE_IF_NONONE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORE_IF_NONONE;
+        const NO_INSTANCE_STATE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_NO_INSTANCE_STATE;
+        const RESTART_IF_CHANGED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_RESTART_IF_CHANGED;
+        const SCRIPT_VARIABLE  = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_SCRIPT_VARIABLE;
+        const STORE_IF_NULL = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORE_IF_NULL;
+        const ANIMATE_AS_TRIGGER = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_ANIMATE_AS_TRIGGER;
+        const UPDATE_ALL_IF_MODIFIED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED;
 
         const DEFAULT = Self::STORAGE.bits | Self::EDITOR.bits | Self::NETWORK.bits;
         const DEFAULT_INTL = Self::DEFAULT.bits | Self::INTERNATIONALIZED.bits;

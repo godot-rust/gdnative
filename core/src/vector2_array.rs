@@ -44,7 +44,7 @@ impl Vector2Array {
     pub fn insert(&mut self, offset: i32, vector: &Vector2) -> bool {
         unsafe {
             let status = (get_api().godot_pool_vector2_array_insert)(&mut self.0, offset, transmute(vector));
-            status != sys::godot_error::GODOT_OK
+            status != sys::godot_error_GODOT_OK
         }
     }
 

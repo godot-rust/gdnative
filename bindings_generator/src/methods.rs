@@ -426,13 +426,13 @@ fn generate_return_pre(w: &mut File, ty: &Ty) -> GeneratorResult {
         }
         &Ty::Result => {
             writeln!(w, r#"
-    let mut ret: sys::godot_error = sys::godot_error::GODOT_OK;
+    let mut ret: sys::godot_error = sys::godot_error_GODOT_OK;
     let ret_ptr = (&mut ret) as *mut _;"#
             )?;
         }
         &Ty::VariantType => {
             writeln!(w, r#"
-    let mut ret: sys::godot_variant_type = sys::godot_variant_type::GODOT_VARIANT_TYPE_NIL;
+    let mut ret: sys::godot_variant_type = sys::godot_variant_type_GODOT_VARIANT_TYPE_NIL;
     let ret_ptr = (&mut ret) as *mut _;"#
             )?;
         }

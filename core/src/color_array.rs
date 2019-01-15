@@ -44,7 +44,7 @@ impl ColorArray {
     pub fn insert(&mut self, offset: i32, color: &Color) -> bool {
         unsafe {
             let status = (get_api().godot_pool_color_array_insert)(&mut self.0, offset, transmute(color));
-            status != sys::godot_error::GODOT_OK
+            status != sys::godot_error_GODOT_OK
         }
     }
 

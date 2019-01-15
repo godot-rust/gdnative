@@ -42,7 +42,7 @@ impl StringArray {
     pub fn insert(&mut self, offset: i32, string: &GodotString) -> bool {
         unsafe {
             let status = (get_api().godot_pool_string_array_insert)(&mut self.0, offset, &string.0);
-            status != sys::godot_error::GODOT_OK
+            status != sys::godot_error_GODOT_OK
         }
     }
 

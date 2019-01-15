@@ -41,7 +41,7 @@ impl ByteArray {
     pub fn insert(&mut self, offset: i32, byte: u8) -> bool {
         unsafe {
             let status = (get_api().godot_pool_byte_array_insert)(&mut self.0, offset, byte);
-            status != sys::godot_error::GODOT_OK
+            status != sys::godot_error_GODOT_OK
         }
     }
 
