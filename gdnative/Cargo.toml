@@ -10,6 +10,8 @@ workspace = ".."
 
 [features]
 gd_test = ["gdnative-core/gd_test"]
+api_struct_raw_init = ["gdnative-core/api_struct_raw_init"]
+
 
 graphics = ["gdnative-graphics"]
 physics = ["gdnative-physics"]

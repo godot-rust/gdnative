@@ -5,3 +5,4 @@ target
 .vscode
 test/project/lib
 **/.import/*
+.idea/

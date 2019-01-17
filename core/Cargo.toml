@@ -10,6 +10,7 @@ workspace = ".."
 
 [features]
 gd_test = []
+api_struct_raw_init = []
 
 [dependencies]
 gdnative-sys = { path = "../sys", version = "0.5.0" }

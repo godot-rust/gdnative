@@ -93,6 +93,16 @@ pub fn get_api() -> &'static GodotApi {
     unsafe { GODOT_API.as_ref().expect("API not bound") }
 }
 
+#[inline]
+#[doc(hidden)]
+#[cfg(feature = "api_struct_raw_init")]
+pub unsafe fn set_api(api_raw: *const sys::godot_gdnative_core_api_struct) {
+    GODOT_API = Some(GodotApi::from_raw(api_raw));
+
+    let api = get_api();
+    ReferenceMethodTable::get(api);
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u32)]
 pub enum GodotError {
