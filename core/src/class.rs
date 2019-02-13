@@ -166,6 +166,8 @@ macro_rules! godot_class_build_methods {
 /// ```ignore
 /// godot_class! {
 ///    class HelloWorld: godot::Node {
+///        is_tool: false;
+/// 
 ///        fields {
 ///            x: f32,
 ///        }
@@ -203,6 +205,7 @@ macro_rules! godot_class_build_methods {
 macro_rules! godot_class {
     (
 class $name:ident: $owner:ty {
+    is_tool:$is_tool:expr;
     fields {
         $(
             $(#[$fattr:meta])*
@@ -254,14 +257,18 @@ class $name:ident: $owner:ty {
                     drop(wrapper);
                 }
 
-                let $builder = init_handle.add_class::<Self>(
-                    $crate::init::ClassDescriptor {
-                        name: stringify!($name),
-                        base_class: <$owner as $crate::GodotObject>::class_name(),
-                        constructor: Some(godot_create),
-                        destructor: Some(godot_free),
-                    }
-                );
+                let descriptor = $crate::init::ClassDescriptor {
+                    name: stringify!($name),
+                    base_class: <$owner as $crate::GodotObject>::class_name(),
+                    constructor: Some(godot_create),
+                    destructor: Some(godot_free),
+                };
+
+                let $builder = if $is_tool { 
+                    init_handle.add_tool_class::<Self>(descriptor)
+                } else {
+                    init_handle.add_class::<Self>(descriptor)
+                };
 
                 godot_class_build_export_methods!($name, $builder, $($tt)*);
 
@@ -279,6 +286,8 @@ class $name:ident: $owner:ty {
 #[cfg(test)]
 godot_class! {
     class TestClass: super::Object {
+        is_tool: false;
+        
         fields {
             a: u32,
         }

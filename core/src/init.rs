@@ -83,6 +83,44 @@ impl InitHandle {
             }
         }
     }
+
+    /// Registers a new tool class to the engine.
+    ///
+    /// The return `ClassBuilder` can be used to add methods, signals and properties
+    /// to the class.
+    pub fn add_tool_class<C>(&self, desc: ClassDescriptor) -> ClassBuilder<C>
+    where C: NativeClass {
+        unsafe {
+            let class_name = CString::new(desc.name).unwrap();
+            let base_name = CString::new(desc.base_class).unwrap();
+
+            let create = sys::godot_instance_create_func {
+                create_func: desc.constructor,
+                method_data: ptr::null_mut(),
+                free_func: None,
+            };
+
+            let destroy = sys::godot_instance_destroy_func {
+                destroy_func: desc.destructor,
+                method_data: ptr::null_mut(),
+                free_func: None,
+            };
+
+            (get_api().godot_nativescript_register_tool_class)(
+                self.handle as *mut _,
+                class_name.as_ptr() as *const _,
+                base_name.as_ptr() as *const _,
+                create,
+                destroy
+            );
+
+            ClassBuilder {
+                init_handle: self.handle,
+                class_name,
+                _marker: PhantomData,
+            }
+        }
+    }
 }
 
 pub type ScriptMethodFn = unsafe extern "C" fn(

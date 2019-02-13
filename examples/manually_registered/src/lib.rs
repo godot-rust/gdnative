@@ -77,6 +77,7 @@ fn init(gdnative_init: init::InitHandle) {
         fn _exit_tree(&mut self) -> ()
     );
 
+    // swap with gdnative_init.add_tool_class to enable use in editor
     let class = gdnative_init.add_class::<MyClass>(
         ClassDescriptor {
             name: "MyClass",
