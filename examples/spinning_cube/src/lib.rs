@@ -6,6 +6,7 @@ use godot::GodotString;
 
 godot_class! {
     class RustTest: godot::MeshInstance {
+	is_tool: false;
         fields {
             start: godot::Vector3,
             time: f32,

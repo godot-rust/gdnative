@@ -3,6 +3,8 @@ extern crate gdnative as godot;
 
 godot_class! {
     class HelloWorld: godot::Node {
+        is_tool: false;
+
         fields {
         }
 
