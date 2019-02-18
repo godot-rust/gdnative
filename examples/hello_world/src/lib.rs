@@ -3,7 +3,7 @@ extern crate gdnative as godot;
 
 godot_class! {
     class HelloWorld: godot::Node {
-        is_tool: false;
+        //is_tool // uncomment to enable use in editor
 
         fields {
         }

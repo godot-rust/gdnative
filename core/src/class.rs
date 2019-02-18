@@ -166,7 +166,7 @@ macro_rules! godot_class_build_methods {
 /// ```ignore
 /// godot_class! {
 ///    class HelloWorld: godot::Node {
-///        is_tool: false;
+///        //is_tool // uncomment to enable use in editor
 /// 
 ///        fields {
 ///            x: f32,
@@ -205,7 +205,6 @@ macro_rules! godot_class_build_methods {
 macro_rules! godot_class {
     (
 class $name:ident: $owner:ty {
-    is_tool:$is_tool:expr;
     fields {
         $(
             $(#[$fattr:meta])*
@@ -257,18 +256,14 @@ class $name:ident: $owner:ty {
                     drop(wrapper);
                 }
 
-                let descriptor = $crate::init::ClassDescriptor {
-                    name: stringify!($name),
-                    base_class: <$owner as $crate::GodotObject>::class_name(),
-                    constructor: Some(godot_create),
-                    destructor: Some(godot_free),
-                };
-
-                let $builder = if $is_tool { 
-                    init_handle.add_tool_class::<Self>(descriptor)
-                } else {
-                    init_handle.add_class::<Self>(descriptor)
-                };
+                let $builder = init_handle.add_class::<Self>(
+                    $crate::init::ClassDescriptor {
+                        name: stringify!($name),
+                        base_class: <$owner as $crate::GodotObject>::class_name(),
+                        constructor: Some(godot_create),
+                        destructor: Some(godot_free),
+                    }
+                );
 
                 godot_class_build_export_methods!($name, $builder, $($tt)*);
 
@@ -280,13 +275,87 @@ class $name:ident: $owner:ty {
             fn class_name() -> &'static str { stringify!($name) }
             fn get_header(&self) -> &$crate::NativeInstanceHeader { &self.header }
         }
-    )
+    );
+    (
+class $name:ident: $owner:ty {
+    is_tool
+    fields {
+        $(
+            $(#[$fattr:meta])*
+            $fname:ident : $fty:ty,
+        )*
+    }
+    setup($builder:ident) $pbody:block
+    constructor($header:ident) $construct:block
+
+    $($tt:tt)*
+}
+    ) => (
+        pub struct $name {
+            header: $crate::NativeInstanceHeader,
+            $(
+                $(#[$fattr])*
+                pub $fname: $fty,
+            )*
+        }
+
+        impl $name {
+            godot_class_build_methods!($($tt)*);
+
+            pub fn get_owner(&self) -> $owner {
+                unsafe {
+                    <$owner as $crate::GodotObject>::from_sys(self.header.this)
+                }
+            }
+
+            pub fn register_class(init_handle: $crate::init::InitHandle) {
+                use $crate::sys;
+
+                fn constructor($header : $crate::NativeInstanceHeader) -> $name {
+                    $construct
+                }
+
+                extern "C" fn godot_create(this: *mut sys::godot_object, _data: *mut $crate::libc::c_void) -> *mut $crate::libc::c_void {
+                    use std::cell::RefCell;
+
+                    let val = constructor($crate::NativeInstanceHeader {
+                        this: this,
+                    });
+                    let wrapper = Box::new(RefCell::new(val));
+                    Box::into_raw(wrapper) as *mut _
+                }
+                extern "C" fn godot_free(_this: *mut sys::godot_object, _data: *mut $crate::libc::c_void, ud: *mut $crate::libc::c_void) {
+                    use std::cell::RefCell;
+                    let wrapper: Box<RefCell<$name>> = unsafe { Box::from_raw(ud as *mut _) };
+                    drop(wrapper);
+                }
+
+                let $builder = init_handle.add_tool_class::<Self>(
+                    $crate::init::ClassDescriptor {
+                        name: stringify!($name),
+                        base_class: <$owner as $crate::GodotObject>::class_name(),
+                        constructor: Some(godot_create),
+                        destructor: Some(godot_free),
+                    }
+                );
+
+                godot_class_build_export_methods!($name, $builder, $($tt)*);
+
+                $pbody
+            }
+        }
+
+        impl $crate::NativeClass for $name {
+            fn class_name() -> &'static str { stringify!($name) }
+            fn get_header(&self) -> &$crate::NativeInstanceHeader { &self.header }
+        }
+    );
 }
 
 #[cfg(test)]
 godot_class! {
     class TestClass: super::Object {
-        is_tool: false;
+        //is_tool // uncomment to enable use in editor
         
         fields {
             a: u32,

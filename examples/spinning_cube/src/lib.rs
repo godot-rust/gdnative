@@ -6,7 +6,7 @@ use godot::GodotString;
 
 godot_class! {
     class RustTest: godot::MeshInstance {
-	is_tool: false;
+	    //is_tool // uncomment to enable use in editor
         fields {
             start: godot::Vector3,
             time: f32,
