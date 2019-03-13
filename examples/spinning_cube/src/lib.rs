@@ -58,18 +58,17 @@ godot_class! {
                 }
             );
         }
-        constructor(header) {
+        constructor(_owner: godot::MeshInstance) {
             RustTest {
-                header,
                 start: godot::Vector3::new(0.0, 0.0, 0.0),
                 time: 0.0,
                 rotate_speed: 0.05,
             }
         }
 
-        export fn _ready(&mut self) {
+        export fn _ready(&mut self, owner: godot::MeshInstance) {
             unsafe {
-                let mut owner = self.get_owner();
+                let mut owner = owner;
                 owner.set_physics_process(true);
                 self.start = owner.get_translation();
                 godot_warn!("Start: {:?}", self.start);
@@ -80,11 +79,11 @@ godot_class! {
             }
         }
 
-        export fn _physics_process(&mut self, delta: f64) {
+        export fn _physics_process(&mut self, owner: godot::MeshInstance, delta: f64) {
             use godot::{Color, Vector3, SpatialMaterial};
             unsafe {
                 self.time += delta as f32;
-                let mut owner = self.get_owner();
+                let mut owner = owner;
                 owner.rotate_y(self.rotate_speed);
                 let offset = Vector3::new(0.0, 1.0, 0.0) * self.time.cos() * 0.5;
                 owner.set_translation(self.start + offset);
@@ -99,7 +98,7 @@ godot_class! {
 }
 
 fn init(handle: godot::init::InitHandle) {
-    RustTest::register_class(handle);
+    handle.add_class::<RustTest>();
 }
 
 godot_gdnative_init!();

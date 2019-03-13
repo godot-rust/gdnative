@@ -3,7 +3,6 @@ extern crate gdnative as godot;
 
 godot_class! {
     class HelloWorld: godot::Node {
-        //is_tool // uncomment to enable use in editor
 
         fields {
         }
@@ -11,20 +10,19 @@ godot_class! {
         setup(_builder) {
         }
 
-        constructor(header) {
+        constructor(_owner: godot::Node) {
             HelloWorld {
-                header,
             }
         }
 
-        export fn _ready(&mut self) {
+        export fn _ready(&mut self, _owner: godot::Node) {
             godot_print!("hello, world.");
         }
     }
 }
 
 fn init(handle: godot::init::InitHandle) {
-    HelloWorld::register_class(handle);
+    handle.add_class::<HelloWorld>();
 }
 
 godot_gdnative_init!();

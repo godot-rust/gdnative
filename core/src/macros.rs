@@ -328,7 +328,8 @@ macro_rules! godot_wrap_constructor {
                 use std::cell::RefCell;
                 use std::boxed::Box;
 
-                let val = $c($crate::NativeInstanceHeader{ this: this });
+                // let val = $c($crate::NativeInstanceHeader{ this: this });
+                let val = $c();
 
                 let wrapper = Box::new(RefCell::new(val));
                 Box::into_raw(wrapper) as *mut _
@@ -381,7 +382,8 @@ macro_rules! godot_wrap_method {
     (
         $type_name:ty,
         fn $method_name:ident(
-            &mut $self:ident
+            &mut $self:ident,
+            $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
         ) -> $retty:ty
     ) => {
@@ -397,6 +399,9 @@ macro_rules! godot_wrap_method {
 
                 use std::cell::RefCell;
                 use std::panic::{self, AssertUnwindSafe};
+                use $crate::GodotObject;
+
+                let $owner: $owner_ty = <$type_name as $crate::NativeClass>::Base::from_sys(this);
 
                 let num_params = godot_wrap_method_parameter_count!($($pname,)*);
                 if num_args != num_params {
@@ -421,7 +426,7 @@ macro_rules! godot_wrap_method {
                 let mut __rust_val = __rust_val.borrow_mut();
 
                 let rust_ret = match panic::catch_unwind(AssertUnwindSafe(|| {
-                    __rust_val.$method_name($($pname,)*)
+                    __rust_val.$method_name($owner, $($pname,)*)
                 })) {
                     Ok(val) => val,
                     Err(err) => {
