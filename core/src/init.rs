@@ -51,7 +51,7 @@ impl InitHandle {
     /// The return `ClassBuilder` can be used to add methods, signals and properties
     /// to the class.
     pub fn add_class<C>(&self)
-    where C: NativeClassRegister {
+    where C: NativeClassMethods {
         unsafe {
             let class_name = CString::new(C::class_name()).unwrap();
             let base_name = CString::new(C::Base::class_name()).unwrap();
@@ -108,13 +108,16 @@ impl InitHandle {
                 destroy
             );
 
-            let builder = ClassBuilder {
+            let mut builder = ClassBuilder {
                 init_handle: self.handle,
                 class_name,
                 _marker: PhantomData,
             };
 
-            C::register(builder);
+            C::register_properties(&mut builder);
+
+            // register methods
+            C::register(&mut builder);
         }
     }
 
@@ -123,7 +126,7 @@ impl InitHandle {
     /// The return `ClassBuilder` can be used to add methods, signals and properties
     /// to the class.
     pub fn add_tool_class<C>(&self)
-        where C: NativeClassRegister {
+        where C: NativeClassMethods {
         unsafe {
             let class_name = CString::new(C::class_name()).unwrap();
             let base_name = CString::new(C::Base::class_name()).unwrap();
@@ -180,13 +183,16 @@ impl InitHandle {
                 destroy
             );
 
-            let builder = ClassBuilder {
+            let mut builder = ClassBuilder {
                 init_handle: self.handle,
                 class_name,
                 _marker: PhantomData,
             };
 
-            C::register(builder);
+            C::register_properties(&mut builder);
+
+            // register methods
+            C::register(&mut builder);
         }
     }
 }

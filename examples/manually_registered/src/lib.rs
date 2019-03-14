@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate gdnative as godot;
 
 use godot::*;
@@ -48,8 +47,8 @@ impl NativeClass for MyClass {
     }
 }
 
-impl NativeClassRegister for MyClass {
-    fn register(builder: godot::init::ClassBuilder<Self>) {
+impl NativeClassMethods for MyClass {
+    fn register(builder: &godot::init::ClassBuilder<Self>) {
 
         use godot::init::*;
 
@@ -85,8 +84,6 @@ impl NativeClassRegister for MyClass {
 }
 
 fn init(gdnative_init: init::InitHandle) {
-    use godot::init::*;
-
     gdnative_init.add_class::<MyClass>();
 }
 

@@ -8,16 +8,60 @@ use Object;
 use object;
 use get_api;
 
+/// Trait used for describing and initializing a Godot script class.
+///
+/// This trait is used to provide data and functionality to the
+/// "data-part" of the class, such as name, initialization and information
+/// about exported properties.
+///
+/// For exported methods, see the [`NativeClassMethods`] trait.
+///
+/// [`NativeClassMethods`]: ./trait.NativeClassMethods.html
 pub trait NativeClass: Sized {
+
+    /// Base type of the class.
+    ///
+    /// In Godot, scripting languages can define "script instances" which can be
+    /// attached to objects. Because of the dynamic nature, the intended "inheritance"
+    /// is not easily implementable properly.
+    ///
+    /// Instead, delegation is used and most calls to a Godot object query the script instance
+    /// first. This way, some methods can be "overwritten" and new ones can be exposed.
+    ///
+    /// This only works when using so called "variant calls", since the querying of the script
+    /// instance is performed there.
+    /// When not using variant calls, any direct(*) calls have to be made to the Godot object
+    /// directly.
+    ///
+    /// The base type describes the "most general" type of object this script class can be
+    /// attached to.
+    ///
+    /// *(\*)*: GDNative enables use of "ptrcall"s, which are wrappers for function pointers.
+    /// Those do not do explicit checks for script implementations **unless the method
+    /// implementation does**.
     type Base: GodotObject;
 
+    /// The name of the class.
+    ///
+    /// In GDNative+NativeScript many classes can be defined in one dynamic library.
+    /// To identify which class has to be used, a library-unique name has to be given.
     fn class_name() -> &'static str;
 
+    /// Function that creates a value of `Self`, used for the script-instance.
+    ///
+    /// This function has a reference to the owner object as a parameter, which can be used to
+    /// set state on the owner upon creation or to query values
     fn init(owner: Self::Base) -> Self;
+
+    /// Register any exported properties to Godot.
+    fn register_properties(_builder: &crate::init::ClassBuilder<Self>) {}
 }
 
-pub trait NativeClassRegister: NativeClass {
-    fn register(builder: crate::init::ClassBuilder<Self>);
+/// Trait used to provide information of Godot-exposed methods of a script class.
+pub trait NativeClassMethods: NativeClass {
+
+    /// Function that registers all exposed methods to Godot.
+    fn register(builder: &crate::init::ClassBuilder<Self>);
 }
 
 /// A reference to a rust native script.
@@ -226,11 +270,9 @@ class $name:ident: $owner:ty {
             }
         }
 
-        impl $crate::NativeClassRegister for $name {
-            fn register($builder: $crate::init::ClassBuilder<Self>) {
+        impl $crate::NativeClassMethods for $name {
+            fn register($builder: &$crate::init::ClassBuilder<Self>) {
                 godot_class_build_export_methods!($name, $builder, $($tt)*);
-
-                $pbody
             }
         }
 
@@ -241,6 +283,10 @@ class $name:ident: $owner:ty {
 
             fn init(owner: $owner) -> Self {
                 $name::_constructor(owner)
+            }
+
+            fn register_properties($builder: &$crate::init::ClassBuilder<Self>) {
+                $pbody
             }
         }
     );
