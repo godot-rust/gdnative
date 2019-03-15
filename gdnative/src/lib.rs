@@ -32,7 +32,8 @@
 // documentation, and are only appearing in the sub-crates. It would make the doc
 // a lot easier to navigate if we could gather all classes here.
 
-#[macro_use]
+extern crate gdnative_derive;
+
 extern crate gdnative_core;
 extern crate gdnative_common;
 #[cfg(feature="graphics")] extern crate gdnative_graphics;
@@ -47,6 +48,7 @@ extern crate gdnative_common;
 #[cfg(feature="input")] extern crate gdnative_input;
 #[cfg(feature="ui")] extern crate gdnative_ui;
 
+#[doc(inline)] pub use gdnative_derive::*;
 #[doc(inline)] pub use gdnative_core::*;
 #[doc(inline)] pub use gdnative_common::*;
 #[doc(inline)] #[cfg(feature="graphics")] pub use gdnative_graphics::*;

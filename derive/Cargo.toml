@@ -1,0 +1,17 @@
+[package]
+name = "gdnative-derive"
+authors = ["The godot-rust developers"]
+description = "The Godot game engine's gdnative derive and procedural macros."
+documentation = "https://docs.rs/crate/gdnative"
+repository = "https://github.com/GodotNativeTools/godot-rust"
+version = "0.5.0"
+license = "MIT"
+edition = "2018"
+workspace = ".."
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "0.15.29", features = ["full"] }
+quote = "0.6.11"

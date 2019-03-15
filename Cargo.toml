@@ -4,6 +4,7 @@
 members = [
     "sys",
     "gdnative",
+    "derive",
     "core",
     "physics",
     "graphics",
