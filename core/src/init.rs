@@ -50,22 +50,54 @@ impl InitHandle {
     ///
     /// The return `ClassBuilder` can be used to add methods, signals and properties
     /// to the class.
-    pub fn add_class<C>(&self, desc: ClassDescriptor) -> ClassBuilder<C>
-    where C: NativeClass {
+    pub fn add_class<C>(&self)
+    where C: NativeClassMethods {
         unsafe {
-            let class_name = CString::new(desc.name).unwrap();
-            let base_name = CString::new(desc.base_class).unwrap();
+            let class_name = CString::new(C::class_name()).unwrap();
+            let base_name = CString::new(C::Base::class_name()).unwrap();
 
-            let create = sys::godot_instance_create_func {
-                create_func: desc.constructor,
-                method_data: ptr::null_mut(),
-                free_func: None,
+
+            let create = {
+                unsafe extern "C" fn constructor<C: NativeClass>(
+                    this: *mut sys::godot_object,
+                    _method_data: *mut libc::c_void
+                ) -> *mut libc::c_void {
+                    use std::cell::RefCell;
+                    use std::boxed::Box;
+
+                    use crate::GodotObject;
+
+                    let val = C::init(C::Base::from_sys(this));
+
+                    let wrapper = Box::new(RefCell::new(val));
+                    Box::into_raw(wrapper) as *mut _
+                }
+
+                sys::godot_instance_create_func {
+                    create_func: Some(constructor::<C>),
+                    method_data: ptr::null_mut(),
+                    free_func: None,
+                }
             };
 
-            let destroy = sys::godot_instance_destroy_func {
-                destroy_func: desc.destructor,
-                method_data: ptr::null_mut(),
-                free_func: None,
+            let destroy = {
+                unsafe extern "C" fn destructor<C: NativeClass>(
+                    _this: *mut sys::godot_object,
+                    _method_data: *mut libc::c_void,
+                    user_data: *mut libc::c_void
+                ) -> () {
+                    use std::cell::RefCell;
+                    use std::boxed::Box;
+
+                    let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
+                    drop(wrapper)
+                }
+
+                sys::godot_instance_destroy_func {
+                    destroy_func: Some(destructor::<C>),
+                    method_data: ptr::null_mut(),
+                    free_func: None,
+                }
             };
 
             (get_api().godot_nativescript_register_class)(
@@ -76,11 +108,16 @@ impl InitHandle {
                 destroy
             );
 
-            ClassBuilder {
+            let mut builder = ClassBuilder {
                 init_handle: self.handle,
                 class_name,
                 _marker: PhantomData,
-            }
+            };
+
+            C::register_properties(&mut builder);
+
+            // register methods
+            C::register(&mut builder);
         }
     }
 
@@ -88,22 +125,54 @@ impl InitHandle {
     ///
     /// The return `ClassBuilder` can be used to add methods, signals and properties
     /// to the class.
-    pub fn add_tool_class<C>(&self, desc: ClassDescriptor) -> ClassBuilder<C>
-    where C: NativeClass {
+    pub fn add_tool_class<C>(&self)
+        where C: NativeClassMethods {
         unsafe {
-            let class_name = CString::new(desc.name).unwrap();
-            let base_name = CString::new(desc.base_class).unwrap();
+            let class_name = CString::new(C::class_name()).unwrap();
+            let base_name = CString::new(C::Base::class_name()).unwrap();
 
-            let create = sys::godot_instance_create_func {
-                create_func: desc.constructor,
-                method_data: ptr::null_mut(),
-                free_func: None,
+
+            let create = {
+                unsafe extern "C" fn constructor<C: NativeClass>(
+                    this: *mut sys::godot_object,
+                    _method_data: *mut libc::c_void
+                ) -> *mut libc::c_void {
+                    use std::cell::RefCell;
+                    use std::boxed::Box;
+
+                    use crate::GodotObject;
+
+                    let val = C::init(C::Base::from_sys(this));
+
+                    let wrapper = Box::new(RefCell::new(val));
+                    Box::into_raw(wrapper) as *mut _
+                }
+
+                sys::godot_instance_create_func {
+                    create_func: Some(constructor::<C>),
+                    method_data: ptr::null_mut(),
+                    free_func: None,
+                }
             };
 
-            let destroy = sys::godot_instance_destroy_func {
-                destroy_func: desc.destructor,
-                method_data: ptr::null_mut(),
-                free_func: None,
+            let destroy = {
+                unsafe extern "C" fn destructor<C: NativeClass>(
+                    _this: *mut sys::godot_object,
+                    _method_data: *mut libc::c_void,
+                    user_data: *mut libc::c_void
+                ) -> () {
+                    use std::cell::RefCell;
+                    use std::boxed::Box;
+
+                    let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
+                    drop(wrapper)
+                }
+
+                sys::godot_instance_destroy_func {
+                    destroy_func: Some(destructor::<C>),
+                    method_data: ptr::null_mut(),
+                    free_func: None,
+                }
             };
 
             (get_api().godot_nativescript_register_tool_class)(
@@ -114,11 +183,16 @@ impl InitHandle {
                 destroy
             );
 
-            ClassBuilder {
+            let mut builder = ClassBuilder {
                 init_handle: self.handle,
                 class_name,
                 _marker: PhantomData,
-            }
+            };
+
+            C::register_properties(&mut builder);
+
+            // register methods
+            C::register(&mut builder);
         }
     }
 }
