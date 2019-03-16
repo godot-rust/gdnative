@@ -1,27 +1,24 @@
 #[macro_use]
-extern crate gdnative as godot;
+extern crate gdnative;
 
-godot_class! {
-    class HelloWorld: godot::Node {
+#[derive(gdnative::NativeClass)]
+#[inherit(gdnative::Node)]
+struct HelloWorld;
 
-        fields {
-        }
+#[gdnative::methods]
+impl HelloWorld {
 
-        setup(_builder) {
-        }
+    fn _init(_owner: gdnative::Node) -> Self {
+        HelloWorld
+    }
 
-        constructor(_owner: godot::Node) {
-            HelloWorld {
-            }
-        }
-
-        export fn _ready(&mut self, _owner: godot::Node) {
-            godot_print!("hello, world.");
-        }
+    #[export]
+    fn _ready(&self, _owner: gdnative::Node) {
+        godot_print!("hello, world.")
     }
 }
 
-fn init(handle: godot::init::InitHandle) {
+fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<HelloWorld>();
 }
 

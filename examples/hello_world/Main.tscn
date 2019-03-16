@@ -3,13 +3,10 @@
 [ext_resource path="res://hello_world_library.gdnlib" type="GDNativeLibrary" id=1]
 
 [sub_resource type="NativeScript" id=1]
-
 resource_name = "HelloWorld"
 class_name = "HelloWorld"
 library = ExtResource( 1 )
 
-[node name="Node" type="Node" index="0"]
-
+[node name="Node" type="Node"]
 script = SubResource( 1 )
-
 
