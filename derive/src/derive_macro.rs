@@ -1,5 +1,5 @@
-use proc_macro::{TokenStream};
-use syn::{DeriveInput, Data, Fields, Type, Ident};
+use proc_macro::TokenStream;
+use syn::{Data, DeriveInput, Fields, Ident, Type};
 
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
@@ -7,7 +7,6 @@ pub(crate) struct DeriveData {
 }
 
 pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
-
     let input = match syn::parse_macro_input::parse::<DeriveInput>(input) {
         Ok(val) => val,
         Err(err) => {
@@ -17,7 +16,8 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
 
     let ident = input.ident;
 
-    let inherit_attr = input.attrs
+    let inherit_attr = input
+        .attrs
         .iter()
         .find(|a| a.path.segments[0].ident == "inherit")
         .expect("No \"inherit\" attribute found");
@@ -38,8 +38,5 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
         // TODO
     }
 
-    DeriveData {
-        name: ident,
-        base,
-    }
+    DeriveData { name: ident, base }
 }

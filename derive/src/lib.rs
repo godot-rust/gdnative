@@ -54,15 +54,12 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(output)
 }
 
-
 #[proc_macro_derive(NativeClass, attributes(inherit, export))]
 pub fn derive_native_class(input: TokenStream) -> TokenStream {
-
     let data = derive_macro::parse_derive_input(input.clone());
 
     // generate NativeClass impl
     let trait_impl = {
-
         let name = data.name;
         let base = data.base;
 
