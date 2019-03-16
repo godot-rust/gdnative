@@ -1,10 +1,8 @@
 use std::ops::Deref;
 use std::marker::PhantomData;
 use std::cell::RefCell;
-use std::mem;
 use sys;
 use GodotObject;
-use Object;
 use object;
 use get_api;
 

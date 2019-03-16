@@ -379,6 +379,7 @@ macro_rules! godot_wrap_method_parameter_count {
 /// that can be passed to the engine when registering a class.
 #[macro_export]
 macro_rules! godot_wrap_method {
+    // "proper" definition
     (
         $type_name:ty,
         fn $method_name:ident(
@@ -439,5 +440,59 @@ macro_rules! godot_wrap_method {
 
             method
         }
+    };
+    // non mut self
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            &self,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+        ) -> $retty:ty
+    ) => {
+        godot_wrap_method!(
+            $type_name,
+            fn $method_name(
+                &mut self,
+                $owner : $owner_ty
+                $(,$pname : $pty)*
+            ) -> $retty
+        )
+    };
+    // non mut self without return type
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            &self,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+        )
+    ) => {
+        godot_wrap_method!(
+            $type_name,
+            fn $method_name(
+                &mut self,
+                $owner : $owner_ty
+                $(,$pname : $pty)*
+            ) -> ()
+        )
+    };
+    // without return type
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            &mut self,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+        )
+    ) => {
+        godot_wrap_method!(
+            $type_name,
+            fn $method_name(
+                &mut self,
+                $owner : $owner_ty
+                $(,$pname : $pty)*
+            ) -> ()
+        )
     };
 }
