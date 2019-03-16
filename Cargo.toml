@@ -22,5 +22,4 @@ members = [
     "bindings_generator",
     "examples/hello_world",
     "examples/spinning_cube",
-    "examples/manually_registered",
 ]

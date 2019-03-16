@@ -66,7 +66,8 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 });
 
                 if let Some(idx) = attribute_pos {
-                    let attr = method.attrs.remove(idx);
+                    // TODO renaming? rpc modes?
+                    let _attr = method.attrs.remove(idx);
 
                     methods_to_export.push(method.sig.clone());
                 }

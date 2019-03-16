@@ -53,3 +53,37 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
 
     TokenStream::from(output)
 }
+
+
+#[proc_macro_derive(NativeClass, attributes(inherit, export))]
+pub fn derive_native_class(input: TokenStream) -> TokenStream {
+
+    let data = derive_macro::parse_derive_input(input.clone());
+
+    // generate NativeClass impl
+    let trait_impl = {
+
+        let name = data.name;
+        let base = data.base;
+
+        // string variant needed for the `class_name` function.
+        let name_str = quote!(#name).to_string();
+
+        quote!(
+            impl gdnative::NativeClass for #name {
+                type Base = #base;
+
+                fn class_name() -> &'static str {
+                    #name_str
+                }
+
+                fn init(owner: Self::Base) -> Self {
+                    Self::_init(owner)
+                }
+            }
+        )
+    };
+
+    // create output token stream
+    trait_impl.into()
+}
