@@ -1,5 +1,3 @@
-extern crate gdnative_bindings_generator;
-
 use gdnative_bindings_generator::*;
 use std::path::PathBuf;
 use std::env;

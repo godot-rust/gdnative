@@ -1,7 +1,7 @@
-use api::*;
+use crate::api::*;
 use std::fs::File;
 use std::io::Write;
-use GeneratorResult;
+use crate::GeneratorResult;
 
 use heck::SnakeCase;
 

@@ -22,10 +22,10 @@
 //!
 
 use super::*;
-use get_api;
-use Variant;
-use ToVariant;
-use NativeClass;
+use crate::get_api;
+use crate::Variant;
+use crate::ToVariant;
+use crate::NativeClass;
 use std::mem;
 use std::ops::Range;
 use std::ffi::CString;

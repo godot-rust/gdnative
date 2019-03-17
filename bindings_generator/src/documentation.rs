@@ -1,7 +1,7 @@
-use api::*;
+use crate::api::*;
 use std::fs::File;
 use std::io::Write;
-use GeneratorResult;
+use crate::GeneratorResult;
 
 pub fn class_doc_link(class: &GodotClass) -> String {
     // TODO: link the correct crate

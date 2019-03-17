@@ -1,8 +1,8 @@
-use sys;
-use get_api;
-use ToVariant;
-use GodotString;
-use Variant;
+use crate::sys;
+use crate::get_api;
+use crate::ToVariant;
+use crate::GodotString;
+use crate::Variant;
 use std::fmt;
 
 /// A reference-counted relative or absolute path in a scene tree, for use with `Node.get_node()` and similar

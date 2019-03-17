@@ -1,7 +1,7 @@
-use api::*;
-use documentation::class_doc_link;
-use GeneratorResult;
-use rust_safe_name;
+use crate::api::*;
+use crate::documentation::class_doc_link;
+use crate::GeneratorResult;
+use crate::rust_safe_name;
 
 use std::fmt;
 use std::io::Write;

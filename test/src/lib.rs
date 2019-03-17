@@ -1,5 +1,4 @@
-#[macro_use]
-extern crate gdnative;
+use gdnative::*;
 
 #[no_mangle]
 pub extern "C" fn run_tests(

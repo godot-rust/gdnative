@@ -1,9 +1,9 @@
-use sys;
-use get_api;
-use Variant;
-use VariantArray;
-use GodotString;
-use ToVariant;
+use crate::sys;
+use crate::get_api;
+use crate::Variant;
+use crate::VariantArray;
+use crate::GodotString;
+use crate::ToVariant;
 use std::fmt;
 
 /// A reference-counted `Dictionary` of `Variant` key-value pairs.
@@ -153,7 +153,7 @@ impl fmt::Debug for Dictionary {
 }
 
 godot_test!(test_dictionary {
-    use VariantType;
+    use crate::VariantType;
     let foo = Variant::from_str("foo");
     let bar = Variant::from_str("bar");
     let nope = Variant::from_str("nope");
