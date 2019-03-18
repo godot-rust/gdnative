@@ -7,8 +7,8 @@ members = [
     "gdnative-derive",
     "gdnative-core",
     "gdnative-bindings",
-    # "test",
+    "test",
     "bindings_generator",
-    # "examples/hello_world",
-    # "examples/spinning_cube",
+    "examples/hello_world",
+    "examples/spinning_cube",
 ]

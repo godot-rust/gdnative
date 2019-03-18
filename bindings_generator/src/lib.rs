@@ -127,6 +127,10 @@ fn generate_class_bindings(
 
     writeln!(output, "}}")?;
 
+    if !class.base_class.is_empty() {
+        generate_deref_impl(output, class)?;
+    }
+
     if class.is_refcounted() && class.instanciable {
         generate_drop(output, class)?;
     }

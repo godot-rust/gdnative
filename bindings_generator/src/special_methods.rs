@@ -225,6 +225,40 @@ r#"    /// Up-cast.
     Ok(())
 }
 
+pub fn generate_deref_impl(
+    output: &mut impl Write,
+    class: &GodotClass,
+) -> GeneratorResult {
+
+    writeln!(output,
+r#"
+
+impl std::ops::Deref for {name} {{
+    type Target = {base};
+
+    fn deref(&self) -> &{base} {{
+        unsafe {{
+            std::mem::transmute(self)
+        }}
+    }}
+}}
+
+impl std::ops::DerefMut for {name} {{
+
+    fn deref_mut(&mut self) -> &mut {base} {{
+        unsafe {{
+            std::mem::transmute(self)
+        }}
+    }}
+}}
+"#,
+        name = class.name,
+        base = class.base_class,
+    )?;
+
+    Ok(())
+}
+
 pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"

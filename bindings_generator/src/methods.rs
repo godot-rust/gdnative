@@ -305,7 +305,8 @@ r#"    #[inline]
             }
         }
 
-        if &class.base_class != "" {
+        // Reference includes all of Object's methods so they are safe.
+        if class.base_class == "Reference" {
             generate_methods(
                 output,
                 api,
