@@ -2,37 +2,14 @@ use std::collections::HashMap;
 use std::fs::File;
 use serde_json;
 
-#[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize)]
-pub enum Crate {
-    core,
-    common,
-    graphics,
-    animation,
-    physics,
-    network,
-    audio,
-    video,
-    arvr,
-    input,
-    ui,
-    editor,
-    visual_script,
-    unknown,
-}
-
 pub struct Api {
     pub classes: Vec<GodotClass>,
-    pub namespaces: HashMap<String, Crate>,
-    pub sub_crate: Crate,
 }
 
 impl Api {
-    pub fn new(sub_crate: Crate) -> Self {
+    pub fn new() -> Self {
         let mut api = Api {
             classes: serde_json::from_slice(get_api_json()).expect("Failed to parse the API description"),
-            namespaces: serde_json::from_slice(get_namespaces_json()).expect("Failed to parse the API namespaces"),
-            sub_crate,
         };
 
         api.strip_leading_underscores();

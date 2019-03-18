@@ -12,7 +12,7 @@ fn skip_method(name: &str) -> bool {
     name == "free" || name == "reference" || name == "unreference"
 }
 
-pub fn generate_method_table(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_method_table(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output, r#"
 #[doc(hidden)]
 #[allow(non_camel_case_types)]
@@ -97,7 +97,7 @@ r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class
     Ok(())
 }
 
-pub fn generate_method_impl(output: &mut File, class: &GodotClass, method: &GodotMethod) -> GeneratorResult {
+pub fn generate_method_impl(output: &mut impl Write, class: &GodotClass, method: &GodotMethod) -> GeneratorResult {
     let method_name = method.get_name();
 
     if skip_method(&method_name) {
@@ -216,7 +216,7 @@ r#"}}"#
 
 
 pub fn generate_methods(
-    output: &mut File,
+    output: &mut impl Write,
     api: &Api,
     method_set: &mut HashSet<String>,
     class_name: &str,
@@ -305,7 +305,8 @@ r#"    #[inline]
             }
         }
 
-        if &class.base_class != "" {
+        // Reference includes all of Object's methods so they are safe.
+        if class.base_class == "Reference" {
             generate_methods(
                 output,
                 api,
@@ -319,7 +320,7 @@ r#"    #[inline]
     Ok(())
 }
 
-fn generate_argument_pre(w: &mut File, ty: &Ty, name: &str) -> GeneratorResult {
+fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorResult {
     match ty {
         &Ty::Bool
         | &Ty::F64
@@ -364,7 +365,7 @@ fn generate_argument_pre(w: &mut File, ty: &Ty, name: &str) -> GeneratorResult {
     Ok(())
 }
 
-fn generate_return_pre(w: &mut File, ty: &Ty) -> GeneratorResult {
+fn generate_return_pre(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
     match ty {
         &Ty::Void => {
             writeln!(w, r#"
@@ -448,7 +449,7 @@ fn generate_return_pre(w: &mut File, ty: &Ty) -> GeneratorResult {
     Ok(())
 }
 
-fn generate_return_post(w: &mut File, ty: &Ty) -> GeneratorResult {
+fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
     match ty {
         &Ty::Void => {},
         &Ty::F64

@@ -34,15 +34,8 @@
 
 #[doc(inline)] pub use gdnative_derive::*;
 #[doc(inline)] pub use gdnative_core::*;
-#[doc(inline)] pub use gdnative_common::*;
-#[doc(inline)] #[cfg(feature="graphics")] pub use gdnative_graphics::*;
-#[doc(inline)] #[cfg(feature="physics")] pub use gdnative_physics::*;
-#[doc(inline)] #[cfg(feature="network")] pub use gdnative_network::*;
-#[doc(inline)] #[cfg(feature="audio")] pub use gdnative_audio::*;
-#[doc(inline)] #[cfg(feature="video")] pub use gdnative_video::*;
-#[doc(inline)] #[cfg(feature="editor")] pub use gdnative_editor::*;
-#[doc(inline)] #[cfg(feature="arvr")] pub use gdnative_arvr::*;
-#[doc(inline)] #[cfg(feature="visual_script")] pub use gdnative_visual_script::*;
-#[doc(inline)] #[cfg(feature="animation")] pub use gdnative_animation::*;
-#[doc(inline)] #[cfg(feature="input")] pub use gdnative_input::*;
-#[doc(inline)] #[cfg(feature="ui")] pub use gdnative_ui::*;
+
+#[doc(inline)]
+#[cfg(feature = "bindings")]
+pub use gdnative_bindings::*;
+

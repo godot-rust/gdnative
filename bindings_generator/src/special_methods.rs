@@ -5,7 +5,7 @@ use crate::GeneratorResult;
 
 use heck::SnakeCase;
 
-pub fn generate_refreference_ctor(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_refreference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     // Constructor
@@ -39,7 +39,7 @@ r#"
     Ok(())
 }
 
-pub fn generate_non_refreference_ctor(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_non_refreference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     /// Constructor.
@@ -73,7 +73,7 @@ r#"
     Ok(())
 }
 
-pub fn generate_godot_object_impl(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
 unsafe impl GodotObject for {name} {{
@@ -107,7 +107,7 @@ impl ToVariant for {name} {{
     Ok(())
 }
 
-pub fn generate_free_impl(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
+pub fn generate_free_impl(output: &mut impl Write, api: &Api, class: &GodotClass) -> GeneratorResult {
     if class.instanciable && !class.is_pointer_safe() {
         writeln!(output,
 r#"impl Free for {name} {{
@@ -131,7 +131,7 @@ r#"impl QueueFree for {name} {{
     Ok(())
 }
 
-pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_singleton_getter(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     let s_name = if class.name.starts_with("_") {
         &class.name[1..]
     } else {
@@ -156,7 +156,7 @@ pub fn generate_singleton_getter(output: &mut File, class: &GodotClass) -> Gener
     Ok(())
 }
 
-pub fn generate_dynamic_cast(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_dynamic_cast(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     /// Generic dynamic cast.
@@ -171,7 +171,7 @@ r#"
 }
 
 pub fn generate_upcast(
-    output: &mut File,
+    output: &mut impl Write,
     api: &Api,
     base_class_name: &str,
     is_pointer_safe: bool,
@@ -225,7 +225,41 @@ r#"    /// Up-cast.
     Ok(())
 }
 
-pub fn generate_drop(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_deref_impl(
+    output: &mut impl Write,
+    class: &GodotClass,
+) -> GeneratorResult {
+
+    writeln!(output,
+r#"
+
+impl std::ops::Deref for {name} {{
+    type Target = {base};
+
+    fn deref(&self) -> &{base} {{
+        unsafe {{
+            std::mem::transmute(self)
+        }}
+    }}
+}}
+
+impl std::ops::DerefMut for {name} {{
+
+    fn deref_mut(&mut self) -> &mut {base} {{
+        unsafe {{
+            std::mem::transmute(self)
+        }}
+    }}
+}}
+"#,
+        name = class.name,
+        base = class.base_class,
+    )?;
+
+    Ok(())
+}
+
+pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
 impl Drop for {name} {{

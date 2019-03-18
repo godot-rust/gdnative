@@ -2,6 +2,7 @@
 extern crate serde_derive;
 
 pub mod api;
+pub mod dependency;
 mod classes;
 mod methods;
 mod special_methods;
@@ -12,6 +13,7 @@ use std::io::Write;
 use std::collections::HashSet;
 
 pub use crate::api::*;
+pub use crate::dependency::*;
 use crate::classes::*;
 use crate::methods::*;
 use crate::special_methods::*;
@@ -19,110 +21,125 @@ use crate::documentation::*;
 
 use std::io;
 
-pub type GeneratorResult = Result<(), io::Error>;
+pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
 pub fn generate_bindings(
     output: &mut File,
-    crate_type: Crate,
+    ignore: Option<HashSet<String>>,
 ) -> GeneratorResult {
 
-    let api = Api::new(crate_type);
+    let to_ignore = ignore.unwrap_or_default();
 
+    let api = Api::new();
+
+    generate_imports(output)?;
+
+    for class in &api.classes {
+
+        // ignore classes that have been generated before.
+        if to_ignore.contains(&class.name) {
+            continue;
+        }
+
+        generate_class_bindings(output, &api, class)?;
+
+    }
+
+    Ok(())
+}
+
+pub fn generate_imports(output: &mut impl Write) -> GeneratorResult {
     writeln!(output, "use std::os::raw::c_char;")?;
     writeln!(output, "use std::ptr;")?;
     writeln!(output, "use std::mem;")?;
 
-    for class in &api.classes {
-        if api.namespaces[&class.name] != crate_type {
-            continue;
-        }
+    Ok(())
+}
 
-        generate_class_documentation(output, &api, class)?;
+pub fn generate_class(
+    output: &mut impl io::Write,
+    class_name: &str,
+) -> GeneratorResult {
 
-        generate_class_struct(output, class)?;
+    let api = Api::new();
 
-        for e in &class.enums {
-            generate_enum(output, class, e)?;
-        }
+    let class = api.find_class(class_name);
 
-        generate_godot_object_impl(output, class)?;
+    if let Some(class) = class {
+        generate_class_bindings(output, &api, class)?;
+    }
 
-        generate_free_impl(output, &api, class)?;
+    Ok(())
+}
 
-        writeln!(output, "impl {} {{", class.name)?;
+fn generate_class_bindings(
+    output: &mut impl io::Write,
+    api: &Api,
+    class: &GodotClass,
+) -> GeneratorResult {
 
-        if class.singleton {
-            generate_singleton_getter(output, class)?;
-        }
+    generate_class_documentation(output, &api, class)?;
 
-        if class.instanciable {
+    generate_class_struct(output, class)?;
 
-            if class.is_refcounted() {
-                generate_refreference_ctor(output, class)?;
-            } else {
-                generate_non_refreference_ctor(output, class)?;
-            }
-        }
+    for e in &class.enums {
+        generate_enum(output, class, e)?;
+    }
 
-        let mut method_set = HashSet::default();
+    generate_godot_object_impl(output, class)?;
 
-        generate_methods(
-            output,
-            &api,
-            &mut method_set,
-            &class.name,
-            class.is_pointer_safe(),
-            true,
-        )?;
+    generate_free_impl(output, &api, class)?;
 
-        generate_upcast(
-            output,
-            &api,
-            &class.base_class,
-            class.is_pointer_safe(),
-        )?;
+    writeln!(output, "impl {} {{", class.name)?;
 
-        generate_dynamic_cast(output, class)?;
+    if class.singleton {
+        generate_singleton_getter(output, class)?;
+    }
 
-        writeln!(output, "}}")?;
+    if class.instanciable {
 
-        if class.is_refcounted() && class.instanciable {
-            generate_drop(output, class)?;
+        if class.is_refcounted() {
+            generate_refreference_ctor(output, class)?;
+        } else {
+            generate_non_refreference_ctor(output, class)?;
         }
     }
 
-//    writeln!(output,
-//r#"#[doc(hidden)]
-//pub mod gdnative_{:?}_private {{
-//
-//use std::sync::{{Once, ONCE_INIT}};
-//use std::os::raw::c_char;
-//use std::ptr;
-//use std::mem;
-//use libc;
-//use object;"#,
-//        api.sub_crate
-//    ).unwrap();
-//
-//    if api.sub_crate != Crate::core {
-//        writeln!(output, "use gdnative_core::*;").unwrap();
-//    } else{
-//        writeln!(output, "use super::*;").unwrap();
-//    }
+    let mut method_set = HashSet::default();
 
-    for class in &api.classes {
-        if api.namespaces[&class.name] != crate_type {
-            continue;
-        }
+    generate_methods(
+        output,
+        &api,
+        &mut method_set,
+        &class.name,
+        class.is_pointer_safe(),
+        true,
+    )?;
 
-        generate_method_table(output, class)?;
+    generate_upcast(
+        output,
+        &api,
+        &class.base_class,
+        class.is_pointer_safe(),
+    )?;
 
-        for method in &class.methods {
-            generate_method_impl(output, class, method)?;
-        }
+    generate_dynamic_cast(output, class)?;
+
+    writeln!(output, "}}")?;
+
+    if !class.base_class.is_empty() {
+        generate_deref_impl(output, class)?;
     }
 
-//    writeln!(output, "\n}} // private module").unwrap();
+    if class.is_refcounted() && class.instanciable {
+        generate_drop(output, class)?;
+    }
+
+    generate_method_table(output, class)?;
+
+    for method in &class.methods {
+        generate_method_impl(output, class, method)?;
+    }
 
     Ok(())
 }
@@ -136,32 +153,6 @@ fn rust_safe_name(name: &str) -> &str {
         "override" => "_override",
         "where" => "_where",
         name => name,
-    }
-}
-
-pub fn get_crate_namespace_opt(crate_type: Option<Crate>) -> &'static str {
-    match crate_type {
-        Some(ty) => get_crate_namespace(ty),
-        None => ""
-    }
-}
-
-pub fn get_crate_namespace(crate_type: Crate) -> &'static str {
-    match crate_type {
-        Crate::core => "core",
-        Crate::common => "common",
-        Crate::graphics => "graphics",
-        Crate::animation => "animation",
-        Crate::physics => "physics",
-        Crate::network => "network",
-        Crate::audio => "audio",
-        Crate::video => "video",
-        Crate::arvr => "arvr",
-        Crate::input => "input",
-        Crate::ui => "ui",
-        Crate::editor => "editor",
-        Crate::visual_script => "visual_script",
-        Crate::unknown => "unknown",
     }
 }
 
