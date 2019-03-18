@@ -1,0 +1,8 @@
+[package]
+name = "gdnative-bindings"
+version = "0.1.0"
+authors = ["karroffel <therzog@mail.de>"]
+edition = "2018"
+
+[dependencies]
+gdnative_bindings_generator = { path = "../bindings_generator" }

@@ -32,7 +32,7 @@ pub extern crate gdnative_sys as sys;
 #[macro_use]
 extern crate bitflags;
 
-pub extern crate gdnative_geom as geom;
+pub mod geom;
 
 mod macros;
 #[macro_use]
