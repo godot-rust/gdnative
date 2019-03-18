@@ -1,7 +1,5 @@
 //! Geometric types.
 
-pub extern crate euclid;
-
 mod plane;
 mod aabb;
 mod basis;
@@ -13,7 +11,7 @@ pub type Transform2D = euclid::Transform2D<f32>;
 pub type Quat = euclid::Rotation3D<f32>;
 pub type Rect2 = euclid::Rect<f32>;
 
-pub use plane::Plane;
-pub use aabb::Aabb;
-pub use basis::Basis;
-pub use transform::Transform;
+pub use crate::plane::Plane;
+pub use crate::aabb::Aabb;
+pub use crate::basis::Basis;
+pub use crate::transform::Transform;

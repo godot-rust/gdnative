@@ -1,7 +1,7 @@
-use sys;
-use get_api;
-use Variant;
-use ToVariant;
+use crate::sys;
+use crate::get_api;
+use crate::Variant;
+use crate::ToVariant;
 
 use std::ffi::CStr;
 use std::ops::Range;
@@ -351,7 +351,7 @@ impl<S> From<S> for GodotString where S: AsRef<str> {
 }
 
 godot_test!(test_string {
-    use VariantType;
+    use crate::VariantType;
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
 

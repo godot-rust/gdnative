@@ -1,7 +1,7 @@
 #![allow(non_snake_case)] // because of the generated bindings.
 
-use sys;
-use get_api;
+use crate::sys;
+use crate::get_api;
 use super::*;
 
 use std::sync::{Once, ONCE_INIT};

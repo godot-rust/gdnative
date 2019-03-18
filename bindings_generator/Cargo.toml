@@ -5,6 +5,7 @@ repository = "https://github.com/GodotNativeTools/godot-rust"
 license = "MIT"
 version = "0.2.0"
 authors = ["The godot-rust developers"]
+edition = "2018"
 
 [dependencies]
 serde = "1.0.15"

@@ -1,4 +1,4 @@
-use Vector3;
+use crate::Vector3;
 
 /// Plane in hessian form.
 #[repr(C)]

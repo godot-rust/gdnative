@@ -1,6 +1,6 @@
-use ToVariant;
-use Variant;
-use Vector3;
+use crate::ToVariant;
+use crate::Variant;
+use crate::Vector3;
 
 impl ToVariant for Vector3 {
     fn to_variant(&self) -> Variant {

@@ -1,4 +1,4 @@
-use Vector3;
+use crate::Vector3;
 
 /// A 3x3 matrix.
 #[repr(C)]

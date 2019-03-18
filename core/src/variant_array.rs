@@ -1,7 +1,7 @@
-use sys;
-use get_api;
-use Variant;
-use ToVariant;
+use crate::sys;
+use crate::get_api;
+use crate::Variant;
+use crate::ToVariant;
 
 /// A reference-counted `Variant` vector. Godot's generic array data type.
 /// Negative indices can be used to count from the right.

@@ -1,7 +1,7 @@
-use api::*;
+use crate::api::*;
 use std::fs::File;
 use std::io::Write;
-use GeneratorResult;
+use crate::GeneratorResult;
 use heck::CamelCase;
 
 pub fn generate_class_struct(output: &mut File, class: &GodotClass) -> GeneratorResult {

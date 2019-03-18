@@ -1,5 +1,5 @@
-use sys;
-use get_api;
+use crate::sys;
+use crate::get_api;
 use std::cmp::Ordering;
 use std::mem::transmute;
 use std::cmp::{Eq, PartialEq};

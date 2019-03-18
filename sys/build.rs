@@ -1,6 +1,3 @@
-
-extern crate bindgen;
-
 use std::env;
 use std::path::PathBuf;
 
@@ -35,12 +32,15 @@ fn osx_include_path() -> Result<String, std::io::Error> {
 fn main() {
     let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let bindings = {
+        // on mac/iOS this will be modified, so it is marked as mutable.
+        // on all other targets, this `mut` will be unused and the complainer compiles.t s
+        #[allow(unused_mut)]
         let mut builder = bindgen::Builder::default()
             .header("godot_headers/gdnative_api_struct.gen.h")
-            .whitelisted_type("godot.*")
-            .whitelisted_function("godot.*")
-            .whitelisted_var("godot.*")
-            .whitelisted_type("GDNATIVE.*")
+            .whitelist_type("godot.*")
+            .whitelist_function("godot.*")
+            .whitelist_var("godot.*")
+            .whitelist_type("GDNATIVE.*")
             .derive_default(true)
             .ignore_functions()
             .ctypes_prefix("libc")

@@ -1,7 +1,7 @@
 use std::ptr;
 use libc;
-use sys;
-use ObjectMethodTable;
+use crate::sys;
+use crate::ObjectMethodTable;
 
 /// Internal details.
 pub unsafe trait GodotObject {
@@ -14,9 +14,9 @@ pub unsafe trait GodotObject {
 
 // This function assumes the godot_object is reference counted.
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
-    use ReferenceMethodTable;
+    use crate::ReferenceMethodTable;
     use std::ptr;
-    let api = ::get_api();
+    let api = crate::get_api();
     let addref_method = ReferenceMethodTable::unchecked_get().reference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
@@ -36,13 +36,13 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
 
 // This function assumes the godot_object is reference counted.
 pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
-    use ReferenceMethodTable;
+    use crate::ReferenceMethodTable;
     use std::ptr;
     let unref_method = ReferenceMethodTable::unchecked_get().unreference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut last_reference = false;
     let ret_ptr = &mut last_reference as *mut bool;
-    (::get_api().godot_method_bind_ptrcall)(
+    (crate::get_api().godot_method_bind_ptrcall)(
         unref_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
@@ -54,13 +54,13 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
 
 // This function assumes the godot_object is reference counted.
 pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
-    use ReferenceMethodTable;
+    use crate::ReferenceMethodTable;
     use std::ptr;
     let init_method = ReferenceMethodTable::unchecked_get().init_ref;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
     let ret_ptr = &mut ok as *mut bool;
-    (::get_api().godot_method_bind_ptrcall)(
+    (crate::get_api().godot_method_bind_ptrcall)(
         init_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
@@ -72,7 +72,7 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
 
 pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     unsafe {
-        let api = ::get_api();
+        let api = crate::get_api();
         let method_bind = ObjectMethodTable::get(api).is_class;
 
         let mut class_name = (api.godot_string_chars_to_utf8_with_len)(

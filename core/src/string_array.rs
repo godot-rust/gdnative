@@ -1,9 +1,9 @@
-use sys;
-use get_api;
-use Variant;
-use ToVariant;
-use VariantArray;
-use GodotString;
+use crate::sys;
+use crate::get_api;
+use crate::Variant;
+use crate::ToVariant;
+use crate::VariantArray;
+use crate::GodotString;
 
 /// A vector of `GodotString` that uses Godot's pool allocator.
 pub struct StringArray(pub(crate) sys::godot_pool_string_array);

@@ -1,9 +1,5 @@
-
-extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-extern crate heck;
 
 pub mod api;
 mod classes;
@@ -15,11 +11,11 @@ use std::fs::File;
 use std::io::Write;
 use std::collections::HashSet;
 
-pub use api::*;
-use classes::*;
-use methods::*;
-use special_methods::*;
-use documentation::*;
+pub use crate::api::*;
+use crate::classes::*;
+use crate::methods::*;
+use crate::special_methods::*;
+use crate::documentation::*;
 
 use std::io;
 

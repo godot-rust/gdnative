@@ -1,10 +1,10 @@
 use std::ops::Deref;
 use std::marker::PhantomData;
 use std::cell::RefCell;
-use sys;
-use GodotObject;
-use object;
-use get_api;
+use crate::sys;
+use crate::GodotObject;
+use crate::object;
+use crate::get_api;
 
 /// Trait used for describing and initializing a Godot script class.
 ///

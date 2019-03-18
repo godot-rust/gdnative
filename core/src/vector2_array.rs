@@ -1,9 +1,9 @@
-use sys;
-use get_api;
-use Variant;
-use ToVariant;
-use VariantArray;
-use Vector2;
+use crate::sys;
+use crate::get_api;
+use crate::Variant;
+use crate::ToVariant;
+use crate::VariantArray;
+use crate::Vector2;
 
 use std::mem::transmute;
 

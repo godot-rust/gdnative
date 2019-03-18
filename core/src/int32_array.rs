@@ -1,8 +1,8 @@
-use sys;
-use get_api;
-use Variant;
-use ToVariant;
-use VariantArray;
+use crate::sys;
+use crate::get_api;
+use crate::Variant;
+use crate::ToVariant;
+use crate::VariantArray;
 
 /// A reference-counted vector of `i32` that uses Godot's pool allocator.
 pub struct Int32Array(pub(crate) sys::godot_pool_int_array);
