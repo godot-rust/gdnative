@@ -16,7 +16,7 @@ pub fn official_doc_url(class: &GodotClass) -> String {
     )
 }
 
-pub fn generate_class_documentation(output: &mut File, api: &Api, class: &GodotClass) -> GeneratorResult {
+pub fn generate_class_documentation(output: &mut impl Write, api: &Api, class: &GodotClass) -> GeneratorResult {
         let has_parent = class.base_class != "";
         let singleton_str = if class.singleton { "singleton " } else { "" } ;
         let ownership_type = if class.is_refcounted() { "reference counted" } else { "unsafe" };
@@ -74,18 +74,6 @@ r#"///
             )?;
         }
 
-        let feature = api.namespaces[&class.name];
-        if feature != Crate::core {
-            writeln!(output,
-r#"///
-/// ## Feature flag
-///
-/// This type is behind the gdnative crate's `{feature:?}` feature flag.
-"#,
-                feature = feature,
-            )?;
-        }
-
         if class.base_class != "" {
             writeln!(output,
 r#"///
@@ -115,7 +103,7 @@ r#"///
 }
 
 fn list_base_classes(
-    output: &mut File,
+    output: &mut impl Write,
     api: &Api,
     parent_name: &str,
 ) -> GeneratorResult {

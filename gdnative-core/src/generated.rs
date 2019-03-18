@@ -1,4 +1,6 @@
 #![allow(non_snake_case)] // because of the generated bindings.
+#![allow(unused_imports)]
+
 
 use crate::sys;
 use crate::get_api;

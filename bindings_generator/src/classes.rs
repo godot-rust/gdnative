@@ -4,7 +4,7 @@ use std::io::Write;
 use crate::GeneratorResult;
 use heck::CamelCase;
 
-pub fn generate_class_struct(output: &mut File, class: &GodotClass) -> GeneratorResult {
+pub fn generate_class_struct(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     if !class.is_refcounted() {
         writeln!(output, "#[derive(Copy, Clone)]")?;
     }
@@ -23,7 +23,7 @@ pub struct {name} {{
     Ok(())
 }
 
-pub fn generate_enum(output: &mut File, class: &GodotClass, e: &Enum) -> GeneratorResult {
+pub fn generate_enum(output: &mut impl Write, class: &GodotClass, e: &Enum) -> GeneratorResult {
     // TODO: check whether the start of the variant name is
     // equal to the end of the enum name and if so don't repeat it
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
