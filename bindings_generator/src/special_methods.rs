@@ -1,11 +1,10 @@
 use crate::api::*;
-use std::fs::File;
 use std::io::Write;
 use crate::GeneratorResult;
 
 use heck::SnakeCase;
 
-pub fn generate_refreference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     // Constructor
@@ -21,7 +20,16 @@ r#"
             }}
         }}
     }}
+"#,
+        name = class.name
+    )?;
 
+    Ok(())
+}
+
+pub fn generate_reference_copy(output: &mut impl Write, _class: &GodotClass) -> GeneratorResult {
+    writeln!(output,
+             r#"
     /// Creates a new reference to the same reference-counted object.
     pub fn new_ref(&self) -> Self {{
         unsafe {{
@@ -32,14 +40,13 @@ r#"
             }}
         }}
     }}
-"#,
-        name = class.name
+"#
     )?;
 
     Ok(())
 }
 
-pub fn generate_non_refreference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_non_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(output,
 r#"
     /// Constructor.
@@ -65,8 +72,7 @@ r#"
     #[inline]
     pub unsafe fn free(self) {{
         (get_api().godot_object_destroy)(self.this);
-    }}
-"#,
+    }}"#,
         name = class.name
     )?;
 
@@ -94,8 +100,7 @@ unsafe impl GodotObject for {name} {{
 impl ToVariant for {name} {{
     fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
     fn from_variant(variant: &Variant) -> Option<Self> {{ variant.try_to_object::<Self>() }}
-}}
-"#,
+}}"#,
         name = class.name,
         addref_if_reference = if class.is_refcounted() {
             "object::add_ref(obj);"
@@ -110,20 +115,20 @@ impl ToVariant for {name} {{
 pub fn generate_free_impl(output: &mut impl Write, api: &Api, class: &GodotClass) -> GeneratorResult {
     if class.instanciable && !class.is_pointer_safe() {
         writeln!(output,
-r#"impl Free for {name} {{
+r#"
+impl Free for {name} {{
     unsafe fn godot_free(self) {{ self.free() }}
-}}
-"#,
+}}"#,
             name = class.name,
         )?;
     }
 
     if class.name == "Node" || api.class_inherits(&class, "Node") {
         writeln!(output,
-r#"impl QueueFree for {name} {{
+r#"
+impl QueueFree for {name} {{
     unsafe fn godot_queue_free(&mut self) {{ self.queue_free() }}
-}}
-"#,
+}}"#,
             name = class.name,
         )?;
     }
@@ -162,8 +167,7 @@ r#"
     /// Generic dynamic cast.
     pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
         object::godot_cast::<T>(self.this)
-    }}
-"#,
+    }}"#,
         maybe_unsafe = if class.is_pointer_safe() { "" } else { "unsafe " },
     )?;
 
@@ -185,8 +189,7 @@ r#"    /// Up-cast.
     pub fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
         {name} {{ this: self.this }}
-    }}
-"#,
+    }}"#,
                 name = parent.name,
                 snake_name = snake_name,
                 addref_if_reference = if parent.is_refcounted() {
@@ -197,13 +200,13 @@ r#"    /// Up-cast.
             )?;
         } else {
             writeln!(output,
-r#"    /// Up-cast.
+r#"
+    /// Up-cast.
     #[inline]
     pub unsafe fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
         {name} {{ this: self.this }}
-    }}
-"#,
+    }}"#,
                 name = parent.name,
                 snake_name = snake_name,
                 addref_if_reference = if parent.is_refcounted() {
@@ -232,7 +235,6 @@ pub fn generate_deref_impl(
 
     writeln!(output,
 r#"
-
 impl std::ops::Deref for {name} {{
     type Target = {base};
 
@@ -244,16 +246,29 @@ impl std::ops::Deref for {name} {{
 }}
 
 impl std::ops::DerefMut for {name} {{
-
     fn deref_mut(&mut self) -> &mut {base} {{
         unsafe {{
             std::mem::transmute(self)
         }}
     }}
-}}
-"#,
+}}"#,
         name = class.name,
         base = class.base_class,
+    )?;
+
+    Ok(())
+}
+
+pub fn generate_reference_clone(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+
+    writeln!(output,
+             r#"
+impl Clone for {name} {{
+    fn clone(&self) -> Self {{
+        self.new_ref()
+    }}
+}}"#,
+             name = class.name
     )?;
 
     Ok(())
@@ -270,8 +285,7 @@ impl Drop for {name} {{
             }}
         }}
     }}
-}}
-"#,
+}}"#,
         name = class.name
     )?;
 
