@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fs::File;
 use serde_json;
 
 pub struct Api {

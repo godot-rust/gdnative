@@ -6,7 +6,6 @@ use crate::rust_safe_name;
 use std::fmt;
 use std::io::Write;
 use std::collections::HashSet;
-use std::fs::File;
 
 fn skip_method(name: &str) -> bool {
     name == "free" || name == "reference" || name == "unreference"

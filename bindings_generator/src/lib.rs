@@ -8,7 +8,6 @@ mod methods;
 mod special_methods;
 mod documentation;
 
-use std::fs::File;
 use std::io::Write;
 use std::collections::HashSet;
 
@@ -24,7 +23,9 @@ use std::io;
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
 pub fn generate_bindings(
-    output: &mut File,
+    output_types_impls: &mut impl Write,
+    output_trait_impls: &mut impl Write,
+    output_method_table: &mut impl Write,
     ignore: Option<HashSet<String>>,
 ) -> GeneratorResult {
 
@@ -32,7 +33,7 @@ pub fn generate_bindings(
 
     let api = Api::new();
 
-    generate_imports(output)?;
+    generate_imports(output_types_impls)?;
 
     for class in &api.classes {
 
@@ -41,7 +42,13 @@ pub fn generate_bindings(
             continue;
         }
 
-        generate_class_bindings(output, &api, class)?;
+        generate_class_bindings(
+            output_types_impls,
+            output_trait_impls,
+            output_method_table,
+            &api,
+            class,
+        )?;
 
     }
 
@@ -57,7 +64,9 @@ pub fn generate_imports(output: &mut impl Write) -> GeneratorResult {
 }
 
 pub fn generate_class(
-    output: &mut impl io::Write,
+    output_types_impls: &mut impl Write,
+    output_trait_impls: &mut impl Write,
+    output_method_table: &mut impl Write,
     class_name: &str,
 ) -> GeneratorResult {
 
@@ -66,79 +75,103 @@ pub fn generate_class(
     let class = api.find_class(class_name);
 
     if let Some(class) = class {
-        generate_class_bindings(output, &api, class)?;
+        generate_class_bindings(
+            output_types_impls,
+            output_trait_impls,
+            output_method_table,
+            &api,
+            class,
+        )?;
     }
 
     Ok(())
 }
 
 fn generate_class_bindings(
-    output: &mut impl io::Write,
+    output_types_impls: &mut impl Write,
+    output_trait_impls: &mut impl Write,
+    output_method_table: &mut impl Write,
     api: &Api,
     class: &GodotClass,
 ) -> GeneratorResult {
+    // types and methods
+    {
+        generate_class_documentation(output_types_impls, &api, class)?;
 
-    generate_class_documentation(output, &api, class)?;
+        generate_class_struct(output_types_impls, class)?;
 
-    generate_class_struct(output, class)?;
+        for e in &class.enums {
+            generate_enum(output_types_impls, class, e)?;
+        }
 
-    for e in &class.enums {
-        generate_enum(output, class, e)?;
-    }
+        writeln!(output_types_impls, "impl {} {{", class.name)?;
 
-    generate_godot_object_impl(output, class)?;
+        if class.singleton {
+            generate_singleton_getter(output_types_impls, class)?;
+        }
 
-    generate_free_impl(output, &api, class)?;
-
-    writeln!(output, "impl {} {{", class.name)?;
-
-    if class.singleton {
-        generate_singleton_getter(output, class)?;
-    }
-
-    if class.instanciable {
+        if class.instanciable {
+            if class.is_refcounted() {
+                generate_reference_ctor(output_types_impls, class)?;
+            } else {
+                generate_non_reference_ctor(output_types_impls, class)?;
+            }
+        }
 
         if class.is_refcounted() {
-            generate_refreference_ctor(output, class)?;
-        } else {
-            generate_non_refreference_ctor(output, class)?;
+            generate_reference_copy(output_types_impls, class)?;
+        }
+
+        let mut method_set = HashSet::default();
+
+        generate_methods(
+            output_types_impls,
+            &api,
+            &mut method_set,
+            &class.name,
+            class.is_pointer_safe(),
+            true,
+        )?;
+
+        generate_upcast(
+            output_types_impls,
+            &api,
+            &class.base_class,
+            class.is_pointer_safe(),
+        )?;
+
+        generate_dynamic_cast(output_types_impls, class)?;
+
+        writeln!(output_types_impls, "}}")?;
+    }
+
+    // traits
+    {
+        generate_godot_object_impl(output_trait_impls, class)?;
+
+        generate_free_impl(output_trait_impls, &api, class)?;
+
+
+        if !class.base_class.is_empty() {
+            generate_deref_impl(output_trait_impls, class)?;
+        }
+
+        if class.is_refcounted() {
+            generate_reference_clone(output_trait_impls, class)?;
+        }
+
+        if class.is_refcounted() && class.instanciable {
+            generate_drop(output_trait_impls, class)?;
         }
     }
 
-    let mut method_set = HashSet::default();
+    // methods and method table
+    {
+        generate_method_table(output_method_table, class)?;
 
-    generate_methods(
-        output,
-        &api,
-        &mut method_set,
-        &class.name,
-        class.is_pointer_safe(),
-        true,
-    )?;
-
-    generate_upcast(
-        output,
-        &api,
-        &class.base_class,
-        class.is_pointer_safe(),
-    )?;
-
-    generate_dynamic_cast(output, class)?;
-
-    writeln!(output, "}}")?;
-
-    if !class.base_class.is_empty() {
-        generate_deref_impl(output, class)?;
-    }
-
-    if class.is_refcounted() && class.instanciable {
-        generate_drop(output, class)?;
-    }
-
-    generate_method_table(output, class)?;
-
-    for method in &class.methods {
-        generate_method_impl(output, class, method)?;
+        for method in &class.methods {
+            generate_method_impl(output_method_table, class, method)?;
+        }
     }
 
     Ok(())

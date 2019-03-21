@@ -1,5 +1,4 @@
 use crate::api::*;
-use std::fs::File;
 use std::io::Write;
 use crate::GeneratorResult;
 use heck::CamelCase;

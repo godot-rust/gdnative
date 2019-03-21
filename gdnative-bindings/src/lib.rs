@@ -10,4 +10,6 @@ use std::sync::{Once, ONCE_INIT};
 use std::ops::*;
 use libc;
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+include!(concat!(env!("OUT_DIR"), "/bindings_types.rs"));
+include!(concat!(env!("OUT_DIR"), "/bindings_traits.rs"));
+include!(concat!(env!("OUT_DIR"), "/bindings_methods.rs"));
