@@ -1,5 +1,7 @@
 # GDNative bindings for Rust
 
+[![Docs Status](https://docs.rs/gdnative/badge.svg)](https://docs.rs/gdnative)
+
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
 ## Work in progress

@@ -20,7 +20,7 @@ use std::fmt;
 /// A `NodePath` consists of node names, “sub-node” (resource) names, and the name of a property in
 /// the final node or resource.
 ///
-/// More info at [Godot's official documentation](https://godot.readthedocs.io/en/3.0/classes/class_nodepath.html)
+/// More info at [Godot's official documentation](https://godot.readthedocs.io/en/latest/classes/class_nodepath.html)
 pub struct NodePath(pub(crate) sys::godot_node_path);
 
 impl NodePath {

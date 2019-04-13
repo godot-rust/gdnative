@@ -10,7 +10,7 @@ pub fn class_doc_link(class: &GodotClass) -> String {
 
 pub fn official_doc_url(class: &GodotClass) -> String {
     format!(
-        "https://godot.readthedocs.io/en/3.0/classes/class_{lower_case}.html",
+        "https://godot.readthedocs.io/en/latest/classes/class_{lower_case}.html",
         lower_case = class.name.to_lowercase(),
     )
 }
