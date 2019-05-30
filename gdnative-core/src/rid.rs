@@ -27,7 +27,7 @@ impl Rid {
     }
 
     fn to_u64(&self) -> u64 {
-        unsafe { transmute(self.0) }
+        unsafe { transmute::<_, usize>(self.0) as _ }
     }
 
     #[doc(hidden)]
