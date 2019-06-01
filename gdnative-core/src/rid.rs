@@ -27,7 +27,13 @@ impl Rid {
     }
 
     fn to_u64(&self) -> u64 {
-        unsafe { transmute::<_, usize>(self.0) as _ }
+        unsafe {
+            // std::mem::transmute needs source and destination types to have the same size. On 32
+            // bit systems sizeof(void *) != size_of<u64>() so this fails to compile. The bindings
+            // define godot_rid as (a newtype of) [u8; u8size] or [u8; u4size] depending on
+            // architecture word size so transmuting to usize should always work.
+            transmute::<_, usize>(self.0) as _
+        }
     }
 
     #[doc(hidden)]
