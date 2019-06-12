@@ -167,7 +167,7 @@ fn generate_class_bindings(
 
     // methods and method table
     {
-        let has_underscore = api.api_underscore.iter().any(|name| class.name.starts_with(name));
+        let has_underscore = api.api_underscore.contains(&class.name);
         generate_method_table(output_method_table, class, has_underscore)?;
 
         for method in &class.methods {
