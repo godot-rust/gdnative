@@ -11,7 +11,7 @@ fn skip_method(name: &str) -> bool {
     name == "free" || name == "reference" || name == "unreference"
 }
 
-pub fn generate_method_table(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_method_table(output: &mut impl Write, class: &GodotClass, has_underscore:bool) -> GeneratorResult {
     writeln!(output, r#"
 #[doc(hidden)]
 #[allow(non_camel_case_types)]
@@ -46,6 +46,11 @@ impl {name}MethodTable {{
             method.get_name()
         )?;
     }
+    let lookup_name : String = if has_underscore {
+        format!("_{class}", class= class.name)
+    } else {
+        class.name.clone()
+    };
     writeln!(output, r#"
         }};
 
@@ -71,9 +76,10 @@ impl {name}MethodTable {{
     #[inline(never)]
     fn init(table: &mut Self, gd_api: &GodotApi) {{
         unsafe {{
-            let class_name = b"{name}\0".as_ptr() as *const c_char;
+            let class_name = b"{lookup_name}\0".as_ptr() as *const c_char;
             table.class_constructor = (gd_api.godot_get_class_constructor)(class_name);"#,
-            name = class.name
+            name = class.name,
+            lookup_name = lookup_name,
         )?;
     for method in &class.methods {
         let method_name = method.get_name();

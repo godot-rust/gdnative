@@ -3,12 +3,14 @@ use serde_json;
 
 pub struct Api {
     pub classes: Vec<GodotClass>,
+    pub api_underscore: Vec<String>,
 }
 
 impl Api {
     pub fn new() -> Self {
         let mut api = Api {
             classes: serde_json::from_slice(get_api_json()).expect("Failed to parse the API description"),
+            api_underscore : Default::default(),
         };
 
         api.strip_leading_underscores();
@@ -42,6 +44,7 @@ impl Api {
         for class in &mut self.classes {
             if class.name.starts_with('_') {
                 class.name = class.name[1..].to_string();
+                self.api_underscore.push(class.name.clone());
             }
             for method in &mut class.methods {
                 if method.return_type.starts_with('_') {
