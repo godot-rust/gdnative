@@ -1,10 +1,11 @@
 [package]
-name = "spinning_cube"
+name = "scene_create"
 version = "0.1.0"
-authors = ["karroffel <therzog@mail.de>"]
+authors = ["tom.leys <tom@crump-leys.com>", "karroffel <therzog@mail.de>"]
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 gdnative = { path = "../../gdnative" }
+euclid = "0.19.6"
