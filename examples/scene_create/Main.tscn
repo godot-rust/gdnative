@@ -1,8 +1,7 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Parent.gdns" type="Script" id=1]
 [ext_resource path="res://Panel.gd" type="Script" id=2]
-[ext_resource path="res://Child_scene.tscn" type="PackedScene" id=3]
 
 [node name="Main" type="Spatial"]
 
@@ -45,21 +44,5 @@ margin_top = 21.0
 margin_right = 580.0
 margin_bottom = 40.0
 text = "No Children have been created yet"
-
-[node name="Child" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -5 )
-visible = false
-
-[node name="Child2" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5 )
-visible = false
-
-[node name="Child3" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5.21943, 0, 5 )
-visible = false
-
-[node name="Child4" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.30119, 0, -4.46641 )
-visible = false
 [connection signal="pressed" from="Ui/Canvas/Panel/Add" to="Ui/Canvas/Panel" method="_on_Add_pressed"]
 [connection signal="pressed" from="Ui/Canvas/Panel/Remove" to="Ui/Canvas/Panel" method="_on_Remove_pressed"]

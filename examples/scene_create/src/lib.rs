@@ -1,9 +1,8 @@
 #[macro_use]
-extern crate gdnative as godot;
+extern crate gdnative;
 extern crate euclid;
 
-use godot::init::{Property, PropertyHint, PropertyUsage};
-use godot::{GodotString, Variant, ResourceLoader, PackedScene, Spatial, Int32Array};
+use gdnative::{GodotString, Variant, ResourceLoader, PackedScene, Spatial};
 use euclid::vec3;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,21 +14,21 @@ pub enum ManageErrs {
 #[derive(gdnative::NativeClass)]
 #[inherit(gdnative::Spatial)]
 struct SceneCreate{
-    /// Store the loaded scene for a very slight performance boost but mostly to show you how.
+    // Store the loaded scene for a very slight performance boost but mostly to show you how.
     template : Option<PackedScene>,
-    children_spawned : i32,
+    children_spawned : u32,
 }
 
 
-/// Demonstrates Scene creation, calling to/from gdscript
-///
-///   1. Child scene is created when spawn_1 is called
-///   2. Child scenes are deleted when remove_1 is called
-///   3. Find and call functions in a node (Panel)
-///   4. Call functions in GDNative (from panel into spawn/remove)
-///
-///  Note, the same mechanism which is used to call from panel into spawn_1 and remove_1 can be
-///   used to call other GDNative classes here in rust.
+// Demonstrates Scene creation, calling to/from gdscript
+//
+//   1. Child scene is created when spawn_one is called
+//   2. Child scenes are deleted when remove_one is called
+//   3. Find and call functions in a node (Panel)
+//   4. Call functions in GDNative (from panel into spawn/remove)
+//
+//  Note, the same mechanism which is used to call from panel into spawn_one and remove_one can be
+//   used to call other GDNative classes here in rust.
 
 #[gdnative::methods]
 impl SceneCreate {
@@ -37,12 +36,8 @@ impl SceneCreate {
     fn _init(_owner: gdnative::Spatial) -> Self {
         SceneCreate {
             template: None, // Have not loaded this template yet.
-            children_spawned: -1,
+            children_spawned: 0,
         }
-    }
-
-    fn class_name() -> &'static str {
-        "SceneCreate"
     }
 
     #[export]
@@ -55,9 +50,9 @@ impl SceneCreate {
     }
 
     #[export]
-    fn spawn_1(&mut self, mut owner: gdnative::Spatial, str : GodotString) {
+    unsafe fn spawn_one(&mut self, mut owner: gdnative::Spatial, message: GodotString) {
 
-        godot_print!("Called spawn_1({})", str.to_string());
+        godot_print!("Called spawn_one({})", message.to_string());
 
         let template = if let Some(template) = &self.template {
             template
@@ -71,42 +66,44 @@ impl SceneCreate {
         match instance_scene::<Spatial>(template) {
             Ok(mut spatial) => {
                 // Here is how you rename the child...
-                self.children_spawned += 1;
                 let key_str = format!("child_{}", self.children_spawned);
-                unsafe{
-                    spatial.set_name(GodotString::from_str(&key_str));
-
-                    let x = (self.children_spawned % 10) as f32;
-                    let z = (self.children_spawned / 10) as f32;
-                    spatial.translate(vec3(-10.0 + x * 2.0, 0.0, -10.0 + z * 2.0));
+                spatial.set_name(GodotString::from_str(&key_str));
 
 
-                    // You need to parent the new scene under some node if you want it in the scene.
-                    //   We parent it under ourselves.
-                    owner.add_child(Some(spatial.to_object()), false);
-                };
+                let x = (self.children_spawned % 10) as f32;
+                let z = (self.children_spawned / 10) as f32;
+                spatial.translate(vec3(-10.0 + x * 2.0, 0.0, -10.0 + z * 2.0));
 
+
+                // You need to parent the new scene under some node if you want it in the scene.
+                //   We parent it under ourselves.
+                owner.add_child(Some(spatial.to_object()), false);
+                self.children_spawned += 1;
 
             },
             Err(err) => godot_print!("Could not instance Child : {:?}", err),
         }
 
-        let num_children = unsafe {owner.get_child_count()};
+        let num_children = owner.get_child_count();
         update_panel(&mut owner, num_children);
     }
 
     #[export]
-    fn remove_1(&mut self, mut owner: gdnative::Spatial, str : GodotString) {
-        godot_print!("Called remove_1({})", str.to_string());
-        let num_children = unsafe {owner.get_child_count()};
+    unsafe fn remove_one(&mut self, mut owner: gdnative::Spatial, str : GodotString) {
+        godot_print!("Called remove_one({})", str.to_string());
+        let num_children = owner.get_child_count();
         if num_children <= 0 {
             godot_print!("No children to delete");
             return;
         }
 
-        let mut last_child = unsafe{owner.get_child(num_children - 1)};
+        assert_eq!(self.children_spawned as i64, num_children);
+
+        let last_child = owner.get_child(num_children - 1);
         if let Some(mut node) = last_child {
-            unsafe{node.queue_free()}
+            node.queue_free();
+            self.children_spawned -= 1;
+
         }
 
         update_panel(&mut owner, num_children - 1);
@@ -114,31 +111,32 @@ impl SceneCreate {
 
 }
 
-fn init(handle: godot::init::InitHandle) {
+fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<SceneCreate>();
 }
 
-pub fn load_scene(name: &str) -> Option<PackedScene> {
+pub fn load_scene(path: &str) -> Option<PackedScene> {
     let scene = ResourceLoader::godot_singleton().load(
-        GodotString::from_str(name),
-        GodotString::from_str("PackedScene"), false);
-
+        GodotString::from_str(path), // could also use path.into() here
+        GodotString::from_str("PackedScene"),
+        false,
+    );
 
     scene.and_then(|s| s.cast::<PackedScene>())
 }
 
-// Root here is needs to be the same type (or a parent type) of the node that you put in the child
-//   scene as the root. For instance Spatial is used for this example.
-pub fn instance_scene<Root>(scene : &PackedScene) -> Result<Root, ManageErrs>
-    where Root: godot::GodotObject {
-    let mut inst_option = scene.instance(0); // 0 - GEN_EDIT_STATE_DISABLED
+/// Root here is needs to be the same type (or a parent type) of the node that you put in the child
+///   scene as the root. For instance Spatial is used for this example.
+unsafe fn instance_scene<Root>(scene : &PackedScene) -> Result<Root, ManageErrs>
+    where Root: gdnative::GodotObject {
+    let inst_option = scene.instance(0); // 0 - GEN_EDIT_STATE_DISABLED
 
-    if let Some(mut instance) = inst_option {
-        if let Some(mut instance_root) = unsafe { instance.cast::<Root>() } {
+    if let Some(instance) = inst_option {
+        if let Some(instance_root) = instance.cast::<Root>() {
             Ok(instance_root)
         }
         else {
-            Err(ManageErrs::RootClassNotSpatial(unsafe{instance.get_name()}.to_string()))
+            Err(ManageErrs::RootClassNotSpatial(instance.get_name().to_string()))
 
         }
     } else {
@@ -146,15 +144,13 @@ pub fn instance_scene<Root>(scene : &PackedScene) -> Result<Root, ManageErrs>
     }
 }
 
-fn update_panel(owner: &mut gdnative::Spatial, num_children : i64) {
+unsafe fn update_panel(owner: &mut gdnative::Spatial, num_children : i64) {
     // Here is how we call into the panel. First we get its node (we might have saved it
     //   from earlier)
-    let panel_node_opt = unsafe {
-        owner.get_parent().and_then(|parent|
+    let panel_node_opt = owner.get_parent().and_then(|parent|
             parent.find_node(GodotString::from_str("Panel"), true, false)
-        )};
-    if let Some(panel_node) = panel_node_opt
-    {
+        );
+    if let Some(panel_node) = panel_node_opt {
         // Put the Node
         let mut as_variant = Variant::from_object(&panel_node);
         match as_variant.call(&GodotString::from_str("set_num_children"),

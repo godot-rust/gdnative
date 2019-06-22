@@ -4,18 +4,18 @@ func _ready():
 	pass # Replace with function body.
 
 # There is a signal set up on the Add button which calls
-#   this method. We pass the call into Parent.spawn_1
+#   this method. We pass the call into Parent.spawn_one
 #   (This calls Rust)
 func _on_Add_pressed():
 	var spawner_node = get_node("/root/Main/Parent")
-	spawner_node.spawn_1("example string") 
+	spawner_node.spawn_one("example string")
 
 # There is a signal set up on the Remove button which calls
-#   this method. We pass the call into Parent.remove_1
+#   this method. We pass the call into Parent.remove_one
 #   (This calls Rust)
 func _on_Remove_pressed():
 	var spawner_node = get_node("/root/Main/Parent")
-	spawner_node.remove_1("Another example string") 
+	spawner_node.remove_one("Another example string")
 
 # This function is called from Rust. All we need there is this 
 #   node and the name "set_num_children"

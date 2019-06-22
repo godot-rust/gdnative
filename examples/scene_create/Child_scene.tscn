@@ -1,11 +1,8 @@
-[gd_scene load_steps=3 format=2]
-
-[ext_resource path="res://Child.gdns" type="Script" id=1]
+[gd_scene load_steps=2 format=2]
 
 [sub_resource type="CubeMesh" id=1]
 
 [node name="Child" type="Spatial"]
-script = ExtResource( 1 )
 
 [node name="CSGMesh" type="CSGMesh" parent="."]
 transform = Transform( 0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0, 0, 0 )
