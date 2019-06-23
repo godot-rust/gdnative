@@ -32,10 +32,11 @@
 // documentation, and are only appearing in the sub-crates. It would make the doc
 // a lot easier to navigate if we could gather all classes here.
 
-#[doc(inline)] pub use gdnative_derive::*;
-#[doc(inline)] pub use gdnative_core::*;
+#[doc(inline)]
+pub use gdnative_core::*;
+#[doc(inline)]
+pub use gdnative_derive::*;
 
 #[doc(inline)]
 #[cfg(feature = "bindings")]
 pub use gdnative_bindings::*;
-

@@ -1,4 +1,3 @@
-
 use crate::Vector3;
 
 /// Axis-aligned bounding box.

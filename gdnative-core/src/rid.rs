@@ -1,8 +1,8 @@
-use crate::sys;
 use crate::get_api;
+use crate::sys;
 use std::cmp::Ordering;
-use std::mem::transmute;
 use std::cmp::{Eq, PartialEq};
+use std::mem::transmute;
 
 /// The RID type is used to access the unique integer ID of a resource.
 /// They are opaque, so they do not grant access to the associated resource by themselves.
@@ -52,7 +52,7 @@ impl Rid {
     }
 }
 
-impl_basic_traits!{
+impl_basic_traits! {
     for Rid as godot_rid {
         Eq => godot_rid_operator_equal;
         Default => godot_rid_new;

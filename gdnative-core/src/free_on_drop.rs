@@ -16,8 +16,10 @@ pub struct FreeOnDrop<T: Free + Clone> {
     ptr: T,
 }
 
-impl<T> FreeOnDrop<T>  where T: Free + Clone {
-
+impl<T> FreeOnDrop<T>
+where
+    T: Free + Clone,
+{
     pub unsafe fn new(ptr: T) -> Self {
         FreeOnDrop { ptr }
     }
@@ -30,19 +32,34 @@ impl<T> FreeOnDrop<T>  where T: Free + Clone {
     }
 }
 
-impl<T> Drop for FreeOnDrop<T> where T: Free + Clone {
+impl<T> Drop for FreeOnDrop<T>
+where
+    T: Free + Clone,
+{
     fn drop(&mut self) {
-        unsafe { self.ptr.clone().godot_free(); }
+        unsafe {
+            self.ptr.clone().godot_free();
+        }
     }
 }
 
-impl<T> Deref for FreeOnDrop<T> where T: Free + Clone {
+impl<T> Deref for FreeOnDrop<T>
+where
+    T: Free + Clone,
+{
     type Target = T;
-    fn deref(&self) -> &T { &self.ptr }
+    fn deref(&self) -> &T {
+        &self.ptr
+    }
 }
 
-impl<T> DerefMut for FreeOnDrop<T> where T: Free + Clone {
-    fn deref_mut(&mut self) -> &mut T { &mut self.ptr }
+impl<T> DerefMut for FreeOnDrop<T>
+where
+    T: Free + Clone,
+{
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.ptr
+    }
 }
 
 /// A wrapper that automatically enqueues the object for deletion when dropped.
@@ -50,8 +67,10 @@ pub struct QueueFreeOnDrop<T: QueueFree + Clone> {
     ptr: T,
 }
 
-impl<T> QueueFreeOnDrop<T>  where T: QueueFree + Clone {
-
+impl<T> QueueFreeOnDrop<T>
+where
+    T: QueueFree + Clone,
+{
     pub unsafe fn new(ptr: T) -> Self {
         QueueFreeOnDrop { ptr }
     }
@@ -64,17 +83,32 @@ impl<T> QueueFreeOnDrop<T>  where T: QueueFree + Clone {
     }
 }
 
-impl<T> Drop for QueueFreeOnDrop<T> where T: QueueFree + Clone {
+impl<T> Drop for QueueFreeOnDrop<T>
+where
+    T: QueueFree + Clone,
+{
     fn drop(&mut self) {
-        unsafe { self.ptr.godot_queue_free(); }
+        unsafe {
+            self.ptr.godot_queue_free();
+        }
     }
 }
 
-impl<T> Deref for QueueFreeOnDrop<T> where T: QueueFree + Clone{
+impl<T> Deref for QueueFreeOnDrop<T>
+where
+    T: QueueFree + Clone,
+{
     type Target = T;
-    fn deref(&self) -> &T { &self.ptr }
+    fn deref(&self) -> &T {
+        &self.ptr
+    }
 }
 
-impl<T> DerefMut for QueueFreeOnDrop<T> where T: QueueFree + Clone {
-    fn deref_mut(&mut self) -> &mut T { &mut self.ptr }
+impl<T> DerefMut for QueueFreeOnDrop<T>
+where
+    T: QueueFree + Clone,
+{
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.ptr
+    }
 }

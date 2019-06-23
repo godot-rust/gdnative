@@ -3,9 +3,8 @@ use gdnative::*;
 #[no_mangle]
 pub extern "C" fn run_tests(
     _data: *mut gdnative::libc::c_void,
-    _args: *mut gdnative::sys::godot_array
+    _args: *mut gdnative::sys::godot_array,
 ) -> gdnative::sys::godot_variant {
-
     let mut status = true;
     status &= gdnative::test_string();
 
@@ -30,7 +29,7 @@ pub extern "C" fn run_tests(
 fn test_constructor() -> bool {
     println!(" -- test_constructor");
 
-    use gdnative::{GDNativeLibrary, Path2D, FreeOnDrop};
+    use gdnative::{FreeOnDrop, GDNativeLibrary, Path2D};
 
     // Just create an object and call a method as a sanity check for the
     // generated constructors.
@@ -39,7 +38,7 @@ fn test_constructor() -> bool {
 
     unsafe {
         let path = FreeOnDrop::new(Path2D::new());
-        let _ =  path.get_z_index();
+        let _ = path.get_z_index();
     }
 
     return true;

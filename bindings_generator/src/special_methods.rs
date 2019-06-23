@@ -1,12 +1,13 @@
 use crate::api::*;
-use std::io::Write;
 use crate::GeneratorResult;
+use std::io::Write;
 
 use heck::SnakeCase;
 
 pub fn generate_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(output,
-r#"
+    writeln!(
+        output,
+        r#"
     // Constructor
     pub fn new() -> Self {{
         unsafe {{
@@ -28,8 +29,9 @@ r#"
 }
 
 pub fn generate_reference_copy(output: &mut impl Write, _class: &GodotClass) -> GeneratorResult {
-    writeln!(output,
-             r#"
+    writeln!(
+        output,
+        r#"
     /// Creates a new reference to the same reference-counted object.
     pub fn new_ref(&self) -> Self {{
         unsafe {{
@@ -47,8 +49,9 @@ pub fn generate_reference_copy(output: &mut impl Write, _class: &GodotClass) -> 
 }
 
 pub fn generate_non_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(output,
-r#"
+    writeln!(
+        output,
+        r#"
     /// Constructor.
     ///
     /// Because this type is not reference counted, the lifetime of the returned object
@@ -80,8 +83,9 @@ r#"
 }
 
 pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(output,
-r#"
+    writeln!(
+        output,
+        r#"
 unsafe impl GodotObject for {name} {{
     fn class_name() -> &'static str {{
         "{name}"
@@ -112,10 +116,15 @@ impl ToVariant for {name} {{
     Ok(())
 }
 
-pub fn generate_free_impl(output: &mut impl Write, api: &Api, class: &GodotClass) -> GeneratorResult {
+pub fn generate_free_impl(
+    output: &mut impl Write,
+    api: &Api,
+    class: &GodotClass,
+) -> GeneratorResult {
     if class.instanciable && !class.is_pointer_safe() {
-        writeln!(output,
-r#"
+        writeln!(
+            output,
+            r#"
 impl Free for {name} {{
     unsafe fn godot_free(self) {{ self.free() }}
 }}"#,
@@ -124,8 +133,9 @@ impl Free for {name} {{
     }
 
     if class.name == "Node" || api.class_inherits(&class, "Node") {
-        writeln!(output,
-r#"
+        writeln!(
+            output,
+            r#"
 impl QueueFree for {name} {{
     unsafe fn godot_queue_free(&mut self) {{ self.queue_free() }}
 }}"#,
@@ -143,7 +153,9 @@ pub fn generate_singleton_getter(output: &mut impl Write, class: &GodotClass) ->
         class.name.as_ref()
     };
 
-    writeln!(output, r#"
+    writeln!(
+        output,
+        r#"
     #[inline]
     pub fn godot_singleton() -> Self {{
         unsafe {{
@@ -162,13 +174,18 @@ pub fn generate_singleton_getter(output: &mut impl Write, class: &GodotClass) ->
 }
 
 pub fn generate_dynamic_cast(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(output,
-r#"
+    writeln!(
+        output,
+        r#"
     /// Generic dynamic cast.
     pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
         object::godot_cast::<T>(self.this)
     }}"#,
-        maybe_unsafe = if class.is_pointer_safe() { "" } else { "unsafe " },
+        maybe_unsafe = if class.is_pointer_safe() {
+            ""
+        } else {
+            "unsafe "
+        },
     )?;
 
     Ok(())
@@ -183,8 +200,9 @@ pub fn generate_upcast(
     if let Some(parent) = api.find_class(&base_class_name) {
         let snake_name = class_name_to_snake_case(&base_class_name);
         if is_pointer_safe {
-            writeln!(output,
-r#"    /// Up-cast.
+            writeln!(
+                output,
+                r#"    /// Up-cast.
     #[inline]
     pub fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
@@ -199,8 +217,9 @@ r#"    /// Up-cast.
                 },
             )?;
         } else {
-            writeln!(output,
-r#"
+            writeln!(
+                output,
+                r#"
     /// Up-cast.
     #[inline]
     pub unsafe fn to_{snake_name}(&self) -> {name} {{
@@ -217,24 +236,16 @@ r#"
             )?;
         }
 
-        generate_upcast(
-            output,
-            api,
-            &parent.base_class,
-            is_pointer_safe,
-        )?;
+        generate_upcast(output, api, &parent.base_class, is_pointer_safe)?;
     }
 
     Ok(())
 }
 
-pub fn generate_deref_impl(
-    output: &mut impl Write,
-    class: &GodotClass,
-) -> GeneratorResult {
-
-    writeln!(output,
-r#"
+pub fn generate_deref_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    writeln!(
+        output,
+        r#"
 impl std::ops::Deref for {name} {{
     type Target = {base};
 
@@ -260,23 +271,24 @@ impl std::ops::DerefMut for {name} {{
 }
 
 pub fn generate_reference_clone(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-
-    writeln!(output,
-             r#"
+    writeln!(
+        output,
+        r#"
 impl Clone for {name} {{
     fn clone(&self) -> Self {{
         self.new_ref()
     }}
 }}"#,
-             name = class.name
+        name = class.name
     )?;
 
     Ok(())
 }
 
 pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(output,
-r#"
+    writeln!(
+        output,
+        r#"
 impl Drop for {name} {{
     fn drop(&mut self) {{
         unsafe {{

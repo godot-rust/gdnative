@@ -1,15 +1,16 @@
 use crate::api::*;
-use std::io::Write;
 use crate::GeneratorResult;
 use heck::CamelCase;
+use std::io::Write;
 
 pub fn generate_class_struct(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     if !class.is_refcounted() {
         writeln!(output, "#[derive(Copy, Clone)]")?;
     }
 
-    writeln!(output,
-r#"#[allow(non_camel_case_types)]
+    writeln!(
+        output,
+        r#"#[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub struct {name} {{
     #[doc(hidden)]
@@ -28,14 +29,16 @@ pub fn generate_enum(output: &mut impl Write, class: &GodotClass, e: &Enum) -> G
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
 
     let mut values: Vec<(&String, &u32)> = e.values.iter().collect();
-    values.sort_by(|a, b|{ a.1.cmp(&b.1) });
+    values.sort_by(|a, b| a.1.cmp(&b.1));
 
-    writeln!(output,
-r#"#[repr(u32)]
+    writeln!(
+        output,
+        r#"#[repr(u32)]
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum {class_name}{enum_name} {{"#,
-        class_name = class.name, enum_name = e.name
+        class_name = class.name,
+        enum_name = e.name
     )?;
 
     for &(key, val) in &values {
@@ -60,7 +63,12 @@ pub enum {class_name}{enum_name} {{"#,
 
 fn try_remove_prefix(key: &str, prefix: &str) -> Option<String> {
     let key_lower = key.to_lowercase();
-    if key_lower.starts_with(prefix) && !key.chars().nth(prefix.len()).map_or(true, |c| c.is_numeric()) {
+    if key_lower.starts_with(prefix)
+        && !key
+            .chars()
+            .nth(prefix.len())
+            .map_or(true, |c| c.is_numeric())
+    {
         return Some(key[prefix.len()..].to_string());
     }
 

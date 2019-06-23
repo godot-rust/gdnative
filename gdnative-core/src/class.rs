@@ -1,10 +1,10 @@
-use std::ops::Deref;
-use std::marker::PhantomData;
-use std::cell::RefCell;
+use crate::get_api;
+use crate::object;
 use crate::sys;
 use crate::GodotObject;
-use crate::object;
-use crate::get_api;
+use std::cell::RefCell;
+use std::marker::PhantomData;
+use std::ops::Deref;
 
 /// Trait used for describing and initializing a Godot script class.
 ///
@@ -16,7 +16,6 @@ use crate::get_api;
 ///
 /// [`NativeClassMethods`]: ./trait.NativeClassMethods.html
 pub trait NativeClass: Sized {
-
     /// Base type of the class.
     ///
     /// In Godot, scripting languages can define "script instances" which can be
@@ -57,7 +56,6 @@ pub trait NativeClass: Sized {
 
 /// Trait used to provide information of Godot-exposed methods of a script class.
 pub trait NativeClassMethods: NativeClass {
-
     /// Function that registers all exposed methods to Godot.
     fn register(builder: &crate::init::ClassBuilder<Self>);
 }
@@ -69,9 +67,11 @@ pub struct NativeRef<T: NativeClass> {
 }
 
 impl<T: NativeClass> NativeRef<T> {
-
     /// Try to cast into a godot object reference.
-    pub fn cast<O>(&self) -> Option<O> where O: GodotObject {
+    pub fn cast<O>(&self) -> Option<O>
+    where
+        O: GodotObject,
+    {
         object::godot_cast::<O>(self.this)
     }
 
@@ -118,7 +118,7 @@ impl<T: NativeClass> Deref for NativeRef<T> {
     }
 }
 
-impl <T: NativeClass> Drop for NativeRef<T> {
+impl<T: NativeClass> Drop for NativeRef<T> {
     fn drop(&mut self) {
         unsafe {
             if object::unref(self.this) {

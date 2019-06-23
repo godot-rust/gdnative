@@ -60,14 +60,20 @@ macro_rules! godot_gdnative_init {
 #[macro_export]
 macro_rules! godot_gdnative_terminate {
     () => {
-        fn godot_gdnative_terminate_empty(_options: *mut $crate::sys::godot_gdnative_terminate_options) {}
+        fn godot_gdnative_terminate_empty(
+            _options: *mut $crate::sys::godot_gdnative_terminate_options,
+        ) {
+        }
         godot_gdnative_terminate!(godot_gdnative_terminate_empty);
     };
     ($callback:ident) => {
         godot_gdnative_terminate!($callback as godot_gdnative_terminate);
     };
     (_ as $fn_name:ident) => {
-        fn godot_gdnative_terminate_empty(_options: *mut $crate::sys::godot_gdnative_terminate_options) {}
+        fn godot_gdnative_terminate_empty(
+            _options: *mut $crate::sys::godot_gdnative_terminate_options,
+        ) {
+        }
         godot_gdnative_terminate!(godot_gdnative_terminate_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
@@ -184,9 +190,7 @@ macro_rules! impl_basic_trait {
     ) => {
         impl Drop for $Type {
             fn drop(&mut self) {
-                unsafe {
-                    (get_api().$gd_method)(&mut self.0)
-                }
+                unsafe { (get_api().$gd_method)(&mut self.0) }
             }
         }
     };
@@ -196,7 +200,7 @@ macro_rules! impl_basic_trait {
     ) => {
         impl Clone for $Type {
             fn clone(&self) -> Self {
-               unsafe {
+                unsafe {
                     let mut result = sys::$GdType::default();
                     (get_api().$gd_method)(&mut result, &self.0);
                     $Type(result)
@@ -224,9 +228,7 @@ macro_rules! impl_basic_trait {
     ) => {
         impl PartialEq for $Type {
             fn eq(&self, other: &Self) -> bool {
-                unsafe {
-                    (get_api().$gd_method)(&self.0, &other.0)
-                }
+                unsafe { (get_api().$gd_method)(&self.0, &other.0) }
             }
         }
     };
@@ -236,9 +238,7 @@ macro_rules! impl_basic_trait {
     ) => {
         impl PartialEq for $Type {
             fn eq(&self, other: &Self) -> bool {
-                unsafe {
-                    (get_api().$gd_method)(&self.0, &other.0)
-                }
+                unsafe { (get_api().$gd_method)(&self.0, &other.0) }
             }
         }
         impl Eq for $Type {}
@@ -291,7 +291,6 @@ macro_rules! impl_common_methods {
     )
 }
 
-
 macro_rules! godot_test {
     ($($test_name:ident $body:block)*) => {
         $(
@@ -319,49 +318,45 @@ macro_rules! godot_test {
 /// that can be passed to the engine when registering a class.
 #[macro_export]
 macro_rules! godot_wrap_constructor {
-    ($_name:ty, $c:expr) => {
-        {
-            unsafe extern "C" fn constructor(
-                this: *mut $crate::sys::godot_object,
-                _method_data: *mut $crate::libc::c_void
-            ) -> *mut $crate::libc::c_void {
-                use std::cell::RefCell;
-                use std::boxed::Box;
+    ($_name:ty, $c:expr) => {{
+        unsafe extern "C" fn constructor(
+            this: *mut $crate::sys::godot_object,
+            _method_data: *mut $crate::libc::c_void,
+        ) -> *mut $crate::libc::c_void {
+            use std::boxed::Box;
+            use std::cell::RefCell;
 
-                // let val = $c($crate::NativeInstanceHeader{ this: this });
-                let val = $c();
+            // let val = $c($crate::NativeInstanceHeader{ this: this });
+            let val = $c();
 
-                let wrapper = Box::new(RefCell::new(val));
-                Box::into_raw(wrapper) as *mut _
-            }
-
-            constructor
+            let wrapper = Box::new(RefCell::new(val));
+            Box::into_raw(wrapper) as *mut _
         }
-    }
+
+        constructor
+    }};
 }
 
 /// Convenience macro to wrap an object's destructor into a function pointer
 /// that can be passed to the engine when registering a class.
 #[macro_export]
 macro_rules! godot_wrap_destructor {
-    ($name:ty) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe extern "C" fn destructor(
-                _this: *mut $crate::sys::godot_object,
-                _method_data: *mut $crate::libc::c_void,
-                user_data: *mut $crate::libc::c_void
-            ) -> () {
-                use std::cell::RefCell;
-                use std::boxed::Box;
+    ($name:ty) => {{
+        #[allow(unused_unsafe)]
+        unsafe extern "C" fn destructor(
+            _this: *mut $crate::sys::godot_object,
+            _method_data: *mut $crate::libc::c_void,
+            user_data: *mut $crate::libc::c_void,
+        ) -> () {
+            use std::boxed::Box;
+            use std::cell::RefCell;
 
-                let wrapper: Box<RefCell<$name>> = unsafe { Box::from_raw(user_data as *mut _) };
-                drop(wrapper)
-            }
-
-            destructor
+            let wrapper: Box<RefCell<$name>> = unsafe { Box::from_raw(user_data as *mut _) };
+            drop(wrapper)
         }
-    }
+
+        destructor
+    }};
 }
 
 #[doc(hidden)]
