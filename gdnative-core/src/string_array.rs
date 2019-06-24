@@ -1,16 +1,18 @@
-use crate::sys;
 use crate::get_api;
-use crate::Variant;
-use crate::ToVariant;
-use crate::VariantArray;
+use crate::sys;
 use crate::GodotString;
+use crate::ToVariant;
+use crate::Variant;
+use crate::VariantArray;
 
 /// A vector of `GodotString` that uses Godot's pool allocator.
 pub struct StringArray(pub(crate) sys::godot_pool_string_array);
 
 impl StringArray {
     /// Creates an empty `StringArray`.
-    pub fn new() -> Self { StringArray::default() }
+    pub fn new() -> Self {
+        StringArray::default()
+    }
 
     /// Creates an array by trying to convert each variant.
     ///
@@ -48,9 +50,7 @@ impl StringArray {
 
     /// Inverts the order of the elements in the array.
     pub fn invert(&mut self) {
-        unsafe {
-            (get_api().godot_pool_string_array_invert)(&mut self.0)
-        }
+        unsafe { (get_api().godot_pool_string_array_invert)(&mut self.0) }
     }
 
     /// Removes an element at the given offset.
@@ -69,9 +69,7 @@ impl StringArray {
 
     /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> GodotString {
-        unsafe {
-            GodotString((get_api().godot_pool_string_array_get)(&self.0, idx))
-        }
+        unsafe { GodotString((get_api().godot_pool_string_array_get)(&self.0, idx)) }
     }
 
     /// Sets the value of the element at the given offset.
@@ -83,9 +81,7 @@ impl StringArray {
 
     /// Returns the number of elements in the array.
     pub fn len(&self) -> i32 {
-        unsafe {
-            (get_api().godot_pool_string_array_size)(&self.0)
-        }
+        unsafe { (get_api().godot_pool_string_array_size)(&self.0) }
     }
 
     #[doc(hidden)]
@@ -112,6 +108,10 @@ impl_basic_traits!(
 );
 
 impl ToVariant for StringArray {
-    fn to_variant(&self) -> Variant { Variant::from_string_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_string_array() }
+    fn to_variant(&self) -> Variant {
+        Variant::from_string_array(self)
+    }
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        variant.try_to_string_array()
+    }
 }

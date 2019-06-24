@@ -28,17 +28,11 @@ mod tests {
 
     #[test]
     fn it_supports_equality() {
-        assert_eq!(
-            Vector3::new(1.0, 2.0, 3.0),
-            Vector3::new(1.0, 2.0, 3.0)
-            );
+        assert_eq!(Vector3::new(1.0, 2.0, 3.0), Vector3::new(1.0, 2.0, 3.0));
     }
 
     #[test]
     fn it_supports_inequality() {
-        assert_ne!(
-            Vector3::new(1.0, 10.0, 100.0),
-            Vector3::new(1.0, 2.0, 3.0)
-            );
+        assert_ne!(Vector3::new(1.0, 10.0, 100.0), Vector3::new(1.0, 2.0, 3.0));
     }
 }

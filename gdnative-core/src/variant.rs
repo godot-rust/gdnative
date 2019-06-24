@@ -1,7 +1,7 @@
 use super::*;
-use std::mem::{transmute, forget};
 use std::default::Default;
 use std::fmt;
+use std::mem::{forget, transmute};
 
 // TODO: implement Debug, PartialEq, etc.
 
@@ -159,37 +159,37 @@ impl VariantType {
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VariantOperator {
-        //comparison
-        Equal, // = OP_EQUAL,
-        NotEqual, // = OP_NOT_EQUAL,
-        Less, // = OP_LESS,
-        LessEqual, // =  OP_LESS_EQUAL,
-        Greater, // =  OP_GREATER,
-        GreaterEqual, // =  OP_GREATER_EQUAL,
-        //mathematic
-        Add, // = OP_ADD,
-        Subtact, // = OP_SUBTRACT,
-        Multiply, // = OP_MULTIPLY,
-        Divide, // = OP_DIVIDE,
-        Negate, // = OP_NEGATE,
-        Positive, // = OP_POSITIVE,
-        Module, // = OP_MODULE,
-        Concat, // = OP_STRING_CONCAT,
-        //bitwise
-        ShiftLeft, // = OP_SHIFT_LEFT,
-        ShiftRight, // = OP_SHIFT_RIGHT,
-        BitAnd, // = OP_BIT_AND,
-        BitOr, // = OP_BIT_OR,
-        BitXor, // = OP_BIT_XOR,
-        BitNegate, // = OP_BIT_NEGATE,
-        //logic
-        And, // = OP_AND,
-        Or, // = OP_OR,
-        Xor, // = OP_XOR,
-        Not, // = OP_NOT,
-        //containment
-        In, // = OP_IN,
-        Max, // = OP_MAX
+    //comparison
+    Equal,        // = OP_EQUAL,
+    NotEqual,     // = OP_NOT_EQUAL,
+    Less,         // = OP_LESS,
+    LessEqual,    // =  OP_LESS_EQUAL,
+    Greater,      // =  OP_GREATER,
+    GreaterEqual, // =  OP_GREATER_EQUAL,
+    //mathematic
+    Add,      // = OP_ADD,
+    Subtact,  // = OP_SUBTRACT,
+    Multiply, // = OP_MULTIPLY,
+    Divide,   // = OP_DIVIDE,
+    Negate,   // = OP_NEGATE,
+    Positive, // = OP_POSITIVE,
+    Module,   // = OP_MODULE,
+    Concat,   // = OP_STRING_CONCAT,
+    //bitwise
+    ShiftLeft,  // = OP_SHIFT_LEFT,
+    ShiftRight, // = OP_SHIFT_RIGHT,
+    BitAnd,     // = OP_BIT_AND,
+    BitOr,      // = OP_BIT_OR,
+    BitXor,     // = OP_BIT_XOR,
+    BitNegate,  // = OP_BIT_NEGATE,
+    //logic
+    And, // = OP_AND,
+    Or,  // = OP_OR,
+    Xor, // = OP_XOR,
+    Not, // = OP_NOT,
+    //containment
+    In,  // = OP_IN,
+    Max, // = OP_MAX
 }
 
 //fn to_godot_varianty_type(v: VariantType) -> sys::godot_variant_type {
@@ -203,7 +203,6 @@ type I64 = i64;
 type Bool = bool;
 
 impl Variant {
-
     variant_constructors_transmute!(
         /// Creates a `Variant` wrapping a `Vector2`.
         pub fn from_vector2(&Vector2) -> Self as sys::godot_vector2 : godot_variant_new_vector2;
@@ -266,13 +265,15 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a string.
     pub fn from_str<S>(s: S) -> Variant
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
             let val = s.as_ref();
-            let mut godot_s = (api.godot_string_chars_to_utf8_with_len)(val.as_ptr() as *const _, val.len() as _);
+            let mut godot_s =
+                (api.godot_string_chars_to_utf8_with_len)(val.as_ptr() as *const _, val.len() as _);
             (api.godot_variant_new_string)(&mut dest, &godot_s);
             (api.godot_string_destroy)(&mut godot_s);
             Variant(dest)
@@ -281,7 +282,8 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a Godot object.
     pub fn from_object<T>(val: &T) -> Variant
-        where T: GodotObject
+    where
+        T: GodotObject,
     {
         unsafe {
             let api = get_api();
@@ -451,11 +453,14 @@ impl Variant {
     );
 
     pub fn try_to_object<T>(&self) -> Option<T>
-        where T: GodotObject
+    where
+        T: GodotObject,
     {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&self.0) != sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT {
+            if (api.godot_variant_get_type)(&self.0)
+                != sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT
+            {
                 return None;
             }
             let obj = Object::from_sys((api.godot_variant_as_object)(&self.0));
@@ -468,16 +473,12 @@ impl Variant {
     }
 
     pub fn try_to_string(&self) -> Option<String> {
-        self.try_to_godot_string().map(|s|{ s.to_string() })
+        self.try_to_godot_string().map(|s| s.to_string())
     }
 
     /// Returns this variant's type.
     pub fn get_type(&self) -> VariantType {
-        unsafe {
-            VariantType::from_sys(
-                (get_api().godot_variant_get_type)(&self.0)
-            )
-        }
+        unsafe { VariantType::from_sys((get_api().godot_variant_get_type)(&self.0)) }
     }
 
     /// Returns true if this is an empty variant.
@@ -486,9 +487,7 @@ impl Variant {
     }
 
     pub fn has_method(&self, method: &GodotString) -> bool {
-        unsafe {
-            (get_api().godot_variant_has_method)(&self.0, &method.0)
-        }
+        unsafe { (get_api().godot_variant_has_method)(&self.0, &method.0) }
     }
 
     // TODO: return a proper error.
@@ -498,12 +497,7 @@ impl Variant {
             let mut err = sys::godot_variant_call_error::default();
             if args.is_empty() {
                 let mut first = ::std::ptr::null() as *const sys::godot_variant;
-                (api.godot_variant_call)(
-                    &mut self.0,
-                    &method.0,
-                    &mut first, 0,
-                    &mut err
-                );
+                (api.godot_variant_call)(&mut self.0, &method.0, &mut first, 0, &mut err);
             } else {
                 // TODO: double check that this is safe.
                 let gd_args: &[sys::godot_variant] = transmute(args);
@@ -511,8 +505,9 @@ impl Variant {
                 (api.godot_variant_call)(
                     &mut self.0,
                     &method.0,
-                    &mut first, args.len() as i32,
-                    &mut err
+                    &mut first,
+                    args.len() as i32,
+                    &mut err,
                 );
             }
 
@@ -573,7 +568,9 @@ impl_basic_traits!(
 );
 
 impl Default for Variant {
-    fn default() -> Self { Variant::new() }
+    fn default() -> Self {
+        Variant::new()
+    }
 }
 
 impl fmt::Debug for Variant {
@@ -645,8 +642,9 @@ impl<'l> From<&'l str> for Variant {
     }
 }
 
-impl <T> From<T> for Variant
-    where T: GodotObject
+impl<T> From<T> for Variant
+where
+    T: GodotObject,
 {
     fn from(val: T) -> Variant {
         Variant::from_object(&val)
@@ -692,7 +690,6 @@ godot_test!(
     }
 );
 
-
 /// Types that can be converted to and from a `Variant`.
 pub trait ToVariant: Sized {
     fn to_variant(&self) -> Variant;
@@ -714,7 +711,7 @@ impl ToVariant for () {
 }
 
 macro_rules! impl_to_variant_for_int {
-    ($ty:ty) => (
+    ($ty:ty) => {
         impl ToVariant for $ty {
             fn to_variant(&self) -> Variant {
                 unsafe {
@@ -727,7 +724,9 @@ macro_rules! impl_to_variant_for_int {
             fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
-                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_INT {
+                    if (api.godot_variant_get_type)(&variant.0)
+                        == sys::godot_variant_type_GODOT_VARIANT_TYPE_INT
+                    {
                         Some((api.godot_variant_as_int)(&variant.0) as Self)
                     } else {
                         None
@@ -735,7 +734,7 @@ macro_rules! impl_to_variant_for_int {
                 }
             }
         }
-    )
+    };
 }
 
 impl_to_variant_for_int!(i8);
@@ -744,7 +743,7 @@ impl_to_variant_for_int!(i32);
 impl_to_variant_for_int!(i64);
 
 macro_rules! godot_uint_impl {
-    ($ty:ty) => (
+    ($ty:ty) => {
         impl ToVariant for $ty {
             fn to_variant(&self) -> Variant {
                 unsafe {
@@ -757,7 +756,9 @@ macro_rules! godot_uint_impl {
             fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
-                    if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_INT {
+                    if (api.godot_variant_get_type)(&variant.0)
+                        == sys::godot_variant_type_GODOT_VARIANT_TYPE_INT
+                    {
                         Some((api.godot_variant_as_uint)(&variant.0) as Self)
                     } else {
                         None
@@ -765,14 +766,13 @@ macro_rules! godot_uint_impl {
                 }
             }
         }
-    )
+    };
 }
 
 godot_uint_impl!(u8);
 godot_uint_impl!(u16);
 godot_uint_impl!(u32);
 godot_uint_impl!(u64);
-
 
 impl ToVariant for f32 {
     fn to_variant(&self) -> Variant {
@@ -786,7 +786,9 @@ impl ToVariant for f32 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL {
+            if (api.godot_variant_get_type)(&variant.0)
+                == sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL
+            {
                 Some((api.godot_variant_as_real)(&variant.0) as Self)
             } else {
                 None
@@ -807,7 +809,9 @@ impl ToVariant for f64 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL {
+            if (api.godot_variant_get_type)(&variant.0)
+                == sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL
+            {
                 Some((api.godot_variant_as_real)(&variant.0) as Self)
             } else {
                 None
@@ -824,12 +828,15 @@ impl ToVariant for String {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
-            if (api.godot_variant_get_type)(&variant.0) == sys::godot_variant_type_GODOT_VARIANT_TYPE_STRING {
+            if (api.godot_variant_get_type)(&variant.0)
+                == sys::godot_variant_type_GODOT_VARIANT_TYPE_STRING
+            {
                 let mut gd_variant = (api.godot_variant_as_string)(&variant.0);
                 let tmp = (api.godot_string_utf8)(&gd_variant);
-                let ret = ::std::ffi::CStr::from_ptr((api.godot_char_string_get_data)(&tmp) as *const _)
-                    .to_string_lossy()
-                    .into_owned();
+                let ret =
+                    ::std::ffi::CStr::from_ptr((api.godot_char_string_get_data)(&tmp) as *const _)
+                        .to_string_lossy()
+                        .into_owned();
                 (api.godot_string_destroy)(&mut gd_variant);
                 Some(ret)
             } else {
@@ -838,4 +845,3 @@ impl ToVariant for String {
         }
     }
 }
-

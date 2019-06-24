@@ -1,7 +1,7 @@
-use crate::sys;
 use crate::get_api;
-use crate::Variant;
+use crate::sys;
 use crate::ToVariant;
+use crate::Variant;
 use crate::VariantArray;
 use crate::Vector2;
 
@@ -12,7 +12,9 @@ pub struct Vector2Array(pub(crate) sys::godot_pool_vector2_array);
 
 impl Vector2Array {
     /// Creates an empty array.
-    pub fn new() -> Self { Vector2Array::default() }
+    pub fn new() -> Self {
+        Vector2Array::default()
+    }
 
     /// Creates an array by trying to convert each variant
     ///
@@ -43,16 +45,15 @@ impl Vector2Array {
     /// Inserts a vector at the given offset.
     pub fn insert(&mut self, offset: i32, vector: &Vector2) -> bool {
         unsafe {
-            let status = (get_api().godot_pool_vector2_array_insert)(&mut self.0, offset, transmute(vector));
+            let status =
+                (get_api().godot_pool_vector2_array_insert)(&mut self.0, offset, transmute(vector));
             status != sys::godot_error_GODOT_OK
         }
     }
 
     /// Inverts the order of the elements in the array.
     pub fn invert(&mut self) {
-        unsafe {
-            (get_api().godot_pool_vector2_array_invert)(&mut self.0)
-        }
+        unsafe { (get_api().godot_pool_vector2_array_invert)(&mut self.0) }
     }
 
     /// Removes an element at the given offset.
@@ -71,9 +72,7 @@ impl Vector2Array {
 
     /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> Vector2 {
-        unsafe {
-            transmute((get_api().godot_pool_vector2_array_get)(&self.0, idx))
-        }
+        unsafe { transmute((get_api().godot_pool_vector2_array_get)(&self.0, idx)) }
     }
 
     /// Sets the value of the element at the given offset.
@@ -85,9 +84,7 @@ impl Vector2Array {
 
     /// Returns the number of elements in the array.
     pub fn len(&self) -> i32 {
-        unsafe {
-            (get_api().godot_pool_vector2_array_size)(&self.0)
-        }
+        unsafe { (get_api().godot_pool_vector2_array_size)(&self.0) }
     }
 
     #[doc(hidden)]
@@ -114,6 +111,10 @@ impl_basic_traits!(
 );
 
 impl ToVariant for Vector2Array {
-    fn to_variant(&self) -> Variant { Variant::from_vector2_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_vector2_array() }
+    fn to_variant(&self) -> Variant {
+        Variant::from_vector2_array(self)
+    }
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        variant.try_to_vector2_array()
+    }
 }

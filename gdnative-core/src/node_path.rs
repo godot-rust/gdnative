@@ -1,7 +1,7 @@
-use crate::sys;
 use crate::get_api;
-use crate::ToVariant;
+use crate::sys;
 use crate::GodotString;
+use crate::ToVariant;
 use crate::Variant;
 use std::fmt;
 
@@ -32,7 +32,10 @@ impl NodePath {
         unsafe {
             let mut dest = sys::godot_node_path::default();
             let api = get_api();
-            let mut from = (api.godot_string_chars_to_utf8_with_len)(path.as_ptr() as *const _, path.len() as _);
+            let mut from = (api.godot_string_chars_to_utf8_with_len)(
+                path.as_ptr() as *const _,
+                path.len() as _,
+            );
             (api.godot_node_path_new)(&mut dest, &from);
             (api.godot_string_destroy)(&mut from);
             NodePath(dest)
@@ -50,50 +53,40 @@ impl NodePath {
 
     /// Returns `true` if the node path is empty.
     pub fn is_empty(&self) -> bool {
-        unsafe {
-            (get_api().godot_node_path_is_empty)(&self.0)
-        }
+        unsafe { (get_api().godot_node_path_is_empty)(&self.0) }
     }
 
     /// Returns `true` if the node path is absolute.
     pub fn is_absolute(&self) -> bool {
-        unsafe {
-            (get_api().godot_node_path_is_absolute)(&self.0)
-        }
+        unsafe { (get_api().godot_node_path_is_absolute)(&self.0) }
     }
 
     /// Get the number of node names which make up the path.
     pub fn name_count(&mut self) -> i32 {
-        unsafe {
-            (get_api().godot_node_path_get_name_count)(&mut self.0)
-        }
+        unsafe { (get_api().godot_node_path_get_name_count)(&mut self.0) }
     }
 
     /// Returns the resource name of the specified `idx`, 0 to subname_count()
     pub fn get_subname(&self, idx: i32) -> GodotString {
-        unsafe {
-            GodotString((get_api().godot_node_path_get_subname)(&self.0, idx))
-        }
+        unsafe { GodotString((get_api().godot_node_path_get_subname)(&self.0, idx)) }
     }
 
     /// Returns the number of resource names in the path.
     pub fn get_subname_count(&self) -> i32 {
-        unsafe {
-            (get_api().godot_node_path_get_subname_count)(&self.0)
-        }
+        unsafe { (get_api().godot_node_path_get_subname_count)(&self.0) }
     }
 
     pub fn get_concatenated_subnames(&self) -> GodotString {
         unsafe {
-            GodotString((get_api().godot_node_path_get_concatenated_subnames)(&self.0))
+            GodotString((get_api().godot_node_path_get_concatenated_subnames)(
+                &self.0,
+            ))
         }
     }
 
     /// Returns the `NodePath` as a `GodotString`
     pub fn to_godot_string(&self) -> GodotString {
-        unsafe {
-            GodotString((get_api().godot_node_path_as_string)(&self.0))
-        }
+        unsafe { GodotString((get_api().godot_node_path_as_string)(&self.0)) }
     }
 
     /// Returns the `NodePath` as a `String`
@@ -117,20 +110,31 @@ impl NodePath {
     }
 }
 
-impl<S> From<S> for NodePath where S: AsRef<str> {
-    fn from(s: S) -> NodePath { NodePath::from_str(&s.as_ref()) }
+impl<S> From<S> for NodePath
+where
+    S: AsRef<str>,
+{
+    fn from(s: S) -> NodePath {
+        NodePath::from_str(&s.as_ref())
+    }
 }
 
 impl Into<String> for NodePath {
-    fn into(self) -> String { self.to_string() }
+    fn into(self) -> String {
+        self.to_string()
+    }
 }
 
 impl From<GodotString> for NodePath {
-    fn from(s: GodotString) -> NodePath { NodePath::new(&s) }
+    fn from(s: GodotString) -> NodePath {
+        NodePath::new(&s)
+    }
 }
 
 impl Into<GodotString> for NodePath {
-    fn into(self) -> GodotString { self.to_godot_string() }
+    fn into(self) -> GodotString {
+        self.to_godot_string()
+    }
 }
 
 impl_basic_traits!(
@@ -141,8 +145,12 @@ impl_basic_traits!(
 );
 
 impl ToVariant for NodePath {
-    fn to_variant(&self) -> Variant { Variant::from_node_path(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_node_path() }
+    fn to_variant(&self) -> Variant {
+        Variant::from_node_path(self)
+    }
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        variant.try_to_node_path()
+    }
 }
 
 impl fmt::Debug for NodePath {

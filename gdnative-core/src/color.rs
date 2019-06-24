@@ -1,5 +1,5 @@
-use crate::sys;
 use crate::get_api;
+use crate::sys;
 use std::mem::transmute;
 
 /// RGBA color with 32 bits floating point components.
@@ -26,21 +26,15 @@ impl Color {
     }
 
     pub fn h(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_h)(self.as_sys_color())
-        }
+        unsafe { (get_api().godot_color_get_h)(self.as_sys_color()) }
     }
 
     pub fn s(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_s)(self.as_sys_color())
-        }
+        unsafe { (get_api().godot_color_get_s)(self.as_sys_color()) }
     }
 
     pub fn v(&self) -> f32 {
-        unsafe {
-            (get_api().godot_color_get_v)(self.as_sys_color())
-        }
+        unsafe { (get_api().godot_color_get_v)(self.as_sys_color()) }
     }
 }
 

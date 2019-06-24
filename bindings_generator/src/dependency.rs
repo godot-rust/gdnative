@@ -15,18 +15,14 @@ pub fn strongly_connected_components(
 ) -> HashSet<String> {
     let mut visited = visited.unwrap_or_default();
 
-    if let Some(class)  = api.find_class(class) {
+    if let Some(class) = api.find_class(class) {
         visit(api, class, &mut visited);
     }
 
     visited
 }
 
-fn visit(
-    api: &Api,
-    class: &GodotClass,
-    visited: &mut HashSet<String>,
-) {
+fn visit(api: &Api, class: &GodotClass, visited: &mut HashSet<String>) {
     visited.insert(class.name.clone());
 
     let mut to_visit = HashSet::new();
@@ -45,11 +41,7 @@ fn visit(
     }
 }
 
-
-fn base_classes(
-    api: &Api,
-    class: &GodotClass,
-) -> HashSet<String> {
+fn base_classes(api: &Api, class: &GodotClass) -> HashSet<String> {
     let mut bases = HashSet::new();
 
     if class.base_class.is_empty() {
@@ -64,10 +56,7 @@ fn base_classes(
     }
 }
 
-fn referenced_classes(
-    api: &Api,
-    class: &GodotClass
-) -> HashSet<String> {
+fn referenced_classes(api: &Api, class: &GodotClass) -> HashSet<String> {
     let mut classes = HashSet::new();
 
     for method in &class.methods {

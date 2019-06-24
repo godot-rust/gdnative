@@ -1,5 +1,5 @@
-use std::collections::{HashMap, HashSet};
 use serde_json;
+use std::collections::{HashMap, HashSet};
 
 pub struct Api {
     pub classes: Vec<GodotClass>,
@@ -9,7 +9,8 @@ pub struct Api {
 impl Api {
     pub fn new() -> Self {
         let mut api = Api {
-            classes: serde_json::from_slice(get_api_json()).expect("Failed to parse the API description"),
+            classes: serde_json::from_slice(get_api_json())
+                .expect("Failed to parse the API description"),
             api_underscore: Default::default(),
         };
 
@@ -74,9 +75,13 @@ pub struct GodotClass {
 }
 
 impl GodotClass {
-    pub fn is_refcounted(&self) -> bool { self.is_reference || &self.name == "Reference" }
+    pub fn is_refcounted(&self) -> bool {
+        self.is_reference || &self.name == "Reference"
+    }
 
-    pub fn is_pointer_safe(&self) -> bool { self.is_refcounted() || self.singleton }
+    pub fn is_pointer_safe(&self) -> bool {
+        self.is_refcounted() || self.singleton
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -207,9 +212,7 @@ impl Ty {
                 let name = split.next().unwrap();
                 Ty::Enum(format!("{}{}", class, name))
             }
-            ty => {
-                Ty::Object(ty.into())
-            },
+            ty => Ty::Object(ty.into()),
         }
     }
 
@@ -286,6 +289,10 @@ impl Ty {
     }
 }
 
-pub fn get_api_json() -> &'static [u8] { include_bytes!("../api.json") }
+pub fn get_api_json() -> &'static [u8] {
+    include_bytes!("../api.json")
+}
 
-pub fn get_namespaces_json() -> &'static [u8] { include_bytes!("../namespaces.json") }
+pub fn get_namespaces_json() -> &'static [u8] {
+    include_bytes!("../namespaces.json")
+}

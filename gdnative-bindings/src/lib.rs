@@ -3,12 +3,12 @@
 
 pub use gdnative_core::*;
 
-use crate::sys;
 use crate::get_api;
+use crate::sys;
 
-use std::sync::{Once, ONCE_INIT};
-use std::ops::*;
 use libc;
+use std::ops::*;
+use std::sync::{Once, ONCE_INIT};
 
 include!(concat!(env!("OUT_DIR"), "/bindings_types.rs"));
 include!(concat!(env!("OUT_DIR"), "/bindings_traits.rs"));

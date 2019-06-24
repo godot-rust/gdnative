@@ -1,9 +1,9 @@
-use crate::sys;
 use crate::get_api;
-use crate::Variant;
-use crate::ToVariant;
-use crate::VariantArray;
+use crate::sys;
 use crate::Color;
+use crate::ToVariant;
+use crate::Variant;
+use crate::VariantArray;
 
 use std::mem::transmute;
 
@@ -12,7 +12,9 @@ pub struct ColorArray(pub(crate) sys::godot_pool_color_array);
 
 impl ColorArray {
     /// Creates an empty `ColorArray`.
-    pub fn new() -> Self { ColorArray::default() }
+    pub fn new() -> Self {
+        ColorArray::default()
+    }
 
     /// Creates an array by trying to convert each variant.
     ///
@@ -43,16 +45,15 @@ impl ColorArray {
     /// Insert a new int at a given position in the array.
     pub fn insert(&mut self, offset: i32, color: &Color) -> bool {
         unsafe {
-            let status = (get_api().godot_pool_color_array_insert)(&mut self.0, offset, transmute(color));
+            let status =
+                (get_api().godot_pool_color_array_insert)(&mut self.0, offset, transmute(color));
             status != sys::godot_error_GODOT_OK
         }
     }
 
     /// Inverts the order of the elements in the array.
     pub fn invert(&mut self) {
-        unsafe {
-            (get_api().godot_pool_color_array_invert)(&mut self.0)
-        }
+        unsafe { (get_api().godot_pool_color_array_invert)(&mut self.0) }
     }
 
     /// Removes an element at the given offset.
@@ -71,9 +72,7 @@ impl ColorArray {
 
     /// Returns a copy of the element at the given offset.
     pub fn get(&self, idx: i32) -> Color {
-        unsafe {
-            transmute((get_api().godot_pool_color_array_get)(&self.0, idx))
-        }
+        unsafe { transmute((get_api().godot_pool_color_array_get)(&self.0, idx)) }
     }
 
     /// Sets the value of the element at the given offset.
@@ -85,9 +84,7 @@ impl ColorArray {
 
     /// Returns the number of elements in the array.
     pub fn len(&self) -> i32 {
-        unsafe {
-            (get_api().godot_pool_color_array_size)(&self.0)
-        }
+        unsafe { (get_api().godot_pool_color_array_size)(&self.0) }
     }
 
     #[doc(hidden)]
@@ -114,6 +111,10 @@ impl_basic_traits!(
 );
 
 impl ToVariant for ColorArray {
-    fn to_variant(&self) -> Variant { Variant::from_color_array(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_color_array() }
+    fn to_variant(&self) -> Variant {
+        Variant::from_color_array(self)
+    }
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        variant.try_to_color_array()
+    }
 }

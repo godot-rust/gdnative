@@ -24,11 +24,10 @@
 //! engine or the object must be carefully deallocated using the object's `free`  method.
 //!
 
-
-#[doc(hidden)]
-pub extern crate libc;
 #[doc(hidden)]
 pub extern crate gdnative_sys as sys;
+#[doc(hidden)]
+pub extern crate libc;
 #[macro_use]
 extern crate bitflags;
 
@@ -37,51 +36,51 @@ pub mod geom;
 mod macros;
 #[macro_use]
 mod class;
-mod free_on_drop;
-mod internal;
+mod byte_array;
 mod color;
+mod color_array;
+mod dictionary;
+mod float32_array;
+mod free_on_drop;
+mod generated;
+pub mod init;
+mod int32_array;
+mod internal;
+mod node_path;
+#[doc(hidden)]
+pub mod object;
+mod rid;
+mod string;
+mod string_array;
 mod variant;
 mod variant_array;
-mod dictionary;
-mod rid;
-mod generated;
-mod node_path;
-mod string;
-mod byte_array;
-mod int32_array;
-mod float32_array;
-mod string_array;
 mod vector2;
 mod vector2_array;
 mod vector3;
 mod vector3_array;
-mod color_array;
-pub mod init;
-#[doc(hidden)]
-pub mod object;
 
-pub use crate::internal::*;
+pub use crate::byte_array::*;
 pub use crate::class::*;
+pub use crate::color::*;
+pub use crate::color_array::*;
+pub use crate::dictionary::*;
+pub use crate::float32_array::*;
 pub use crate::free_on_drop::*;
+pub use crate::generated::*;
+pub use crate::geom::*;
+pub use crate::int32_array::*;
+pub use crate::internal::*;
+pub use crate::node_path::*;
+pub use crate::object::GodotObject;
+pub use crate::rid::*;
+pub use crate::string::*;
+pub use crate::string_array::*;
 pub use crate::variant::*;
 pub use crate::variant_array::*;
-pub use crate::dictionary::*;
-pub use crate::geom::*;
-pub use crate::color::*;
-pub use crate::rid::*;
-pub use crate::node_path::*;
-pub use crate::generated::*;
-pub use crate::string::*;
-pub use crate::byte_array::*;
-pub use crate::int32_array::*;
-pub use crate::float32_array::*;
-pub use crate::string_array::*;
 pub use crate::vector2::*;
 pub use crate::vector2_array::*;
 pub use crate::vector3::*;
 pub use crate::vector3_array::*;
-pub use crate::color_array::*;
-pub use crate::object::GodotObject;
 
 use std::mem;
 

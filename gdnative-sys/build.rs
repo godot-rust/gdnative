@@ -20,7 +20,10 @@ fn osx_include_path() -> Result<String, std::io::Error> {
     let infix = if prefix == "/Library/Developer/CommandLineTools" {
         format!("SDKs/{}.sdk", platform)
     } else {
-        format!("Platforms/{}.platform/Developer/SDKs/{}.sdk", platform, platform)
+        format!(
+            "Platforms/{}.platform/Developer/SDKs/{}.sdk",
+            platform, platform
+        )
     };
 
     let suffix = "usr/include";
@@ -50,12 +53,11 @@ fn main() {
         match osx_include_path() {
             Ok(osx_include_path) => {
                 builder = builder.clang_arg("-I").clang_arg(osx_include_path);
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
-        builder.generate()
-            .expect("Unable to generate bindings")
+        builder.generate().expect("Unable to generate bindings")
     };
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());

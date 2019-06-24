@@ -22,56 +22,45 @@ impl godot::NativeClass for RustTest {
     }
 
     fn register_properties(builder: &godot::init::ClassBuilder<Self>) {
-        builder.add_property(
-            Property {
-                name: "base/rotate_speed",
-                default: 0.05,
-                hint: PropertyHint::Range {
-                    range: 0.05..1.0,
-                    step: 0.01,
-                    slider: true
-                },
-                getter: |this: &mut RustTest| this.rotate_speed,
-                setter: |this: &mut RustTest, v| this.rotate_speed = v,
-                usage: PropertyUsage::DEFAULT,
-            }
-        );
+        builder.add_property(Property {
+            name: "base/rotate_speed",
+            default: 0.05,
+            hint: PropertyHint::Range {
+                range: 0.05..1.0,
+                step: 0.01,
+                slider: true,
+            },
+            getter: |this: &mut RustTest| this.rotate_speed,
+            setter: |this: &mut RustTest, v| this.rotate_speed = v,
+            usage: PropertyUsage::DEFAULT,
+        });
 
-        builder.add_property(
-            Property {
-                name: "test/test_enum",
-                default: GodotString::from_str("Hello"),
-                hint: PropertyHint::Enum {
-                    values: &[
-                        "Hello",
-                        "World",
-                        "Testing",
-                    ]
-                },
-                getter: |_: &mut RustTest| { GodotString::from_str("Hello") },
-                setter: (),
-                usage: PropertyUsage::DEFAULT,
-            }
-        );
+        builder.add_property(Property {
+            name: "test/test_enum",
+            default: GodotString::from_str("Hello"),
+            hint: PropertyHint::Enum {
+                values: &["Hello", "World", "Testing"],
+            },
+            getter: |_: &mut RustTest| GodotString::from_str("Hello"),
+            setter: (),
+            usage: PropertyUsage::DEFAULT,
+        });
 
-        builder.add_property(
-            Property {
-                name: "test/test_flags",
-                default: 0,
-                hint: PropertyHint::Flags {
-                    values: &["A", "B", "C", "D" ],
-                },
-                getter: |_: &mut RustTest| 0,
-                setter: (),
-                usage: PropertyUsage::DEFAULT,
-            }
-        );
+        builder.add_property(Property {
+            name: "test/test_flags",
+            default: 0,
+            hint: PropertyHint::Flags {
+                values: &["A", "B", "C", "D"],
+            },
+            getter: |_: &mut RustTest| 0,
+            setter: (),
+            usage: PropertyUsage::DEFAULT,
+        });
     }
 }
 
 #[godot::methods]
 impl RustTest {
-
     fn _init() -> Self {
         RustTest {
             start: godot::Vector3::new(0.0, 0.0, 0.0),
@@ -93,7 +82,7 @@ impl RustTest {
 
     #[export]
     unsafe fn _physics_process(&mut self, mut owner: godot::MeshInstance, delta: f64) {
-        use godot::{Color, Vector3, SpatialMaterial};
+        use godot::{Color, SpatialMaterial, Vector3};
 
         self.time += delta as f32;
         owner.rotate_y(self.rotate_speed * delta);

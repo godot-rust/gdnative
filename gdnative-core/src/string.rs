@@ -1,20 +1,18 @@
-use crate::sys;
 use crate::get_api;
-use crate::Variant;
+use crate::sys;
 use crate::ToVariant;
+use crate::Variant;
 
-use std::ffi::CStr;
-use std::ops::Range;
-use std::str;
-use std::slice;
 use std::cmp::Ordering;
-use std::mem::{transmute, forget};
+use std::ffi::CStr;
 use std::fmt;
+use std::mem::{forget, transmute};
+use std::ops::Range;
+use std::slice;
+use std::str;
 
 /// Godot's reference-counted string type.
-pub struct GodotString(
-    pub(crate) sys::godot_string
-);
+pub struct GodotString(pub(crate) sys::godot_string);
 
 macro_rules! impl_methods {
     // Methods that return a GodotString:
@@ -43,27 +41,26 @@ macro_rules! impl_methods {
 }
 
 impl GodotString {
-    pub fn new() -> Self { GodotString::default() }
+    pub fn new() -> Self {
+        GodotString::default()
+    }
 
     pub fn from_str<S>(s: S) -> Self
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         unsafe {
             let api = get_api();
             let val = s.as_ref();
-            let godot_s = (api.godot_string_chars_to_utf8_with_len)(
-                val.as_ptr() as *const _,
-                val.len() as _
-            );
+            let godot_s =
+                (api.godot_string_chars_to_utf8_with_len)(val.as_ptr() as *const _, val.len() as _);
 
             GodotString(godot_s)
         }
     }
 
     pub fn len(&self) -> usize {
-        unsafe {
-            (get_api().godot_string_length)(&self.0) as usize
-        }
+        unsafe { (get_api().godot_string_length)(&self.0) as usize }
     }
 
     impl_methods!(
@@ -111,41 +108,35 @@ impl GodotString {
     );
 
     pub fn is_valid_hex_number(&self, with_prefix: bool) -> bool {
-        unsafe {
-            (get_api().godot_string_is_valid_hex_number)(&self.0, with_prefix)
-        }
+        unsafe { (get_api().godot_string_is_valid_hex_number)(&self.0, with_prefix) }
     }
 
     pub fn begins_with(&self, s: &GodotString) -> bool {
-        unsafe {
-            (get_api().godot_string_begins_with)(&self.0, &s.0)
-        }
+        unsafe { (get_api().godot_string_begins_with)(&self.0, &s.0) }
     }
 
     pub fn ends_with(&self, s: &GodotString) -> bool {
-        unsafe {
-            (get_api().godot_string_ends_with)(&self.0, &s.0)
-        }
+        unsafe { (get_api().godot_string_ends_with)(&self.0, &s.0) }
     }
 
     pub fn begins_with_c_str(&self, s: &CStr) -> bool {
-        unsafe {
-            (get_api().godot_string_begins_with_char_array)(&self.0, s.as_ptr())
-        }
+        unsafe { (get_api().godot_string_begins_with_char_array)(&self.0, s.as_ptr()) }
     }
 
     pub fn sub_string(&self, range: Range<usize>) -> Self {
         unsafe {
             let count = range.end - range.start;
-            GodotString((get_api().godot_string_substr)(&self.0, range.start as i32, count as i32))
+            GodotString((get_api().godot_string_substr)(
+                &self.0,
+                range.start as i32,
+                count as i32,
+            ))
         }
     }
 
     #[doc(hidden)]
     pub fn to_utf8(&self) -> Utf8String {
-        unsafe {
-            Utf8String((get_api().godot_string_utf8)(&self.0))
-        }
+        unsafe { Utf8String((get_api().godot_string_utf8)(&self.0)) }
     }
 
     pub fn to_string(&self) -> String {
@@ -153,21 +144,15 @@ impl GodotString {
     }
 
     pub fn find(&self, what: &GodotString) -> i32 {
-        unsafe {
-            (get_api().godot_string_find)(&self.0, what.0)
-        }
+        unsafe { (get_api().godot_string_find)(&self.0, what.0) }
     }
 
     pub fn find_from(&self, what: &GodotString, from: i32) -> i32 {
-        unsafe {
-            (get_api().godot_string_find_from)(&self.0, what.0, from)
-        }
+        unsafe { (get_api().godot_string_find_from)(&self.0, what.0, from) }
     }
 
     pub fn find_last(&self, what: &GodotString) -> i32 {
-        unsafe {
-            (get_api().godot_string_find_last)(&self.0, what.0)
-        }
+        unsafe { (get_api().godot_string_find_last)(&self.0, what.0) }
     }
 
     /// Returns the internal ffi representation of the string and consumes
@@ -216,8 +201,12 @@ impl_basic_traits!(
 );
 
 impl ToVariant for GodotString {
-    fn to_variant(&self) -> Variant { Variant::from_godot_string(self) }
-    fn from_variant(variant: &Variant) -> Option<Self> { variant.try_to_godot_string() }
+    fn to_variant(&self) -> Variant {
+        Variant::from_godot_string(self)
+    }
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        variant.try_to_godot_string()
+    }
 }
 
 impl fmt::Debug for GodotString {
@@ -233,9 +222,7 @@ pub struct Utf8String(pub(crate) sys::godot_char_string);
 
 impl Utf8String {
     pub fn len(&self) -> i32 {
-        unsafe {
-            (get_api().godot_char_string_length)(&self.0)
-        }
+        unsafe { (get_api().godot_char_string_length)(&self.0) }
     }
 
     fn data(&self) -> &u8 {
@@ -246,15 +233,11 @@ impl Utf8String {
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe {
-            slice::from_raw_parts(self.data(), self.len() as usize)
-        }
+        unsafe { slice::from_raw_parts(self.data(), self.len() as usize) }
     }
 
     pub fn as_str(&self) -> &str {
-        unsafe {
-            str::from_utf8_unchecked(self.as_bytes())
-        }
+        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 
     pub fn to_string(&self) -> String {
@@ -278,7 +261,8 @@ pub struct StringName(pub(crate) sys::godot_string_name);
 
 impl StringName {
     pub fn from_str<S>(s: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         let gd_string = GodotString::from_str(s);
         StringName::from_godot_string(&gd_string);
@@ -301,21 +285,15 @@ impl StringName {
     }
 
     pub fn get_hash(&self) -> u32 {
-        unsafe {
-            (get_api().godot_string_name_get_hash)(&self.0)
-        }
+        unsafe { (get_api().godot_string_name_get_hash)(&self.0) }
     }
 
     pub fn get_name(&self) -> GodotString {
-        unsafe {
-            GodotString((get_api().godot_string_name_get_name)(&self.0))
-        }
+        unsafe { GodotString((get_api().godot_string_name_get_name)(&self.0)) }
     }
 
     pub fn operator_less(&self, s: &StringName) -> bool {
-        unsafe {
-            (get_api().godot_string_name_operator_less)(&self.0, &s.0)
-        }
+        unsafe { (get_api().godot_string_name_operator_less)(&self.0, &s.0) }
     }
 }
 
@@ -346,8 +324,13 @@ impl PartialOrd for StringName {
     }
 }
 
-impl<S> From<S> for GodotString where S: AsRef<str> {
-    fn from(s: S) -> GodotString { GodotString::from_str(s) }
+impl<S> From<S> for GodotString
+where
+    S: AsRef<str>,
+{
+    fn from(s: S) -> GodotString {
+        GodotString::from_str(s)
+    }
 }
 
 godot_test!(test_string {

@@ -1,7 +1,7 @@
-use std::ptr;
-use libc;
 use crate::sys;
 use crate::ObjectMethodTable;
+use libc;
+use std::ptr;
 
 /// Internal details.
 pub unsafe trait GodotObject {
@@ -25,7 +25,7 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
         addref_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
-        ok_ptr as *mut _
+        ok_ptr as *mut _,
     );
 
     // If this assertion blows up it means there is a reference counting bug
@@ -46,7 +46,7 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
         unref_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
-        ret_ptr as *mut _
+        ret_ptr as *mut _,
     );
 
     last_reference
@@ -64,7 +64,7 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
         init_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
-        ret_ptr as *mut _
+        ret_ptr as *mut _,
     );
 
     debug_assert!(ok);
@@ -77,7 +77,7 @@ pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
 
         let mut class_name = (api.godot_string_chars_to_utf8_with_len)(
             class_name.as_ptr() as *const _,
-            class_name.len() as _
+            class_name.len() as _,
         );
 
         let mut argument_buffer = [ptr::null() as *const libc::c_void; 1];
@@ -89,7 +89,7 @@ pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
             method_bind,
             obj,
             argument_buffer.as_mut_ptr() as *mut _,
-            ret_ptr as *mut _
+            ret_ptr as *mut _,
         );
 
         (api.godot_string_destroy)(&mut class_name);

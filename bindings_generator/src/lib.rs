@@ -2,21 +2,21 @@
 extern crate serde_derive;
 
 pub mod api;
-pub mod dependency;
 mod classes;
+pub mod dependency;
+mod documentation;
 mod methods;
 mod special_methods;
-mod documentation;
 
-use std::io::Write;
 use std::collections::HashSet;
+use std::io::Write;
 
 pub use crate::api::*;
-pub use crate::dependency::*;
 use crate::classes::*;
+pub use crate::dependency::*;
+use crate::documentation::*;
 use crate::methods::*;
 use crate::special_methods::*;
-use crate::documentation::*;
 
 use std::io;
 
@@ -28,7 +28,6 @@ pub fn generate_bindings(
     output_method_table: &mut impl Write,
     ignore: Option<HashSet<String>>,
 ) -> GeneratorResult {
-
     let to_ignore = ignore.unwrap_or_default();
 
     let api = Api::new();
@@ -36,7 +35,6 @@ pub fn generate_bindings(
     generate_imports(output_types_impls)?;
 
     for class in &api.classes {
-
         // ignore classes that have been generated before.
         if to_ignore.contains(&class.name) {
             continue;
@@ -49,7 +47,6 @@ pub fn generate_bindings(
             &api,
             class,
         )?;
-
     }
 
     Ok(())
@@ -69,7 +66,6 @@ pub fn generate_class(
     output_method_table: &mut impl Write,
     class_name: &str,
 ) -> GeneratorResult {
-
     let api = Api::new();
 
     let class = api.find_class(class_name);
@@ -151,7 +147,6 @@ fn generate_class_bindings(
 
         generate_free_impl(output_trait_impls, &api, class)?;
 
-
         if !class.base_class.is_empty() {
             generate_deref_impl(output_trait_impls, class)?;
         }
@@ -189,4 +184,3 @@ fn rust_safe_name(name: &str) -> &str {
         name => name,
     }
 }
-

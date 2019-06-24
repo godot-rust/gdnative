@@ -23,15 +23,15 @@
 
 use super::*;
 use crate::get_api;
-use crate::Variant;
-use crate::ToVariant;
 use crate::NativeClass;
-use std::mem;
-use std::ops::Range;
+use crate::ToVariant;
+use crate::Variant;
+use libc;
 use std::ffi::CString;
 use std::marker::PhantomData;
+use std::mem;
+use std::ops::Range;
 use std::ptr;
-use libc;
 
 /// A handle that can register new classes to the engine during initialization.
 ///
@@ -44,26 +44,29 @@ pub struct InitHandle {
 
 impl InitHandle {
     #[doc(hidden)]
-    pub unsafe fn new(handle: *mut libc::c_void) -> Self { InitHandle { handle } }
+    pub unsafe fn new(handle: *mut libc::c_void) -> Self {
+        InitHandle { handle }
+    }
 
     /// Registers a new class to the engine.
     ///
     /// The return `ClassBuilder` can be used to add methods, signals and properties
     /// to the class.
     pub fn add_class<C>(&self)
-    where C: NativeClassMethods {
+    where
+        C: NativeClassMethods,
+    {
         unsafe {
             let class_name = CString::new(C::class_name()).unwrap();
             let base_name = CString::new(C::Base::class_name()).unwrap();
 
-
             let create = {
                 unsafe extern "C" fn constructor<C: NativeClass>(
                     this: *mut sys::godot_object,
-                    _method_data: *mut libc::c_void
+                    _method_data: *mut libc::c_void,
                 ) -> *mut libc::c_void {
-                    use std::cell::RefCell;
                     use std::boxed::Box;
+                    use std::cell::RefCell;
 
                     use crate::GodotObject;
 
@@ -84,10 +87,10 @@ impl InitHandle {
                 unsafe extern "C" fn destructor<C: NativeClass>(
                     _this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
-                    user_data: *mut libc::c_void
+                    user_data: *mut libc::c_void,
                 ) -> () {
-                    use std::cell::RefCell;
                     use std::boxed::Box;
+                    use std::cell::RefCell;
 
                     let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
                     drop(wrapper)
@@ -105,7 +108,7 @@ impl InitHandle {
                 class_name.as_ptr() as *const _,
                 base_name.as_ptr() as *const _,
                 create,
-                destroy
+                destroy,
             );
 
             let mut builder = ClassBuilder {
@@ -126,19 +129,20 @@ impl InitHandle {
     /// The return `ClassBuilder` can be used to add methods, signals and properties
     /// to the class.
     pub fn add_tool_class<C>(&self)
-        where C: NativeClassMethods {
+    where
+        C: NativeClassMethods,
+    {
         unsafe {
             let class_name = CString::new(C::class_name()).unwrap();
             let base_name = CString::new(C::Base::class_name()).unwrap();
 
-
             let create = {
                 unsafe extern "C" fn constructor<C: NativeClass>(
                     this: *mut sys::godot_object,
-                    _method_data: *mut libc::c_void
+                    _method_data: *mut libc::c_void,
                 ) -> *mut libc::c_void {
-                    use std::cell::RefCell;
                     use std::boxed::Box;
+                    use std::cell::RefCell;
 
                     use crate::GodotObject;
 
@@ -159,10 +163,10 @@ impl InitHandle {
                 unsafe extern "C" fn destructor<C: NativeClass>(
                     _this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
-                    user_data: *mut libc::c_void
+                    user_data: *mut libc::c_void,
                 ) -> () {
-                    use std::cell::RefCell;
                     use std::boxed::Box;
+                    use std::cell::RefCell;
 
                     let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
                     drop(wrapper)
@@ -180,7 +184,7 @@ impl InitHandle {
                 class_name.as_ptr() as *const _,
                 base_name.as_ptr() as *const _,
                 create,
-                destroy
+                destroy,
             );
 
             let mut builder = ClassBuilder {
@@ -202,30 +206,25 @@ pub type ScriptMethodFn = unsafe extern "C" fn(
     *mut libc::c_void,
     *mut libc::c_void,
     libc::c_int,
-    *mut *mut sys::godot_variant
+    *mut *mut sys::godot_variant,
 ) -> sys::godot_variant;
 
-pub type ScriptConstructorFn = unsafe extern "C" fn(
-    *mut sys::godot_object,
-    *mut libc::c_void
-) -> *mut libc::c_void;
+pub type ScriptConstructorFn =
+    unsafe extern "C" fn(*mut sys::godot_object, *mut libc::c_void) -> *mut libc::c_void;
 
-pub type ScriptDestructorFn = unsafe extern "C" fn(
-    *mut sys::godot_object,
-    *mut libc::c_void,
-    *mut libc::c_void
-) -> ();
+pub type ScriptDestructorFn =
+    unsafe extern "C" fn(*mut sys::godot_object, *mut libc::c_void, *mut libc::c_void) -> ();
 
 pub enum RpcMode {
     Disabled,
     Remote,
     Sync,
     Mater,
-    Slave
+    Slave,
 }
 
 pub struct ScriptMethodAttributes {
-    pub rpc_mode: RpcMode
+    pub rpc_mode: RpcMode,
 }
 
 pub struct ScriptMethod<'l> {
@@ -252,17 +251,16 @@ pub struct ClassBuilder<C: NativeClass> {
 }
 
 impl<C: NativeClass> ClassBuilder<C> {
-
     pub fn add_method_advanced(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
         let attr = sys::godot_method_attributes {
-            rpc_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED
+            rpc_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
         };
 
         let method_desc = sys::godot_instance_method {
             method: method.method_ptr,
             method_data: method.method_data,
-            free_func: method.free_func
+            free_func: method.free_func,
         };
 
         unsafe {
@@ -271,23 +269,21 @@ impl<C: NativeClass> ClassBuilder<C> {
                 self.class_name.as_ptr() as *const _,
                 method_name.as_ptr() as *const _,
                 attr,
-                method_desc
+                method_desc,
             );
         }
     }
 
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
-        self.add_method_advanced(
-            ScriptMethod {
-                name: name,
-                method_ptr: Some(method),
-                attributes: ScriptMethodAttributes {
-                    rpc_mode: RpcMode::Disabled
-                },
-                method_data: ptr::null_mut(),
-                free_func: None
+        self.add_method_advanced(ScriptMethod {
+            name: name,
+            method_ptr: Some(method),
+            attributes: ScriptMethodAttributes {
+                rpc_mode: RpcMode::Disabled,
             },
-        );
+            method_data: ptr::null_mut(),
+            free_func: None,
+        });
     }
 
     pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
@@ -298,16 +294,21 @@ impl<C: NativeClass> ClassBuilder<C> {
     {
         unsafe {
             let hint_text = match property.hint {
-                PropertyHint::Range { ref range, step, slider } => {
-
+                PropertyHint::Range {
+                    ref range,
+                    step,
+                    slider,
+                } => {
                     if slider {
                         Some(format!("{},{},{},slider", range.start, range.end, step))
                     } else {
                         Some(format!("{},{},{}", range.start, range.end, step))
                     }
                 }
-                PropertyHint::Enum { values } | PropertyHint::Flags { values } => { Some(values.join(",")) }
-                PropertyHint::NodePathToEditedNode | PropertyHint::None => { None }
+                PropertyHint::Enum { values } | PropertyHint::Flags { values } => {
+                    Some(values.join(","))
+                }
+                PropertyHint::NodePathToEditedNode | PropertyHint::None => None,
             };
             let hint_string = if let Some(text) = hint_text {
                 GodotString::from_str(text)
@@ -336,7 +337,9 @@ impl<C: NativeClass> ClassBuilder<C> {
                 self.init_handle,
                 self.class_name.as_ptr(),
                 path.as_ptr() as *const _,
-                &mut attr, set, get
+                &mut attr,
+                set,
+                get,
             );
         }
     }
@@ -345,7 +348,8 @@ impl<C: NativeClass> ClassBuilder<C> {
         use std::ptr;
         unsafe {
             let name = GodotString::from_str(signal.name);
-            let mut args = signal.args
+            let mut args = signal
+                .args
                 .iter()
                 .map(|arg| {
                     let arg_name = GodotString::from_str(arg.name);
@@ -369,7 +373,7 @@ impl<C: NativeClass> ClassBuilder<C> {
                     args: args.as_mut_ptr(),
                     num_default_args: 0,
                     default_args: ptr::null_mut(),
-                }
+                },
             );
         }
     }
@@ -385,14 +389,14 @@ pub enum PropertyHint<'l> {
     },
     // ExpRange,
     Enum {
-        values: &'l[&'l str],
+        values: &'l [&'l str],
     },
     // ExpEasing,
     // Length,
     // SpriteFrame,
     // KeyAccel,
     Flags {
-        values: &'l[&'l str],
+        values: &'l [&'l str],
     },
     // Layers2DRender,
     // Layers2DPhysics,
@@ -427,7 +431,9 @@ impl<'l> PropertyHint<'l> {
             PropertyHint::Range { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_RANGE,
             PropertyHint::Enum { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_ENUM,
             PropertyHint::Flags { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_FLAGS,
-            PropertyHint::NodePathToEditedNode => sys::godot_property_hint_GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE,
+            PropertyHint::NodePathToEditedNode => {
+                sys::godot_property_hint_GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE
+            }
         }
     }
 }
@@ -464,8 +470,7 @@ impl PropertyUsage {
     }
 }
 
-pub struct Property<'l, T, S, G>
-{
+pub struct Property<'l, T, S, G> {
     pub name: &'l str,
     pub setter: S,
     pub getter: G,
@@ -498,20 +503,21 @@ extern "C" fn empty_setter(
     _this: *mut sys::godot_object,
     _method: *mut libc::c_void,
     _class: *mut libc::c_void,
-    _val: *mut sys::godot_variant
-) {}
+    _val: *mut sys::godot_variant,
+) {
+}
 
 extern "C" fn empty_getter(
     _this: *mut sys::godot_object,
     _method: *mut libc::c_void,
-    _class: *mut libc::c_void
+    _class: *mut libc::c_void,
 ) -> sys::godot_variant {
     Variant::new().forget()
 }
 
 extern "C" fn empty_free_func(_data: *mut libc::c_void) {}
 
-unsafe impl <C: NativeClass, T: ToVariant> PropertySetter<C, T> for () {
+unsafe impl<C: NativeClass, T: ToVariant> PropertySetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
         set.set_func = Some(empty_setter);
@@ -520,7 +526,7 @@ unsafe impl <C: NativeClass, T: ToVariant> PropertySetter<C, T> for () {
     }
 }
 
-unsafe impl <C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
+unsafe impl<C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
         get.get_func = Some(empty_getter);
@@ -529,10 +535,11 @@ unsafe impl <C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
     }
 }
 
-unsafe impl <F, C, T> PropertySetter<C, T> for F
-    where C: NativeClass,
-          T: ToVariant,
-          F: Fn(&mut C, T),
+unsafe impl<F, C, T> PropertySetter<C, T> for F
+where
+    C: NativeClass,
+    T: ToVariant,
+    F: Fn(&mut C, T),
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         use std::cell::RefCell;
@@ -540,11 +547,15 @@ unsafe impl <F, C, T> PropertySetter<C, T> for F
         let data = Box::new(self);
         set.method_data = Box::into_raw(data) as *mut _;
 
-        extern "C" fn invoke<C, F, T>(_this: *mut sys::godot_object, method: *mut libc::c_void, class: *mut libc::c_void, val: *mut sys::godot_variant)
-            where C: NativeClass,
-                T: ToVariant,
-                F: Fn(&mut C, T),
-
+        extern "C" fn invoke<C, F, T>(
+            _this: *mut sys::godot_object,
+            method: *mut libc::c_void,
+            class: *mut libc::c_void,
+            val: *mut sys::godot_variant,
+        ) where
+            C: NativeClass,
+            T: ToVariant,
+            F: Fn(&mut C, T),
         {
             unsafe {
                 let rust_ty = &*(class as *mut RefCell<C>);
@@ -571,10 +582,11 @@ unsafe impl <F, C, T> PropertySetter<C, T> for F
     }
 }
 
-unsafe impl <F, C, T> PropertyGetter<C, T> for F
-    where C: NativeClass,
-          T: ToVariant,
-          F: Fn(&mut C) -> T,
+unsafe impl<F, C, T> PropertyGetter<C, T> for F
+where
+    C: NativeClass,
+    T: ToVariant,
+    F: Fn(&mut C) -> T,
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
         use std::cell::RefCell;
@@ -582,11 +594,15 @@ unsafe impl <F, C, T> PropertyGetter<C, T> for F
         let data = Box::new(self);
         get.method_data = Box::into_raw(data) as *mut _;
 
-        extern "C" fn invoke<C, F, T>(_this: *mut sys::godot_object, method: *mut libc::c_void, class: *mut libc::c_void) -> sys::godot_variant
-            where C: NativeClass,
-                T: ToVariant,
-                F: Fn(&mut C) -> T,
-
+        extern "C" fn invoke<C, F, T>(
+            _this: *mut sys::godot_object,
+            method: *mut libc::c_void,
+            class: *mut libc::c_void,
+        ) -> sys::godot_variant
+        where
+            C: NativeClass,
+            T: ToVariant,
+            F: Fn(&mut C) -> T,
         {
             unsafe {
                 let rust_ty = &*(class as *mut RefCell<C>);

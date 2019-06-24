@@ -1,5 +1,5 @@
-use libc;
 use crate::sys::*;
+use libc;
 
 macro_rules! def_api {
     (

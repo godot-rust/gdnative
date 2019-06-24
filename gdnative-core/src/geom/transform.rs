@@ -1,4 +1,4 @@
-use crate::{Vector3, Basis};
+use crate::{Basis, Vector3};
 
 /// 3D Transformation (3x4 matrix) Using basis + origin representation.
 #[repr(C)]
