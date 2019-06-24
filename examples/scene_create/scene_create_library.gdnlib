@@ -1,0 +1,18 @@
+[general]
+
+singleton=false
+load_once=false
+symbol_prefix="godot_"
+reloadable=true
+
+[entry]
+
+OSX.64="../../target/debug/libscene_create.dylib"
+X11.64="../../target/debug/libscene_create.so"
+Windows.64="res://../../target/debug/scene_create.dll"
+
+[dependencies]
+
+OSX.64=[  ]
+UWP.64=[  ]
+X11.64=[  ]

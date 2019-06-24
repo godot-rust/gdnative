@@ -416,7 +416,9 @@ macro_rules! godot_wrap_method {
                     let $pname = if let Some(val) = <$pty as $crate::ToVariant>::from_variant(_variant) {
                         val
                     } else {
-                        godot_error!("Incorrect argument type for argument {}", offset);
+                        godot_error!("Incorrect argument type {:?} for argument {}",
+                            _variant.get_type(),
+                            offset);
                         return $crate::Variant::new().to_sys();
                     };
 

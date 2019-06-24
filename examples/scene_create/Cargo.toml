@@ -1,0 +1,11 @@
+[package]
+name = "scene_create"
+version = "0.1.0"
+authors = ["tom.leys <tom@crump-leys.com>", "karroffel <therzog@mail.de>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../../gdnative" }
+euclid = "0.19.6"

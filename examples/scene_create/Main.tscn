@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Parent.gdns" type="Script" id=1]
+[ext_resource path="res://Panel.gd" type="Script" id=2]
+
+[node name="Main" type="Spatial"]
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 0.707107, 0.5, -0.5, 0, 0.707107, 0.707107, 0.707107, -0.5, 0.5, -9.65923, 12.7955, 9.30623 )
+current = true
+
+[node name="Parent" type="Spatial" parent="."]
+script = ExtResource( 1 )
+
+[node name="Ui" type="Node2D" parent="."]
+
+[node name="Canvas" type="CanvasLayer" parent="Ui"]
+
+[node name="Panel" type="Panel" parent="Ui/Canvas"]
+margin_top = 533.0
+margin_right = 1023.0
+margin_bottom = 598.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource( 2 )
+
+[node name="Add" type="Button" parent="Ui/Canvas/Panel"]
+margin_left = 28.8019
+margin_top = 18.0811
+margin_right = 160.802
+margin_bottom = 48.0811
+text = "Add Child"
+
+[node name="Remove" type="Button" parent="Ui/Canvas/Panel"]
+margin_left = 179.803
+margin_top = 19.4414
+margin_right = 311.803
+margin_bottom = 49.4414
+text = "Remove Child"
+
+[node name="Label" type="Label" parent="Ui/Canvas/Panel"]
+margin_left = 345.0
+margin_top = 21.0
+margin_right = 580.0
+margin_bottom = 40.0
+text = "No Children have been created yet"
+[connection signal="pressed" from="Ui/Canvas/Panel/Add" to="Ui/Canvas/Panel" method="_on_Add_pressed"]
+[connection signal="pressed" from="Ui/Canvas/Panel/Remove" to="Ui/Canvas/Panel" method="_on_Remove_pressed"]
