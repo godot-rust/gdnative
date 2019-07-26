@@ -15,7 +15,6 @@ pub unsafe trait GodotObject {
 // This function assumes the godot_object is reference counted.
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
-    use std::ptr;
     let api = crate::get_api();
     let addref_method = ReferenceMethodTable::unchecked_get().reference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
@@ -37,7 +36,6 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
 // This function assumes the godot_object is reference counted.
 pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
     use crate::ReferenceMethodTable;
-    use std::ptr;
     let unref_method = ReferenceMethodTable::unchecked_get().unreference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut last_reference = false;
@@ -55,7 +53,6 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
 // This function assumes the godot_object is reference counted.
 pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
-    use std::ptr;
     let init_method = ReferenceMethodTable::unchecked_get().init_ref;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
