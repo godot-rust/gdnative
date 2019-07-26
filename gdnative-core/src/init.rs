@@ -65,10 +65,7 @@ impl InitHandle {
                     this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
                 ) -> *mut libc::c_void {
-                    use std::boxed::Box;
                     use std::cell::RefCell;
-
-                    use crate::GodotObject;
 
                     let val = C::init(C::Base::from_sys(this));
 
@@ -89,7 +86,6 @@ impl InitHandle {
                     _method_data: *mut libc::c_void,
                     user_data: *mut libc::c_void,
                 ) -> () {
-                    use std::boxed::Box;
                     use std::cell::RefCell;
 
                     let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
@@ -141,10 +137,7 @@ impl InitHandle {
                     this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
                 ) -> *mut libc::c_void {
-                    use std::boxed::Box;
                     use std::cell::RefCell;
-
-                    use crate::GodotObject;
 
                     let val = C::init(C::Base::from_sys(this));
 
@@ -165,7 +158,6 @@ impl InitHandle {
                     _method_data: *mut libc::c_void,
                     user_data: *mut libc::c_void,
                 ) -> () {
-                    use std::boxed::Box;
                     use std::cell::RefCell;
 
                     let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
@@ -345,7 +337,6 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     pub fn add_signal(&self, signal: Signal) {
-        use std::ptr;
         unsafe {
             let name = GodotString::from_str(signal.name);
             let mut args = signal
