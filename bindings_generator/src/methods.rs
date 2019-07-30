@@ -455,6 +455,7 @@ fn generate_return_pre(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
         | &Ty::ColorArray
         | &Ty::Int32Array
         | &Ty::Float32Array
+        | &Ty::Rid
         => {
             writeln!(w, r#"
     let mut ret = {sys_ty}::default();
@@ -463,7 +464,7 @@ fn generate_return_pre(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
             )?;
         }
         &Ty::Object(_) // TODO: double check
-        | &Ty::Rid => {
+        => {
             writeln!(w, r#"
     let mut ret: *mut sys::godot_object = ptr::null_mut();
     let ret_ptr = (&mut ret) as *mut _;"#
@@ -518,11 +519,7 @@ fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
         &Ty::Rid => {
             writeln!(
                 w,
-                r#"
-    let mut rid = Rid::default();
-    (gd_api.godot_rid_new_with_resource)(rid.mut_sys(), ret);
-
-    rid"#
+                r#"    Rid::from_sys(ret)"#
             )?;
         }
         &Ty::String
