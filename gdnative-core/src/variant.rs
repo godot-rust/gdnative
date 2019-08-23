@@ -845,3 +845,23 @@ impl ToVariant for String {
         }
     }
 }
+
+impl ToVariant for bool {
+    fn to_variant(&self) -> Variant {
+        Variant::from_bool(*self)
+    }
+
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        variant.try_to_bool()
+    }
+}
+
+impl ToVariant for Variant {
+    fn to_variant(&self) -> Variant {
+        self.clone()
+    }
+
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        Some(variant.clone())
+    }
+}
