@@ -845,3 +845,13 @@ impl ToVariant for String {
         }
     }
 }
+
+impl ToVariant for Variant {
+    fn to_variant(&self) -> Variant {
+        self.clone()
+    }
+
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        Some(variant.clone())
+    }
+}
