@@ -105,15 +105,27 @@ pub struct GodotMethod {
     pub arguments: Vec<GodotArgument>,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct MethodName<'a> {
+    pub rust_name: &'a str,
+    pub original_name: &'a str,
+}
+
 impl GodotMethod {
-    pub fn get_name(&self) -> &str {
+    pub fn get_name(&self) -> MethodName {
         // GDScript and NativeScript have ::new methods but we want to reserve
         // the name for the constructors.
         if &self.name == "new" {
-            return "_new";
+            return MethodName {
+                rust_name: "_new",
+                original_name: "new",
+            };
         }
 
-        &self.name
+        MethodName {
+            rust_name: &self.name,
+            original_name: &self.name,
+        }
     }
 
     pub fn get_return_type(&self) -> Ty {

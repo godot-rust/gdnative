@@ -22,6 +22,7 @@ pub extern "C" fn run_tests(
     status &= gdnative::test_vector3_variants();
 
     status &= test_constructor();
+    status &= test_underscore_method_binding();
 
     gdnative::Variant::from_bool(status).forget()
 }
@@ -42,6 +43,21 @@ fn test_constructor() -> bool {
     }
 
     return true;
+}
+
+fn test_underscore_method_binding() -> bool {
+    println!(" -- test_underscore_method_binding");
+
+    let ok = std::panic::catch_unwind(|| {
+        let table = gdnative::NativeScriptMethodTable::get(get_api());
+        assert_ne!(0, table._new as usize);
+    }).is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_underscore_method_binding failed");
+    }
+
+    ok
 }
 
 godot_gdnative_init!();

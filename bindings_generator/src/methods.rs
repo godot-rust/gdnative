@@ -27,7 +27,7 @@ pub struct {name}MethodTable {{
     )?;
 
     for method in &class.methods {
-        let method_name = method.get_name();
+        let MethodName { rust_name: method_name, .. } = method.get_name();
         if method_name == "free" {
             continue;
         }
@@ -49,14 +49,14 @@ impl {name}MethodTable {{
         name = class.name
     )?;
     for method in &class.methods {
-        let method_name = method.get_name();
+        let MethodName { rust_name: method_name, .. } = method.get_name();
         if method_name == "free" {
             continue;
         }
         writeln!(
             output,
             "            {}: 0 as *mut sys::godot_method_bind,",
-            method.get_name()
+            method_name,
         )?;
     }
     let lookup_name: String = if has_underscore {
@@ -97,14 +97,15 @@ impl {name}MethodTable {{
         lookup_name = lookup_name,
     )?;
     for method in &class.methods {
-        let method_name = method.get_name();
+        let MethodName { rust_name: method_name, original_name } = method.get_name();
         if method_name == "free" {
             continue;
         }
 
         writeln!(output,
-r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class_name, "{method_name}\0".as_ptr() as *const c_char );"#,
-            method_name = method_name
+r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class_name, "{original_name}\0".as_ptr() as *const c_char );"#,
+            method_name = method_name,
+            original_name = original_name,
         )?;
     }
 
@@ -124,7 +125,7 @@ pub fn generate_method_impl(
     class: &GodotClass,
     method: &GodotMethod,
 ) -> GeneratorResult {
-    let method_name = method.get_name();
+    let MethodName { rust_name: method_name, .. } = method.get_name();
 
     if skip_method(&method_name) {
         return Ok(());
@@ -259,7 +260,7 @@ pub fn generate_methods(
 ) -> GeneratorResult {
     if let Some(class) = api.find_class(class_name) {
         'method: for method in &class.methods {
-            let method_name = method.get_name();
+            let MethodName { rust_name: method_name, .. } = method.get_name();
 
             if skip_method(&method_name) {
                 continue;
