@@ -106,6 +106,10 @@ fn generate_class_bindings(
             generate_singleton_getter(output_types_impls, class)?;
         }
 
+        if class.name == "GDNativeLibrary" {
+            generate_gdnative_library_singleton_getter(output_types_impls, class)?;
+        }
+
         if class.instanciable {
             if class.is_refcounted() {
                 generate_reference_ctor(output_types_impls, class)?;
@@ -157,6 +161,10 @@ fn generate_class_bindings(
 
         if class.is_refcounted() && class.instanciable {
             generate_drop(output_trait_impls, class)?;
+        }
+
+        if class.instanciable {
+            generate_instanciable_impl(output_trait_impls, class)?;
         }
     }
 

@@ -1,10 +1,12 @@
 use crate::get_api;
-use crate::object;
 use crate::sys;
+use crate::object;
+use crate::Variant;
+use crate::ToVariant;
+use crate::GodotString;
 use crate::GodotObject;
+use crate::Instanciable;
 use std::cell::RefCell;
-use std::marker::PhantomData;
-use std::ops::Deref;
 
 /// Trait used for describing and initializing a Godot script class.
 ///
@@ -60,71 +62,116 @@ pub trait NativeClassMethods: NativeClass {
     fn register(builder: &crate::init::ClassBuilder<Self>);
 }
 
-/// A reference to a rust native script.
-pub struct NativeRef<T: NativeClass> {
-    this: *mut sys::godot_object,
-    _marker: PhantomData<T>,
+/// A reference to a GodotObject with a rust NativeClass attached.
+pub struct Instance<T: NativeClass> {
+    this: T::Base,
+    script: *mut RefCell<T>,
 }
 
-impl<T: NativeClass> NativeRef<T> {
-    /// Try to cast into a godot object reference.
-    pub fn cast<O>(&self) -> Option<O>
+impl<T: NativeClass> Instance<T> {
+    /// Creates a `T::Base` with the script `T` attached. Both `T::Base` and `T` must have zero
+    /// argument constructors.
+    /// 
+    /// Must be called after the library is initialized.
+    pub fn new() -> Self
     where
-        O: GodotObject,
+        T::Base: Instanciable,
     {
-        object::godot_cast::<O>(self.this)
-    }
-
-    /// Creates a new reference to the same object.
-    pub fn new_ref(&self) -> Self {
         unsafe {
-            object::add_ref(self.this);
+            let gd_api = get_api();
+            
+            // The API functions take NUL-terminated C strings. &CStr is not used for its runtime cost.
+            let class_name = b"NativeScript\0".as_ptr() as *const libc::c_char;
+            let ctor = (gd_api.godot_get_class_constructor)(class_name).unwrap();
+            let set_class_name = (gd_api.godot_method_bind_get_method)(class_name, b"set_class_name\0".as_ptr() as *const libc::c_char);
+            let set_library = (gd_api.godot_method_bind_get_method)(class_name, b"set_library\0".as_ptr() as *const libc::c_char);
+            let object_set_script = crate::ObjectMethodTable::get(gd_api).set_script;
 
-            Self {
-                this: self.this,
-                _marker: PhantomData,
+            let native_script = ctor();
+            object::init_ref_count(native_script);
+
+
+            let script_class_name = GodotString::from(T::class_name());
+            let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
+            (gd_api.godot_method_bind_ptrcall)(set_class_name, native_script, args.as_mut_ptr(), std::ptr::null_mut());
+
+            let mut args: [*const libc::c_void; 1] = [crate::get_gdnative_library_sys()];
+            (gd_api.godot_method_bind_ptrcall)(set_library, native_script, args.as_mut_ptr(), std::ptr::null_mut());
+
+            let this = T::Base::construct();
+
+            assert_ne!(std::ptr::null_mut(), this.to_sys(), "base object should not be null");
+
+            let mut args: [*const libc::c_void; 1] = [native_script as *const _];
+            (gd_api.godot_method_bind_ptrcall)(object_set_script, this.to_sys(), args.as_mut_ptr(), std::ptr::null_mut());
+
+            let script = (gd_api.godot_nativescript_get_userdata)(this.to_sys()) as *mut RefCell<T>;
+
+            assert_ne!(std::ptr::null_mut(), script, "script instance should not be null");
+
+            object::unref(native_script);
+
+            Instance {
+                this,
+                script,
             }
         }
     }
 
-    fn get_impl(&self) -> &RefCell<T> {
-        unsafe {
-            let api = get_api();
-            let ud = (api.godot_nativescript_get_userdata)(self.this);
-            &*(ud as *const _ as *const RefCell<T>)
-        }
-    }
-
-    #[doc(hidden)]
-    pub unsafe fn sys(&self) -> *mut sys::godot_object {
+    pub fn into_base(self) -> T::Base {
         self.this
     }
 
-    #[doc(hidden)]
-    pub unsafe fn from_sys(ptr: *mut sys::godot_object) -> Self {
-        object::add_ref(ptr);
-
-        NativeRef {
-            this: ptr,
-            _marker: PhantomData,
-        }
-    }
-}
-
-impl<T: NativeClass> Deref for NativeRef<T> {
-    type Target = RefCell<T>;
-    fn deref(&self) -> &Self::Target {
-        self.get_impl()
-    }
-}
-
-impl<T: NativeClass> Drop for NativeRef<T> {
-    fn drop(&mut self) {
+    pub fn script(&self) -> &RefCell<T> {
         unsafe {
-            if object::unref(self.this) {
-                (get_api().godot_object_destroy)(self.this);
-            }
+            &*self.script
         }
+    }
+
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value. Can be used on reference counted types for multiple times.
+    pub fn apply<F, U>(&self, op: F) -> U
+    where
+        T::Base: Clone,
+        F: FnOnce(&mut T, T::Base) -> U,
+    {
+        let mut script = self.script().borrow_mut();
+        op(&mut *script, self.this.clone())
+    }
+
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value. Can be used for multiple times via aliasing. For reference-counted types
+    /// behaves like the safe `apply`, which should be preferred.
+    pub unsafe fn apply_aliased<F, U>(&self, op: F) -> U
+    where
+        F: FnOnce(&mut T, T::Base) -> U,
+    {
+        let mut script = self.script().borrow_mut();
+        op(&mut *script, T::Base::from_sys(self.this.to_sys()))
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn from_sys_unchecked(ptr: *mut sys::godot_object) -> Self {
+        let api = get_api();
+        let user_data = (api.godot_nativescript_get_userdata)(ptr);
+        Self::from_raw(ptr, user_data)
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn from_raw(ptr: *mut sys::godot_object, user_data: *mut libc::c_void) -> Self {
+        let this = T::Base::from_sys(ptr);
+        let script = user_data as *const _ as *mut RefCell<T>;
+        Instance { this, script }
+    }
+}
+
+impl<T> ToVariant for Instance<T>
+where
+    T: NativeClass,
+    T::Base: ToVariant,
+{
+    fn to_variant(&self) -> Variant {
+        self.this.to_variant()
     }
 }
 
@@ -308,6 +355,26 @@ godot_class! {
 
         export fn _ready(&mut self, _owner: super::Object) {
             godot_print!("hello, world.");
+        }
+    }
+}
+
+#[cfg(test)]
+godot_class! {
+    class TestReturnInstanceClass: super::Object {
+
+        fields {
+        }
+
+        setup(_builder) {}
+
+        constructor(_owner: super::Object) {
+            TestReturnInstanceClass {
+            }
+        }
+
+        export fn answer(&mut self, _owner: super::Object) -> Instance<TestClass> {
+            Instance::new()
         }
     }
 }

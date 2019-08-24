@@ -32,6 +32,7 @@ macro_rules! godot_gdnative_init {
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
             unsafe {
                 $crate::GODOT_API = Some($crate::GodotApi::from_raw((*options).api_struct));
+                $crate::GDNATIVE_LIBRARY_SYS = Some((*options).gd_native_library);
             }
             let api = $crate::get_api();
             // Force the initialization of the method table of common types. This way we can
@@ -393,11 +394,10 @@ macro_rules! godot_wrap_method {
                 args: *mut *mut $crate::sys::godot_variant
             ) -> $crate::sys::godot_variant {
 
-                use std::cell::RefCell;
                 use std::panic::{self, AssertUnwindSafe};
-                use $crate::GodotObject;
+                use $crate::Instance;
 
-                let $owner: $owner_ty = <$type_name as $crate::NativeClass>::Base::from_sys(this);
+                let __instance: Instance<$type_name> = Instance::from_raw(this, user_data);
 
                 let num_params = godot_wrap_method_parameter_count!($($pname,)*);
                 if num_args != num_params {
@@ -420,11 +420,10 @@ macro_rules! godot_wrap_method {
                     offset += 1;
                 )*
 
-                let __rust_val = &*(user_data as *mut RefCell<$type_name>);
-                let mut __rust_val = __rust_val.borrow_mut();
-
-                let rust_ret = match panic::catch_unwind(AssertUnwindSafe(|| {
-                    __rust_val.$method_name($owner, $($pname,)*)
+                let rust_ret = match panic::catch_unwind(AssertUnwindSafe(move || {
+                    let ret = __instance.apply_aliased(|__rust_val, $owner| __rust_val.$method_name($owner, $($pname,)*));
+                    std::mem::drop(__instance);
+                    ret
                 })) {
                     Ok(val) => val,
                     Err(err) => {

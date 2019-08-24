@@ -24,6 +24,8 @@ pub extern "C" fn run_tests(
     status &= test_constructor();
     status &= test_underscore_method_binding();
 
+    status &= test_rust_class_construction();
+
     gdnative::Variant::from_bool(status).forget()
 }
 
@@ -60,6 +62,50 @@ fn test_underscore_method_binding() -> bool {
     ok
 }
 
+struct Foo(i64);
+
+impl NativeClass for Foo {
+    type Base = Reference;
+    fn class_name() -> &'static str {
+        "Foo"
+    }
+    fn init(_owner: Reference) -> Foo {
+        Foo(42)
+    }
+    fn register_properties(_builder: &init::ClassBuilder<Self>) {
+    }
+}
+
+#[methods]
+impl Foo {
+    #[export]
+    fn answer(&mut self, _owner: Reference) -> i64 {
+        self.0
+    }
+}
+
+fn test_rust_class_construction() -> bool {
+    println!(" -- test_rust_class_construction");
+
+    let ok = std::panic::catch_unwind(|| {
+        let foo = Instance::<Foo>::new();
+        assert_eq!(42, foo.apply(|foo, owner| {
+            foo.answer(owner)
+        }));
+        assert_eq!(Some(42), unsafe { foo.into_base().call("answer".into(), &[]) }.try_to_i64());
+    }).is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_rust_class_construction failed");
+    }
+
+    ok
+}
+
+fn init(handle: init::InitHandle) {
+    handle.add_class::<Foo>();
+}
+
 godot_gdnative_init!();
-godot_nativescript_init!();
+godot_nativescript_init!(init);
 godot_gdnative_terminate!();

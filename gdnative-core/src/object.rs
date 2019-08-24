@@ -12,6 +12,11 @@ pub unsafe trait GodotObject {
     unsafe fn from_sys(obj: *mut sys::godot_object) -> Self;
 }
 
+/// GodotObjects that have a zero argument constructor.
+pub trait Instanciable: GodotObject {
+    fn construct() -> Self;
+}
+
 // This function assumes the godot_object is reference counted.
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
