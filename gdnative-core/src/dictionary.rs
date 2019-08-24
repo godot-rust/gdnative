@@ -2,6 +2,7 @@ use crate::get_api;
 use crate::sys;
 use crate::GodotString;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
 use std::fmt;
@@ -126,6 +127,9 @@ impl ToVariant for Dictionary {
     fn to_variant(&self) -> Variant {
         Variant::from_dictionary(self)
     }
+}
+
+impl FromVariant for Dictionary {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_dictionary()
     }

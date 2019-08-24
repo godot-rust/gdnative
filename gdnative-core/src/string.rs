@@ -1,6 +1,7 @@
 use crate::get_api;
 use crate::sys;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 
 use std::cmp::Ordering;
@@ -204,6 +205,9 @@ impl ToVariant for GodotString {
     fn to_variant(&self) -> Variant {
         Variant::from_godot_string(self)
     }
+}
+
+impl FromVariant for GodotString {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_godot_string()
     }

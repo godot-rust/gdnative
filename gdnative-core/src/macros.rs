@@ -408,7 +408,7 @@ macro_rules! godot_wrap_method {
                 let mut offset = 0;
                 $(
                     let _variant: &$crate::Variant = ::std::mem::transmute(&mut *(*args).offset(offset));
-                    let $pname = if let Some(val) = <$pty as $crate::ToVariant>::from_variant(_variant) {
+                    let $pname = if let Some(val) = <$pty as $crate::FromVariant>::from_variant(_variant) {
                         val
                     } else {
                         godot_error!("Incorrect argument type {:?} for argument {}",

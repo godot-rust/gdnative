@@ -2,6 +2,7 @@ use crate::get_api;
 use crate::sys;
 use crate::GodotString;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use std::fmt;
 
@@ -148,6 +149,9 @@ impl ToVariant for NodePath {
     fn to_variant(&self) -> Variant {
         Variant::from_node_path(self)
     }
+}
+
+impl FromVariant for NodePath {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_node_path()
     }

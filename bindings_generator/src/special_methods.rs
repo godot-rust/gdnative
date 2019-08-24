@@ -103,6 +103,8 @@ unsafe impl GodotObject for {name} {{
 
 impl ToVariant for {name} {{
     fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
+}}
+impl FromVariant for {name} {{
     fn from_variant(variant: &Variant) -> Option<Self> {{ variant.try_to_object::<Self>() }}
 }}"#,
         name = class.name,
