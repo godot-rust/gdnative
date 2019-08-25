@@ -6,7 +6,9 @@ use crate::ToVariant;
 use crate::GodotString;
 use crate::GodotObject;
 use crate::Instanciable;
-use std::cell::RefCell;
+use crate::UserData;
+use crate::Map;
+use crate::MapMut;
 
 /// Trait used for describing and initializing a Godot script class.
 ///
@@ -40,6 +42,11 @@ pub trait NativeClass: Sized {
     /// implementation does**.
     type Base: GodotObject;
 
+    /// User-data wrapper type of the class.
+    /// 
+    /// See module-level documentation on `user_data` for more info.
+    type UserData: UserData<Target=Self>;
+
     /// The name of the class.
     ///
     /// In GDNative+NativeScript many classes can be defined in one dynamic library.
@@ -63,9 +70,10 @@ pub trait NativeClassMethods: NativeClass {
 }
 
 /// A reference to a GodotObject with a rust NativeClass attached.
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub struct Instance<T: NativeClass> {
     this: T::Base,
-    script: *mut RefCell<T>,
+    script: T::UserData,
 }
 
 impl<T: NativeClass> Instance<T> {
@@ -105,9 +113,11 @@ impl<T: NativeClass> Instance<T> {
             let mut args: [*const libc::c_void; 1] = [native_script as *const _];
             (gd_api.godot_method_bind_ptrcall)(object_set_script, this.to_sys(), args.as_mut_ptr(), std::ptr::null_mut());
 
-            let script = (gd_api.godot_nativescript_get_userdata)(this.to_sys()) as *mut RefCell<T>;
+            let script_ptr = (gd_api.godot_nativescript_get_userdata)(this.to_sys()) as *const libc::c_void;
 
-            assert_ne!(std::ptr::null_mut(), script, "script instance should not be null");
+            assert_ne!(std::ptr::null(), script_ptr, "script instance should not be null");
+
+            let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
 
             object::unref(native_script);
 
@@ -122,32 +132,48 @@ impl<T: NativeClass> Instance<T> {
         self.this
     }
 
-    pub fn script(&self) -> &RefCell<T> {
-        unsafe {
-            &*self.script
-        }
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value. Can be used on reference counted types for multiple times.
+    pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
+    where
+        T::Base: Clone,
+        T::UserData: Map,
+        F: FnOnce(&T, T::Base) -> U,
+    {
+        self.script.map(|script| op(script, self.this.clone()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
-    pub fn apply<F, U>(&self, op: F) -> U
+    pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::Base: Clone,
+        T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
     {
-        let mut script = self.script().borrow_mut();
-        op(&mut *script, self.this.clone())
+        self.script.map_mut(|script| op(script, self.this.clone()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used for multiple times via aliasing. For reference-counted types
-    /// behaves like the safe `apply`, which should be preferred.
-    pub unsafe fn apply_aliased<F, U>(&self, op: F) -> U
+    /// behaves like the safe `map`, which should be preferred.
+    pub unsafe fn map_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
+        T::UserData: Map,
+        F: FnOnce(&T, T::Base) -> U,
+    {
+        self.script.map(|script| op(script, T::Base::from_sys(self.this.to_sys())))
+    }
+
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value. Can be used for multiple times via aliasing. For reference-counted types
+    /// behaves like the safe `map`, which should be preferred.
+    pub unsafe fn map_mut_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
+    where
+        T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
     {
-        let mut script = self.script().borrow_mut();
-        op(&mut *script, T::Base::from_sys(self.this.to_sys()))
+        self.script.map_mut(|script| op(script, T::Base::from_sys(self.this.to_sys())))
     }
 
     #[doc(hidden)]
@@ -160,8 +186,22 @@ impl<T: NativeClass> Instance<T> {
     #[doc(hidden)]
     pub unsafe fn from_raw(ptr: *mut sys::godot_object, user_data: *mut libc::c_void) -> Self {
         let this = T::Base::from_sys(ptr);
-        let script = user_data as *const _ as *mut RefCell<T>;
+        let script_ptr = user_data as *const libc::c_void;
+        let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
         Instance { this, script }
+    }
+}
+
+impl<T> Clone for Instance<T>
+where
+    T: NativeClass,
+    T::Base: Clone,
+{
+    fn clone(&self) -> Self {
+        Instance {
+            this: self.this.clone(),
+            script: self.script.clone(),
+        }
     }
 }
 
@@ -287,7 +327,7 @@ macro_rules! godot_class_build_methods {
 #[macro_export]
 macro_rules! godot_class {
     (
-class $name:ident: $owner:ty {
+class $name:ident ($user_data:ty) : $owner:ty {
     fields {
         $(
             $(#[$fattr:meta])*
@@ -323,6 +363,7 @@ class $name:ident: $owner:ty {
 
         impl $crate::NativeClass for $name {
             type Base = $owner;
+            type UserData = $user_data;
 
             fn class_name() -> &'static str { stringify!($name) }
 
@@ -332,6 +373,36 @@ class $name:ident: $owner:ty {
 
             fn register_properties($builder: &$crate::init::ClassBuilder<Self>) {
                 $pbody
+            }
+        }
+    );
+    (
+class $name:ident: $owner:ty {
+    fields {
+        $(
+            $(#[$fattr:meta])*
+            $fname:ident : $fty:ty,
+        )*
+    }
+    setup($builder:ident) $pbody:block
+    constructor($owner_name:ident : $owner_ty:ty) $construct:block
+
+    $($tt:tt)*
+}
+    ) => (
+        godot_class! {
+            class $name ($crate::user_data::DefaultUserData<$name>) : $owner {
+                fields {
+                    $(
+                        $(#[$fattr])*
+                        $fname : $fty,
+                    )*
+                }
+
+                setup($builder) $pbody
+                constructor($owner_name : $owner_ty) $construct
+
+                $($tt)*
             }
         }
     );

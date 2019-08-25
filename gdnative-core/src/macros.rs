@@ -324,14 +324,11 @@ macro_rules! godot_wrap_constructor {
             this: *mut $crate::sys::godot_object,
             _method_data: *mut $crate::libc::c_void,
         ) -> *mut $crate::libc::c_void {
-            use std::boxed::Box;
-            use std::cell::RefCell;
-
             // let val = $c($crate::NativeInstanceHeader{ this: this });
             let val = $c();
 
-            let wrapper = Box::new(RefCell::new(val));
-            Box::into_raw(wrapper) as *mut _
+            let wrapper = <$_name as $crate::NativeClass>::UserData::new(val);
+            wrapper.into_user_data() as *mut $crate::libc::c_void
         }
 
         constructor
@@ -349,10 +346,7 @@ macro_rules! godot_wrap_destructor {
             _method_data: *mut $crate::libc::c_void,
             user_data: *mut $crate::libc::c_void,
         ) -> () {
-            use std::boxed::Box;
-            use std::cell::RefCell;
-
-            let wrapper: Box<RefCell<$name>> = unsafe { Box::from_raw(user_data as *mut _) };
+            let wrapper = <$_name as $crate::NativeClass>::UserData::consume_user_data_unchecked(user_data);
             drop(wrapper)
         }
 
@@ -371,15 +365,14 @@ macro_rules! godot_wrap_method_parameter_count {
     }
 }
 
-/// Convenience macro to wrap an object's method into a function pointer
-/// that can be passed to the engine when registering a class.
+#[doc(hidden)]
 #[macro_export]
-macro_rules! godot_wrap_method {
-    // "proper" definition
+macro_rules! godot_wrap_method_inner {
     (
         $type_name:ty,
+        $map_method:ident,
         fn $method_name:ident(
-            &mut $self:ident,
+            $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
         ) -> $retty:ty
@@ -421,7 +414,7 @@ macro_rules! godot_wrap_method {
                 )*
 
                 let rust_ret = match panic::catch_unwind(AssertUnwindSafe(move || {
-                    let ret = __instance.apply_aliased(|__rust_val, $owner| __rust_val.$method_name($owner, $($pname,)*));
+                    let ret = __instance.$map_method(|__rust_val, $owner| __rust_val.$method_name($owner, $($pname,)*));
                     std::mem::drop(__instance);
                     ret
                 })) {
@@ -431,35 +424,67 @@ macro_rules! godot_wrap_method {
                     }
                 };
 
-                <$retty as $crate::ToVariant>::to_variant(&rust_ret).forget()
+                match rust_ret {
+                    Ok(val) => <$retty as $crate::ToVariant>::to_variant(&val).forget(),
+                    Err(err) => {
+                        godot_error!("gdnative-core: method call failed with error: {:?}", err);
+                        $crate::Variant::new().to_sys()
+                    } 
+                }
             }
 
             method
         }
     };
-    // non mut self
+}
+
+/// Convenience macro to wrap an object's method into a function pointer
+/// that can be passed to the engine when registering a class.
+#[macro_export]
+macro_rules! godot_wrap_method {
+    // mutable
     (
         $type_name:ty,
         fn $method_name:ident(
-            &self,
+            &mut $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
         ) -> $retty:ty
     ) => {
-        godot_wrap_method!(
+        godot_wrap_method_inner!(
             $type_name,
+            map_mut_aliased,
             fn $method_name(
-                &mut self,
-                $owner : $owner_ty
+                $self,
+                $owner: $owner_ty
                 $(,$pname : $pty)*
             ) -> $retty
         )
     };
-    // non mut self without return type
+    // immutable
     (
         $type_name:ty,
         fn $method_name:ident(
-            &self,
+            & $self:ident,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+        ) -> $retty:ty
+    ) => {
+        godot_wrap_method_inner!(
+            $type_name,
+            map_aliased,
+            fn $method_name(
+                $self,
+                $owner: $owner_ty
+                $(,$pname : $pty)*
+            ) -> $retty
+        )
+    };
+    // mutable without return type
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            &mut $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
         )
@@ -467,17 +492,17 @@ macro_rules! godot_wrap_method {
         godot_wrap_method!(
             $type_name,
             fn $method_name(
-                &mut self,
-                $owner : $owner_ty
+                &mut $self,
+                $owner: $owner_ty
                 $(,$pname : $pty)*
             ) -> ()
         )
     };
-    // without return type
+    // immutable without return type
     (
         $type_name:ty,
         fn $method_name:ident(
-            &mut self,
+            & $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
         )
@@ -485,8 +510,8 @@ macro_rules! godot_wrap_method {
         godot_wrap_method!(
             $type_name,
             fn $method_name(
-                &mut self,
-                $owner : $owner_ty
+                & $self,
+                $owner: $owner_ty
                 $(,$pname : $pty)*
             ) -> ()
         )

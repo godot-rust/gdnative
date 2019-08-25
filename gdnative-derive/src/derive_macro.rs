@@ -4,6 +4,7 @@ use syn::{Data, DeriveInput, Fields, Ident, Type};
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
     pub(crate) base: Type,
+    pub(crate) user_data: Type,
 }
 
 pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
@@ -26,6 +27,19 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
     let base = syn::parse::<Type>(inherit_attr.tts.clone().into())
         .expect("`inherits` attribute requires the base type as an argument.");
 
+    let user_data = input
+        .attrs
+        .iter()
+        .find(|a| a.path.segments[0].ident == "user_data")
+        .map(|attr| {
+            syn::parse::<Type>(attr.tts.clone().into())
+                .expect("`userdata` attribute requires a type as an argument.")
+        })
+        .unwrap_or_else(|| {
+            syn::parse::<Type>(quote! { ::gdnative::user_data::DefaultUserData<#ident> }.into())
+                .expect("quoted tokens should be a valid type")
+        });
+
     // make sure it's a struct
     let struct_data = if let Data::Struct(data) = input.data {
         data
@@ -38,5 +52,5 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
         // TODO
     }
 
-    DeriveData { name: ident, base }
+    DeriveData { name: ident, base, user_data }
 }

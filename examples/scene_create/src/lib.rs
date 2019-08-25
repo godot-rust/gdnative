@@ -19,6 +19,9 @@ struct SceneCreate {
     children_spawned: u32,
 }
 
+// Assume godot objects are safe to Send
+unsafe impl Send for SceneCreate { }
+
 // Demonstrates Scene creation, calling to/from gdscript
 //
 //   1. Child scene is created when spawn_one is called
