@@ -5,11 +5,15 @@ use crate::ToVariant;
 use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
+use crate::access::{MaybeUnaligned, Aligned};
 
 use std::mem::transmute;
 
 /// A reference-counted vector of `ColorArray` that uses Godot's pool allocator.
 pub struct ColorArray(pub(crate) sys::godot_pool_color_array);
+
+pub type Read<'a> = Aligned<ReadGuard<'a>>;
+pub type Write<'a> = Aligned<WriteGuard<'a>>;
 
 impl ColorArray {
     /// Creates an empty `ColorArray`.
@@ -88,6 +92,22 @@ impl ColorArray {
         unsafe { (get_api().godot_pool_color_array_size)(&self.0) }
     }
 
+    pub fn read<'a>(&'a self) -> Read<'a> {
+        unsafe {
+            MaybeUnaligned::new(ReadGuard::new(self.sys()))
+                .try_into_aligned()
+                .expect("Pool array access should be aligned. This indicates a bug in Godot")
+        }
+    }
+
+    pub fn write<'a>(&'a mut self) -> Write<'a> {
+        unsafe {
+            MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
+                .try_into_aligned()
+                .expect("Pool array access should be aligned. This indicates a bug in Godot")
+        }
+    }
+
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_pool_color_array {
         &self.0
@@ -122,3 +142,62 @@ impl FromVariant for ColorArray {
         variant.try_to_color_array()
     }
 }
+
+define_access_guard! {
+    pub struct ReadGuard<'a> : sys::godot_pool_color_array_read_access {
+        access = godot_pool_color_array_read(*const sys::godot_pool_color_array),
+        len = godot_pool_color_array_size,
+    }
+    Guard<Target=Color> => godot_pool_color_array_read_access_ptr -> *const sys::godot_color;
+    Drop => godot_pool_color_array_read_access_destroy;
+    Clone => godot_pool_color_array_read_access_copy;
+}
+
+define_access_guard! {
+    pub struct WriteGuard<'a> : sys::godot_pool_color_array_write_access {
+        access = godot_pool_color_array_write(*mut sys::godot_pool_color_array),
+        len = godot_pool_color_array_size,
+    }
+    Guard<Target=Color> + WritePtr => godot_pool_color_array_write_access_ptr -> *mut sys::godot_color;
+    Drop => godot_pool_color_array_write_access_destroy;
+}
+
+godot_test!(
+    test_color_array_access {
+        let mut arr = ColorArray::new();
+        arr.push(&Color::rgb(1.0, 0.0, 0.0));
+        arr.push(&Color::rgb(0.0, 1.0, 0.0));
+        arr.push(&Color::rgb(0.0, 0.0, 1.0));
+        
+        let original_read = {
+            let read = arr.read();
+            assert_eq!(&[
+                Color::rgb(1.0, 0.0, 0.0),
+                Color::rgb(0.0, 1.0, 0.0),
+                Color::rgb(0.0, 0.0, 1.0),
+            ], read.as_slice());
+            read.clone()
+        };
+
+        let mut cow_arr = arr.new_ref();
+
+        {
+            let mut write = cow_arr.write();
+            assert_eq!(3, write.len());
+            for i in write.as_mut_slice() {
+                i.b = 1.0;
+            }
+        }
+
+        assert_eq!(Color::rgb(1.0, 0.0, 1.0), cow_arr.get(0));
+        assert_eq!(Color::rgb(0.0, 1.0, 1.0), cow_arr.get(1));
+        assert_eq!(Color::rgb(0.0, 0.0, 1.0), cow_arr.get(2));
+        
+        // the write shouldn't have affected the original array
+        assert_eq!(&[
+            Color::rgb(1.0, 0.0, 0.0),
+            Color::rgb(0.0, 1.0, 0.0),
+            Color::rgb(0.0, 0.0, 1.0),
+        ], original_read.as_slice());
+    }
+);
