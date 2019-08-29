@@ -688,6 +688,25 @@ godot_test!(
         assert!(v_m1.try_to_f64().is_none());
         assert!(v_m1.try_to_array().is_none());
     }
+
+    test_variant_bool {
+        let v_true = Variant::from_bool(true);
+        assert_eq!(v_true.get_type(), VariantType::Bool);
+
+        assert!(!v_true.is_nil());
+        assert_eq!(v_true.try_to_bool(), Some(true));
+        assert!(v_true.try_to_f64().is_none());
+        assert!(v_true.try_to_array().is_none());
+
+        let v_false = Variant::from_bool(false);
+        assert_eq!(v_false.get_type(), VariantType::Bool);
+
+        assert!(!v_false.is_nil());
+        assert_eq!(v_false.try_to_bool(), Some(false));
+        assert!(v_false.try_to_f64().is_none());
+        assert!(v_false.try_to_array().is_none());
+
+    }
 );
 
 /// Types that can be converted to a `Variant`.
