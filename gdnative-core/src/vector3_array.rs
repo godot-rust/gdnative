@@ -1,6 +1,7 @@
 use crate::get_api;
 use crate::sys;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
 use crate::Vector3;
@@ -114,6 +115,9 @@ impl ToVariant for Vector3Array {
     fn to_variant(&self) -> Variant {
         Variant::from_vector3_array(self)
     }
+}
+
+impl FromVariant for Vector3Array {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_vector3_array()
     }

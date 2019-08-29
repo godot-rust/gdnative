@@ -1,6 +1,7 @@
 use crate::get_api;
 use crate::sys;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 
 /// A reference-counted `Variant` vector. Godot's generic array data type.
@@ -176,6 +177,9 @@ impl ToVariant for VariantArray {
     fn to_variant(&self) -> Variant {
         Variant::from_array(self)
     }
+}
+
+impl FromVariant for VariantArray {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_array()
     }

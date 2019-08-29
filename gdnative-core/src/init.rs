@@ -25,6 +25,7 @@ use super::*;
 use crate::get_api;
 use crate::NativeClass;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use libc;
 use std::ffi::CString;
@@ -280,7 +281,7 @@ impl<C: NativeClass> ClassBuilder<C> {
 
     pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
     where
-        T: ToVariant,
+        T: ToVariant + FromVariant,
         S: PropertySetter<C, T>,
         G: PropertyGetter<C, T>,
     {
@@ -482,7 +483,7 @@ pub struct Signal<'l> {
     pub args: &'l [SignalArgument<'l>],
 }
 
-pub unsafe trait PropertySetter<C: NativeClass, T: ToVariant> {
+pub unsafe trait PropertySetter<C: NativeClass, T: FromVariant> {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func;
 }
 
@@ -508,7 +509,7 @@ extern "C" fn empty_getter(
 
 extern "C" fn empty_free_func(_data: *mut libc::c_void) {}
 
-unsafe impl<C: NativeClass, T: ToVariant> PropertySetter<C, T> for () {
+unsafe impl<C: NativeClass, T: FromVariant> PropertySetter<C, T> for () {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
         set.set_func = Some(empty_setter);
@@ -529,7 +530,7 @@ unsafe impl<C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
 unsafe impl<F, C, T> PropertySetter<C, T> for F
 where
     C: NativeClass,
-    T: ToVariant,
+    T: FromVariant,
     F: Fn(&mut C, T),
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
@@ -545,7 +546,7 @@ where
             val: *mut sys::godot_variant,
         ) where
             C: NativeClass,
-            T: ToVariant,
+            T: FromVariant,
             F: Fn(&mut C, T),
         {
             unsafe {

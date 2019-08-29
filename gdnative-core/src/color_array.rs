@@ -2,6 +2,7 @@ use crate::get_api;
 use crate::sys;
 use crate::Color;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
 
@@ -114,6 +115,9 @@ impl ToVariant for ColorArray {
     fn to_variant(&self) -> Variant {
         Variant::from_color_array(self)
     }
+}
+
+impl FromVariant for ColorArray {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_color_array()
     }

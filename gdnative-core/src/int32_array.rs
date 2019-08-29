@@ -1,6 +1,7 @@
 use crate::get_api;
 use crate::sys;
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
 
@@ -110,6 +111,9 @@ impl ToVariant for Int32Array {
     fn to_variant(&self) -> Variant {
         Variant::from_int32_array(self)
     }
+}
+
+impl FromVariant for Int32Array {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_int32_array()
     }

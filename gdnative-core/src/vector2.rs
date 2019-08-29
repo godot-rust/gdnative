@@ -1,4 +1,5 @@
 use crate::ToVariant;
+use crate::FromVariant;
 use crate::Variant;
 use crate::Vector2;
 
@@ -6,7 +7,9 @@ impl ToVariant for Vector2 {
     fn to_variant(&self) -> Variant {
         Variant::from_vector2(self)
     }
+}
 
+impl FromVariant for Vector2 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_vector2()
     }

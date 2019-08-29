@@ -690,9 +690,13 @@ godot_test!(
     }
 );
 
-/// Types that can be converted to and from a `Variant`.
-pub trait ToVariant: Sized {
+/// Types that can be converted to a `Variant`.
+pub trait ToVariant {
     fn to_variant(&self) -> Variant;
+}
+
+/// Types that can be converted from a `Variant`.
+pub trait FromVariant: Sized {
     fn from_variant(variant: &Variant) -> Option<Self>;
 }
 
@@ -700,7 +704,9 @@ impl ToVariant for () {
     fn to_variant(&self) -> Variant {
         Variant::new()
     }
+}
 
+impl FromVariant for () {
     fn from_variant(variant: &Variant) -> Option<Self> {
         if variant.get_type() == VariantType::Nil {
             Some(())
@@ -720,7 +726,9 @@ macro_rules! impl_to_variant_for_int {
                     Variant(ret)
                 }
             }
+        }
 
+        impl FromVariant for $ty {
             fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
@@ -752,7 +760,9 @@ macro_rules! godot_uint_impl {
                     Variant(ret)
                 }
             }
+        }
 
+        impl FromVariant for $ty {
             fn from_variant(variant: &Variant) -> Option<Self> {
                 unsafe {
                     let api = get_api();
@@ -782,7 +792,9 @@ impl ToVariant for f32 {
             Variant(ret)
         }
     }
+}
 
+impl FromVariant for f32 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
@@ -805,7 +817,9 @@ impl ToVariant for f64 {
             Variant(ret)
         }
     }
+}
 
+impl FromVariant for f64 {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
@@ -824,7 +838,9 @@ impl ToVariant for String {
     fn to_variant(&self) -> Variant {
         Variant::from_str(&self)
     }
+}
 
+impl FromVariant for String {
     fn from_variant(variant: &Variant) -> Option<Self> {
         unsafe {
             let api = get_api();
@@ -850,7 +866,9 @@ impl ToVariant for bool {
     fn to_variant(&self) -> Variant {
         Variant::from_bool(*self)
     }
+}
 
+impl FromVariant for bool {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_bool()
     }
@@ -860,7 +878,9 @@ impl ToVariant for Variant {
     fn to_variant(&self) -> Variant {
         self.clone()
     }
+}
 
+impl FromVariant for Variant {
     fn from_variant(variant: &Variant) -> Option<Self> {
         Some(variant.clone())
     }
