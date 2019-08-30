@@ -155,8 +155,18 @@ impl<T: NativeClass> Instance<T> {
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
-    /// value. Can be used for multiple times via aliasing. For reference-counted types
-    /// behaves like the safe `map`, which should be preferred.
+    /// value. Can be used for multiple times via aliasing:
+    /// 
+    /// ```ignore
+    /// unsafe {
+    ///     instance.map_aliased(/* ... */);
+    ///     // instance.owner may be invalid now, but you can still:
+    ///     instance.map_aliased(/* ... */);
+    ///     instance.map_aliased(/* ... */); // ...for multiple times
+    /// }
+    /// ```
+    /// 
+    /// For reference-counted types behaves like the safe `map`, which should be preferred.
     pub unsafe fn map_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
@@ -166,8 +176,18 @@ impl<T: NativeClass> Instance<T> {
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
-    /// value. Can be used for multiple times via aliasing. For reference-counted types
-    /// behaves like the safe `map`, which should be preferred.
+    /// value. Can be used for multiple times via aliasing:
+    /// 
+    /// ```ignore
+    /// unsafe {
+    ///     instance.map_mut_aliased(/* ... */);
+    ///     // instance.owner may be invalid now, but you can still:
+    ///     instance.map_mut_aliased(/* ... */);
+    ///     instance.map_mut_aliased(/* ... */); // ...for multiple times
+    /// }
+    /// ```
+    /// 
+    /// For reference-counted types behaves like the safe `map_mut`, which should be preferred.
     pub unsafe fn map_mut_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
