@@ -498,7 +498,7 @@ macro_rules! godot_wrap_method_inner {
 
                 let mut offset = 0;
                 $(
-                    let _variant: &$crate::Variant = ::std::mem::transmute(&mut *(*args).offset(offset));
+                    let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
                     let $pname = if let Some(val) = <$pty as $crate::FromVariant>::from_variant(_variant) {
                         val
                     } else {
