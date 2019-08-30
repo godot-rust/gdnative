@@ -24,6 +24,10 @@ pub extern "C" fn run_tests(
 
     status &= gdnative::test_vector3_variants();
 
+    status &= gdnative::test_variant_option();
+    status &= gdnative::test_variant_result();
+    status &= gdnative::test_to_variant_iter();
+
     status &= gdnative::test_byte_array_access();
     status &= gdnative::test_int32_array_access();
     status &= gdnative::test_float32_array_access();
