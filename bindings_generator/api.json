@@ -150414,7 +150414,7 @@
 			},
 			{
 				"name": "new",
-				"return_type": "Object",
+				"return_type": "Variant",
 				"is_editor": false,
 				"is_noscript": false,
 				"is_const": false,

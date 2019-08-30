@@ -30,6 +30,7 @@ pub extern crate gdnative_sys as sys;
 pub extern crate libc;
 #[macro_use]
 extern crate bitflags;
+extern crate parking_lot;
 
 pub mod geom;
 
@@ -53,6 +54,7 @@ pub mod object;
 mod rid;
 mod string;
 mod string_array;
+pub mod user_data;
 mod variant;
 mod variant_array;
 mod vector2;
@@ -73,7 +75,11 @@ pub use crate::int32_array::*;
 pub use crate::internal::*;
 pub use crate::node_path::*;
 pub use crate::object::GodotObject;
+pub use crate::object::Instanciable;
 pub use crate::rid::*;
+pub use crate::user_data::UserData;
+pub use crate::user_data::Map;
+pub use crate::user_data::MapMut;
 pub use crate::string::*;
 pub use crate::string_array::*;
 pub use crate::variant::*;
@@ -87,10 +93,17 @@ use std::mem;
 
 #[doc(hidden)]
 pub static mut GODOT_API: Option<GodotApi> = None;
+#[doc(hidden)]
+pub static mut GDNATIVE_LIBRARY_SYS: Option<*mut sys::godot_object> = None;
 #[inline]
 #[doc(hidden)]
 pub fn get_api() -> &'static GodotApi {
     unsafe { GODOT_API.as_ref().expect("API not bound") }
+}
+#[inline]
+#[doc(hidden)]
+pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
+    unsafe { GDNATIVE_LIBRARY_SYS.expect("GDNativeLibrary not bound") }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]

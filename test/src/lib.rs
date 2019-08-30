@@ -1,4 +1,6 @@
 use gdnative::*;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 
 #[no_mangle]
 pub extern "C" fn run_tests(
@@ -28,6 +30,9 @@ pub extern "C" fn run_tests(
 
     status &= test_constructor();
     status &= test_underscore_method_binding();
+
+    status &= test_rust_class_construction();
+    status &= test_owner_free_ub();
 
     gdnative::Variant::from_bool(status).forget()
 }
@@ -65,6 +70,133 @@ fn test_underscore_method_binding() -> bool {
     ok
 }
 
+struct Foo(i64);
+
+impl NativeClass for Foo {
+    type Base = Reference;
+    type UserData = user_data::ArcData<Foo>;
+    fn class_name() -> &'static str {
+        "Foo"
+    }
+    fn init(_owner: Reference) -> Foo {
+        Foo(42)
+    }
+    fn register_properties(_builder: &init::ClassBuilder<Self>) {
+    }
+}
+
+#[methods]
+impl Foo {
+    #[export]
+    fn answer(&self, _owner: Reference) -> i64 {
+        self.0
+    }
+}
+
+fn test_rust_class_construction() -> bool {
+    println!(" -- test_rust_class_construction");
+
+    let ok = std::panic::catch_unwind(|| {
+        let foo = Instance::<Foo>::new();
+        assert_eq!(Ok(42), foo.map(|foo, owner| {
+            foo.answer(owner)
+        }));
+        assert_eq!(Some(42), unsafe { foo.into_base().call("answer".into(), &[]) }.try_to_i64());
+    }).is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_rust_class_construction failed");
+    }
+
+    ok
+}
+
+struct Bar(i64, Option<Arc<AtomicUsize>>);
+
+impl NativeClass for Bar {
+    type Base = Node;
+    type UserData = user_data::RwLockData<Bar>;
+    fn class_name() -> &'static str {
+        "Bar"
+    }
+    fn init(_owner: Node) -> Bar {
+        Bar(42, None)
+    }
+    fn register_properties(_builder: &init::ClassBuilder<Self>) {
+    }
+}
+
+impl Bar {
+    fn set_drop_counter(&mut self, counter: Arc<AtomicUsize>) {
+        self.1 = Some(counter);
+    }
+}
+
+#[methods]
+impl Bar {
+    #[export]
+    fn free_is_not_ub(&mut self, owner: Node) -> bool {
+        unsafe {
+            owner.free();
+        }
+        assert_eq!(42, self.0, "self should not point to garbage");
+        true
+    }
+
+    #[export]
+    fn set_script_is_not_ub(&mut self, mut owner: Node) -> bool {
+        unsafe {
+            owner.set_script(None);
+        }
+        assert_eq!(42, self.0, "self should not point to garbage");
+        true
+    }
+}
+
+impl Drop for Bar {
+    fn drop(&mut self) {
+        let counter = self.1.take().expect("drop counter should be set");
+        counter.fetch_add(1, AtomicOrdering::AcqRel);
+        self.0 = 0;
+    }
+}
+
+fn test_owner_free_ub() -> bool {
+    println!(" -- test_owner_free_ub");
+
+    let ok = std::panic::catch_unwind(|| {
+        let drop_counter = Arc::new(AtomicUsize::new(0));
+
+        let bar = Instance::<Bar>::new();
+        unsafe {
+            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone())).expect("lock should not fail");
+            let mut base = bar.into_base();
+            assert_eq!(Some(true), base.call("set_script_is_not_ub".into(), &[]).try_to_bool());
+            base.free();
+        }
+
+        let bar = Instance::<Bar>::new();
+        unsafe {
+            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone())).expect("lock should not fail");
+            assert_eq!(Some(true), bar.into_base().call("free_is_not_ub".into(), &[]).try_to_bool());
+        }
+
+        // the values are eventually dropped
+        assert_eq!(2, drop_counter.load(AtomicOrdering::Acquire));
+    }).is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_owner_free_ub failed");
+    }
+
+    ok
+}
+
+fn init(handle: init::InitHandle) {
+    handle.add_class::<Foo>();
+    handle.add_class::<Bar>();
+}
+
 godot_gdnative_init!();
-godot_nativescript_init!();
+godot_nativescript_init!(init);
 godot_gdnative_terminate!();

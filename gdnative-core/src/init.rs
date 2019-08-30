@@ -27,6 +27,8 @@ use crate::NativeClass;
 use crate::ToVariant;
 use crate::FromVariant;
 use crate::Variant;
+use crate::Map;
+use crate::MapMut;
 use libc;
 use std::ffi::CString;
 use std::marker::PhantomData;
@@ -66,12 +68,10 @@ impl InitHandle {
                     this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
                 ) -> *mut libc::c_void {
-                    use std::cell::RefCell;
-
                     let val = C::init(C::Base::from_sys(this));
 
-                    let wrapper = Box::new(RefCell::new(val));
-                    Box::into_raw(wrapper) as *mut _
+                    let wrapper = C::UserData::new(val);
+                    C::UserData::into_user_data(wrapper) as *mut _
                 }
 
                 sys::godot_instance_create_func {
@@ -87,9 +87,7 @@ impl InitHandle {
                     _method_data: *mut libc::c_void,
                     user_data: *mut libc::c_void,
                 ) -> () {
-                    use std::cell::RefCell;
-
-                    let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
+                    let wrapper = C::UserData::consume_user_data_unchecked(user_data);
                     drop(wrapper)
                 }
 
@@ -138,12 +136,10 @@ impl InitHandle {
                     this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
                 ) -> *mut libc::c_void {
-                    use std::cell::RefCell;
-
                     let val = C::init(C::Base::from_sys(this));
 
-                    let wrapper = Box::new(RefCell::new(val));
-                    Box::into_raw(wrapper) as *mut _
+                    let wrapper = C::UserData::new(val);
+                    C::UserData::into_user_data(wrapper) as *mut _
                 }
 
                 sys::godot_instance_create_func {
@@ -159,9 +155,7 @@ impl InitHandle {
                     _method_data: *mut libc::c_void,
                     user_data: *mut libc::c_void,
                 ) -> () {
-                    use std::cell::RefCell;
-
-                    let wrapper: Box<RefCell<C>> = Box::from_raw(user_data as *mut _);
+                    let wrapper = C::UserData::consume_user_data_unchecked(user_data);
                     drop(wrapper)
                 }
 
@@ -530,11 +524,11 @@ unsafe impl<C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
 unsafe impl<F, C, T> PropertySetter<C, T> for F
 where
     C: NativeClass,
+    C::UserData: MapMut,
     T: FromVariant,
     F: Fn(&mut C, T),
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
-        use std::cell::RefCell;
         let mut set = sys::godot_property_set_func::default();
         let data = Box::new(self);
         set.method_data = Box::into_raw(data) as *mut _;
@@ -546,16 +540,18 @@ where
             val: *mut sys::godot_variant,
         ) where
             C: NativeClass,
+            C::UserData: MapMut,
             T: FromVariant,
             F: Fn(&mut C, T),
         {
             unsafe {
-                let rust_ty = &*(class as *mut RefCell<C>);
-                let mut rust_ty = rust_ty.borrow_mut();
+                let rust_ty = C::UserData::clone_from_user_data_unchecked(class as *const _);
                 let func = &mut *(method as *mut F);
 
                 if let Some(val) = T::from_variant(Variant::cast_ref(val)) {
-                    func(&mut *rust_ty, val);
+                    if let Err(err) = rust_ty.map_mut(|rust_ty| func(rust_ty, val)) {
+                        godot_error!("gdnative-core: cannot call property setter: {:?}", err);
+                    }
                 } else {
                     godot_error!("Incorrect type passed to property");
                 }
@@ -577,11 +573,11 @@ where
 unsafe impl<F, C, T> PropertyGetter<C, T> for F
 where
     C: NativeClass,
+    C::UserData: Map,
     T: ToVariant,
-    F: Fn(&mut C) -> T,
+    F: Fn(&C) -> T,
 {
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
-        use std::cell::RefCell;
         let mut get = sys::godot_property_get_func::default();
         let data = Box::new(self);
         get.method_data = Box::into_raw(data) as *mut _;
@@ -593,15 +589,20 @@ where
         ) -> sys::godot_variant
         where
             C: NativeClass,
+            C::UserData: Map,
             T: ToVariant,
-            F: Fn(&mut C) -> T,
+            F: Fn(&C) -> T,
         {
             unsafe {
-                let rust_ty = &*(class as *mut RefCell<C>);
-                let mut rust_ty = rust_ty.borrow_mut();
+                let rust_ty = C::UserData::clone_from_user_data_unchecked(class as *const _);
                 let func = &mut *(method as *mut F);
-                let ret = func(&mut *rust_ty);
-                ret.to_variant().forget()
+                match rust_ty.map(|rust_ty| func(rust_ty)) {
+                    Ok(ret) => ret.to_variant().forget(),
+                    Err(err) => {
+                        godot_error!("gdnative-core: cannot call property getter: {:?}", err);
+                        Variant::new().to_sys()
+                    },
+                }
             }
         }
         get.get_func = Some(invoke::<C, F, T>);

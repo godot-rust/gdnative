@@ -112,7 +112,24 @@ impl FromVariant for {name} {{
             "object::add_ref(obj);"
         } else {
             "// Not reference-counted."
-        }
+        },
+    )?;
+
+    Ok(())
+}
+
+pub fn generate_instanciable_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    assert!(class.instanciable);
+    
+    writeln!(
+        output,
+        r#"
+impl Instanciable for {name} {{
+    fn construct() -> Self {{
+        {name}::new()
+    }}
+}}"#,
+        name = class.name,
     )?;
 
     Ok(())
@@ -301,6 +318,27 @@ impl Drop for {name} {{
     }}
 }}"#,
         name = class.name
+    )?;
+
+    Ok(())
+}
+
+pub fn generate_gdnative_library_singleton_getter(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    assert_eq!("GDNativeLibrary", class.name);
+    writeln!(
+        output,
+        r#"
+/// Returns the GDNativeLibrary object of this library. Can be used to construct NativeScript objects.
+/// 
+/// See also `Instance::new` for a typed API.
+#[inline]
+pub fn current_library() -> Self {{
+    let this = get_gdnative_library_sys();
+
+    Self {{
+        this
+    }}
+}}"#
     )?;
 
     Ok(())

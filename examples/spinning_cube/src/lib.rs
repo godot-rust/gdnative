@@ -12,6 +12,7 @@ struct RustTest {
 
 impl godot::NativeClass for RustTest {
     type Base = godot::MeshInstance;
+    type UserData = godot::user_data::MutexData<RustTest>;
 
     fn class_name() -> &'static str {
         "RustTest"
@@ -30,7 +31,7 @@ impl godot::NativeClass for RustTest {
                 step: 0.01,
                 slider: true,
             },
-            getter: |this: &mut RustTest| this.rotate_speed,
+            getter: |this: &RustTest| this.rotate_speed,
             setter: |this: &mut RustTest, v| this.rotate_speed = v,
             usage: PropertyUsage::DEFAULT,
         });
@@ -41,7 +42,7 @@ impl godot::NativeClass for RustTest {
             hint: PropertyHint::Enum {
                 values: &["Hello", "World", "Testing"],
             },
-            getter: |_: &mut RustTest| GodotString::from_str("Hello"),
+            getter: |_: &RustTest| GodotString::from_str("Hello"),
             setter: (),
             usage: PropertyUsage::DEFAULT,
         });
@@ -52,7 +53,7 @@ impl godot::NativeClass for RustTest {
             hint: PropertyHint::Flags {
                 values: &["A", "B", "C", "D"],
             },
-            getter: |_: &mut RustTest| 0,
+            getter: |_: &RustTest| 0,
             setter: (),
             usage: PropertyUsage::DEFAULT,
         });
