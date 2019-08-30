@@ -46,6 +46,7 @@ mod generated;
 pub mod init;
 mod int32_array;
 mod internal;
+pub mod access;
 mod node_path;
 #[doc(hidden)]
 pub mod object;
