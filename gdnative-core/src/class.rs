@@ -72,7 +72,7 @@ pub trait NativeClassMethods: NativeClass {
 /// A reference to a GodotObject with a rust NativeClass attached.
 #[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub struct Instance<T: NativeClass> {
-    this: T::Base,
+    owner: T::Base,
     script: T::UserData,
 }
 
@@ -106,14 +106,14 @@ impl<T: NativeClass> Instance<T> {
             let mut args: [*const libc::c_void; 1] = [crate::get_gdnative_library_sys()];
             (gd_api.godot_method_bind_ptrcall)(set_library, native_script, args.as_mut_ptr(), std::ptr::null_mut());
 
-            let this = T::Base::construct();
+            let owner = T::Base::construct();
 
-            assert_ne!(std::ptr::null_mut(), this.to_sys(), "base object should not be null");
+            assert_ne!(std::ptr::null_mut(), owner.to_sys(), "base object should not be null");
 
             let mut args: [*const libc::c_void; 1] = [native_script as *const _];
-            (gd_api.godot_method_bind_ptrcall)(object_set_script, this.to_sys(), args.as_mut_ptr(), std::ptr::null_mut());
+            (gd_api.godot_method_bind_ptrcall)(object_set_script, owner.to_sys(), args.as_mut_ptr(), std::ptr::null_mut());
 
-            let script_ptr = (gd_api.godot_nativescript_get_userdata)(this.to_sys()) as *const libc::c_void;
+            let script_ptr = (gd_api.godot_nativescript_get_userdata)(owner.to_sys()) as *const libc::c_void;
 
             assert_ne!(std::ptr::null(), script_ptr, "script instance should not be null");
 
@@ -122,14 +122,14 @@ impl<T: NativeClass> Instance<T> {
             object::unref(native_script);
 
             Instance {
-                this,
+                owner,
                 script,
             }
         }
     }
 
     pub fn into_base(self) -> T::Base {
-        self.this
+        self.owner
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -140,7 +140,7 @@ impl<T: NativeClass> Instance<T> {
         T::UserData: Map,
         F: FnOnce(&T, T::Base) -> U,
     {
-        self.script.map(|script| op(script, self.this.clone()))
+        self.script.map(|script| op(script, self.owner.clone()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -151,7 +151,7 @@ impl<T: NativeClass> Instance<T> {
         T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
     {
-        self.script.map_mut(|script| op(script, self.this.clone()))
+        self.script.map_mut(|script| op(script, self.owner.clone()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -162,7 +162,7 @@ impl<T: NativeClass> Instance<T> {
         T::UserData: Map,
         F: FnOnce(&T, T::Base) -> U,
     {
-        self.script.map(|script| op(script, T::Base::from_sys(self.this.to_sys())))
+        self.script.map(|script| op(script, T::Base::from_sys(self.owner.to_sys())))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -173,7 +173,7 @@ impl<T: NativeClass> Instance<T> {
         T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
     {
-        self.script.map_mut(|script| op(script, T::Base::from_sys(self.this.to_sys())))
+        self.script.map_mut(|script| op(script, T::Base::from_sys(self.owner.to_sys())))
     }
 
     #[doc(hidden)]
@@ -185,10 +185,10 @@ impl<T: NativeClass> Instance<T> {
 
     #[doc(hidden)]
     pub unsafe fn from_raw(ptr: *mut sys::godot_object, user_data: *mut libc::c_void) -> Self {
-        let this = T::Base::from_sys(ptr);
+        let owner = T::Base::from_sys(ptr);
         let script_ptr = user_data as *const libc::c_void;
         let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
-        Instance { this, script }
+        Instance { owner, script }
     }
 }
 
@@ -199,7 +199,7 @@ where
 {
     fn clone(&self) -> Self {
         Instance {
-            this: self.this.clone(),
+            owner: self.owner.clone(),
             script: self.script.clone(),
         }
     }
@@ -211,7 +211,7 @@ where
     T::Base: ToVariant,
 {
     fn to_variant(&self) -> Variant {
-        self.this.to_variant()
+        self.owner.to_variant()
     }
 }
 
