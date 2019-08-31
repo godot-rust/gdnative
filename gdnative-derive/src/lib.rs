@@ -1,4 +1,6 @@
 extern crate proc_macro;
+extern crate proc_macro2;
+#[macro_use]
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -7,6 +9,7 @@ use proc_macro::TokenStream;
 
 mod derive_macro;
 mod method_macro;
+mod derive_conv_variant;
 
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
@@ -85,4 +88,14 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
 
     // create output token stream
     trait_impl.into()
+}
+
+#[proc_macro_derive(ToVariant)]
+pub fn derive_to_variant(input: TokenStream) -> TokenStream {
+    derive_conv_variant::derive_to_variant(input)
+}
+
+#[proc_macro_derive(FromVariant)]
+pub fn derive_from_variant(input: TokenStream) -> TokenStream {
+    derive_conv_variant::derive_from_variant(input)
 }

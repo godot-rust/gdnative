@@ -688,14 +688,70 @@ godot_test!(
         assert!(v_m1.try_to_f64().is_none());
         assert!(v_m1.try_to_array().is_none());
     }
+
+    test_variant_bool {
+        let v_true = Variant::from_bool(true);
+        assert_eq!(v_true.get_type(), VariantType::Bool);
+
+        assert!(!v_true.is_nil());
+        assert_eq!(v_true.try_to_bool(), Some(true));
+        assert!(v_true.try_to_f64().is_none());
+        assert!(v_true.try_to_array().is_none());
+
+        let v_false = Variant::from_bool(false);
+        assert_eq!(v_false.get_type(), VariantType::Bool);
+
+        assert!(!v_false.is_nil());
+        assert_eq!(v_false.try_to_bool(), Some(false));
+        assert!(v_false.try_to_f64().is_none());
+        assert!(v_false.try_to_array().is_none());
+
+    }
 );
 
 /// Types that can be converted to a `Variant`.
+/// 
+/// ## Wrappers and collections
+/// 
+/// Implementations are provided for a few common Rust wrappers and collections:
+/// 
+/// - `Option<T>` is unwrapped to inner value, or `Nil` if `None`
+/// - `Result<T, E>` is represented as an externally tagged `Dictionary` (see below).
+/// - `PhantomData<T>` is represented as `Nil`.
+/// - `&[T]` and `Vec<T>` are represented as `VariantArray`s. `FromVariant` is only implemented
+/// for `Vec<T>`.
+/// 
+/// ## Deriving `ToVariant`
+/// 
+/// The derive macro does the following mapping between Rust structures and Godot types:
+/// 
+/// - `Newtype(inner)` is unwrapped to `inner`
+/// - `Tuple(a, b, c)` is represented as a `VariantArray` (`[a, b, c]`)
+/// - `Struct { a, b, c }` is represented as a `Dictionary` (`{ "a": a, "b": b, "c": c }`)
+/// - `Unit` is represented as an empty `Dictionary` (`{}`)
+/// - `Enum::Variant(a, b, c)` is represented as an externally tagged `Dictionary`
+///   (`{ "Variant": [a, b, c] }`)
 pub trait ToVariant {
     fn to_variant(&self) -> Variant;
 }
 
 /// Types that can be converted from a `Variant`.
+/// 
+/// ## `Option<T>` and `MaybeNot<T>`
+/// 
+/// `Option<T>` requires the Variant to be `T` or `Nil`, in that order. For looser semantics,
+/// use `MaybeNot<T>`, which will catch all variant values that are not `T` as well.
+/// 
+/// ## `Vec<T>`
+/// 
+/// The `FromVariant` implementation for `Vec<T>` only allow homogeneous arrays. If you want to
+/// manually handle potentially heterogeneous values e.g. for error reporting, use `VariantArray`
+/// directly or compose with an appropriate wrapper: `Vec<Option<T>>` or `Vec<MaybeNot<T>>`.
+/// 
+/// ## Deriving `FromVariant`
+/// 
+/// The derive macro provides implementation consistent with derived `ToVariant`. See `ToVariant`
+/// for detailed documentation.
 pub trait FromVariant: Sized {
     fn from_variant(variant: &Variant) -> Option<Self>;
 }
@@ -885,3 +941,220 @@ impl FromVariant for Variant {
         Some(variant.clone())
     }
 }
+
+impl<T> ToVariant for std::marker::PhantomData<T> {
+    fn to_variant(&self) -> Variant {
+        Variant::new()
+    }
+}
+
+impl<T> FromVariant for std::marker::PhantomData<T> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        if variant.is_nil() {
+            Some(std::marker::PhantomData)
+        }
+        else {
+            None
+        }
+    }
+}
+
+impl<T: ToVariant> ToVariant for Option<T> {
+    fn to_variant(&self) -> Variant {
+        match &self {
+            Some(thing) => thing.to_variant(),
+            None => Variant::new(),
+        }
+    }
+}
+
+impl<T: FromVariant> FromVariant for Option<T> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        T::from_variant(variant).map(Some).or_else(|| {
+            if variant.is_nil() {
+                Some(None)
+            }
+            else {
+                None
+            }
+        })
+    }
+}
+
+/// Wrapper type around a `FromVariant` result that may not be a success
+#[derive(Clone, Debug)]
+pub struct MaybeNot<T>(Result<T, Variant>);
+
+impl<T: FromVariant> FromVariant for MaybeNot<T> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        Some(MaybeNot(T::from_variant(variant).ok_or_else(|| variant.clone())))
+    }
+}
+
+impl<T> MaybeNot<T> {
+    pub fn into_result(self) -> Result<T, Variant> {
+        self.0
+    }
+
+    pub fn as_ref(&self) -> Result<&T, &Variant> {
+        self.0.as_ref()
+    }
+
+    pub fn as_mut(&mut self) -> Result<&mut T, &mut Variant> {
+        self.0.as_mut()
+    }
+
+    pub fn cloned(&self) -> Result<T, Variant>
+    where
+        T: Clone,
+    {
+        self.0.clone()
+    }
+
+    pub fn ok(self) -> Option<T> {
+        self.0.ok()
+    }
+}
+
+impl<T: ToVariant, E: ToVariant> ToVariant for Result<T, E> {
+    fn to_variant(&self) -> Variant {
+        let mut dict = Dictionary::new();
+        match &self {
+            Ok(val) => dict.set(&"Ok".into(), &val.to_variant()),
+            Err(err) => dict.set(&"Err".into(), &err.to_variant()),
+        }
+        dict.to_variant()
+    }
+}
+
+impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        let dict = variant.try_to_dictionary()?;
+        if dict.len() != 1 {
+            return None;
+        }
+        let keys = dict.keys();
+        let key_variant = keys.get_ref(0);
+        let key = key_variant.try_to_string()?;
+        match key.as_str() {
+            "Ok" => {
+                let val = T::from_variant(dict.get_ref(key_variant))?;
+                Some(Ok(val))
+            },
+            "Err" => {
+                let err = E::from_variant(dict.get_ref(key_variant))?;
+                Some(Err(err))
+            },
+            _ => None,
+        }
+    }
+}
+
+impl<T: ToVariant> ToVariant for &[T] {
+    fn to_variant(&self) -> Variant {
+        let mut array = VariantArray::new();
+        for val in self.iter() {
+            // there is no real way to avoid CoW allocations right now, as ptrw isn't exposed
+            array.push(&val.to_variant());
+        }
+        array.to_variant()
+    }
+}
+
+impl<T: ToVariant> ToVariant for Vec<T> {
+    fn to_variant(&self) -> Variant {
+        self.as_slice().to_variant()
+    }
+}
+
+impl<T: FromVariant> FromVariant for Vec<T> {
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        use std::convert::TryInto;
+
+        let arr = variant.try_to_array()?;
+        let len: usize = arr.len().try_into().ok()?;
+        let mut vec = Vec::with_capacity(len);
+        for idx in 0..len as i32 {
+            let item = T::from_variant(arr.get_ref(idx))?;
+            vec.push(item);
+        }
+        Some(vec)
+    }
+}
+
+godot_test!(
+    test_variant_option {
+        use std::marker::PhantomData;
+        
+        let variant = Some(42 as i64).to_variant();
+        assert_eq!(Some(42), variant.try_to_i64());
+
+        let variant = Option::<bool>::None.to_variant();
+        assert!(variant.is_nil());
+
+        let variant = Variant::new();
+        assert_eq!(Some(None), Option::<i64>::from_variant(&variant));
+        assert_eq!(Some(None), Option::<bool>::from_variant(&variant));
+        assert_eq!(Some(None), Option::<String>::from_variant(&variant));
+
+        let variant = Variant::from_i64(42);
+        assert_eq!(Some(Some(42)), Option::<i64>::from_variant(&variant));
+        assert_eq!(None, Option::<bool>::from_variant(&variant));
+        assert_eq!(None, Option::<String>::from_variant(&variant));
+
+        let variant = Variant::new();
+        assert_eq!(Some(Some(())), Option::<()>::from_variant(&variant));
+        assert_eq!(Some(Some(PhantomData)), Option::<PhantomData<*const u8>>::from_variant(&variant));
+
+        let variant = Variant::from_i64(42);
+        assert_eq!(None, Option::<PhantomData<*const u8>>::from_variant(&variant));
+    }
+
+    test_variant_result {
+        let variant = Result::<i64, ()>::Ok(42 as i64).to_variant();
+        let dict = variant.try_to_dictionary().expect("should be dic");
+        assert_eq!(Some(42), dict.get_ref(&"Ok".into()).try_to_i64());
+
+        let variant = Result::<(), i64>::Err(54 as i64).to_variant();
+        let dict = variant.try_to_dictionary().expect("should be dic");
+        assert_eq!(Some(54), dict.get_ref(&"Err".into()).try_to_i64());
+
+        let variant = Variant::from_bool(true);
+        assert_eq!(None, Result::<(), i64>::from_variant(&variant));
+
+        let mut dict = Dictionary::new();
+        dict.set(&"Ok".into(), &Variant::from_i64(42));
+        assert_eq!(Some(Ok(42)), Result::<i64, i64>::from_variant(&dict.to_variant()));
+
+        let mut dict = Dictionary::new();
+        dict.set(&"Err".into(), &Variant::from_i64(54));
+        assert_eq!(Some(Err(54)), Result::<i64, i64>::from_variant(&dict.to_variant()));
+    }
+
+    test_to_variant_iter {
+        let slice: &[i64] = &[0, 1, 2, 3, 4];
+        let variant = slice.to_variant();
+        let array = variant.try_to_array().expect("should be array");
+        assert_eq!(5, array.len());
+        for i in 0..5 {
+            assert_eq!(Some(i), array.get_ref(i as i32).try_to_i64());
+        }
+
+        let vec = Vec::<i64>::from_variant(&variant).expect("should succeed");
+        assert_eq!(slice, vec.as_slice());
+
+        let mut het_array = VariantArray::new();
+        het_array.push(&Variant::from_i64(42));
+        het_array.push(&Variant::new());
+        assert_eq!(None, Vec::<i64>::from_variant(&het_array.to_variant()));
+        assert_eq!(Some(vec![Some(42), None]), Vec::<Option<i64>>::from_variant(&het_array.to_variant()));
+        
+        het_array.push(&f64::to_variant(&54.0));
+        assert_eq!(None, Vec::<Option<i64>>::from_variant(&het_array.to_variant()));
+        let vec_maybe = Vec::<MaybeNot<i64>>::from_variant(&het_array.to_variant()).expect("should succeed");
+        assert_eq!(3, vec_maybe.len());
+        assert_eq!(Some(&42), vec_maybe[0].as_ref().ok());
+        assert_eq!(Some(&Variant::new()), vec_maybe[1].as_ref().err());
+        assert_eq!(Some(&f64::to_variant(&54.0)), vec_maybe[2].as_ref().err());
+    }
+);

@@ -18,10 +18,15 @@ pub extern "C" fn run_tests(
 
     status &= gdnative::test_variant_nil();
     status &= gdnative::test_variant_i64();
+    status &= gdnative::test_variant_bool();
 
     status &= gdnative::test_vector2_variants();
 
     status &= gdnative::test_vector3_variants();
+
+    status &= gdnative::test_variant_option();
+    status &= gdnative::test_variant_result();
+    status &= gdnative::test_to_variant_iter();
 
     status &= gdnative::test_byte_array_access();
     status &= gdnative::test_int32_array_access();
@@ -30,6 +35,7 @@ pub extern "C" fn run_tests(
 
     status &= test_constructor();
     status &= test_underscore_method_binding();
+    status &= test_derive_to_variant();
 
     status &= test_rust_class_construction();
     status &= test_owner_free_ub();
@@ -207,6 +213,60 @@ fn test_owner_free_ub() -> bool {
 
     if !ok {
         godot_error!("   !! Test test_owner_free_ub failed");
+    }
+
+    ok
+}
+
+fn test_derive_to_variant() -> bool {
+    println!(" -- test_derive_to_variant");
+
+
+    #[derive(Clone, Eq, PartialEq, Debug, ToVariant, FromVariant)]
+    struct ToVar<T>
+    where
+        T: Associated,
+    {
+        foo: T::A,
+        bar: T,
+        baz: ToVarEnum<T::B>,
+    }
+
+    #[derive(Clone, Eq, PartialEq, Debug, ToVariant, FromVariant)]
+    enum ToVarEnum<T> {
+        Foo(T),
+        Bar,
+        Baz { baz: u8 },
+    }
+
+    trait Associated {
+        type A;
+        type B;
+    }
+
+    impl Associated for f64 {
+        type A = i64;
+        type B = bool;
+    }
+
+    let ok = std::panic::catch_unwind(|| {
+        let data = ToVar::<f64> {
+            foo: 42,
+            bar: 54.0,
+            baz: ToVarEnum::Foo(true),
+        };
+        let variant = data.to_variant();
+        let dictionary = variant.try_to_dictionary().expect("should be dictionary");
+        assert_eq!(Some(42), dictionary.get(&"foo".into()).try_to_i64());
+        assert_eq!(Some(54.0), dictionary.get(&"bar".into()).try_to_f64());
+        let enum_dict = dictionary.get(&"baz".into()).try_to_dictionary().expect("should be dictionary");
+        assert_eq!(Some(true), enum_dict.get(&"Foo".into()).try_to_bool());
+        assert_eq!(Some(&data.baz), ToVarEnum::from_variant(&enum_dict.to_variant()).as_ref());
+        assert_eq!(Some(&data), ToVar::from_variant(&variant).as_ref());
+    }).is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_derive_to_variant failed");
     }
 
     ok
