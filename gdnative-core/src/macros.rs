@@ -502,9 +502,11 @@ macro_rules! godot_wrap_method_inner {
                     let $pname = if let Some(val) = <$pty as $crate::FromVariant>::from_variant(_variant) {
                         val
                     } else {
-                        godot_error!("Incorrect argument type {:?} for argument {}",
-                            _variant.get_type(),
-                            offset);
+                        godot_error!("Incorrect argument type for argument #{} ({}: {}). Got VariantType::{:?} (non-primitive types may impose structural checks)",
+                            offset + 1,
+                            stringify!($pname),
+                            stringify!($pty),
+                            _variant.get_type());
                         return $crate::Variant::new().to_sys();
                     };
 
