@@ -91,6 +91,26 @@ impl Foo {
     fn answer(&self, _owner: Reference) -> i64 {
         self.0
     }
+
+    #[export]
+    fn choose(&self, _owner: Reference, a: GodotString, which: bool, b: GodotString) -> GodotString {
+        if which {
+            a
+        }
+        else {
+            b
+        }
+    }
+
+    #[export]
+    fn choose_variant(&self, _owner: Reference, a: i32, what: Variant, b: f64) -> Variant {
+        let what = what.try_to_string().expect("should be string");
+        match what.as_str() {
+            "int" => a.to_variant(),
+            "float" => b.to_variant(),
+            _ => panic!("should be int or float, got {:?}", what),
+        }
+    }
 }
 
 fn test_rust_class_construction() -> bool {
