@@ -32,6 +32,9 @@ pub extern "C" fn run_tests(
     status &= gdnative::test_int32_array_access();
     status &= gdnative::test_float32_array_access();
     status &= gdnative::test_color_array_access();
+    status &= gdnative::test_string_array_access();
+    status &= gdnative::test_vector2_array_access();
+    status &= gdnative::test_vector3_array_access();
 
     status &= test_constructor();
     status &= test_underscore_method_binding();

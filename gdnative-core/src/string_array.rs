@@ -5,9 +5,13 @@ use crate::ToVariant;
 use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
+use crate::access::{MaybeUnaligned, Aligned};
 
 /// A vector of `GodotString` that uses Godot's pool allocator.
 pub struct StringArray(pub(crate) sys::godot_pool_string_array);
+
+pub type Read<'a> = Aligned<ReadGuard<'a>>;
+pub type Write<'a> = Aligned<WriteGuard<'a>>;
 
 impl StringArray {
     /// Creates an empty `StringArray`.
@@ -85,6 +89,22 @@ impl StringArray {
         unsafe { (get_api().godot_pool_string_array_size)(&self.0) }
     }
 
+    pub fn read<'a>(&'a self) -> Read<'a> {
+        unsafe {
+            MaybeUnaligned::new(ReadGuard::new(self.sys()))
+                .try_into_aligned()
+                .expect("Pool array access should be aligned. This indicates a bug in Godot")
+        }
+    }
+
+    pub fn write<'a>(&'a mut self) -> Write<'a> {
+        unsafe {
+            MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
+                .try_into_aligned()
+                .expect("Pool array access should be aligned. This indicates a bug in Godot")
+        }
+    }
+
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_pool_string_array {
         &self.0
@@ -119,3 +139,62 @@ impl FromVariant for StringArray {
         variant.try_to_string_array()
     }
 }
+
+define_access_guard! {
+    pub struct ReadGuard<'a> : sys::godot_pool_string_array_read_access {
+        access = godot_pool_string_array_read(*const sys::godot_pool_string_array),
+        len = godot_pool_string_array_size,
+    }
+    Guard<Target=GodotString> => godot_pool_string_array_read_access_ptr -> *const sys::godot_string;
+    Drop => godot_pool_string_array_read_access_destroy;
+    Clone => godot_pool_string_array_read_access_copy;
+}
+
+define_access_guard! {
+    pub struct WriteGuard<'a> : sys::godot_pool_string_array_write_access {
+        access = godot_pool_string_array_write(*mut sys::godot_pool_string_array),
+        len = godot_pool_string_array_size,
+    }
+    Guard<Target=GodotString> + WritePtr => godot_pool_string_array_write_access_ptr -> *mut sys::godot_string;
+    Drop => godot_pool_string_array_write_access_destroy;
+}
+
+godot_test!(
+    test_string_array_access {
+        let mut arr = StringArray::new();
+        arr.push(&GodotString::from("foo"));
+        arr.push(&GodotString::from("bar"));
+        arr.push(&GodotString::from("baz"));
+        
+        let original_read = {
+            let read = arr.read();
+            assert_eq!(&[
+                GodotString::from("foo"),
+                GodotString::from("bar"),
+                GodotString::from("baz"),
+            ], read.as_slice());
+            read.clone()
+        };
+
+        let mut cow_arr = arr.new_ref();
+
+        {
+            let mut write = cow_arr.write();
+            assert_eq!(3, write.len());
+            for s in write.as_mut_slice() {
+                *s = s.to_uppercase();
+            }
+        }
+
+        assert_eq!(GodotString::from("FOO"), cow_arr.get(0));
+        assert_eq!(GodotString::from("BAR"), cow_arr.get(1));
+        assert_eq!(GodotString::from("BAZ"), cow_arr.get(2));
+        
+        // the write shouldn't have affected the original array
+        assert_eq!(&[
+            GodotString::from("foo"),
+            GodotString::from("bar"),
+            GodotString::from("baz"),
+        ], original_read.as_slice());
+    }
+);
