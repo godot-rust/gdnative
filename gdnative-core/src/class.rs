@@ -132,6 +132,22 @@ impl<T: NativeClass> Instance<T> {
         self.owner
     }
 
+    pub fn into_script(self) -> T::UserData {
+        self.script
+    }
+
+    pub fn decouple(self) -> (T::Base, T::UserData) {
+        (self.owner, self.script)
+    }
+
+    pub fn base(&self) -> &T::Base {
+        &self.owner
+    }
+
+    pub fn script(&self) -> &T::UserData {
+        &self.script
+    }
+
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
