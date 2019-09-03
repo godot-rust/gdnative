@@ -150,6 +150,21 @@ impl VariantArray {
     //     unimplemented!();
     // }
 
+    pub fn iter(&self) -> Iter {
+        Iter {
+            arr: self,
+            range: 0..self.len(),
+        }
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut {
+        let len = self.len();
+        IterMut {
+            arr: self,
+            range: 0..len,
+        }
+    }
+
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_array {
         &self.0
@@ -182,6 +197,43 @@ impl ToVariant for VariantArray {
 impl FromVariant for VariantArray {
     fn from_variant(variant: &Variant) -> Option<Self> {
         variant.try_to_array()
+    }
+}
+
+pub struct Iter<'a> {
+    arr: &'a VariantArray,
+    range: std::ops::Range<i32>,
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a Variant;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.range.next().map(|idx| self.arr.get_ref(idx))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
+    }
+}
+
+pub struct IterMut<'a> {
+    arr: &'a mut VariantArray,
+    range: std::ops::Range<i32>,
+}
+
+impl<'a> Iterator for IterMut<'a> {
+    type Item = &'a mut Variant;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.range.next().map(|idx| {
+            let short_ref: &'_ mut Variant = self.arr.get_mut_ref(idx);
+            unsafe {
+                std::mem::transmute::<_, &'a mut Variant>(short_ref)
+            }
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
     }
 }
 
@@ -245,6 +297,26 @@ godot_test!(test_array {
     assert!(array2.contains(&foo));
     assert!(array2.contains(&bar));
     assert!(!array2.contains(&nope));
+
+    let mut array3 = VariantArray::new(); // []
+
+    array3.push(&Variant::from_i64(42));
+    array3.push(&Variant::from_i64(1337));
+    array3.push(&Variant::from_i64(512));
+
+    assert_eq!(
+        &[42, 1337, 512],
+        array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
+    );
+
+    for v in array3.iter_mut() {
+        *v = Variant::from_i64(54);
+    }
+
+    assert_eq!(
+        &[54, 54, 54],
+        array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
+    );
 });
 
 // TODO: clear arrays without affecting clones

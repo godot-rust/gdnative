@@ -5,11 +5,15 @@ use crate::FromVariant;
 use crate::Variant;
 use crate::VariantArray;
 use crate::Vector3;
+use crate::access::{MaybeUnaligned, Aligned};
 
 use std::mem::transmute;
 
 /// A reference-counted vector of `Vector3` that uses Godot's pool allocator.
 pub struct Vector3Array(pub(crate) sys::godot_pool_vector3_array);
+
+pub type Read<'a> = Aligned<ReadGuard<'a>>;
+pub type Write<'a> = Aligned<WriteGuard<'a>>;
 
 impl Vector3Array {
     /// Creates an empty array.
@@ -88,6 +92,22 @@ impl Vector3Array {
         unsafe { (get_api().godot_pool_vector3_array_size)(&self.0) }
     }
 
+    pub fn read<'a>(&'a self) -> Read<'a> {
+        unsafe {
+            MaybeUnaligned::new(ReadGuard::new(self.sys()))
+                .try_into_aligned()
+                .expect("Pool array access should be aligned. This indicates a bug in Godot")
+        }
+    }
+
+    pub fn write<'a>(&'a mut self) -> Write<'a> {
+        unsafe {
+            MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
+                .try_into_aligned()
+                .expect("Pool array access should be aligned. This indicates a bug in Godot")
+        }
+    }
+
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_pool_vector3_array {
         &self.0
@@ -122,3 +142,63 @@ impl FromVariant for Vector3Array {
         variant.try_to_vector3_array()
     }
 }
+
+define_access_guard! {
+    pub struct ReadGuard<'a> : sys::godot_pool_vector3_array_read_access {
+        access = godot_pool_vector3_array_read(*const sys::godot_pool_vector3_array),
+        len = godot_pool_vector3_array_size,
+    }
+    Guard<Target=Vector3> => godot_pool_vector3_array_read_access_ptr -> *const sys::godot_vector3;
+    Drop => godot_pool_vector3_array_read_access_destroy;
+    Clone => godot_pool_vector3_array_read_access_copy;
+}
+
+define_access_guard! {
+    pub struct WriteGuard<'a> : sys::godot_pool_vector3_array_write_access {
+        access = godot_pool_vector3_array_write(*mut sys::godot_pool_vector3_array),
+        len = godot_pool_vector3_array_size,
+    }
+    Guard<Target=Vector3> + WritePtr => godot_pool_vector3_array_write_access_ptr -> *mut sys::godot_vector3;
+    Drop => godot_pool_vector3_array_write_access_destroy;
+}
+
+godot_test!(
+    test_vector3_array_access {
+        let mut arr = Vector3Array::new();
+        arr.push(&Vector3::new(1.0, 2.0, 3.0));
+        arr.push(&Vector3::new(3.0, 4.0, 5.0));
+        arr.push(&Vector3::new(5.0, 6.0, 7.0));
+        
+        let original_read = {
+            let read = arr.read();
+            assert_eq!(&[
+                Vector3::new(1.0, 2.0, 3.0),
+                Vector3::new(3.0, 4.0, 5.0),
+                Vector3::new(5.0, 6.0, 7.0),
+            ], read.as_slice());
+            read.clone()
+        };
+
+        let mut cow_arr = arr.new_ref();
+
+        {
+            let mut write = cow_arr.write();
+            assert_eq!(3, write.len());
+            for s in write.as_mut_slice() {
+                s.x += 2.0;
+                s.y += 1.0;
+            }
+        }
+
+        assert_eq!(Vector3::new(3.0, 3.0, 3.0), cow_arr.get(0));
+        assert_eq!(Vector3::new(5.0, 5.0, 5.0), cow_arr.get(1));
+        assert_eq!(Vector3::new(7.0, 7.0, 7.0), cow_arr.get(2));
+        
+        // the write shouldn't have affected the original array
+        assert_eq!(&[
+            Vector3::new(1.0, 2.0, 3.0),
+            Vector3::new(3.0, 4.0, 5.0),
+            Vector3::new(5.0, 6.0, 7.0),
+        ], original_read.as_slice());
+    }
+);
