@@ -149,7 +149,7 @@ pub enum VariantType {
 impl VariantType {
     #[doc(hidden)]
     pub fn from_sys(v: sys::godot_variant_type) -> VariantType {
-        unsafe { transmute(v) }
+        unsafe { transmute(v as u32) }
     }
 }
 
