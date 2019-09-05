@@ -156,7 +156,7 @@ pub struct LockFailed;
 #[derive(Debug)]
 pub struct MutexData<T, OPT=DefaultLockPolicy> {
     lock: Arc<Mutex<T>>,
-    _marker: PhantomData<*const OPT>,
+    _marker: PhantomData<OPT>,
 }
 
 unsafe impl<T, OPT> UserData for MutexData<T, OPT>
@@ -248,7 +248,7 @@ impl<T, OPT> Clone for MutexData<T, OPT> {
 #[derive(Debug)]
 pub struct RwLockData<T, OPT=DefaultLockPolicy> {
     lock: Arc<RwLock<T>>,
-    _marker: PhantomData<*const OPT>,
+    _marker: PhantomData<OPT>,
 }
 
 unsafe impl<T, OPT> UserData for RwLockData<T, OPT>
