@@ -174,5 +174,5 @@ pub fn result_from_sys(err: sys::godot_error) -> GodotResult {
         return Ok(());
     }
 
-    Err(unsafe { mem::transmute(err) })
+    Err(unsafe { mem::transmute(err as u32) })
 }
