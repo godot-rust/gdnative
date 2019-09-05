@@ -3,7 +3,15 @@ rust:
   - stable
   - nightly
 env:
-  - RUST_BACKTRACE=1
+  - RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
+before_script:
+  - 'wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip'
+  - unzip /tmp/godot.zip -d godot_bin
+  - export PATH=$PATH:$PWD/godot_bin/
 script:
-  - cargo test --all
-
+  - cargo test --all --all-features
+  - cd test
+  - cargo build
+  - mkdir ./project/lib
+  - cp ../target/debug/libgdnative_test.so ./project/lib/
+  - '"Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/'

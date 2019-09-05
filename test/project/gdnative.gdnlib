@@ -2,6 +2,8 @@
 
 X11.32="res://lib/libgdnative_test.so"
 X11.64="res://lib/libgdnative_test.so"
+Server.32="res://lib/libgdnative_test.so"
+Server.64="res://lib/libgdnative_test.so"
 Windows="res://lib/gdnative_test.dll"
 
 [dependencies]
