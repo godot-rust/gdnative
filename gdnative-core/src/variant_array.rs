@@ -1,7 +1,7 @@
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
 use crate::FromVariant;
+use crate::ToVariant;
 use crate::Variant;
 
 /// A reference-counted `Variant` vector. Godot's generic array data type.
@@ -226,9 +226,7 @@ impl<'a> Iterator for IterMut<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.range.next().map(|idx| {
             let short_ref: &'_ mut Variant = self.arr.get_mut_ref(idx);
-            unsafe {
-                std::mem::transmute::<_, &'a mut Variant>(short_ref)
-            }
+            unsafe { std::mem::transmute::<_, &'a mut Variant>(short_ref) }
         })
     }
 

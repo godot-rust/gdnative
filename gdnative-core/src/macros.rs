@@ -310,9 +310,7 @@ macro_rules! impl_guard_common_trait {
     ) => {
         impl<'a> Clone for $Type<'a> {
             fn clone(&self) -> Self {
-                let $access = unsafe {
-                    ($crate::get_api().$gd_method)(self.$access)
-                };
+                let $access = unsafe { ($crate::get_api().$gd_method)(self.$access) };
 
                 $Type {
                     $access,
@@ -444,7 +442,8 @@ macro_rules! godot_wrap_destructor {
             _method_data: *mut $crate::libc::c_void,
             user_data: *mut $crate::libc::c_void,
         ) -> () {
-            let wrapper = <$_name as $crate::NativeClass>::UserData::consume_user_data_unchecked(user_data);
+            let wrapper =
+                <$_name as $crate::NativeClass>::UserData::consume_user_data_unchecked(user_data);
             drop(wrapper)
         }
 
@@ -529,7 +528,7 @@ macro_rules! godot_wrap_method_inner {
                     Err(err) => {
                         godot_error!("gdnative-core: method call failed with error: {:?}", err);
                         $crate::Variant::new().to_sys()
-                    } 
+                    }
                 }
             }
 
@@ -549,6 +548,7 @@ macro_rules! godot_wrap_method {
             &mut $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,)?
         ) -> $retty:ty
     ) => {
         godot_wrap_method_inner!(
@@ -568,6 +568,7 @@ macro_rules! godot_wrap_method {
             & $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,)?
         ) -> $retty:ty
     ) => {
         godot_wrap_method_inner!(
@@ -587,6 +588,7 @@ macro_rules! godot_wrap_method {
             &mut $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,)?
         )
     ) => {
         godot_wrap_method!(
@@ -605,6 +607,7 @@ macro_rules! godot_wrap_method {
             & $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,)?
         )
     ) => {
         godot_wrap_method!(

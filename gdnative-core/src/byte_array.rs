@@ -1,10 +1,10 @@
+use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
 use crate::FromVariant;
+use crate::ToVariant;
 use crate::Variant;
 use crate::VariantArray;
-use crate::access::{MaybeUnaligned, Aligned};
 
 /// A reference-counted vector of bytes that uses Godot's pool allocator.
 pub struct ByteArray(pub(crate) sys::godot_pool_byte_array);
@@ -164,7 +164,7 @@ godot_test!(
         for i in 0..8 {
             arr.push(i);
         }
-        
+
         let original_read = {
             let read = arr.read();
             assert_eq!(&[0, 1, 2, 3, 4, 5, 6, 7], read.as_slice());
@@ -184,7 +184,7 @@ godot_test!(
         for i in 0..8 {
             assert_eq!(i * 2, cow_arr.get(i as i32));
         }
-        
+
         // the write shouldn't have affected the original array
         assert_eq!(&[0, 1, 2, 3, 4, 5, 6, 7], original_read.as_slice());
     }

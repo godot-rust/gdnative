@@ -23,12 +23,12 @@
 
 use super::*;
 use crate::get_api;
-use crate::NativeClass;
-use crate::ToVariant;
 use crate::FromVariant;
-use crate::Variant;
 use crate::Map;
 use crate::MapMut;
+use crate::NativeClass;
+use crate::ToVariant;
+use crate::Variant;
 use libc;
 use std::ffi::CString;
 use std::marker::PhantomData;
@@ -601,7 +601,7 @@ where
                     Err(err) => {
                         godot_error!("gdnative-core: cannot call property getter: {:?}", err);
                         Variant::new().to_sys()
-                    },
+                    }
                 }
             }
         }

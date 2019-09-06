@@ -1,10 +1,10 @@
+use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
 use crate::FromVariant;
+use crate::ToVariant;
 use crate::Variant;
 use crate::VariantArray;
-use crate::access::{MaybeUnaligned, Aligned};
 
 /// A reference-counted vector of `f32` that uses Godot's pool allocator.
 pub struct Float32Array(pub(crate) sys::godot_pool_real_array);
@@ -164,7 +164,7 @@ godot_test!(
         for i in 0..8 {
             arr.push(i as f32);
         }
-        
+
         let original_read = {
             let read = arr.read();
             assert_eq!(&[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], read.as_slice());
@@ -184,7 +184,7 @@ godot_test!(
         for i in 0..8 {
             assert_eq!(i as f32 * 2.0, cow_arr.get(i as i32));
         }
-        
+
         // the write shouldn't have affected the original array
         assert_eq!(&[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], original_read.as_slice());
     }

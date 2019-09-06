@@ -1,49 +1,49 @@
 //! Customizable user-data wrappers.
-//! 
+//!
 //! ## `NativeClass` and user-data
-//! 
+//!
 //! In Godot Engine, scripted behavior is attached to base objects through "script instances":
 //! objects that store script state, and allow dynamic dispatch of overridden methods. GDNative
 //! exposes this to native languages as a `void *` pointer, known as "user-data", that may point
 //! to anything defined by the native library in question.
-//! 
+//!
 //! Godot is written in C++, and unlike Rust, it doesn't have the same strict reference aliasing
 //! constraints. This user-data pointer can be aliased mutably, and called freely from different
 //! threads by the engine or other scripts. Thus, to maintain safety, wrapper types are be used
 //! to make sure that the Rust rules for references are always held for the `self` argument, and
 //! no UB can occur because we freed `owner` or put another script on it.
-//! 
+//!
 //! ## Which wrapper to use?
-//! 
+//!
 //! ### Use a `MutexData<T>` when:
-//! 
+//!
 //! - You don't want to handle locks explicitly.
 //! - Your `NativeClass` type is only `Send`, but not `Sync`.
-//! 
+//!
 //! ### Use a `RwLockData<T>` when:
-//! 
+//!
 //! - You don't want to handle locks explicitly.
 //! - Some of your exported methods take `&self`, and you don't need them to be exclusive.
 //! - Your `NativeClass` type is `Send + Sync`.
-//! 
+//!
 //! ### Use a `ArcData<T>` when:
-//! 
+//!
 //! - You want safety for your methods, but can't tolerate lock overhead on each method call.
 //! - You want fine grained lock control for parallelism.
 //! - All your exported methods take `&self`.
 //! - Your `NativeClass` type is `Send + Sync`.
 
-use std::mem;
+use parking_lot::{Mutex, RwLock};
 use std::fmt::Debug;
+use std::marker::PhantomData;
+use std::mem;
 use std::sync::Arc;
 use std::time::Duration;
-use std::marker::PhantomData;
-use parking_lot::{Mutex, RwLock};
 
 use crate::NativeClass;
 
 /// Trait for customizable user-data wrappers.
-/// 
+///
 /// See module-level documentation for detailed explanation on user-data.
 pub unsafe trait UserData: Sized + Clone {
     type Target: NativeClass;
@@ -52,20 +52,20 @@ pub unsafe trait UserData: Sized + Clone {
     fn new(val: Self::Target) -> Self;
 
     /// Takes a native instance and returns an opaque pointer that can be used to recover it.
-    /// 
+    ///
     /// This gives "ownership" to the engine.
     unsafe fn into_user_data(self) -> *const libc::c_void;
 
     /// Takes an opaque pointer produced by `into_user_data` and "consumes" it to produce the
     /// original instance, keeping the reference count.
-    /// 
+    ///
     /// This should be used when "ownership" is taken from the engine, i.e. destructors.
     /// Use elsewhere can lead to premature drops of the instance contained inside.
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self;
 
     /// Takes an opaque pointer produced by `into_user_data` and "clones" it to produce the
     /// original instance, increasing the reference count.
-    /// 
+    ///
     /// This should be used when user data is "borrowed" from the engine.
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self;
 }
@@ -96,17 +96,17 @@ pub type DefaultUserData<T> = MutexData<T, DefaultLockPolicy>;
 
 /// Error type indicating that an operation can't fail.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum Infallible { }
+pub enum Infallible {}
 
 /// Policies to deal with potential deadlocks
-/// 
+///
 /// As Godot allows mutable pointer aliasing, doing certain things in exported method bodies may
 /// lead to the engine calling another method on `owner`, leading to another locking attempt
 /// within the same thread:
-/// 
+///
 /// - Variant calls on anything may dispatch to a script method.
 /// - Anything that could emit signals, that are connected to in a non-deferred manner.
-/// 
+///
 /// As there is no universal way to deal with such situations, behavior of locking wrappers can
 /// be customized using this enum.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -124,19 +124,19 @@ pub enum DeadlockPolicy {
 }
 
 /// Trait defining associated constants for locking wrapper options
-/// 
+///
 /// This is required because constant generics ([RFC 2000][rfc-2000]) isn't available in stable
 /// rust yet.
-/// 
+///
 /// See also `DeadlockPolicy`.
-/// 
+///
 /// [rfc-2000]: https://github.com/rust-lang/rfcs/blob/master/text/2000-const-generics.md
 pub trait LockOptions {
     const DEADLOCK_POLICY: DeadlockPolicy;
 }
 
 /// Default lock policy that may change in future versions.
-/// 
+///
 /// Currently, it has a deadlock policy of `Allow`.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct DefaultLockPolicy;
@@ -150,11 +150,11 @@ impl LockOptions for DefaultLockPolicy {
 pub struct LockFailed;
 
 /// User-data wrapper encapsulating a `Arc<Mutex<T>>`.
-/// 
+///
 /// The underlying `Mutex` may change in the future. The current implementation is
 /// `parking_lot`.
 #[derive(Debug)]
-pub struct MutexData<T, OPT=DefaultLockPolicy> {
+pub struct MutexData<T, OPT = DefaultLockPolicy> {
     lock: Arc<Mutex<T>>,
     _marker: PhantomData<OPT>,
 }
@@ -210,7 +210,6 @@ where
     }
 }
 
-
 impl<T, OPT> MapMut for MutexData<T, OPT>
 where
     T: NativeClass + Send,
@@ -242,11 +241,11 @@ impl<T, OPT> Clone for MutexData<T, OPT> {
 }
 
 /// User-data wrapper encapsulating a `Arc<RwLock<T>>`.
-/// 
+///
 /// The underlying `RwLock` may change in the future. The current implementation is
 /// `parking_lot`.
 #[derive(Debug)]
-pub struct RwLockData<T, OPT=DefaultLockPolicy> {
+pub struct RwLockData<T, OPT = DefaultLockPolicy> {
     lock: Arc<RwLock<T>>,
     _marker: PhantomData<OPT>,
 }
@@ -293,7 +292,7 @@ where
     OPT: LockOptions,
 {
     type Err = LockFailed;
-    
+
     fn map<F, U>(&self, op: F) -> Result<U, LockFailed>
     where
         F: FnOnce(&T) -> U,
@@ -308,14 +307,13 @@ where
     }
 }
 
-
 impl<T, OPT> MapMut for RwLockData<T, OPT>
 where
     T: NativeClass + Send + Sync,
     OPT: LockOptions,
 {
     type Err = LockFailed;
-    
+
     fn map_mut<F, U>(&self, op: F) -> Result<U, LockFailed>
     where
         F: FnOnce(&mut T) -> U,

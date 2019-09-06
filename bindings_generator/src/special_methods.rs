@@ -120,7 +120,7 @@ impl FromVariant for {name} {{
 
 pub fn generate_instanciable_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     assert!(class.instanciable);
-    
+
     writeln!(
         output,
         r#"
@@ -323,7 +323,10 @@ impl Drop for {name} {{
     Ok(())
 }
 
-pub fn generate_gdnative_library_singleton_getter(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_gdnative_library_singleton_getter(
+    output: &mut impl Write,
+    class: &GodotClass,
+) -> GeneratorResult {
     assert_eq!("GDNativeLibrary", class.name);
     writeln!(
         output,

@@ -27,7 +27,10 @@ pub struct {name}MethodTable {{
     )?;
 
     for method in &class.methods {
-        let MethodName { rust_name: method_name, .. } = method.get_name();
+        let MethodName {
+            rust_name: method_name,
+            ..
+        } = method.get_name();
         if method_name == "free" {
             continue;
         }
@@ -49,7 +52,10 @@ impl {name}MethodTable {{
         name = class.name
     )?;
     for method in &class.methods {
-        let MethodName { rust_name: method_name, .. } = method.get_name();
+        let MethodName {
+            rust_name: method_name,
+            ..
+        } = method.get_name();
         if method_name == "free" {
             continue;
         }
@@ -79,7 +85,7 @@ impl {name}MethodTable {{
     pub fn get(gd_api: &GodotApi) -> &'static Self {{
         unsafe {{
             let table = Self::get_mut();
-            static INIT: Once = ONCE_INIT;
+            static INIT: Once = Once::new();
             INIT.call_once(|| {{
                 {name}MethodTable::init(table, gd_api);
             }});
@@ -97,7 +103,10 @@ impl {name}MethodTable {{
         lookup_name = lookup_name,
     )?;
     for method in &class.methods {
-        let MethodName { rust_name: method_name, original_name } = method.get_name();
+        let MethodName {
+            rust_name: method_name,
+            original_name,
+        } = method.get_name();
         if method_name == "free" {
             continue;
         }
@@ -125,7 +134,10 @@ pub fn generate_method_impl(
     class: &GodotClass,
     method: &GodotMethod,
 ) -> GeneratorResult {
-    let MethodName { rust_name: method_name, .. } = method.get_name();
+    let MethodName {
+        rust_name: method_name,
+        ..
+    } = method.get_name();
 
     if skip_method(&method_name) {
         return Ok(());
@@ -260,7 +272,10 @@ pub fn generate_methods(
 ) -> GeneratorResult {
     if let Some(class) = api.find_class(class_name) {
         'method: for method in &class.methods {
-            let MethodName { rust_name: method_name, .. } = method.get_name();
+            let MethodName {
+                rust_name: method_name,
+                ..
+            } = method.get_name();
 
             if skip_method(&method_name) {
                 continue;
@@ -518,10 +533,7 @@ fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
             writeln!(w, r#"    mem::transmute(ret)"#)?;
         }
         &Ty::Rid => {
-            writeln!(
-                w,
-                r#"    Rid::from_sys(ret)"#
-            )?;
+            writeln!(w, r#"    Rid::from_sys(ret)"#)?;
         }
         &Ty::String
         | &Ty::NodePath

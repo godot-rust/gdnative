@@ -7,9 +7,9 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 
+mod derive_conv_variant;
 mod derive_macro;
 mod method_macro;
-mod derive_conv_variant;
 
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
