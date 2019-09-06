@@ -1,14 +1,13 @@
 #![allow(non_snake_case)] // because of the generated bindings.
 #![allow(unused_imports)]
 
-
 use super::*;
 use crate::get_api;
 use crate::sys;
 
 use libc;
 use std::ops::*;
-use std::sync::{Once, ONCE_INIT};
+use std::sync::Once;
 
 use std::os::raw::c_char;
 use std::ptr;

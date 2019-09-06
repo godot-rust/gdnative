@@ -8,7 +8,7 @@ use crate::sys;
 
 use libc;
 use std::ops::*;
-use std::sync::{Once, ONCE_INIT};
+use std::sync::Once;
 
 include!(concat!(env!("OUT_DIR"), "/bindings_types.rs"));
 include!(concat!(env!("OUT_DIR"), "/bindings_traits.rs"));

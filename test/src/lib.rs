@@ -1,6 +1,6 @@
 use gdnative::*;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
+use std::sync::Arc;
 
 #[no_mangle]
 pub extern "C" fn run_tests(
@@ -49,8 +49,6 @@ pub extern "C" fn run_tests(
 fn test_constructor() -> bool {
     println!(" -- test_constructor");
 
-    use gdnative::{FreeOnDrop, GDNativeLibrary, Path2D};
-
     // Just create an object and call a method as a sanity check for the
     // generated constructors.
     let lib = GDNativeLibrary::new();
@@ -70,7 +68,8 @@ fn test_underscore_method_binding() -> bool {
     let ok = std::panic::catch_unwind(|| {
         let table = gdnative::NativeScriptMethodTable::get(get_api());
         assert_ne!(0, table._new as usize);
-    }).is_ok();
+    })
+    .is_ok();
 
     if !ok {
         godot_error!("   !! Test test_underscore_method_binding failed");
@@ -90,8 +89,7 @@ impl NativeClass for Foo {
     fn init(_owner: Reference) -> Foo {
         Foo(42)
     }
-    fn register_properties(_builder: &init::ClassBuilder<Self>) {
-    }
+    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
 }
 
 #[methods]
@@ -102,11 +100,16 @@ impl Foo {
     }
 
     #[export]
-    fn choose(&self, _owner: Reference, a: GodotString, which: bool, b: GodotString) -> GodotString {
+    fn choose(
+        &self,
+        _owner: Reference,
+        a: GodotString,
+        which: bool,
+        b: GodotString,
+    ) -> GodotString {
         if which {
             a
-        }
-        else {
+        } else {
             b
         }
     }
@@ -127,11 +130,13 @@ fn test_rust_class_construction() -> bool {
 
     let ok = std::panic::catch_unwind(|| {
         let foo = Instance::<Foo>::new();
-        assert_eq!(Ok(42), foo.map(|foo, owner| {
-            foo.answer(owner)
-        }));
-        assert_eq!(Some(42), unsafe { foo.into_base().call("answer".into(), &[]) }.try_to_i64());
-    }).is_ok();
+        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
+        assert_eq!(
+            Some(42),
+            unsafe { foo.into_base().call("answer".into(), &[]) }.try_to_i64()
+        );
+    })
+    .is_ok();
 
     if !ok {
         godot_error!("   !! Test test_rust_class_construction failed");
@@ -151,8 +156,7 @@ impl NativeClass for Bar {
     fn init(_owner: Node) -> Bar {
         Bar(42, None)
     }
-    fn register_properties(_builder: &init::ClassBuilder<Self>) {
-    }
+    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
 }
 
 impl Bar {
@@ -198,21 +202,32 @@ fn test_owner_free_ub() -> bool {
 
         let bar = Instance::<Bar>::new();
         unsafe {
-            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone())).expect("lock should not fail");
+            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone()))
+                .expect("lock should not fail");
             let mut base = bar.into_base();
-            assert_eq!(Some(true), base.call("set_script_is_not_ub".into(), &[]).try_to_bool());
+            assert_eq!(
+                Some(true),
+                base.call("set_script_is_not_ub".into(), &[]).try_to_bool()
+            );
             base.free();
         }
 
         let bar = Instance::<Bar>::new();
         unsafe {
-            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone())).expect("lock should not fail");
-            assert_eq!(Some(true), bar.into_base().call("free_is_not_ub".into(), &[]).try_to_bool());
+            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone()))
+                .expect("lock should not fail");
+            assert_eq!(
+                Some(true),
+                bar.into_base()
+                    .call("free_is_not_ub".into(), &[])
+                    .try_to_bool()
+            );
         }
 
         // the values are eventually dropped
         assert_eq!(2, drop_counter.load(AtomicOrdering::Acquire));
-    }).is_ok();
+    })
+    .is_ok();
 
     if !ok {
         godot_error!("   !! Test test_owner_free_ub failed");
@@ -223,7 +238,6 @@ fn test_owner_free_ub() -> bool {
 
 fn test_derive_to_variant() -> bool {
     println!(" -- test_derive_to_variant");
-
 
     #[derive(Clone, Eq, PartialEq, Debug, ToVariant, FromVariant)]
     struct ToVar<T>
@@ -262,11 +276,18 @@ fn test_derive_to_variant() -> bool {
         let dictionary = variant.try_to_dictionary().expect("should be dictionary");
         assert_eq!(Some(42), dictionary.get(&"foo".into()).try_to_i64());
         assert_eq!(Some(54.0), dictionary.get(&"bar".into()).try_to_f64());
-        let enum_dict = dictionary.get(&"baz".into()).try_to_dictionary().expect("should be dictionary");
+        let enum_dict = dictionary
+            .get(&"baz".into())
+            .try_to_dictionary()
+            .expect("should be dictionary");
         assert_eq!(Some(true), enum_dict.get(&"Foo".into()).try_to_bool());
-        assert_eq!(Some(&data.baz), ToVarEnum::from_variant(&enum_dict.to_variant()).as_ref());
+        assert_eq!(
+            Some(&data.baz),
+            ToVarEnum::from_variant(&enum_dict.to_variant()).as_ref()
+        );
         assert_eq!(Some(&data), ToVar::from_variant(&variant).as_ref());
-    }).is_ok();
+    })
+    .is_ok();
 
     if !ok {
         godot_error!("   !! Test test_derive_to_variant failed");
