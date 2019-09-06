@@ -1,17 +1,58 @@
 language: rust
-rust:
-  - stable
-  - nightly
-env:
-  - RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
-before_script:
-  - 'wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip'
-  - unzip /tmp/godot.zip -d godot_bin
-  - export PATH=$PATH:$PWD/godot_bin/
+
+cache: cargo
+
+matrix:
+
+  allow_failures:
+   - rust: nightly
+  fast_finish: true
+
+  include:
+    - name: cargo fmt
+      rust: stable
+      env: CI_STAGE_CARGO_FMT=yes
+      before_script:
+       - rustup component add rustfmt
+
+    - name: cargo test (stable)
+      rust: stable
+      env: CI_STAGE_CARGO_TEST=yes
+
+    - name: Godot test (stable)
+      rust: stable
+      env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
+      before_script:
+        - 'wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip'
+        - unzip /tmp/godot.zip -d godot_bin
+        - export PATH=$PATH:$PWD/godot_bin/
+
+    - name: cargo test (nightly)
+      rust: nightly
+      env: CI_STAGE_CARGO_TEST=yes
+
+    - name: Godot test (nightly)
+      rust: nightly
+      env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
+      before_script:
+        - 'wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip'
+        - unzip /tmp/godot.zip -d godot_bin
+        - export PATH=$PATH:$PWD/godot_bin/
+
+
 script:
-  - cargo test --all --all-features
-  - cd test
-  - cargo build
-  - mkdir ./project/lib
-  - cp ../target/debug/libgdnative_test.so ./project/lib/
-  - '"Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/'
+  - if [[ "$CI_STAGE_CARGO_FMT" == "yes" ]]; then
+      cargo fmt --all -- --check;
+    fi
+
+  - if [[ "$CI_STAGE_CARGO_TEST" == "yes" ]]; then
+      cargo test --all --all-features;
+    fi
+
+  - if [[ "$CI_STAGE_GODOT_TEST" == "yes" ]]; then
+      cd test;
+      cargo build;
+      mkdir ./project/lib;
+      cp ../target/debug/libgdnative_test.so ./project/lib/;
+      "Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/;
+    fi
