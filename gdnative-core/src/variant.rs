@@ -710,21 +710,21 @@ godot_test!(
 );
 
 /// Types that can be converted to a `Variant`.
-/// 
+///
 /// ## Wrappers and collections
-/// 
+///
 /// Implementations are provided for a few common Rust wrappers and collections:
-/// 
+///
 /// - `Option<T>` is unwrapped to inner value, or `Nil` if `None`
 /// - `Result<T, E>` is represented as an externally tagged `Dictionary` (see below).
 /// - `PhantomData<T>` is represented as `Nil`.
 /// - `&[T]` and `Vec<T>` are represented as `VariantArray`s. `FromVariant` is only implemented
 /// for `Vec<T>`.
-/// 
+///
 /// ## Deriving `ToVariant`
-/// 
+///
 /// The derive macro does the following mapping between Rust structures and Godot types:
-/// 
+///
 /// - `Newtype(inner)` is unwrapped to `inner`
 /// - `Tuple(a, b, c)` is represented as a `VariantArray` (`[a, b, c]`)
 /// - `Struct { a, b, c }` is represented as a `Dictionary` (`{ "a": a, "b": b, "c": c }`)
@@ -736,20 +736,20 @@ pub trait ToVariant {
 }
 
 /// Types that can be converted from a `Variant`.
-/// 
+///
 /// ## `Option<T>` and `MaybeNot<T>`
-/// 
+///
 /// `Option<T>` requires the Variant to be `T` or `Nil`, in that order. For looser semantics,
 /// use `MaybeNot<T>`, which will catch all variant values that are not `T` as well.
-/// 
+///
 /// ## `Vec<T>`
-/// 
+///
 /// The `FromVariant` implementation for `Vec<T>` only allow homogeneous arrays. If you want to
 /// manually handle potentially heterogeneous values e.g. for error reporting, use `VariantArray`
 /// directly or compose with an appropriate wrapper: `Vec<Option<T>>` or `Vec<MaybeNot<T>>`.
-/// 
+///
 /// ## Deriving `FromVariant`
-/// 
+///
 /// The derive macro provides implementation consistent with derived `ToVariant`. See `ToVariant`
 /// for detailed documentation.
 pub trait FromVariant: Sized {
@@ -952,8 +952,7 @@ impl<T> FromVariant for std::marker::PhantomData<T> {
     fn from_variant(variant: &Variant) -> Option<Self> {
         if variant.is_nil() {
             Some(std::marker::PhantomData)
-        }
-        else {
+        } else {
             None
         }
     }
@@ -970,14 +969,15 @@ impl<T: ToVariant> ToVariant for Option<T> {
 
 impl<T: FromVariant> FromVariant for Option<T> {
     fn from_variant(variant: &Variant) -> Option<Self> {
-        T::from_variant(variant).map(Some).or_else(|| {
-            if variant.is_nil() {
-                Some(None)
-            }
-            else {
-                None
-            }
-        })
+        T::from_variant(variant).map(Some).or_else(
+            || {
+                if variant.is_nil() {
+                    Some(None)
+                } else {
+                    None
+                }
+            },
+        )
     }
 }
 
@@ -987,7 +987,9 @@ pub struct MaybeNot<T>(Result<T, Variant>);
 
 impl<T: FromVariant> FromVariant for MaybeNot<T> {
     fn from_variant(variant: &Variant) -> Option<Self> {
-        Some(MaybeNot(T::from_variant(variant).ok_or_else(|| variant.clone())))
+        Some(MaybeNot(
+            T::from_variant(variant).ok_or_else(|| variant.clone()),
+        ))
     }
 }
 
@@ -1040,11 +1042,11 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
             "Ok" => {
                 let val = T::from_variant(dict.get_ref(key_variant))?;
                 Some(Ok(val))
-            },
+            }
             "Err" => {
                 let err = E::from_variant(dict.get_ref(key_variant))?;
                 Some(Err(err))
-            },
+            }
             _ => None,
         }
     }
@@ -1085,7 +1087,7 @@ impl<T: FromVariant> FromVariant for Vec<T> {
 godot_test!(
     test_variant_option {
         use std::marker::PhantomData;
-        
+
         let variant = Some(42 as i64).to_variant();
         assert_eq!(Some(42), variant.try_to_i64());
 
@@ -1148,7 +1150,7 @@ godot_test!(
         het_array.push(&Variant::new());
         assert_eq!(None, Vec::<i64>::from_variant(&het_array.to_variant()));
         assert_eq!(Some(vec![Some(42), None]), Vec::<Option<i64>>::from_variant(&het_array.to_variant()));
-        
+
         het_array.push(&f64::to_variant(&54.0));
         assert_eq!(None, Vec::<Option<i64>>::from_variant(&het_array.to_variant()));
         let vec_maybe = Vec::<MaybeNot<i64>>::from_variant(&het_array.to_variant()).expect("should succeed");

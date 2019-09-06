@@ -1,5 +1,5 @@
-use crate::ToVariant;
 use crate::FromVariant;
+use crate::ToVariant;
 use crate::Variant;
 use crate::Vector2;
 

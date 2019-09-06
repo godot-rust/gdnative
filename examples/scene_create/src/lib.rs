@@ -20,7 +20,7 @@ struct SceneCreate {
 }
 
 // Assume godot objects are safe to Send
-unsafe impl Send for SceneCreate { }
+unsafe impl Send for SceneCreate {}
 
 // Demonstrates Scene creation, calling to/from gdscript
 //

@@ -1,14 +1,14 @@
 use crate::get_api;
-use crate::sys;
 use crate::object;
-use crate::Variant;
-use crate::ToVariant;
-use crate::GodotString;
+use crate::sys;
 use crate::GodotObject;
+use crate::GodotString;
 use crate::Instanciable;
-use crate::UserData;
 use crate::Map;
 use crate::MapMut;
+use crate::ToVariant;
+use crate::UserData;
+use crate::Variant;
 
 /// Trait used for describing and initializing a Godot script class.
 ///
@@ -43,9 +43,9 @@ pub trait NativeClass: Sized {
     type Base: GodotObject;
 
     /// User-data wrapper type of the class.
-    /// 
+    ///
     /// See module-level documentation on `user_data` for more info.
-    type UserData: UserData<Target=Self>;
+    type UserData: UserData<Target = Self>;
 
     /// The name of the class.
     ///
@@ -79,7 +79,7 @@ pub struct Instance<T: NativeClass> {
 impl<T: NativeClass> Instance<T> {
     /// Creates a `T::Base` with the script `T` attached. Both `T::Base` and `T` must have zero
     /// argument constructors.
-    /// 
+    ///
     /// Must be called after the library is initialized.
     pub fn new() -> Self
     where
@@ -87,44 +87,70 @@ impl<T: NativeClass> Instance<T> {
     {
         unsafe {
             let gd_api = get_api();
-            
+
             // The API functions take NUL-terminated C strings. &CStr is not used for its runtime cost.
             let class_name = b"NativeScript\0".as_ptr() as *const libc::c_char;
             let ctor = (gd_api.godot_get_class_constructor)(class_name).unwrap();
-            let set_class_name = (gd_api.godot_method_bind_get_method)(class_name, b"set_class_name\0".as_ptr() as *const libc::c_char);
-            let set_library = (gd_api.godot_method_bind_get_method)(class_name, b"set_library\0".as_ptr() as *const libc::c_char);
+            let set_class_name = (gd_api.godot_method_bind_get_method)(
+                class_name,
+                b"set_class_name\0".as_ptr() as *const libc::c_char,
+            );
+            let set_library = (gd_api.godot_method_bind_get_method)(
+                class_name,
+                b"set_library\0".as_ptr() as *const libc::c_char,
+            );
             let object_set_script = crate::ObjectMethodTable::get(gd_api).set_script;
 
             let native_script = ctor();
             object::init_ref_count(native_script);
 
-
             let script_class_name = GodotString::from(T::class_name());
             let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
-            (gd_api.godot_method_bind_ptrcall)(set_class_name, native_script, args.as_mut_ptr(), std::ptr::null_mut());
+            (gd_api.godot_method_bind_ptrcall)(
+                set_class_name,
+                native_script,
+                args.as_mut_ptr(),
+                std::ptr::null_mut(),
+            );
 
             let mut args: [*const libc::c_void; 1] = [crate::get_gdnative_library_sys()];
-            (gd_api.godot_method_bind_ptrcall)(set_library, native_script, args.as_mut_ptr(), std::ptr::null_mut());
+            (gd_api.godot_method_bind_ptrcall)(
+                set_library,
+                native_script,
+                args.as_mut_ptr(),
+                std::ptr::null_mut(),
+            );
 
             let owner = T::Base::construct();
 
-            assert_ne!(std::ptr::null_mut(), owner.to_sys(), "base object should not be null");
+            assert_ne!(
+                std::ptr::null_mut(),
+                owner.to_sys(),
+                "base object should not be null"
+            );
 
             let mut args: [*const libc::c_void; 1] = [native_script as *const _];
-            (gd_api.godot_method_bind_ptrcall)(object_set_script, owner.to_sys(), args.as_mut_ptr(), std::ptr::null_mut());
+            (gd_api.godot_method_bind_ptrcall)(
+                object_set_script,
+                owner.to_sys(),
+                args.as_mut_ptr(),
+                std::ptr::null_mut(),
+            );
 
-            let script_ptr = (gd_api.godot_nativescript_get_userdata)(owner.to_sys()) as *const libc::c_void;
+            let script_ptr =
+                (gd_api.godot_nativescript_get_userdata)(owner.to_sys()) as *const libc::c_void;
 
-            assert_ne!(std::ptr::null(), script_ptr, "script instance should not be null");
+            assert_ne!(
+                std::ptr::null(),
+                script_ptr,
+                "script instance should not be null"
+            );
 
             let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
 
             object::unref(native_script);
 
-            Instance {
-                owner,
-                script,
-            }
+            Instance { owner, script }
         }
     }
 
@@ -172,7 +198,7 @@ impl<T: NativeClass> Instance<T> {
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used for multiple times via aliasing:
-    /// 
+    ///
     /// ```ignore
     /// unsafe {
     ///     instance.map_aliased(/* ... */);
@@ -181,19 +207,20 @@ impl<T: NativeClass> Instance<T> {
     ///     instance.map_aliased(/* ... */); // ...for multiple times
     /// }
     /// ```
-    /// 
+    ///
     /// For reference-counted types behaves like the safe `map`, which should be preferred.
     pub unsafe fn map_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
         F: FnOnce(&T, T::Base) -> U,
     {
-        self.script.map(|script| op(script, T::Base::from_sys(self.owner.to_sys())))
+        self.script
+            .map(|script| op(script, T::Base::from_sys(self.owner.to_sys())))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used for multiple times via aliasing:
-    /// 
+    ///
     /// ```ignore
     /// unsafe {
     ///     instance.map_mut_aliased(/* ... */);
@@ -202,14 +229,15 @@ impl<T: NativeClass> Instance<T> {
     ///     instance.map_mut_aliased(/* ... */); // ...for multiple times
     /// }
     /// ```
-    /// 
+    ///
     /// For reference-counted types behaves like the safe `map_mut`, which should be preferred.
     pub unsafe fn map_mut_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
     {
-        self.script.map_mut(|script| op(script, T::Base::from_sys(self.owner.to_sys())))
+        self.script
+            .map_mut(|script| op(script, T::Base::from_sys(self.owner.to_sys())))
     }
 
     #[doc(hidden)]

@@ -52,5 +52,9 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
         // TODO
     }
 
-    DeriveData { name: ident, base, user_data }
+    DeriveData {
+        name: ident,
+        base,
+        user_data,
+    }
 }

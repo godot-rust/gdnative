@@ -1,9 +1,9 @@
 //! Maybe unaligned pool array access
 
 use std::mem;
+use std::ops::{Deref, DerefMut};
 use std::ptr;
 use std::slice;
-use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 /// An pool array access that may be unaligned.
@@ -39,7 +39,7 @@ pub unsafe trait Guard: Drop {
 
 /// Marker trait for write access guards
 #[doc(hidden)]
-pub unsafe trait WritePtr: Guard { }
+pub unsafe trait WritePtr: Guard {}
 
 impl<G: Guard> MaybeUnaligned<G> {
     pub(crate) fn new(guard: G) -> Self {
@@ -56,11 +56,8 @@ impl<G: Guard> MaybeUnaligned<G> {
     /// aligned.
     pub fn try_into_aligned(self) -> Option<Aligned<G>> {
         if self.guard.read_ptr() as usize % mem::align_of::<G::Target>() == 0 {
-            unsafe {
-                Some(self.assume_aligned())
-            }
-        }
-        else {
+            unsafe { Some(self.assume_aligned()) }
+        } else {
             None
         }
     }
@@ -139,7 +136,8 @@ where
 {
     pub fn as_slice(&self) -> &[G::Target] {
         debug_assert_eq!(
-            self.guard.len(), self.owned.len(),
+            self.guard.len(),
+            self.owned.len(),
             "owned vec should be exactly as large as guard.len"
         );
         self.owned.as_slice()
@@ -147,7 +145,8 @@ where
 
     pub fn as_mut_slice(&mut self) -> &mut [G::Target] {
         debug_assert_eq!(
-            self.guard.len(), self.owned.len(),
+            self.guard.len(),
+            self.owned.len(),
             "owned vec should be exactly as large as guard.len"
         );
         self.owned.as_mut_slice()
@@ -201,45 +200,43 @@ mod tests {
     }
 
     impl<T> Drop for PtrGuard<T> {
-        fn drop(&mut self) { }
+        fn drop(&mut self) {}
     }
 
     unsafe impl<T> Guard for PtrGuard<T> {
         type Target = T;
-        fn len(&self) -> usize { self.len }
-        fn read_ptr(&self) -> *const T { self.ptr }
+        fn len(&self) -> usize {
+            self.len
+        }
+        fn read_ptr(&self) -> *const T {
+            self.ptr
+        }
     }
 
-    unsafe impl<T> WritePtr for PtrGuard<T> { }
+    unsafe impl<T> WritePtr for PtrGuard<T> {}
 
     #[test]
     fn it_detects_unaligned_ptrs() {
         let vec: Vec<i64> = vec![1, 2, 3, 4, 5, 6, 7, 8];
         let aligned = vec.as_ptr();
-        let unaligned = unsafe {
-            (aligned as *const u8).add(1) as *const i64
-        };
+        let unaligned = unsafe { (aligned as *const u8).add(1) as *const i64 };
 
         assert_eq!(
             Some(vec![1, 2, 3, 4, 5, 6]),
-            MaybeUnaligned
-                ::new(PtrGuard {
-                    ptr: aligned,
-                    len: 6,
-                })
-                .try_into_aligned()
-                .map(|slice| Vec::from(&*slice))
+            MaybeUnaligned::new(PtrGuard {
+                ptr: aligned,
+                len: 6,
+            })
+            .try_into_aligned()
+            .map(|slice| Vec::from(&*slice))
         );
 
-        assert!(
-            MaybeUnaligned
-                ::new(PtrGuard {
-                    ptr: unaligned,
-                    len: 1,
-                })
-                .try_into_aligned()
-                .is_none()
-        );
+        assert!(MaybeUnaligned::new(PtrGuard {
+            ptr: unaligned,
+            len: 1,
+        })
+        .try_into_aligned()
+        .is_none());
     }
 
     #[test]
@@ -250,7 +247,7 @@ mod tests {
             let mut ptr = &mut arr[0] as *mut u8;
             for _ in 0..(512 - 64) {
                 if ptr as usize % mem::align_of::<i64>() != 0 {
-                    break
+                    break;
                 }
                 ptr = ptr.add(1);
             }
@@ -276,7 +273,7 @@ mod tests {
             ptr: unaligned_ptr,
             len: 8,
         });
-        
+
         let vec = access.to_vec();
 
         assert_eq!(vec![0, 2, 4, 6, 8, 10, 12, 14], vec);

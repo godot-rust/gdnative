@@ -1,11 +1,11 @@
+use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
 use crate::FromVariant;
+use crate::ToVariant;
 use crate::Variant;
 use crate::VariantArray;
 use crate::Vector3;
-use crate::access::{MaybeUnaligned, Aligned};
 
 use std::mem::transmute;
 
@@ -168,7 +168,7 @@ godot_test!(
         arr.push(&Vector3::new(1.0, 2.0, 3.0));
         arr.push(&Vector3::new(3.0, 4.0, 5.0));
         arr.push(&Vector3::new(5.0, 6.0, 7.0));
-        
+
         let original_read = {
             let read = arr.read();
             assert_eq!(&[
@@ -193,7 +193,7 @@ godot_test!(
         assert_eq!(Vector3::new(3.0, 3.0, 3.0), cow_arr.get(0));
         assert_eq!(Vector3::new(5.0, 5.0, 5.0), cow_arr.get(1));
         assert_eq!(Vector3::new(7.0, 7.0, 7.0), cow_arr.get(2));
-        
+
         // the write shouldn't have affected the original array
         assert_eq!(&[
             Vector3::new(1.0, 2.0, 3.0),

@@ -1,7 +1,7 @@
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
 use crate::FromVariant;
+use crate::ToVariant;
 use crate::Variant;
 
 use std::cmp::Ordering;
