@@ -140,10 +140,6 @@ impl GodotString {
         unsafe { Utf8String((get_api().godot_string_utf8)(&self.0)) }
     }
 
-    pub fn to_string(&self) -> String {
-        self.to_utf8().to_string()
-    }
-
     pub fn find(&self, what: &GodotString) -> i32 {
         unsafe { (get_api().godot_string_find)(&self.0, what.0) }
     }
@@ -216,6 +212,12 @@ impl FromVariant for GodotString {
 impl fmt::Debug for GodotString {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_string().fmt(f)
+    }
+}
+
+impl ToString for GodotString {
+    fn to_string(&self) -> String {
+        self.to_utf8().to_string()
     }
 }
 
