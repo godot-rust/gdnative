@@ -221,6 +221,12 @@ impl ToString for GodotString {
     }
 }
 
+impl std::hash::Hash for GodotString {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write_u64(self.u64_hash());
+    }
+}
+
 // TODO: Is it useful to expose this type?
 // Could just make it an internal detail of how to convert to a rust string.
 #[doc(hidden)]
