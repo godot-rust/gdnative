@@ -1,7 +1,9 @@
 [entry]
 
-X11.64="../../target/debug/libspinning_cube.so"
-OSX.64="../../target/debug/libspinning_cube.dylib"
+X11.64="res://../../target/debug/libspinning_cube.so"
+OSX.64="res://../../target/debug/libspinning_cube.dylib"
+Windows.64="res://../../target/debug/spinning_cube.dll"
+
 
 [dependencies]
 

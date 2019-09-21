@@ -7,8 +7,8 @@ reloadable=true
 
 [entry]
 
-OSX.64="../../target/debug/libscene_create.dylib"
-X11.64="../../target/debug/libscene_create.so"
+OSX.64="res://../../target/debug/libscene_create.dylib"
+X11.64="res://../../target/debug/libscene_create.so"
 Windows.64="res://../../target/debug/scene_create.dll"
 
 [dependencies]
