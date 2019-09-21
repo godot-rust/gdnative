@@ -1,7 +1,8 @@
 [entry]
 
-X11.64="../../target/debug/libhello_world.so"
-OSX.64="../../target/debug/libhello_world.dylib"
+X11.64="res://../../target/debug/libhello_world.so"
+OSX.64="res://../../target/debug/libhello_world.dylib"
+Windows.64="res://../../target/debug/hello_world.dll"
 
 [dependencies]
 
