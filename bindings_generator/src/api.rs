@@ -72,6 +72,7 @@ pub struct GodotClass {
 
     pub methods: Vec<GodotMethod>,
     pub enums: Vec<Enum>,
+    pub constants: HashMap<ConstantName, ConstantValue>,
 }
 
 impl GodotClass {
@@ -83,6 +84,9 @@ impl GodotClass {
         self.is_refcounted() || self.singleton
     }
 }
+
+pub type ConstantName = String;
+pub type ConstantValue = i64;
 
 #[derive(Deserialize, Debug)]
 pub struct Enum {

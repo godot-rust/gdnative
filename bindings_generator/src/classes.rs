@@ -23,6 +23,28 @@ pub struct {name} {{
     Ok(())
 }
 
+pub fn generate_class_constants(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    if class.constants.is_empty() {
+        return Ok(());
+    }
+
+    writeln!(output, "/// Constants")?;
+    writeln!(output, "#[allow(non_upper_case_globals)]")?;
+    writeln!(output, "impl {} {{", class.name)?;
+
+    for (name, value) in &class.constants {
+        writeln!(
+            output,
+            "    pub const {name}: i64 = {value};",
+            name = name,
+            value = value,
+        )?;
+    }
+
+    writeln!(output, "}}")?;
+    Ok(())
+}
+
 #[derive(Copy, Clone, PartialEq)]
 struct EnumReference<'a> {
     class: &'a str,

@@ -100,6 +100,8 @@ fn generate_class_bindings(
             generate_enum(output_types_impls, class, e)?;
         }
 
+        generate_class_constants(output_types_impls, class)?;
+
         writeln!(output_types_impls, "impl {} {{", class.name)?;
 
         if class.singleton {
