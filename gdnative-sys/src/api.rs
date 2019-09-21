@@ -51,11 +51,19 @@ impl GodotApi {
         let api = &*api_raw;
         for i in 0 .. api.num_extensions {
             let ext = api.extensions.offset(i as _);
-            $(
-                if (**ext).type_ == $ety_key as u32 {
-                    $elabel = Some(&*((*ext) as *const $est));
-                }
-            )*
+
+            let mut ext_api_ptr = *ext as *const godot_gdnative_api_struct;
+            while !ext_api_ptr.is_null() {
+                $(
+                    if (&*ext_api_ptr).type_ == $ety_key as u32 &&
+                        ((&*ext_api_ptr).version.major == $ever_maj)
+                        && ((&*ext_api_ptr).version.minor == $ever_min) {
+                        $elabel = Some(&*(ext_api_ptr as *const $est));
+                    }
+                )*
+
+                ext_api_ptr = (&*ext_api_ptr).next;
+            }
         }
 
         {

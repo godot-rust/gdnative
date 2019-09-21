@@ -9,4 +9,3 @@ library = ExtResource( 1 )
 
 [node name="Node" type="Node"]
 script = SubResource( 1 )
-
