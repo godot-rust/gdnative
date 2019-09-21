@@ -47,7 +47,6 @@ mod free_on_drop;
 mod generated;
 pub mod init;
 mod int32_array;
-mod internal;
 mod node_path;
 #[doc(hidden)]
 pub mod object;
@@ -72,7 +71,6 @@ pub use crate::free_on_drop::*;
 pub use crate::generated::*;
 pub use crate::geom::*;
 pub use crate::int32_array::*;
-pub use crate::internal::*;
 pub use crate::node_path::*;
 pub use crate::object::GodotObject;
 pub use crate::object::Instanciable;
@@ -88,6 +86,8 @@ pub use crate::vector2::*;
 pub use crate::vector2_array::*;
 pub use crate::vector3::*;
 pub use crate::vector3_array::*;
+
+pub use sys::GodotApi;
 
 use std::mem;
 

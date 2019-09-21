@@ -4,4 +4,8 @@
 
 //! Raw C API.
 
+pub mod api;
+
+pub use api::GodotApi;
+
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
