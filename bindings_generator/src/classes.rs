@@ -23,6 +23,53 @@ pub struct {name} {{
     Ok(())
 }
 
+pub fn generate_class_constants(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    if class.constants.is_empty() {
+        return Ok(());
+    }
+
+    writeln!(output, "/// Constants")?;
+    writeln!(output, "#[allow(non_upper_case_globals)]")?;
+    writeln!(output, "impl {} {{", class.name)?;
+
+    for (name, value) in &class.constants {
+        writeln!(
+            output,
+            "    pub const {name}: i64 = {value};",
+            name = name,
+            value = value,
+        )?;
+    }
+
+    writeln!(output, "}}")?;
+    Ok(())
+}
+
+#[derive(Copy, Clone, PartialEq)]
+struct EnumReference<'a> {
+    class: &'a str,
+    enum_name: &'a str,
+    enum_variant: &'a str,
+}
+
+const ENUM_VARIANTS_TO_SKIP: &[EnumReference<'static>] = &[
+    EnumReference {
+        class: "MultiplayerAPI",
+        enum_name: "RPCMode",
+        enum_variant: "RPC_MODE_SLAVE",
+    },
+    EnumReference {
+        class: "MultiplayerAPI",
+        enum_name: "RPCMode",
+        enum_variant: "RPC_MODE_SYNC",
+    },
+    EnumReference {
+        class: "TextureLayered",
+        enum_name: "Flags",
+        enum_variant: "FLAGS_DEFAULT",
+    },
+];
+
 pub fn generate_enum(output: &mut impl Write, class: &GodotClass, e: &Enum) -> GeneratorResult {
     // TODO: check whether the start of the variant name is
     // equal to the end of the enum name and if so don't repeat it
@@ -43,6 +90,16 @@ pub enum {class_name}{enum_name} {{"#,
 
     for &(key, val) in &values {
         // Use lowercase to test because of different CamelCase conventions (Msaa/MSAA, etc.).
+        let enum_ref = EnumReference {
+            class: class.name.as_str(),
+            enum_name: e.name.as_str(),
+            enum_variant: key.as_str(),
+        };
+
+        if ENUM_VARIANTS_TO_SKIP.contains(&enum_ref) {
+            continue;
+        }
+
         let enum_name_without_mode = if e.name.ends_with("Mode") {
             e.name[0..(e.name.len() - 4)].to_lowercase()
         } else {

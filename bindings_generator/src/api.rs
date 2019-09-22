@@ -9,7 +9,7 @@ pub struct Api {
 impl Api {
     pub fn new() -> Self {
         let mut api = Api {
-            classes: serde_json::from_slice(get_api_json())
+            classes: serde_json::from_str(get_api_json())
                 .expect("Failed to parse the API description"),
             api_underscore: Default::default(),
         };
@@ -72,6 +72,7 @@ pub struct GodotClass {
 
     pub methods: Vec<GodotMethod>,
     pub enums: Vec<Enum>,
+    pub constants: HashMap<ConstantName, ConstantValue>,
 }
 
 impl GodotClass {
@@ -83,6 +84,9 @@ impl GodotClass {
         self.is_refcounted() || self.singleton
     }
 }
+
+pub type ConstantName = String;
+pub type ConstantValue = i64;
 
 #[derive(Deserialize, Debug)]
 pub struct Enum {
@@ -301,10 +305,6 @@ impl Ty {
     }
 }
 
-pub fn get_api_json() -> &'static [u8] {
-    include_bytes!("../api.json")
-}
-
-pub fn get_namespaces_json() -> &'static [u8] {
-    include_bytes!("../namespaces.json")
+pub fn get_api_json() -> &'static str {
+    include_str!("../api.json")
 }

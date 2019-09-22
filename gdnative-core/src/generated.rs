@@ -4,6 +4,7 @@
 use super::*;
 use crate::get_api;
 use crate::sys;
+use crate::sys::GodotApi;
 
 use libc;
 use std::ops::*;
