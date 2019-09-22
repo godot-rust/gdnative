@@ -23,7 +23,6 @@ struct GodotApi {
     }
 }
     ) => (
-#[doc(hidden)]
 #[derive(Clone, Copy)]
 pub struct GodotApi {
     $(
