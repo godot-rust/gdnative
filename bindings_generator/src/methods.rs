@@ -143,7 +143,7 @@ pub fn generate_method_impl(
         return Ok(());
     }
 
-    let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
+    let mut rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
         ty
     } else {
         writeln!(output, "// TODO: missing method {}", method_name)?;
@@ -166,6 +166,7 @@ pub fn generate_method_impl(
 
     if method.has_varargs {
         params.push_str(", varargs: &[Variant]");
+        rust_ret_type = "Variant".to_string();
     }
 
     writeln!(
@@ -281,7 +282,7 @@ pub fn generate_methods(
                 continue;
             }
 
-            let rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
+            let mut rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
                 ty
             } else {
                 continue;
@@ -316,6 +317,7 @@ pub fn generate_methods(
             if method.has_varargs {
                 params_decl.push_str(", varargs: &[Variant]");
                 params_use.push_str(", varargs");
+                rust_ret_type = "Variant".to_string();
             }
 
             let self_param = if method.is_const {
