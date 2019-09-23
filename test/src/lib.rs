@@ -82,12 +82,26 @@ struct Foo(i64);
 
 impl NativeClass for Foo {
     type Base = Reference;
-    type UserData = user_data::ArcData<Foo>;
+    type UserData = user_data::Tracked<user_data::ArcData<Foo>>;
     fn class_name() -> &'static str {
         "Foo"
     }
     fn init(_owner: Reference) -> Foo {
         Foo(42)
+    }
+    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
+}
+
+struct NotFoo;
+
+impl NativeClass for NotFoo {
+    type Base = Reference;
+    type UserData = user_data::Tracked<user_data::ArcData<NotFoo>>;
+    fn class_name() -> &'static str {
+        "NotFoo"
+    }
+    fn init(_owner: Reference) -> NotFoo {
+        NotFoo
     }
     fn register_properties(_builder: &init::ClassBuilder<Self>) {}
 }
@@ -130,11 +144,20 @@ fn test_rust_class_construction() -> bool {
 
     let ok = std::panic::catch_unwind(|| {
         let foo = Instance::<Foo>::new();
+
         assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
+
+        let mut base = foo.into_base();
         assert_eq!(
             Some(42),
-            unsafe { foo.into_base().call("answer".into(), &[]) }.try_to_i64()
+            unsafe { base.call("answer".into(), &[]) }.try_to_i64()
         );
+
+        let foo = Instance::<Foo>::try_from_base(base).expect("should be able to downcast");
+        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
+
+        let base = foo.into_base();
+        assert!(Instance::<NotFoo>::try_from_base(base).is_none());
     })
     .is_ok();
 

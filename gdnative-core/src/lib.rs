@@ -31,6 +31,8 @@ pub extern crate libc;
 #[macro_use]
 extern crate bitflags;
 extern crate parking_lot;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod geom;
 

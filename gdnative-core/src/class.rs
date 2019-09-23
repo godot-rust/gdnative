@@ -1,6 +1,8 @@
 use crate::get_api;
 use crate::object;
 use crate::sys;
+use crate::user_data::TryClone;
+use crate::FromVariant;
 use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
@@ -174,6 +176,41 @@ impl<T: NativeClass> Instance<T> {
         &self.script
     }
 
+    /// Try to downcast `T::Base` to `Instance<T>`. This safe version can only be used with
+    /// reference counted base classes.
+    pub fn try_from_base(owner: T::Base) -> Option<Self>
+    where
+        T::Base: Clone,
+        T::UserData: TryClone,
+    {
+        unsafe { Self::try_from_unsafe_base(owner) }
+    }
+
+    /// Try to downcast `T::Base` to `Instance<T>`.
+    ///
+    /// # Safety
+    ///
+    /// It's up to the caller to ensure that `owner` points to a valid Godot object, and
+    /// that it will not be freed until this function returns. Otherwise, it is undefined
+    /// behavior to call this function and/or use its return value.
+    pub unsafe fn try_from_unsafe_base(owner: T::Base) -> Option<Self>
+    where
+        T::UserData: TryClone,
+    {
+        let user_data_ptr = {
+            let api = get_api();
+            let owner_ptr = owner.to_sys();
+            (api.godot_nativescript_get_userdata)(owner_ptr) as *const libc::c_void
+        };
+
+        if user_data_ptr.is_null() {
+            return None;
+        }
+
+        let script = T::UserData::try_clone_from_user_data(user_data_ptr)?;
+        Some(Instance { owner, script })
+    }
+
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
@@ -276,6 +313,18 @@ where
 {
     fn to_variant(&self) -> Variant {
         self.owner.to_variant()
+    }
+}
+
+impl<T> FromVariant for Instance<T>
+where
+    T: NativeClass,
+    T::Base: FromVariant + Clone,
+    T::UserData: TryClone,
+{
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        let owner = T::Base::from_variant(variant)?;
+        Self::try_from_base(owner)
     }
 }
 
