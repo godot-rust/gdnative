@@ -84,7 +84,7 @@ macro_rules! godot_gdnative_terminate {
             $callback(options);
 
             unsafe {
-                $crate::GODOT_API = None;
+                $crate::cleanup_internal_state();
             }
         }
     };

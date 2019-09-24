@@ -53,6 +53,7 @@ pub mod object;
 mod rid;
 mod string;
 mod string_array;
+mod type_tag;
 pub mod user_data;
 mod variant;
 mod variant_array;
@@ -104,6 +105,12 @@ pub fn get_api() -> &'static GodotApi {
 #[doc(hidden)]
 pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
     unsafe { GDNATIVE_LIBRARY_SYS.expect("GDNativeLibrary not bound") }
+}
+#[inline]
+#[doc(hidden)]
+pub unsafe fn cleanup_internal_state() {
+    type_tag::cleanup();
+    GODOT_API = None;
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
