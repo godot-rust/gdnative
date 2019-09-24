@@ -1,6 +1,7 @@
 use crate::get_api;
 use crate::object;
 use crate::sys;
+use crate::FromVariant;
 use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
@@ -19,7 +20,7 @@ use crate::Variant;
 /// For exported methods, see the [`NativeClassMethods`] trait.
 ///
 /// [`NativeClassMethods`]: ./trait.NativeClassMethods.html
-pub trait NativeClass: Sized {
+pub trait NativeClass: Sized + 'static {
     /// Base type of the class.
     ///
     /// In Godot, scripting languages can define "script instances" which can be
@@ -174,6 +175,35 @@ impl<T: NativeClass> Instance<T> {
         &self.script
     }
 
+    /// Try to downcast `T::Base` to `Instance<T>`. This safe version can only be used with
+    /// reference counted base classes.
+    pub fn try_from_base(owner: T::Base) -> Option<Self>
+    where
+        T::Base: Clone,
+    {
+        unsafe { Self::try_from_unsafe_base(owner) }
+    }
+
+    /// Try to downcast `T::Base` to `Instance<T>`.
+    ///
+    /// # Safety
+    ///
+    /// It's up to the caller to ensure that `owner` points to a valid Godot object, and
+    /// that it will not be freed until this function returns. Otherwise, it is undefined
+    /// behavior to call this function and/or use its return value.
+    pub unsafe fn try_from_unsafe_base(owner: T::Base) -> Option<Self> {
+        let type_tag = (get_api().godot_nativescript_get_type_tag)(owner.to_sys());
+        if type_tag.is_null() {
+            return None;
+        }
+
+        if !crate::type_tag::check::<T>(type_tag) {
+            return None;
+        }
+
+        Some(Self::from_sys_unchecked(owner.to_sys()))
+    }
+
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
@@ -276,6 +306,17 @@ where
 {
     fn to_variant(&self) -> Variant {
         self.owner.to_variant()
+    }
+}
+
+impl<T> FromVariant for Instance<T>
+where
+    T: NativeClass,
+    T::Base: FromVariant + Clone,
+{
+    fn from_variant(variant: &Variant) -> Option<Self> {
+        let owner = T::Base::from_variant(variant)?;
+        Self::try_from_base(owner)
     }
 }
 

@@ -106,6 +106,12 @@ impl InitHandle {
                 destroy,
             );
 
+            (get_api().godot_nativescript_set_type_tag)(
+                self.handle as *mut _,
+                class_name.as_ptr() as *const _,
+                crate::type_tag::create::<C>(),
+            );
+
             let mut builder = ClassBuilder {
                 init_handle: self.handle,
                 class_name,
@@ -172,6 +178,12 @@ impl InitHandle {
                 base_name.as_ptr() as *const _,
                 create,
                 destroy,
+            );
+
+            (get_api().godot_nativescript_set_type_tag)(
+                self.handle as *mut _,
+                class_name.as_ptr() as *const _,
+                crate::type_tag::create::<C>(),
             );
 
             let mut builder = ClassBuilder {
