@@ -24,7 +24,7 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
         .expect("No \"inherit\" attribute found");
 
     // read base class
-    let base = syn::parse::<Type>(inherit_attr.tts.clone().into())
+    let base = syn::parse::<Type>(inherit_attr.tokens.clone().into())
         .expect("`inherits` attribute requires the base type as an argument.");
 
     let user_data = input
@@ -32,7 +32,7 @@ pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
         .iter()
         .find(|a| a.path.segments[0].ident == "user_data")
         .map(|attr| {
-            syn::parse::<Type>(attr.tts.clone().into())
+            syn::parse::<Type>(attr.tokens.clone().into())
                 .expect("`userdata` attribute requires a type as an argument.")
         })
         .unwrap_or_else(|| {

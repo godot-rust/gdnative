@@ -212,14 +212,14 @@ pub(crate) fn extend_bounds(generics: Generics, repr: &Repr, bound: &syn::Path) 
         fn visit_type_path(&mut self, type_path: &'ast TypePath) {
             let path = &type_path.path;
             if let Some(seg) = path.segments.last() {
-                if seg.value().ident == "PhantomData" {
+                if seg.ident == "PhantomData" {
                     // things inside PhantomDatas doesn't need to be bounded, so stopping
                     // recursive visit here
                     return;
                 }
             }
             if let Some(seg) = path.segments.first() {
-                if self.all_type_params.contains(&seg.value().ident) {
+                if self.all_type_params.contains(&seg.ident) {
                     // if the first segment of the type path is a known type variable, then this
                     // is likely an associated type
                     // TODO: what about cases like <Foo<T> as Trait>::A? Maybe too fringe to be
