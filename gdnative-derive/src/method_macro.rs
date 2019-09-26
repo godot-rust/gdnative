@@ -1,11 +1,12 @@
-use syn::{FnArg, ImplItem, ItemImpl, MethodSig, Pat, PatIdent, Type};
+use syn::{FnArg, ImplItem, ItemImpl, Signature, Pat, PatIdent, Type};
 
 use proc_macro::TokenStream;
 use syn::export::Span;
+use std::boxed::Box;
 
 pub(crate) struct ClassMethodExport {
     pub(crate) class_ty: Box<Type>,
-    pub(crate) methods: Vec<MethodSig>,
+    pub(crate) methods: Vec<Signature>,
 }
 
 /// Parse the input.
@@ -42,7 +43,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         methods: vec![],
     };
 
-    let mut methods_to_export = Vec::<MethodSig>::new();
+    let mut methods_to_export = Vec::<Signature>::new();
 
     // extract all methods that have the #[export] attribute.
     // add all items back to the impl block again.
@@ -84,7 +85,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     // into the list of things to export.
     {
         for mut method in methods_to_export {
-            let generics = &method.decl.generics;
+            let generics = &method.generics;
 
             if generics.type_params().count() > 0 {
                 eprintln!("type parameters not allowed in exported functions");
@@ -102,25 +103,25 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
             // remove "mut" from arguments.
             // give every wildcard a (hopefully) unique name.
             method
-                .decl
                 .inputs
                 .iter_mut()
                 .enumerate()
                 .for_each(|(i, arg)| match arg {
-                    FnArg::Captured(cap) => match cap.pat.clone() {
+                    FnArg::Typed(cap) => match *cap.pat.clone() {
                         Pat::Wild(_) => {
                             let name = format!("___unused_arg_{}", i);
 
-                            cap.pat = Pat::Ident(PatIdent {
+                            cap.pat = Box::new(Pat::Ident(PatIdent {
+                                attrs: vec![],
                                 by_ref: None,
                                 mutability: None,
                                 ident: syn::Ident::new(&name, Span::call_site()),
                                 subpat: None,
-                            });
+                            }));
                         }
                         Pat::Ident(mut ident) => {
                             ident.mutability = None;
-                            cap.pat = Pat::Ident(ident);
+                            cap.pat = Box::new(Pat::Ident(ident));
                         }
                         _ => {}
                     },
