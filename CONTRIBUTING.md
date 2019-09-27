@@ -23,6 +23,8 @@ Have a look at the [issues](https://github.com/GodotNativeTools/godot-rust/issue
 
 - Whenever applicable, add tests relevant to the fixed bug or new feature.
 
+- Use `cargo fmt` to format your code.
+
 ## Testing
 
 - run `cargo test --all` from the root of the repository.
