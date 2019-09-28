@@ -1084,6 +1084,57 @@ impl<T: FromVariant> FromVariant for Vec<T> {
     }
 }
 
+macro_rules! tuple_length {
+    () => { 0i32 };
+    ($_x:ident, $($xs:ident,)*) => {
+        1i32 + tuple_length!($($xs,)*)
+    };
+}
+
+macro_rules! impl_variant_for_tuples_next {
+    ($_x:ident, $($xs:ident,)*) => {
+        impl_variant_for_tuples!($($xs,)*);
+    }
+}
+
+macro_rules! impl_variant_for_tuples {
+    () => {};
+    ( $($name:ident,)+ ) => {
+        impl<$($name: ToVariant,)+> ToVariant for ($($name,)+) {
+            #[allow(non_snake_case)]
+            fn to_variant(&self) -> Variant {
+                let mut array = VariantArray::new();
+                let ($($name,)+) = self;
+                $(
+                    array.push(&$name.to_variant());
+                )+
+                array.to_variant()
+            }
+        }
+
+        impl<$($name: FromVariant,)+> FromVariant for ($($name,)+) {
+            #[allow(non_snake_case)]
+            fn from_variant(v: &Variant) -> Option<Self> {
+                let array = v.try_to_array()?;
+                if array.len() != tuple_length!($($name,)+) {
+                    return None;
+                }
+
+                let mut iter = array.iter();
+                $(
+                    let $name = $name::from_variant(iter.next().unwrap())?;
+                )+
+
+                Some(($($name,)+))
+            }
+        }
+
+        impl_variant_for_tuples_next!($($name,)+);
+    };
+}
+
+impl_variant_for_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12,);
+
 godot_test!(
     test_variant_option {
         use std::marker::PhantomData;
@@ -1158,5 +1209,15 @@ godot_test!(
         assert_eq!(Some(&42), vec_maybe[0].as_ref().ok());
         assert_eq!(Some(&Variant::new()), vec_maybe[1].as_ref().err());
         assert_eq!(Some(&f64::to_variant(&54.0)), vec_maybe[2].as_ref().err());
+    }
+
+    test_variant_tuple {
+        let variant = (42i64, 54i64).to_variant();
+        let arr = variant.try_to_array().expect("should be array");
+        assert_eq!(Some(42), arr.get_ref(0).try_to_i64());
+        assert_eq!(Some(54), arr.get_ref(1).try_to_i64());
+
+        let tuple = <(i64, i64)>::from_variant(&variant);
+        assert_eq!(Some((42, 54)), tuple);
     }
 );
