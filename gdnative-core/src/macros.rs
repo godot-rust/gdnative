@@ -513,7 +513,10 @@ macro_rules! godot_wrap_method_inner {
                 )*
 
                 let rust_ret = match panic::catch_unwind(AssertUnwindSafe(move || {
-                    let ret = __instance.$map_method(|__rust_val, $owner| __rust_val.$method_name($owner, $($pname,)*));
+                    let ret = __instance.$map_method(|__rust_val, $owner| {
+                        let ret = __rust_val.$method_name($owner, $($pname,)*);
+                        <$retty as $crate::ToVariant>::to_variant(&ret)
+                    });
                     std::mem::drop(__instance);
                     ret
                 })) {
@@ -524,7 +527,7 @@ macro_rules! godot_wrap_method_inner {
                 };
 
                 match rust_ret {
-                    Ok(val) => <$retty as $crate::ToVariant>::to_variant(&val).forget(),
+                    Ok(val) => val.forget(),
                     Err(err) => {
                         godot_error!("gdnative-core: method call failed with error: {:?}", err);
                         $crate::Variant::new().to_sys()
