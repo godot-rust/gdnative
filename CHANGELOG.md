@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.0] - 2019-09-28
+## [0.7.0] - 2019-12-22
 
 ### Added
 
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (implements `ToVariant` and `FromVariant`, so it can be used as a parameter
   or return type).
 
-- Generated class wrappers now inclue associated constants for constants
+- Generated class wrappers now include associated constants for constants
   provided by Godot.
 
 - New example projects.
@@ -60,3 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The "domain-grouped" crates for generated bindings are merged into a single
   crate, so the individual crates are no longer in use.
+
+### Fixed
+
+- Fixed a memory safety issue where the strings used to register signals are
+  dropped before the API call.
+
+- Fixed a correctness issue where the layout of method arguments is
+  incorrectly assumed to be continuous, causing invalid memory access when
+  calling methods with multiple arguments.

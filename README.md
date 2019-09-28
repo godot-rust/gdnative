@@ -4,7 +4,7 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
-**[API Documentation](https://docs.rs/gdnative/0.6.0/gdnative/)** 
+**[API Documentation](https://docs.rs/gdnative/0.7.0/gdnative/)** 
 
 - Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.1/classes/) but you have to do casting between classes and subclasses manually.
 
@@ -12,32 +12,19 @@ Rust bindings to the [Godot game engine](http://godotengine.org/).
 
 The bindings, while usable, are a work in progress. Some APIs are missing and the existing ones are still in flux.
 
-## EXAMPLES
-The repository contains a [variety of examples](https://github.com/GodotNativeTools/godot-rust/tree/master/examples) which are ready to use, complete with Godot projects and setup for easy compiliation from Cargo.
-- [/examples/hello_world](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
-- [/examples/spinning_cube/](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
-- [/examples/scene_create](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
-(Perhaps you can contribute some more?)
+## Usage
 
-## 3rd-Party Tutorials
-- In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
-- Auto Setup Script - https://gitlab.com/ardawan-opensource/gdnative-rust-setup
+Add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
 
-## Open source example projects:
-- https://github.com/you-win/godot-pong-rust
-(Please open a PR if you have one to share)
+```toml
+[dependencies]
+gdnative = "0.7"
 
-## Contributing
+[lib]
+crate-type = ["cdylib"]
+```
 
-See the [contribution guidelines](CONTRIBUTING.md)
-
-## License
-
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
-
----
-
-## "Hello World" example
+## Example
 
 The most general use-case of the bindings will be to interact with Godot using the generated wrapper
 classes, as well as providing custom functionality by exposing Rust types as *NativeScript*s.
@@ -48,9 +35,7 @@ to Godot.
 (The following section is a very quick-and-dirty rundown of how to get started with the Rust bindings.
 For a more complete and detailed introduction see the [Godot documentation page](https://docs.godotengine.org/en/latest/tutorials/plugins/gdnative/gdnative-c-example.html).)
 
-As is tradition, a simple "Hello World" should serve as an introduction.
-
-(A copy of this "hello world" project can be found in the [`examples`](examples/hello_world) folder. )
+As is tradition, a simple "Hello World" should serve as an introduction. A copy of this "hello world" project can be found in the [`examples`](examples/hello_world) folder.
 
 ### The project setup
 
@@ -60,18 +45,11 @@ Starting with an empty Godot project, a `cargo` project can be created inside th
 cargo init --lib
 ```
 
-To use the GDNative bindings in your project you have to add the `gdnative` crate as a dependency. The crates.io version of the bindings is very out of date, and it's currently preferred to use the `master` branch instead until a new release is made.
+To use the GDNative bindings in your project you have to add the `gdnative` crate as a dependency.
 
 ```toml
 [dependencies]
-gdnative = { git = "git://github.com/GodotNativeTools/godot-rust" }
-```
-
-You may also vendor the bindings as a local dependency:
-
-```toml
-[dependencies]
-gdnative = { path = "../godot-rust" }
+gdnative = "0.7"
 ```
 
 Since GDNative can only use C-compatible dynamic libraries, the crate type has to be set accordingly.
@@ -91,6 +69,7 @@ use gdnative::*;
 /// The HelloWorld "class"
 #[derive(NativeClass)]
 #[inherit(Node)]
+#[user_data(user_data::ArcData<HelloWorld>)]
 pub struct HelloWorld;
 
 // __One__ `impl` block can have the `#[methods]` attribute, which will generate
@@ -145,3 +124,34 @@ In the popup-select the "NativeScript" option and set the class name to "HelloWo
 **NOTE**: After creation, the NativeScript resource does not automatically point to the `GDNativeLibrary` resource.
 Make sure to set click the "library" field in the Inspector and "load" the library.
 
+### Further examples
+
+The [/examples](https://github.com/GodotNativeTools/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
+
+- [/examples/hello_world](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
+- [/examples/spinning_cube/](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
+- [/examples/scene_create](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
+
+## Third-party resources
+
+Several third-party resources have been created for the bindings. Open a PR to have yours included here!
+
+### Tutorials
+
+- In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
+
+### Open-source projects
+
+- Pong - https://github.com/you-win/godot-pong-rust
+
+### Utilities
+
+- Auto Setup Script (as git dependency) - https://gitlab.com/ardawan-opensource/gdnative-rust-setup
+
+## Contributing
+
+See the [contribution guidelines](CONTRIBUTING.md)
+
+## License
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
