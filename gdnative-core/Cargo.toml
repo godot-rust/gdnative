@@ -2,7 +2,7 @@
 name = "gdnative-core"
 authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative core bindings."
-documentation = "https://docs.rs/crate/gdnative"
+documentation = "https://docs.rs/crate/gdnative-core"
 repository = "https://github.com/GodotNativeTools/godot-rust"
 version = "0.7.0"
 license = "MIT"

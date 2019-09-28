@@ -1,7 +1,12 @@
 [package]
 name = "gdnative-bindings"
-version = "0.7.0"
 authors = ["The godot-rust developers"]
+description = "The Godot game engine's automatcally generated bindings to Godot classes."
+documentation = "https://docs.rs/crate/gdnative-bindings"
+repository = "https://github.com/GodotNativeTools/godot-rust"
+version = "0.7.0"
+license = "MIT"
+workspace = ".."
 edition = "2018"
 
 [dependencies]
