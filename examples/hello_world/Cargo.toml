@@ -2,6 +2,7 @@
 name = "hello_world"
 version = "0.1.0"
 authors = ["karroffel <therzog@mail.de>"]
+publish = false
 
 [lib]
 crate-type = ["cdylib"]

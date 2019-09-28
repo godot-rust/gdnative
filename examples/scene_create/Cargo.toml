@@ -2,6 +2,7 @@
 name = "scene_create"
 version = "0.1.0"
 authors = ["tom.leys <tom@crump-leys.com>", "karroffel <therzog@mail.de>"]
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
