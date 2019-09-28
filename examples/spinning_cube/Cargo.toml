@@ -1,7 +1,7 @@
 [package]
 name = "spinning_cube"
 version = "0.1.0"
-authors = ["karroffel <therzog@mail.de>"]
+authors = ["The godot-rust developers"]
 publish = false
 
 [lib]
