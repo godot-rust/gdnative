@@ -778,7 +778,7 @@ macro_rules! impl_to_variant_for_int {
             fn to_variant(&self) -> Variant {
                 unsafe {
                     let mut ret = sys::godot_variant::default();
-                    (get_api().godot_variant_new_int)(&mut ret, i64::from(*self));
+                    (get_api().godot_variant_new_int)(&mut ret, (*self) as i64);
                     Variant(ret)
                 }
             }
@@ -805,6 +805,7 @@ impl_to_variant_for_int!(i8);
 impl_to_variant_for_int!(i16);
 impl_to_variant_for_int!(i32);
 impl_to_variant_for_int!(i64);
+impl_to_variant_for_int!(isize);
 
 macro_rules! godot_uint_impl {
     ($ty:ty) => {
@@ -812,7 +813,7 @@ macro_rules! godot_uint_impl {
             fn to_variant(&self) -> Variant {
                 unsafe {
                     let mut ret = sys::godot_variant::default();
-                    (get_api().godot_variant_new_uint)(&mut ret, u64::from(*self));
+                    (get_api().godot_variant_new_uint)(&mut ret, (*self) as u64);
                     Variant(ret)
                 }
             }
@@ -839,6 +840,7 @@ godot_uint_impl!(u8);
 godot_uint_impl!(u16);
 godot_uint_impl!(u32);
 godot_uint_impl!(u64);
+godot_uint_impl!(usize);
 
 impl ToVariant for f32 {
     fn to_variant(&self) -> Variant {
