@@ -2,7 +2,7 @@ use crate::FromVariant;
 use crate::ToVariant;
 use crate::Variant;
 use crate::Vector2;
-use euclid::{Angle, Length, Rotation2D, Trig, UnknownUnit};
+use euclid::{Angle, Length, Point2D, Rotation2D, Trig, UnknownUnit};
 
 impl ToVariant for Vector2 {
     fn to_variant(&self) -> Variant {
@@ -21,38 +21,32 @@ impl FromVariant for Vector2 {
 /// Trait used to provide additional methods that are equivalent to Godot's methods.
 /// See the official [`Godot documentation`](https://docs.godotengine.org/en/3.1/classes/class_vector2.html).
 pub trait Vector2Godot {
-    fn angle(self) -> Angle<f32>;
     fn angle_to(self, other: Self) -> Angle<f32>;
-    fn angle_to_point(self, other: Self) -> Angle<f32>;
+    fn angle_to_point(self, point: Point2D<f32, UnknownUnit>) -> Angle<f32>;
     fn aspect(self) -> f32;
     fn bounce(self, normal: Self) -> Self;
     fn clamped(self, length: f32) -> Self;
     fn cubic_interpolate(self, b: Self, pre_a: Self, post_b: Self, t: f32) -> Self;
-    fn direction_to(self, other: Self) -> Self;
-    fn distance_to(self, other: Self) -> Length<f32, UnknownUnit>;
-    fn distance_squared_to(self, other: Self) -> Length<f32, UnknownUnit>;
+    fn direction_to(self, point: Point2D<f32, UnknownUnit>) -> Self;
+    fn distance_to(self, point: Point2D<f32, UnknownUnit>) -> Length<f32, UnknownUnit>;
+    fn distance_squared_to(self, point: Point2D<f32, UnknownUnit>) -> Length<f32, UnknownUnit>;
     fn project(self, other: Self) -> Self;
-    fn reflect(self, other: Self) -> Self;
+    fn reflect(self, normal: Self) -> Self;
     fn rotated(self, angle: Angle<f32>) -> Self;
-    fn slide(self, other: Self) -> Self;
+    fn slide(self, normal: Self) -> Self;
     fn snapped(self, other: Self) -> Self;
     fn tangent(self) -> Self;
 }
 
 impl Vector2Godot for Vector2 {
     #[inline]
-    fn angle(self) -> Angle<f32> {
-        self.angle_from_x_axis()
-    }
-
-    #[inline]
     fn angle_to(self, other: Self) -> Angle<f32> {
         Angle::radians(Trig::fast_atan2(self.cross(other), self.dot(other)))
     }
 
     #[inline]
-    fn angle_to_point(self, other: Self) -> Angle<f32> {
-        Angle::radians(Trig::fast_atan2(self.y - other.y, self.x - other.x))
+    fn angle_to_point(self, point: Point2D<f32, UnknownUnit>) -> Angle<f32> {
+        Angle::radians(Trig::fast_atan2(self.y - point.y, self.x - point.x))
     }
 
     #[inline]
@@ -93,18 +87,19 @@ impl Vector2Godot for Vector2 {
     }
 
     #[inline]
-    fn direction_to(self, other: Self) -> Self {
-        (other - self).normalize()
+    fn direction_to(self, point: Point2D<f32, UnknownUnit>) -> Self {
+        (point - self).to_vector().normalize()
     }
 
     #[inline]
-    fn distance_to(self, other: Self) -> Length<f32, UnknownUnit> {
-        Length::new((self - other).length())
+    fn distance_to(self, point: Point2D<f32, UnknownUnit>) -> Length<f32, UnknownUnit> {
+        let squared = (self.x - point.x).powi(2) + (self.y - point.y).powi(2);
+        Length::new(squared.sqrt())
     }
 
     #[inline]
-    fn distance_squared_to(self, other: Self) -> Length<f32, UnknownUnit> {
-        Length::new((self - other).square_length())
+    fn distance_squared_to(self, point: Point2D<f32, UnknownUnit>) -> Length<f32, UnknownUnit> {
+        Length::new((self.x - point.x).powi(2) + (self.y - point.y).powi(2))
     }
 
     #[inline]
@@ -115,8 +110,8 @@ impl Vector2Godot for Vector2 {
     }
 
     #[inline]
-    fn reflect(self, other: Self) -> Self {
-        other - self * self.dot(other) * 2.0
+    fn reflect(self, normal: Self) -> Self {
+        normal - self * self.dot(normal) * 2.0
     }
 
     #[inline]
@@ -126,8 +121,8 @@ impl Vector2Godot for Vector2 {
     }
 
     #[inline]
-    fn slide(self, other: Self) -> Self {
-        other - self * self.dot(other)
+    fn slide(self, normal: Self) -> Self {
+        normal - self * self.dot(normal)
     }
 
     #[inline]
