@@ -32,6 +32,11 @@
 //! - You want fine grained lock control for parallelism.
 //! - All your exported methods take `&self`.
 //! - Your `NativeClass` type is `Send + Sync`.
+//!
+//! ### Use a `LocalCellData<T>` when:
+//!
+//! - Your `NativeClass` type is not `Send`, and you will only ever use it from the thread where
+//!   it's originally created.
 
 use parking_lot::{Mutex, RwLock};
 use std::fmt::Debug;
@@ -384,5 +389,143 @@ where
 impl<T> Clone for ArcData<T> {
     fn clone(&self) -> Self {
         ArcData(self.0.clone())
+    }
+}
+
+/// User-data wrapper analogous to a `Arc<RefCell<T>>`, that is restricted to the thread
+/// where it was originally created.
+///
+/// This works by checking `ThreadId` before touching the underlying reference. If the id
+/// doesn't match the original thread, `map` and `map_mut` will return an error.
+#[derive(Debug)]
+pub struct LocalCellData<T> {
+    inner: Arc<local_cell::LocalCell<T>>,
+}
+
+pub use self::local_cell::LocalCellError;
+
+mod local_cell {
+    use std::cell::{Ref, RefCell, RefMut};
+    use std::thread::{self, ThreadId};
+
+    #[derive(Debug)]
+    pub struct LocalCell<T> {
+        thread_id: ThreadId,
+        cell: RefCell<T>,
+    }
+
+    /// Error indicating that a borrow has failed.
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    pub enum LocalCellError {
+        DifferentThread {
+            original: ThreadId,
+            current: ThreadId,
+        },
+        BorrowFailed,
+    }
+
+    impl<T> LocalCell<T> {
+        pub fn new(val: T) -> Self {
+            LocalCell {
+                thread_id: thread::current().id(),
+                cell: RefCell::new(val),
+            }
+        }
+
+        fn inner(&self) -> Result<&RefCell<T>, LocalCellError> {
+            let current = thread::current().id();
+
+            if self.thread_id == current {
+                Ok(&self.cell)
+            } else {
+                Err(LocalCellError::DifferentThread {
+                    original: self.thread_id,
+                    current,
+                })
+            }
+        }
+
+        pub fn try_borrow(&self) -> Result<Ref<T>, LocalCellError> {
+            let inner = self.inner()?;
+            inner.try_borrow().map_err(|_| LocalCellError::BorrowFailed)
+        }
+
+        pub fn try_borrow_mut(&self) -> Result<RefMut<T>, LocalCellError> {
+            let inner = self.inner()?;
+            inner
+                .try_borrow_mut()
+                .map_err(|_| LocalCellError::BorrowFailed)
+        }
+    }
+
+    // Implementing Send + Sync is ok because the cell is guarded from access outside the
+    // original thread.
+    unsafe impl<T> Send for LocalCell<T> {}
+    unsafe impl<T> Sync for LocalCell<T> {}
+}
+
+unsafe impl<T> UserData for LocalCellData<T>
+where
+    T: NativeClass,
+{
+    type Target = T;
+
+    fn new(val: Self::Target) -> Self {
+        LocalCellData {
+            inner: Arc::new(local_cell::LocalCell::new(val)),
+        }
+    }
+
+    unsafe fn into_user_data(self) -> *const libc::c_void {
+        Arc::into_raw(self.inner) as *const libc::c_void
+    }
+
+    unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self {
+        LocalCellData {
+            inner: Arc::from_raw(ptr as *const local_cell::LocalCell<T>),
+        }
+    }
+
+    unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self {
+        let borrowed = Arc::from_raw(ptr as *const local_cell::LocalCell<T>);
+        let arc = borrowed.clone();
+        mem::forget(borrowed);
+        LocalCellData { inner: arc }
+    }
+}
+
+impl<T> Map for LocalCellData<T>
+where
+    T: NativeClass,
+{
+    type Err = LocalCellError;
+
+    fn map<F, U>(&self, op: F) -> Result<U, Self::Err>
+    where
+        F: FnOnce(&Self::Target) -> U,
+    {
+        self.inner.try_borrow().map(|r| op(&*r))
+    }
+}
+
+impl<T> MapMut for LocalCellData<T>
+where
+    T: NativeClass,
+{
+    type Err = LocalCellError;
+
+    fn map_mut<F, U>(&self, op: F) -> Result<U, Self::Err>
+    where
+        F: FnOnce(&mut Self::Target) -> U,
+    {
+        self.inner.try_borrow_mut().map(|mut w| op(&mut *w))
+    }
+}
+
+impl<T> Clone for LocalCellData<T> {
+    fn clone(&self) -> Self {
+        LocalCellData {
+            inner: self.inner.clone(),
+        }
     }
 }
