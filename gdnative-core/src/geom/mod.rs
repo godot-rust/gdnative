@@ -11,7 +11,6 @@ pub type Transform2D = euclid::default::Transform2D<f32>;
 pub type Quat = euclid::default::Rotation3D<f32>;
 pub type Rect2 = euclid::default::Rect<f32>;
 pub type Angle = euclid::Angle<f32>;
-pub type Length = euclid::Length<f32, euclid::UnknownUnit>;
 pub type Point3 = euclid::default::Point3D<f32>;
 pub type Point2 = euclid::default::Point2D<f32>;
 pub type Rotation2D = euclid::default::Rotation2D<f32>;

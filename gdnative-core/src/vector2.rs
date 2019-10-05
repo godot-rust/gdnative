@@ -1,6 +1,5 @@
-use crate::{Angle, Length, Point2, Rotation2D, Vector2};
+use crate::{Angle, Rotation2D, Vector2};
 use crate::{FromVariant, ToVariant, Variant};
-use euclid::Trig;
 
 impl ToVariant for Vector2 {
     fn to_variant(&self) -> Variant {
@@ -19,30 +18,12 @@ impl FromVariant for Vector2 {
 /// Trait used to provide additional methods that are equivalent to Godot's methods.
 /// See the official [`Godot documentation`](https://docs.godotengine.org/en/3.1/classes/class_vector2.html).
 pub trait Vector2Godot {
-    /// Returns the angle in radians between the two vectors.
-    fn angle_to(self, other: Self) -> Angle;
-    /// Returns the angle in radians between the line connecting the two points and the x
-    /// coordinate.
-    fn angle_to_point(self, point: Point2) -> Angle;
     /// Returns the ratio of x to y.
     fn aspect(self) -> f32;
-    /// Returns the vector “bounced off” from a plane defined by the given normal.
-    fn bounce(self, normal: Self) -> Self;
-    /// Returns the vector with a maximum length.
-    fn clamped(self, length: Length) -> Self;
     /// Cubicly interpolates between this vector and `b` using `pre_a` and `post_b` as handles,
     /// and returns the result at position `t`. `t` is in the range of 0.0 - 1.0, representing
     /// the amount of interpolation.
     fn cubic_interpolate(self, b: Self, pre_a: Self, post_b: Self, t: f32) -> Self;
-    /// Returns the normalized vector pointing from this vector to `point`.
-    fn direction_to(self, point: Point2) -> Self;
-    /// Returns the distance to `point`.
-    fn distance_to(self, point: Point2) -> Length;
-    /// Returns the squared distance to `point`. Prefer this function over distance_to if you
-    /// need to sort vectors or need the squared distance for some formula.
-    fn distance_squared_to(self, point: Point2) -> Length;
-    /// Returns the vector projected onto the `other` vector.
-    fn project(self, other: Self) -> Self;
     /// Returns the vector reflected from a plane defined by the given `normal`.
     fn reflect(self, normal: Self) -> Self;
     /// Returns the vector rotated by `angle` radians.
@@ -57,33 +38,8 @@ pub trait Vector2Godot {
 
 impl Vector2Godot for Vector2 {
     #[inline]
-    fn angle_to(self, other: Self) -> Angle {
-        Angle::radians(Trig::fast_atan2(self.cross(other), self.dot(other)))
-    }
-
-    #[inline]
-    fn angle_to_point(self, point: Point2) -> Angle {
-        Angle::radians(Trig::fast_atan2(self.y - point.y, self.x - point.x))
-    }
-
-    #[inline]
     fn aspect(self) -> f32 {
         self.x / self.y
-    }
-
-    #[inline]
-    fn bounce(self, normal: Self) -> Self {
-        let normal = normal.normalize();
-        normal * ((-2.0) * self.dot(normal)) + self
-    }
-
-    #[inline]
-    fn clamped(self, length: Length) -> Self {
-        if self.length() > length.get() {
-            self.normalize() * length.get()
-        } else {
-            self
-        }
     }
 
     #[inline]
@@ -104,31 +60,8 @@ impl Vector2Godot for Vector2 {
     }
 
     #[inline]
-    fn direction_to(self, point: Point2) -> Self {
-        (point - self).to_vector().normalize()
-    }
-
-    #[inline]
-    fn distance_to(self, point: Point2) -> Length {
-        let squared = (self.x - point.x).powi(2) + (self.y - point.y).powi(2);
-        Length::new(squared.sqrt())
-    }
-
-    #[inline]
-    fn distance_squared_to(self, point: Point2) -> Length {
-        Length::new((self.x - point.x).powi(2) + (self.y - point.y).powi(2))
-    }
-
-    #[inline]
-    fn project(self, other: Self) -> Self {
-        let v1 = other;
-        let v2 = self;
-        v2 * (v1.dot(v2) / v2.dot(v2))
-    }
-
-    #[inline]
     fn reflect(self, normal: Self) -> Self {
-        normal - self * self.dot(normal) * 2.0
+        normal * 2.0 * self.dot(normal)  - self
     }
 
     #[inline]

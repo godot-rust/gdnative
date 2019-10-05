@@ -50,6 +50,7 @@ mod int32_array;
 mod node_path;
 #[doc(hidden)]
 pub mod object;
+mod point2;
 mod rid;
 mod string;
 mod string_array;
@@ -75,6 +76,7 @@ pub use crate::int32_array::*;
 pub use crate::node_path::*;
 pub use crate::object::GodotObject;
 pub use crate::object::Instanciable;
+pub use crate::point2::*;
 pub use crate::rid::*;
 pub use crate::string::*;
 pub use crate::string_array::*;
