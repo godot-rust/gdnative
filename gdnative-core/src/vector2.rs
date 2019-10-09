@@ -24,8 +24,6 @@ pub trait Vector2Godot {
     /// and returns the result at position `t`. `t` is in the range of 0.0 - 1.0, representing
     /// the amount of interpolation.
     fn cubic_interpolate(self, b: Self, pre_a: Self, post_b: Self, t: f32) -> Self;
-    /// Returns the vector reflected from a plane defined by the given `normal`.
-    fn reflect(self, normal: Self) -> Self;
     /// Returns the vector rotated by `angle` radians.
     fn rotated(self, angle: Angle) -> Self;
     /// Returns the component of the vector along a plane defined by the given normal.
@@ -60,11 +58,6 @@ impl Vector2Godot for Vector2 {
     }
 
     #[inline]
-    fn reflect(self, normal: Self) -> Self {
-        normal * 2.0 * self.dot(normal)  - self
-    }
-
-    #[inline]
     fn rotated(self, angle: Angle) -> Self {
         let r = Rotation2D::new(angle);
         r.transform_vector(self)
@@ -72,7 +65,7 @@ impl Vector2Godot for Vector2 {
 
     #[inline]
     fn slide(self, normal: Self) -> Self {
-        normal - self * self.dot(normal)
+        self - normal * self.dot(normal)
     }
 
     #[inline]
@@ -128,7 +121,8 @@ godot_test!(
 
 #[cfg(test)]
 mod tests {
-    use super::Vector2;
+    use crate::Vector2;
+    use crate::vector2::Vector2Godot;
 
     #[test]
     fn it_is_copy() {
@@ -150,5 +144,17 @@ mod tests {
     #[test]
     fn it_supports_inequality() {
         assert_ne!(Vector2::new(1.0, 10.0), Vector2::new(1.0, 2.0));
+    }
+
+    #[test]
+    fn test_slide() {
+        let normal = Vector2::new(0.0, 1.0);
+        assert_eq!(Vector2::new(1.0, 1.0).slide(normal), Vector2::new(1.0, 0.0));
+    }
+
+    #[test]
+    fn test_snapped() {
+        let by = Vector2::new(1.0, 4.0);
+        assert_eq!(Vector2::new(1.5, 5.6).snapped(by), Vector2::new(2.0, 4.0));
     }
 }
