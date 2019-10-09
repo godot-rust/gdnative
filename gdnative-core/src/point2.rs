@@ -2,7 +2,7 @@ use crate::{Angle, Point2, Vector2};
 use euclid::Trig;
 
 /// Helper methods for `Point2`.
-/// 
+///
 /// Trait used to provide additional methods that are equivalent to Godot's methods.
 /// See the official [`Godot documentation`](https://docs.godotengine.org/en/3.1/classes/class_vector2.html).
 pub trait Point2Godot {

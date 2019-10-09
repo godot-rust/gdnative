@@ -121,8 +121,8 @@ godot_test!(
 
 #[cfg(test)]
 mod tests {
-    use crate::Vector2;
     use crate::vector2::Vector2Godot;
+    use crate::Vector2;
 
     #[test]
     fn it_is_copy() {
