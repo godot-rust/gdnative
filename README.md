@@ -4,9 +4,38 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
+**[API Documentation](https://docs.rs/gdnative/0.6.0/gdnative/)** 
+
+- Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.1/classes/) but you have to do casting between classes and subclasses manually.
+
 ## Work in progress
 
 The bindings, while usable, are a work in progress. Some APIs are missing and the existing ones are still in flux.
+
+## EXAMPLES
+The repository contains a [variety of examples](https://github.com/GodotNativeTools/godot-rust/tree/master/examples) which are ready to use, complete with Godot projects and setup for easy compiliation from Cargo.
+- [/examples/hello_world](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
+- [/examples/spinning_cube/](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
+- [/examples/scene_create](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
+(Perhaps you can contribute some more?)
+
+## 3rd-Party Tutorials
+- In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
+- Auto Setup Script - https://gitlab.com/ardawan-opensource/gdnative-rust-setup
+
+## Open source example projects:
+- https://github.com/you-win/godot-pong-rust
+(Please open a PR if you have one to share)
+
+## Contributing
+
+See the [contribution guidelines](CONTRIBUTING.md)
+
+## License
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
+
+---
 
 ## "Hello World" example
 
@@ -109,10 +138,3 @@ In the popup-select the "NativeScript" option and set the class name to "HelloWo
 **NOTE**: After creation, the NativeScript resource does not automatically point to the `GDNativeLibrary` resource.
 Make sure to set click the "library" field in the Inspector and "load" the library.
 
-## Contributing
-
-See the [contribution guidelines](CONTRIBUTING.md)
-
-## License
-
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
