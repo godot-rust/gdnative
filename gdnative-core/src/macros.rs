@@ -530,6 +530,7 @@ macro_rules! godot_wrap_method_inner {
                     Ok(val) => val.forget(),
                     Err(err) => {
                         godot_error!("gdnative-core: method call failed with error: {:?}", err);
+                        godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
                         $crate::Variant::new().to_sys()
                     }
                 }
