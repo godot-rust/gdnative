@@ -341,8 +341,12 @@ pub(crate) fn derive_to_variant(input: TokenStream) -> TokenStream {
     let DeriveData {
         ident,
         repr,
-        generics,
+        mut generics,
     } = parse_derive_input(input, &bound);
+
+    for param in generics.type_params_mut() {
+        param.default = None;
+    }
 
     let return_expr = match repr {
         Repr::Struct(var_repr) => {
@@ -403,8 +407,12 @@ pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
     let DeriveData {
         ident,
         repr,
-        generics,
+        mut generics,
     } = parse_derive_input(input, &bound);
+
+    for param in generics.type_params_mut() {
+        param.default = None;
+    }
 
     let input_ident = Ident::new("__variant", Span::call_site());
 
