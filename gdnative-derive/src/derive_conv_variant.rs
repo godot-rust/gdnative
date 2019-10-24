@@ -142,10 +142,9 @@ impl VariantRepr {
 
                 if types.len() == 1 {
                     // as newtype
-                    let inner = types.get(0).unwrap();
                     quote! {
                         {
-                            let __inner = #inner::from_variant(#variant)?;
+                            let __inner = FromVariant::from_variant(#variant)?;
                             Some(#ctor(__inner))
                         }
                     }
