@@ -359,27 +359,33 @@ pub(crate) fn derive_to_variant(input: TokenStream) -> TokenStream {
             }
         }
         Repr::Enum(variants) => {
-            let match_arms = variants
-                .iter()
-                .map(|(var_ident, var_repr)| {
-                    let destructure_pattern = var_repr.destructure_pattern();
-                    let to_variant = var_repr.to_variant();
-                    let var_ident_string = format!("{}", var_ident);
-                    let var_ident_string_literal = Literal::string(&var_ident_string);
-                    quote! {
-                        #ident::#var_ident #destructure_pattern => {
-                            let mut __dict = ::gdnative::Dictionary::new();
-                            let __key = ::gdnative::GodotString::from(#var_ident_string_literal).to_variant();
-                            let __value = #to_variant;
-                            __dict.set(&__key, &__value);
-                            __dict.to_variant()
+            if variants.is_empty() {
+                quote! {
+                    unreachable!("this is an uninhabitable enum");
+                }
+            } else {
+                let match_arms = variants
+                    .iter()
+                    .map(|(var_ident, var_repr)| {
+                        let destructure_pattern = var_repr.destructure_pattern();
+                        let to_variant = var_repr.to_variant();
+                        let var_ident_string = format!("{}", var_ident);
+                        let var_ident_string_literal = Literal::string(&var_ident_string);
+                        quote! {
+                            #ident::#var_ident #destructure_pattern => {
+                                let mut __dict = ::gdnative::Dictionary::new();
+                                let __key = ::gdnative::GodotString::from(#var_ident_string_literal).to_variant();
+                                let __value = #to_variant;
+                                __dict.set(&__key, &__value);
+                                __dict.to_variant()
+                            }
                         }
-                    }
-                });
+                    });
 
-            quote! {
-                match &self {
-                    #( #match_arms ),*
+                quote! {
+                    match &self {
+                        #( #match_arms ),*
+                    }
                 }
             }
         }
@@ -425,6 +431,10 @@ pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
             }
         }
         Repr::Enum(variants) => {
+            if variants.is_empty() {
+                panic!("cannot derive FromVariant for an uninhabited enum");
+            }
+
             let var_input_ident = Ident::new("__enum_variant", Span::call_site());
 
             let var_ident_strings: Vec<String> = variants
