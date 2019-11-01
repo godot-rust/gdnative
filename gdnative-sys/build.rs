@@ -76,7 +76,7 @@ mod header_binding {
             Ok(android_include_path) => {
                 builder = builder.clang_arg("-I").clang_arg(android_include_path);
             }
-            _ => {}
+            _ => panic!("Unable to find android include path")
         }
 
         let bindings = builder.generate().expect("Unable to generate bindings");
