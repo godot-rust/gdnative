@@ -2,7 +2,7 @@ use std::env;
 
 fn main() {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let out_dir = env::var("OUT_DIR").unwrap();
+    let out_dir = env::var("OUT_DIR").unwrap();    
 
     header_binding::generate(&manifest_dir, &out_dir);
 
@@ -43,9 +43,9 @@ mod header_binding {
         Ok(directory)
     }
 
-   #[cfg(target_os = "android")]
+   #[cfg(any(target_os = "android", target_os = "linux"))]
     fn android_include_path() -> Option<String> {
-        let java_home = env::var("JAVA_HOME")?; 
+        let java_home = std::env::var("JAVA_HOME").unwrap(); 
         let directory = format!("{}/{}", java_home, "include");
         Some(directory)
     }
@@ -71,12 +71,21 @@ mod header_binding {
             }
             _ => {}
         }
-        #[cfg(target_os = "android")]
-        match android_include_path() {
-            Some(android_include_path) => {
-                builder = builder.clang_arg("-I").clang_arg(android_include_path);
+
+        // work-around cross compiling for --target=aarch64-linux-android
+       #[cfg(any(target_os = "android", target_os = "linux"))]
+        {
+            use std::env;
+            let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+            if target_os == "android" {
+                match android_include_path() {
+                    Some(android_include_path) => {
+                        println!("Include path: \t {:?}", android_include_path);
+                        builder = builder.clang_arg("-I").clang_arg(android_include_path);
+                    }
+                    _ => panic!("Unable to find android include path")
+                }
             }
-            _ => panic!("Unable to find android include path")
         }
 
         let bindings = builder.generate().expect("Unable to generate bindings");
