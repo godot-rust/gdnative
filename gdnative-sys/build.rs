@@ -46,7 +46,7 @@ mod header_binding {
 
    #[cfg(target_os = "android")]
     fn android_include_path() -> Option<String> {
-        let java_home = env::var("JAVA_HOME").unwrap(); 
+        let java_home = env::var("JAVA_HOME")?; 
         let directory = format!("{}/{}", java_home, "include");
         Ok(directory)
     }
