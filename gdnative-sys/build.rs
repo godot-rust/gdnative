@@ -1,5 +1,4 @@
 use std::env;
-use std::io::Error;
 
 fn main() {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
