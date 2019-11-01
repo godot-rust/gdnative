@@ -73,7 +73,7 @@ mod header_binding {
         }
         #[cfg(target_os = "android")]
         match android_include_path() {
-            Ok(android_include_path) => {
+            Some(android_include_path) => {
                 builder = builder.clang_arg("-I").clang_arg(android_include_path);
             }
             _ => panic!("Unable to find android include path")
