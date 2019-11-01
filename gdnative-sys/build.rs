@@ -47,7 +47,7 @@ mod header_binding {
     fn android_include_path() -> Option<String> {
         let java_home = env::var("JAVA_HOME")?; 
         let directory = format!("{}/{}", java_home, "include");
-        Ok(directory)
+        Some(directory)
     }
     pub(crate) fn generate(manifest_dir: &str, out_dir: &str) {
         // on mac/iOS this will be modified, so it is marked as mutable.
