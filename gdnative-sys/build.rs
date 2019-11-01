@@ -1,4 +1,5 @@
 use std::env;
+use std::io::Error;
 
 fn main() {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -43,6 +44,12 @@ mod header_binding {
         Ok(directory)
     }
 
+   #[cfg(target_os = "android")]
+    fn android_include_path() -> Result<String, Box<dyn Error>> {
+        let java_home = env::var("JAVA_HOME").unwrap(); 
+        let directory = format!("{}/{}", java_home, "include");
+        Ok(directory)
+    }
     pub(crate) fn generate(manifest_dir: &str, out_dir: &str) {
         // on mac/iOS this will be modified, so it is marked as mutable.
         // on all other targets, this `mut` will be unused and the complainer compiles.t s
@@ -62,6 +69,13 @@ mod header_binding {
         match osx_include_path() {
             Ok(osx_include_path) => {
                 builder = builder.clang_arg("-I").clang_arg(osx_include_path);
+            }
+            _ => {}
+        }
+        #[cfg(target_os = "android")]
+        match android_include_path() {
+            Ok(android_include_path) => {
+                builder = builder.clang_arg("-I").clang_arg(android_include_path);
             }
             _ => {}
         }
