@@ -81,7 +81,9 @@ mod header_binding {
                 match android_include_path() {
                     Some(android_include_path) => {
                         println!("Include path: \t {:?}", android_include_path);
-                        builder = builder.clang_arg("-I").clang_arg(android_include_path);
+                        builder = builder.clang_arg("-I").clang_arg(android_include_path.clone());
+                        // work around jni_md.h
+                        builder = builder.clang_arg("-I").clang_arg(format!("{}/{}", android_include_path, "linux"));
                     }
                     _ => panic!("Unable to find android include path")
                 }
