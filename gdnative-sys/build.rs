@@ -43,6 +43,13 @@ mod header_binding {
         Ok(directory)
     }
 
+    #[cfg(any(target_os = "android", target_os = "linux"))]
+    fn android_include_path() -> Option<String> {
+        let java_home = std::env::var("JAVA_HOME").expect("JAVA_HOME environment variable should be set");
+        let directory = format!("{}/{}", java_home, "include");
+        Some(directory)
+    }
+
     pub(crate) fn generate(manifest_dir: &str, out_dir: &str) {
         // on mac/iOS this will be modified, so it is marked as mutable.
         // on all other targets, this `mut` will be unused and the complainer compiles.t s
@@ -65,6 +72,28 @@ mod header_binding {
             }
             _ => {}
         }
+
+        // work-around cross compiling for --target=aarch64-linux-android
+        #[cfg(any(target_os = "android", target_os = "linux"))]
+        {
+            use std::env;
+            let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+            if target_os == "android" {
+                match android_include_path() {
+                    Some(android_include_path) => {
+                        println!("Include path: \t {:?}", android_include_path);
+                        builder = builder
+                            .clang_arg("-I")
+                            .clang_arg(android_include_path.clone());
+                        // work around jni_md.h
+                        builder = builder
+                            .clang_arg("-I")
+                            .clang_arg(format!("{}/{}", android_include_path, "linux"));
+                    }
+                    _ => panic!("Unable to find android include path"),
+                }
+            }
+        }        
 
         let bindings = builder.generate().expect("Unable to generate bindings");
 
