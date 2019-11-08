@@ -45,7 +45,7 @@ mod header_binding {
 
     #[cfg(any(target_os = "android", target_os = "linux"))]
     fn android_include_path() -> Option<String> {
-        let java_home = std::env::var("JAVA_HOME").expect("JAVA_HOME environment variable should be set");
+        let java_home = std::env::var("JAVA_HOME").ok()?;
         let directory = format!("{}/{}", java_home, "include");
         Some(directory)
     }
