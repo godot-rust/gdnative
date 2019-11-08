@@ -346,20 +346,24 @@ impl<C: NativeClass> ClassBuilder<C> {
     pub fn add_signal(&self, signal: Signal) {
         unsafe {
             let name = GodotString::from_str(signal.name);
-            let mut args = signal
+            let owned = signal
                 .args
                 .iter()
                 .map(|arg| {
                     let arg_name = GodotString::from_str(arg.name);
                     let hint_string = GodotString::new();
-                    sys::godot_signal_argument {
-                        name: arg_name.to_sys(),
-                        type_: arg.default.get_type() as i32,
-                        hint: arg.hint.to_sys(),
-                        hint_string: hint_string.to_sys(),
-                        usage: arg.usage.to_sys(),
-                        default_value: arg.default.to_sys(),
-                    }
+                    (arg, arg_name, hint_string)
+                })
+                .collect::<Vec<_>>();
+            let mut args = owned
+                .iter()
+                .map(|(arg, arg_name, hint_string)| sys::godot_signal_argument {
+                    name: arg_name.to_sys(),
+                    type_: arg.default.get_type() as i32,
+                    hint: arg.hint.to_sys(),
+                    hint_string: hint_string.to_sys(),
+                    usage: arg.usage.to_sys(),
+                    default_value: arg.default.to_sys(),
                 })
                 .collect::<Vec<_>>();
             (get_api().godot_nativescript_register_signal)(

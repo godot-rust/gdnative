@@ -320,9 +320,37 @@ fn test_derive_to_variant() -> bool {
     ok
 }
 
+struct RegisterSignal;
+
+impl NativeClass for RegisterSignal {
+    type Base = Reference;
+    type UserData = user_data::ArcData<RegisterSignal>;
+    fn class_name() -> &'static str {
+        "RegisterSignal"
+    }
+    fn init(_owner: Reference) -> RegisterSignal {
+        RegisterSignal
+    }
+    fn register_properties(builder: &init::ClassBuilder<Self>) {
+        builder.add_signal(gdnative::init::Signal {
+            name: "progress",
+            args: &[gdnative::init::SignalArgument {
+                name: "amount",
+                default: gdnative::Variant::new(),
+                hint: gdnative::init::PropertyHint::None,
+                usage: gdnative::init::PropertyUsage::DEFAULT,
+            }],
+        });
+    }
+}
+
+#[methods]
+impl RegisterSignal {}
+
 fn init(handle: init::InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<Bar>();
+    handle.add_class::<RegisterSignal>();
 }
 
 godot_gdnative_init!();
