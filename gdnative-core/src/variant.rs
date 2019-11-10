@@ -153,6 +153,36 @@ impl VariantType {
     }
 }
 
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum CallError {
+    InvalidMethod =
+        sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_INVALID_METHOD as u32,
+    InvalidArgument =
+        sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_INVALID_ARGUMENT as u32,
+    TooManyArguments =
+        sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_TOO_MANY_ARGUMENTS as u32,
+    TooFewArguments =
+        sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_TOO_FEW_ARGUMENTS as u32,
+    InstanceIsNull =
+        sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_INSTANCE_IS_NULL as u32,
+}
+
+impl CallError {
+    fn from_sys(v: sys::godot_variant_call_error_error) -> Result<(), CallError> {
+        if v == sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_OK {
+            Ok(())
+        } else {
+            debug_assert!(
+                (v as u32) <= sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_INSTANCE_IS_NULL as u32,
+                "Godot should have passed a known error",
+            );
+
+            Err(unsafe { transmute(v as u32) })
+        }
+    }
+}
+
 // TODO: Looks like this is missing from the godot_headers bindings.
 // It's risky to redefine it here and count on the fact that the integer
 // constants will be the same.
@@ -490,32 +520,20 @@ impl Variant {
         unsafe { (get_api().godot_variant_has_method)(&self.0, &method.0) }
     }
 
-    // TODO: return a proper error.
-    pub fn call(&mut self, method: &GodotString, args: &[Variant]) -> Result<(), ()> {
+    pub fn call(&mut self, method: &GodotString, args: &[Variant]) -> Result<Variant, CallError> {
         unsafe {
             let api = get_api();
             let mut err = sys::godot_variant_call_error::default();
-            if args.is_empty() {
-                let mut first = ::std::ptr::null() as *const sys::godot_variant;
-                (api.godot_variant_call)(&mut self.0, &method.0, &mut first, 0, &mut err);
-            } else {
-                // TODO: double check that this is safe.
-                let gd_args: &[sys::godot_variant] = transmute(args);
-                let mut first = &gd_args[0] as *const sys::godot_variant;
-                (api.godot_variant_call)(
-                    &mut self.0,
-                    &method.0,
-                    &mut first,
-                    args.len() as i32,
-                    &mut err,
-                );
-            }
+            let mut arg_refs = args.iter().map(Variant::sys).collect::<Vec<_>>();
+            let variant = (api.godot_variant_call)(
+                &mut self.0,
+                &method.0,
+                arg_refs.as_mut_ptr(),
+                args.len() as i32,
+                &mut err,
+            );
 
-            if err.error == sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_OK {
-                Ok(())
-            } else {
-                Err(())
-            }
+            CallError::from_sys(err.error).map(|_| Variant::from_sys(variant))
         }
     }
 
