@@ -23,7 +23,7 @@ struct GodotApi {
     }
 }
     ) => (
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct GodotApi {
     $(
     $(
