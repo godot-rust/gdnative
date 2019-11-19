@@ -93,7 +93,7 @@ mod header_binding {
                     _ => panic!("Unable to find android include path"),
                 }
             }
-        }        
+        }
 
         let bindings = builder.generate().expect("Unable to generate bindings");
 
