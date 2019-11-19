@@ -1,0 +1,9 @@
+[package]
+name = "gdnative-log"
+version = "0.1.0"
+authors = ["Chris Williams <chris@chrispwill.com>"]
+edition = "2018"
+
+[dependencies]
+log = { version = "^0.4.8", features = ["std"] }
+gdnative-core = { path = "../gdnative-core", version = "0.5.0" }

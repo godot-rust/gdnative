@@ -40,3 +40,7 @@ pub use gdnative_derive::*;
 #[doc(inline)]
 #[cfg(feature = "bindings")]
 pub use gdnative_bindings::*;
+
+#[doc(inline)]
+#[cfg(feature = "log")]
+pub use gdnative_log::*;
