@@ -330,7 +330,7 @@ mod api_wrapper {
         }
         let caps = RE
             .captures(c_type)
-            .expect("Godot's API JSON file contains unexpected C types");
+            .expect(&format!("Unknown C type: {:?}", c_type));
         let ptr_count = caps
             .get(3)
             .unwrap()
@@ -343,7 +343,7 @@ mod api_wrapper {
             (1, true) => quote!(*const ),
             (1, false) => quote!(*mut ),
             (2, true) => quote!(*mut *const ),
-            _ => panic!("Unknown C type: {:?}", c_type),
+            _ => panic!("Unknown C type (Too many pointers?): {:?}", c_type),
         };
         let rust_type = match caps.get(2).unwrap().as_str() {
             "void" => {
