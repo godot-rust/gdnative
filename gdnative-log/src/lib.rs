@@ -8,7 +8,8 @@
 #[macro_use]
 extern crate gdnative_core;
 
-use log::{self, Level, Metadata, Record, SetLoggerError};
+pub use log::Level;
+use log::{self, Metadata, Record, SetLoggerError};
 
 struct GodotLogger {
     level: Level,
