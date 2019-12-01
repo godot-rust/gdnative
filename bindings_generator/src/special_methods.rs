@@ -289,6 +289,73 @@ impl std::ops::DerefMut for {name} {{
     Ok(())
 }
 
+pub fn generate_from_impl_for_upcast(
+    output: &mut impl Write,
+    api: &Api,
+    source: &GodotClass,
+    super_class_name: &str,
+) -> GeneratorResult {
+    if let Some(super_class) = api.find_class(super_class_name) {
+        if source.is_pointer_safe() {
+            writeln!(
+                output,
+                r#"
+// Upcast
+impl<'a> ::std::convert::From<&'a {source_name}> for {super_class_name} {{
+    fn from(obj: &'a {source_name}) -> Self {{
+        obj.to_{snake_case_super_class_name}()
+    }}
+}}
+"#,
+                source_name = source.name,
+                super_class_name = super_class.name,
+                snake_case_super_class_name = class_name_to_snake_case(super_class.name.as_str()),
+            )?;
+        } else {
+            writeln!(
+                output,
+                r#"
+// Ref upcast
+impl<'a> ::std::convert::From<&'a {source_name}> for {super_class_name} {{
+    fn from(obj: &'a {source_name}) -> Self {{
+        unsafe {{
+            obj.to_{snake_case_super_class_name}()
+        }}
+    }}
+}}
+"#,
+                source_name = source.name,
+                super_class_name = super_class.name,
+                snake_case_super_class_name = class_name_to_snake_case(super_class.name.as_str()),
+            )?;
+        }
+
+        writeln!(
+            output,
+            r#"
+// Mut ref upcast
+impl<'a> ::std::convert::From<&'a mut {source_name}> for {super_class_name} {{
+    fn from(obj: &'a mut {source_name}) -> Self {{
+        {super_class_name}::from(&*obj)
+    }}
+}}
+
+// Object upcast
+impl ::std::convert::From<{source_name}> for {super_class_name} {{
+    fn from(obj: {source_name}) -> Self {{
+        {super_class_name}::from(&obj)
+    }}
+}}
+"#,
+            source_name = source.name,
+            super_class_name = super_class.name,
+        )?;
+
+        generate_from_impl_for_upcast(output, api, source, super_class.base_class.as_str())?;
+    }
+    Ok(())
+}
+
 pub fn generate_reference_clone(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(
         output,
@@ -332,7 +399,7 @@ pub fn generate_gdnative_library_singleton_getter(
         output,
         r#"
 /// Returns the GDNativeLibrary object of this library. Can be used to construct NativeScript objects.
-/// 
+///
 /// See also `Instance::new` for a typed API.
 #[inline]
 pub fn current_library() -> Self {{

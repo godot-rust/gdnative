@@ -153,6 +153,8 @@ fn generate_class_bindings(
 
         generate_free_impl(output_trait_impls, &api, class)?;
 
+        generate_from_impl_for_upcast(output_trait_impls, &api, class, class.base_class.as_str())?;
+
         if !class.base_class.is_empty() {
             generate_deref_impl(output_trait_impls, class)?;
         }
