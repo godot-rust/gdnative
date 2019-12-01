@@ -1,0 +1,12 @@
+[package]
+name = "signal_connection"
+version = "0.1.0"
+authors = ["AlterionX <ben.xu.cs@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../../gdnative" }
+lazy_static = "1.4.0"

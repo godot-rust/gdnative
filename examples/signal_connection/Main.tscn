@@ -1,0 +1,72 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Main.gdns" type="Script" id=1]
+
+[node name="Root" type="CenterContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+display = NodePath("Content/PressCountDisplay")
+increment_button = NodePath("Content/IncrementButton")
+text_entry = NodePath("Content/ButtonTextEntry")
+disconnect_button = NodePath("Content/PressCountConnectToggleButton")
+
+[node name="Content" type="GridContainer" parent="."]
+margin_left = 314.0
+margin_top = 249.0
+margin_right = 709.0
+margin_bottom = 351.0
+columns = 2
+
+[node name="PressCountLabel" type="Label" parent="Content"]
+margin_top = 5.0
+margin_right = 141.0
+margin_bottom = 19.0
+text = "Times pressed"
+
+[node name="PressCountDisplay" type="Label" parent="Content"]
+margin_left = 145.0
+margin_right = 395.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 250, 25 )
+text = "0"
+valign = 1
+
+[node name="IncrementLabel" type="Label" parent="Content"]
+margin_top = 32.0
+margin_right = 141.0
+margin_bottom = 46.0
+text = "Press to increment"
+
+[node name="IncrementButton" type="Button" parent="Content"]
+margin_left = 145.0
+margin_top = 29.0
+margin_right = 395.0
+margin_bottom = 49.0
+
+[node name="ButtonTextLabel" type="Label" parent="Content"]
+margin_top = 58.0
+margin_right = 141.0
+margin_bottom = 72.0
+text = "Enter button text here"
+
+[node name="ButtonTextEntry" type="TextEdit" parent="Content"]
+margin_left = 145.0
+margin_top = 53.0
+margin_right = 395.0
+margin_bottom = 78.0
+rect_min_size = Vector2( 0, 25 )
+size_flags_horizontal = 3
+
+[node name="PressCountConnectToggleLabel" type="Label" parent="Content"]
+margin_top = 85.0
+margin_right = 141.0
+margin_bottom = 99.0
+text = "Deactivate the button"
+
+[node name="PressCountConnectToggleButton" type="Button" parent="Content"]
+margin_left = 145.0
+margin_top = 82.0
+margin_right = 395.0
+margin_bottom = 102.0
+[connection signal="pressed" from="Content/IncrementButton" to="." method="increment"]
