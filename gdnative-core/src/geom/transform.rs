@@ -1,4 +1,5 @@
 use crate::{Basis, Vector3};
+use euclid::{Point3D, Transform3D};
 
 /// 3D Transformation (3x4 matrix) Using basis + origin representation.
 #[repr(C)]
@@ -13,3 +14,22 @@ pub struct Transform {
 }
 
 // TODO: methods!
+impl Transform {
+    pub fn translate(origin: Vector3) -> Transform {
+        Transform {
+            basis: Basis::identity(),
+            origin,
+        }
+    }
+
+    pub fn from_transform<Src, Dst>(transform: &Transform3D<f32, Src, Dst>) -> Transform {
+        Transform {
+            basis: Basis::from_transform(transform),
+            origin: transform
+                .transform_point3d(Point3D::origin())
+                .unwrap_or(Point3D::origin())
+                .to_vector()
+                .to_untyped(),
+        }
+    }
+}

@@ -1,0 +1,22 @@
+[package]
+name = "specs_integration"
+version = "0.1.0"
+authors = ["tom.leys <tom@crump-leys.com>", "karroffel <therzog@mail.de>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../../gdnative" }
+euclid = "0.20.1"
+lazy_static="1.2.0"
+
+specs = {version="0.15.1", features = [] }
+# If you are on the nightly toolchain, consider turning on this feature for nice
+#   Error messages...
+#specs = {version="0.15.1", features = ["nightly"] }
+
+# specs-physics = { path = "../../lib/specs-physics" }
+nalgebra = "0.18.1"
+# ncollide3d = "0.19"
+# nphysics3d = "0.11.1"

@@ -1,0 +1,18 @@
+[general]
+
+singleton=false
+load_once=false
+symbol_prefix="godot_"
+reloadable=true
+
+[entry]
+
+OSX.64="res://../../target/debug/libspecs_integration.dylib"
+X11.64="res://../../target/debug/libspecs_integration.so"
+Windows.64="res://../../target/debug/specs_integration.dll"
+
+[dependencies]
+
+OSX.64=[  ]
+UWP.64=[  ]
+X11.64=[  ]
