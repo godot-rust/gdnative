@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="CubeMesh" id=1]
+
+[node name="Child" type="Spatial"]
+
+[node name="CSGMesh" type="CSGMesh" parent="."]
+transform = Transform( 0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0, 0, 0 )
+mesh = SubResource( 1 )
+
+[node name="CSGMesh2" type="CSGMesh" parent="."]
+transform = Transform( 0.1, 0, 0, 0, 0.4, 0, 0, 0, 0.1, 0, 2.15568, 0 )
+mesh = SubResource( 1 )

@@ -1,0 +1,8 @@
+[gd_resource type="NativeScript" load_steps=2 format=2]
+
+[ext_resource path="res://specs_integration.gdnlib" type="GDNativeLibrary" id=1]
+
+[resource]
+resource_name = "ChildSpawner"
+class_name = "SpecsIntegration"
+library = ExtResource( 1 )
