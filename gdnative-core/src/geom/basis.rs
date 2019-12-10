@@ -53,19 +53,40 @@ impl Basis {
         }
     }
 
-    // transposed dot products
-    fn tdotx(&self, v: Vector3) -> f32 {
-        // Note: This is a port of the Godot C++ code and is not well tested yet in Rust.
+    /// Transposed dot product with the x axis of the matrix.
+    pub fn tdotx(&self, v: Vector3) -> f32 {
         self.elements[0].x * v.x + self.elements[1].x * v.y + self.elements[2].x * v.z
     }
 
-    fn tdoty(&self, v: Vector3) -> f32 {
-        // Note: This is a port of the Godot C++ code and is not well tested yet in Rust.
+    /// Transposed dot product with the y axis of the matrix.
+    pub fn tdoty(&self, v: Vector3) -> f32 {
         self.elements[0].y * v.x + self.elements[1].y * v.y + self.elements[2].y * v.z
     }
 
-    fn tdotz(&self, v: Vector3) -> f32 {
-        // Note: This is a port of the Godot C++ code and is not well tested yet in Rust.
+    /// Transposed dot product with the z axis of the matrix.
+    pub fn tdotz(&self, v: Vector3) -> f32 {
         self.elements[0].z * v.x + self.elements[1].z * v.y + self.elements[2].z * v.z
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transposed_dot_is_sane() {
+        let basis = Basis {
+            elements: [
+                Vector3::new(1.0, 2.0, 3.0),
+                Vector3::new(2.0, 3.0, 4.0),
+                Vector3::new(3.0, 4.0, 5.0),
+            ]
+        };
+
+        let vector = Vector3::new(4.0, 5.0, 6.0);
+
+	    assert!((basis.tdotx(vector) - 32.0).abs() < std::f32::EPSILON);
+	    assert!((basis.tdoty(vector) - 47.0).abs() < std::f32::EPSILON);
+	    assert!((basis.tdotz(vector) - 62.0).abs() < std::f32::EPSILON);
     }
 }
