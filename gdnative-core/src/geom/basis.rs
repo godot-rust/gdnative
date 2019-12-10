@@ -58,37 +58,41 @@ impl Basis {
             ],
         }
     }
-    //
-    //    /// set_euler_yxz expects a vector containing the Euler angles in the format
-    //    /// (ax,ay,az), where ax is the angle of rotation around x axis,
-    //    /// and similar for other axes.
-    //    /// The current implementation uses YXZ convention (Z is the first rotation).
-    //    pub fn from_euler_yxz(p_euler: Vector3) -> Basis {
-    //
-    //        let c = Math::cos(p_euler.x);
-    //        let s = Math::sin(p_euler.x);
-    //        let xmat = Basis::element_new(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c);
-    //
-    //        let c = Math::cos(p_euler.y);
-    //        let s = Math::sin(p_euler.y);
-    //        let ymat = Basis::element_new(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c);
-    //
-    //        let c = Math::cos(p_euler.z);
-    //        let s = Math::sin(p_euler.z);
-    //        let zmat = Basis::element_new(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0);
-    //
-    //        // optimizer will optimize away all this anyway
-    //        ymat * xmat * zmat;
-    //    }
-    //
-    //    // transposed dot products
-    //    fn tdotx(&self, v: Vector3) -> f32 {
-    //        self.elements[0].x * v[0] + self.elements[1].x * v[1] + self.elements[2].x * v[2]
-    //    }
-    //    fn tdoty(&self, v: Vector3) -> f32 {
-    //        self.elements[0].y * v[0] + self.elements[1].y * v[1] + self.elements[2].y * v[2]
-    //    }
-    //    fn tdotz(&self, v: Vector3) -> f32 {
-    //        self.elements[0].z * v[0] + self.elements[1].z * v[1] + self.elements[2].z * v[2]
-    //    }
+
+    /// Transposed dot product with the x axis of the matrix.
+    pub fn tdotx(&self, v: Vector3) -> f32 {
+        self.elements[0].x * v.x + self.elements[1].x * v.y + self.elements[2].x * v.z
+    }
+
+    /// Transposed dot product with the y axis of the matrix.
+    pub fn tdoty(&self, v: Vector3) -> f32 {
+        self.elements[0].y * v.x + self.elements[1].y * v.y + self.elements[2].y * v.z
+    }
+
+    /// Transposed dot product with the z axis of the matrix.
+    pub fn tdotz(&self, v: Vector3) -> f32 {
+        self.elements[0].z * v.x + self.elements[1].z * v.y + self.elements[2].z * v.z
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transposed_dot_is_sane() {
+        let basis = Basis {
+            elements: [
+                Vector3::new(1.0, 2.0, 3.0),
+                Vector3::new(2.0, 3.0, 4.0),
+                Vector3::new(3.0, 4.0, 5.0),
+            ]
+        };
+
+        let vector = Vector3::new(4.0, 5.0, 6.0);
+
+	    assert!((basis.tdotx(vector) - 32.0).abs() < std::f32::EPSILON);
+	    assert!((basis.tdoty(vector) - 47.0).abs() < std::f32::EPSILON);
+	    assert!((basis.tdotz(vector) - 62.0).abs() < std::f32::EPSILON);
+    }
 }
