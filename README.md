@@ -60,11 +60,18 @@ Starting with an empty Godot project, a `cargo` project can be created inside th
 cargo init --lib
 ```
 
-To use the GDNative bindings in your project you have to add the `gdnative` crate as a dependency.
+To use the GDNative bindings in your project you have to add the `gdnative` crate as a dependency. The crates.io version of the bindings is very out of date, and it's currently preferred to use the `master` branch instead until a new release is made.
 
 ```toml
 [dependencies]
-gdnative = "0.5.0"
+gdnative = { git = "git://github.com/GodotNativeTools/godot-rust" }
+```
+
+You may also vendor the bindings as a local dependency:
+
+```toml
+[dependencies]
+gdnative = { path = "../godot-rust" }
 ```
 
 Since GDNative can only use C-compatible dynamic libraries, the crate type has to be set accordingly.
