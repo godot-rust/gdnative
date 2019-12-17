@@ -194,8 +194,8 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
             if ty.starts_with("Option") {
                 writeln!(
                     output,
-                    r#"    let {name}: Variant = if let Some(o) = {name} {{
-           o.into()
+                    r#"    let {name}: Variant = if let Some(o) = &{name} {{
+           o.to_variant()
        }} else {{ Variant::new() }};"#,
                     name = rust_safe_name(&argument.name)
                 )?;
@@ -209,7 +209,7 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
                 writeln!(
                     output,
                     r#"
-       let {name}: Variant = {name}.into();"#,
+       let {name}: Variant = (&{name}).to_variant();"#,
                     name = rust_safe_name(&argument.name)
                 )?;
             }
@@ -226,6 +226,14 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
     }}
     let ret = Variant::from_sys((gd_api.godot_method_bind_call)(method_bind, obj_ptr, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
         )?;
+
+        for argument in &method.arguments {
+            writeln!(
+                output,
+                r#"    drop({name});"#,
+                name = rust_safe_name(&argument.name),
+            )?;
+        }
 
         if rust_ret_type.starts_with("Option") {
             writeln!(output, r#"    ret.try_to_object()"#)?;
@@ -254,6 +262,14 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
         writeln!(output, r#"
     (gd_api.godot_method_bind_ptrcall)(method_bind, obj_ptr, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
         )?;
+
+        for argument in &method.arguments {
+            writeln!(
+                output,
+                r#"    drop({name});"#,
+                name = rust_safe_name(&argument.name),
+            )?;
+        }
 
         generate_return_post(output, &method.get_return_type())?;
     }
@@ -417,7 +433,7 @@ fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorRe
             )?;
         }
         &Ty::Object(_) => {
-            writeln!(w, r#"        if let Some(arg) = {name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
+            writeln!(w, r#"        if let Some(arg) = &{name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
                 name = name,
             )?;
         }
