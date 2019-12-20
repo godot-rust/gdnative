@@ -111,8 +111,9 @@ impl {name}MethodTable {{
             continue;
         }
 
-        writeln!(output,
-r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class_name, "{original_name}\0".as_ptr() as *const c_char );"#,
+        writeln!(
+            output,
+            r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class_name, "{original_name}\0".as_ptr() as *const c_char );"#,
             method_name = method_name,
             original_name = original_name,
         )?;
@@ -184,8 +185,9 @@ pub unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_r
         params = params,
     )?;
     if method.has_varargs {
-        writeln!(output,
-r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity({arg_count} + varargs.len());"#,
+        writeln!(
+            output,
+            r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity({arg_count} + varargs.len());"#,
             arg_count = method.arguments.len()
         )?;
 
@@ -220,7 +222,9 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
             )?;
         }
 
-        writeln!(output, r#"
+        writeln!(
+            output,
+            r#"
     for arg in varargs {{
         argument_buffer.push(arg.sys() as *const _);
     }}
@@ -259,7 +263,9 @@ r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capac
 
         generate_return_pre(output, &method.get_return_type())?;
 
-        writeln!(output, r#"
+        writeln!(
+            output,
+            r#"
     (gd_api.godot_method_bind_ptrcall)(method_bind, obj_ptr, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
         )?;
 
@@ -433,7 +439,9 @@ fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorRe
             )?;
         }
         &Ty::Object(_) => {
-            writeln!(w, r#"        if let Some(arg) = &{name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
+            writeln!(
+                w,
+                r#"        if let Some(arg) = &{name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
                 name = name,
             )?;
         }
