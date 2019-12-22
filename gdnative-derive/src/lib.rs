@@ -57,7 +57,10 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(output)
 }
 
-#[proc_macro_derive(NativeClass, attributes(inherit, export, user_data))]
+#[proc_macro_derive(
+    NativeClass,
+    attributes(inherit, export, user_data, property, register_with)
+)]
 pub fn derive_native_class(input: TokenStream) -> TokenStream {
     let data = derive_macro::parse_derive_input(input.clone());
 
@@ -66,6 +69,24 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
         let name = data.name;
         let base = data.base;
         let user_data = data.user_data;
+        let register_callback = data
+            .register_callback
+            .map(|function_path| quote!(#function_path(builder);))
+            .unwrap_or(quote!({}));
+        let properties = data.properties.iter().map(|(ident, config)| {
+            let default_value = &config.default;
+            let label = format!("base/{}", ident);
+            quote!({
+                builder.add_property(gdnative::init::Property{
+                    name: #label,
+                    getter: |this: &#name| this.#ident,
+                    setter: |this: &mut #name, v| this.#ident = v,
+                    default: #default_value,
+                    usage: gdnative::init::PropertyUsage::DEFAULT,
+                    hint: gdnative::init::PropertyHint::None
+                });
+            })
+        });
 
         // string variant needed for the `class_name` function.
         let name_str = quote!(#name).to_string();
@@ -81,6 +102,11 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
 
                 fn init(owner: Self::Base) -> Self {
                     Self::_init(owner)
+                }
+
+                fn register_properties(builder: &gdnative::init::ClassBuilder<Self>) {
+                    #(#properties)*;
+                    #register_callback
                 }
             }
         )

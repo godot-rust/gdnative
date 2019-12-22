@@ -1,68 +1,43 @@
 #[macro_use]
 extern crate gdnative as godot;
 
-use godot::init::{Property, PropertyHint, PropertyUsage};
-use godot::GodotString;
-
+#[derive(godot::NativeClass)]
+#[inherit(godot::MeshInstance)]
+#[user_data(godot::user_data::MutexData<RustTest>)]
+#[register_with(my_register_function)]
 struct RustTest {
     start: godot::Vector3,
     time: f32,
+    #[property(default = 0.05)]
     rotate_speed: f64,
 }
 
-impl godot::NativeClass for RustTest {
-    type Base = godot::MeshInstance;
-    type UserData = godot::user_data::MutexData<RustTest>;
-
-    fn class_name() -> &'static str {
-        "RustTest"
-    }
-
-    fn init(_owner: Self::Base) -> Self {
-        Self::_init()
-    }
-
-    fn register_properties(builder: &godot::init::ClassBuilder<Self>) {
-        builder.add_property(Property {
-            name: "base/rotate_speed",
-            default: 0.05,
-            hint: PropertyHint::Range {
-                range: 0.05..1.0,
-                step: 0.01,
-                slider: true,
-            },
-            getter: |this: &RustTest| this.rotate_speed,
-            setter: |this: &mut RustTest, v| this.rotate_speed = v,
-            usage: PropertyUsage::DEFAULT,
-        });
-
-        builder.add_property(Property {
-            name: "test/test_enum",
-            default: GodotString::from_str("Hello"),
-            hint: PropertyHint::Enum {
-                values: &["Hello", "World", "Testing"],
-            },
-            getter: |_: &RustTest| GodotString::from_str("Hello"),
-            setter: (),
-            usage: PropertyUsage::DEFAULT,
-        });
-
-        builder.add_property(Property {
-            name: "test/test_flags",
-            default: 0,
-            hint: PropertyHint::Flags {
-                values: &["A", "B", "C", "D"],
-            },
-            getter: |_: &RustTest| 0,
-            setter: (),
-            usage: PropertyUsage::DEFAULT,
-        });
-    }
+fn my_register_function(builder: &godot::init::ClassBuilder<RustTest>) {
+    builder.add_property(godot::init::Property {
+        name: "test/test_enum",
+        default: godot::GodotString::from_str("Hello"),
+        hint: godot::init::PropertyHint::Enum {
+            values: &["Hello", "World", "Testing"],
+        },
+        getter: |_: &RustTest| godot::GodotString::from_str("Hello"),
+        setter: (),
+        usage: godot::init::PropertyUsage::DEFAULT,
+    });
+    builder.add_property(godot::init::Property {
+        name: "test/test_flags",
+        default: 0,
+        hint: godot::init::PropertyHint::Flags {
+            values: &["A", "B", "C", "D"],
+        },
+        getter: |_: &RustTest| 0,
+        setter: (),
+        usage: godot::init::PropertyUsage::DEFAULT,
+    });
 }
 
 #[godot::methods]
 impl RustTest {
-    fn _init() -> Self {
+    fn _init(_owner: godot::MeshInstance) -> Self {
         RustTest {
             start: godot::Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
