@@ -18,7 +18,7 @@ bindings = ["gdnative-bindings"]
 [dependencies]
 gdnative-derive = { path = "../gdnative-derive", version = "0.7.0" }
 gdnative-core = { path = "../gdnative-core", version = "0.7.0" }
-gdnative-bindings = { optional = true, path = "../gdnative-bindings" }
+gdnative-bindings = { optional = true, path = "../gdnative-bindings", version = "0.7.0" }
 
 [package.metadata.docs.rs]
 all-features = true
