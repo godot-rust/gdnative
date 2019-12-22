@@ -1,7 +1,8 @@
 [package]
 name = "scene_create"
 version = "0.1.0"
-authors = ["tom.leys <tom@crump-leys.com>", "karroffel <therzog@mail.de>"]
+authors = ["The godot-rust developers"]
+publish = false
 
 [lib]
 crate-type = ["cdylib"]

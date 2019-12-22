@@ -4,7 +4,7 @@ authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.5.0"
+version = "0.7.0"
 license = "MIT"
 workspace = ".."
 edition = "2018"
@@ -16,8 +16,8 @@ gd_test = ["gdnative-core/gd_test"]
 bindings = ["gdnative-bindings"]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive", version = "0.5.0" }
-gdnative-core = { path = "../gdnative-core", version = "0.5.0" }
+gdnative-derive = { path = "../gdnative-derive", version = "0.7.0" }
+gdnative-core = { path = "../gdnative-core", version = "0.7.0" }
 gdnative-bindings = { optional = true, path = "../gdnative-bindings" }
 
 [package.metadata.docs.rs]

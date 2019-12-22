@@ -1,0 +1,71 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.7.0] - 2019-12-22
+
+### Added
+
+- Procedural-macro `methods` which can be applied to `impl` blocks and allows
+  a more natural Rust syntax for creating script types and exporting functions
+  using attributes.
+
+- The `ToVariant` and `FromVariant` traits, including derive macros.
+  These traits can be used to define how custom types can be constructed from
+  `Variant`s or be extracted from existing `Variant`s.
+  Any type implementing `FromVariant` can be used as a parameter to an exported
+  function. Any type implementing `ToVariant` can be returned from exported
+  functions.
+
+- Derive-macro for `NativeClass` trait.
+
+- Every type implementing `NativeClass` provides a "user data" storage type
+  which is used to control how the script data is stored internally. A default
+  value is provided via the procedural macro.
+
+- Iterators for Godot collection types.
+
+- `Instance<T>` type which contains the Godot owner object and the script data
+  (implements `ToVariant` and `FromVariant`, so it can be used as a parameter
+  or return type).
+
+- Generated class wrappers now include associated constants for constants
+  provided by Godot.
+
+- New example projects.
+
+### Changed
+
+- The code now uses the Rust 2018 edition.
+
+- The API description of Godot classes was updated to the stable Godot version
+  `3.1.1`.
+
+- The GDNative API description was updated to the stable Godot version `3.1.1`
+  and now includes added GDNative extensions.
+
+- The `NativeClass` trait has changed a lot and was split into two traits to
+  allow the `methods` procedural macro to generate a description of exported
+  methods.
+
+- The generated class bindings are stored in a single crate again and use the 
+  `Deref` trait to implement inheritance.
+
+### Removed
+
+- The "domain-grouped" crates for generated bindings are merged into a single
+  crate, so the individual crates are no longer in use.
+
+### Fixed
+
+- Fixed a memory safety issue where the strings used to register signals are
+  dropped before the API call.
+
+- Fixed a correctness issue where the layout of method arguments is
+  incorrectly assumed to be continuous, causing invalid memory access when
+  calling methods with multiple arguments.
