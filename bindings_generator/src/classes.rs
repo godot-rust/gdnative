@@ -68,6 +68,16 @@ const ENUM_VARIANTS_TO_SKIP: &[EnumReference<'static>] = &[
         enum_name: "Flags",
         enum_variant: "FLAGS_DEFAULT",
     },
+    EnumReference {
+        class: "CameraServer",
+        enum_name: "FeedImage",
+        enum_variant: "FEED_YCBCR_IMAGE",
+    },
+    EnumReference {
+        class: "CameraServer",
+        enum_name: "FeedImage",
+        enum_variant: "FEED_Y_IMAGE",
+    },
 ];
 
 pub fn generate_enum(output: &mut impl Write, class: &GodotClass, e: &Enum) -> GeneratorResult {
@@ -75,7 +85,7 @@ pub fn generate_enum(output: &mut impl Write, class: &GodotClass, e: &Enum) -> G
     // equal to the end of the enum name and if so don't repeat it
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
 
-    let mut values: Vec<(&String, &u32)> = e.values.iter().collect();
+    let mut values: Vec<(&String, &i64)> = e.values.iter().collect();
     values.sort_by(|a, b| a.1.cmp(&b.1));
 
     writeln!(
@@ -88,7 +98,11 @@ pub enum {class_name}{enum_name} {{"#,
         enum_name = e.name
     )?;
 
+    let mut previous_value = None;
+
     for &(key, val) in &values {
+        let val = *val as u64 as u32;
+
         // Use lowercase to test because of different CamelCase conventions (Msaa/MSAA, etc.).
         let enum_ref = EnumReference {
             class: class.name.as_str(),
@@ -97,6 +111,18 @@ pub enum {class_name}{enum_name} {{"#,
         };
 
         if ENUM_VARIANTS_TO_SKIP.contains(&enum_ref) {
+            continue;
+        }
+
+        // Check if the value is a duplicate. This is fine because `values` is already sorted by value.
+        if Some(val) == previous_value.replace(val) {
+            println!(
+                "cargo:warning=Enum variant {class}.{name}.{variant} skipped: duplicate value {value}",
+                class = enum_ref.class,
+                name = enum_ref.enum_name,
+                variant = enum_ref.enum_variant,
+                value = val,
+            );
             continue;
         }
 
