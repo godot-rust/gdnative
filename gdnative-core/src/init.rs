@@ -564,12 +564,15 @@ where
                 let rust_ty = C::UserData::clone_from_user_data_unchecked(class as *const _);
                 let func = &mut *(method as *mut F);
 
-                if let Some(val) = T::from_variant(Variant::cast_ref(val)) {
-                    if let Err(err) = rust_ty.map_mut(|rust_ty| func(rust_ty, val)) {
-                        godot_error!("gdnative-core: cannot call property setter: {:?}", err);
+                match T::from_variant(Variant::cast_ref(val)) {
+                    Ok(val) => {
+                        if let Err(err) = rust_ty.map_mut(|rust_ty| func(rust_ty, val)) {
+                            godot_error!("gdnative-core: cannot call property setter: {:?}", err);
+                        }
                     }
-                } else {
-                    godot_error!("Incorrect type passed to property");
+                    Err(err) => {
+                        godot_error!("Incorrect type passed to property: {}", err);
+                    }
                 }
             }
         }

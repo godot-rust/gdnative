@@ -1,4 +1,3 @@
-use crate::FromVariant;
 use crate::ToVariant;
 use crate::Variant;
 use crate::Vector3;
@@ -9,15 +8,11 @@ impl ToVariant for Vector3 {
     }
 }
 
-impl FromVariant for Vector3 {
-    fn from_variant(variant: &Variant) -> Option<Self> {
-        variant.try_to_vector3()
-    }
-}
-
 godot_test!(
     test_vector3_variants {
         fn test(vector: Vector3, set_to: Vector3) {
+            use crate::FromVariant;
+
             let api = crate::get_api();
 
             let copied = vector;
@@ -65,7 +60,7 @@ godot_test!(
         test(Vector3::new(1.0, 2.0, 3.0), Vector3::new(4.0, 5.0, 6.0));
         test(Vector3::new(4.0, 5.0, 6.0), Vector3::new(7.0, 8.0, 9.0));
     }
-    );
+);
 
 #[cfg(test)]
 mod tests {

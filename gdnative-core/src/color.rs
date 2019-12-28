@@ -36,6 +36,11 @@ impl Color {
     pub fn v(&self) -> f32 {
         unsafe { (get_api().godot_color_get_v)(self.as_sys_color()) }
     }
+
+    #[doc(hidden)]
+    pub fn from_sys(c: sys::godot_color) -> Self {
+        unsafe { transmute::<sys::godot_color, Self>(c) }
+    }
 }
 
 #[test]

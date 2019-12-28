@@ -2,6 +2,7 @@ use crate::get_api;
 use crate::object;
 use crate::sys;
 use crate::FromVariant;
+use crate::FromVariantError;
 use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
@@ -314,9 +315,11 @@ where
     T: NativeClass,
     T::Base: FromVariant + Clone,
 {
-    fn from_variant(variant: &Variant) -> Option<Self> {
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         let owner = T::Base::from_variant(variant)?;
-        Self::try_from_base(owner)
+        Self::try_from_base(owner).ok_or(FromVariantError::InvalidInstance {
+            expected: T::class_name(),
+        })
     }
 }
 

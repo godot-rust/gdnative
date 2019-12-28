@@ -1,7 +1,6 @@
 use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::FromVariant;
 use crate::ToVariant;
 use crate::Variant;
 use crate::VariantArray;
@@ -130,12 +129,6 @@ impl_basic_traits!(
 impl ToVariant for ByteArray {
     fn to_variant(&self) -> Variant {
         Variant::from_byte_array(self)
-    }
-}
-
-impl FromVariant for ByteArray {
-    fn from_variant(variant: &Variant) -> Option<Self> {
-        variant.try_to_byte_array()
     }
 }
 

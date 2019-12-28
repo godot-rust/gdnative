@@ -7,3 +7,10 @@ pub struct Aabb {
     pub position: Vector3,
     pub size: Vector3,
 }
+
+impl Aabb {
+    #[doc(hidden)]
+    pub fn from_sys(c: sys::godot_aabb) -> Self {
+        unsafe { std::mem::transmute::<sys::godot_aabb, Self>(c) }
+    }
+}

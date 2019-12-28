@@ -1,7 +1,6 @@
 use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::FromVariant;
 use crate::GodotString;
 use crate::ToVariant;
 use crate::Variant;
@@ -131,12 +130,6 @@ impl_basic_traits!(
 impl ToVariant for StringArray {
     fn to_variant(&self) -> Variant {
         Variant::from_string_array(self)
-    }
-}
-
-impl FromVariant for StringArray {
-    fn from_variant(variant: &Variant) -> Option<Self> {
-        variant.try_to_string_array()
     }
 }
 

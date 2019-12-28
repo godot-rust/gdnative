@@ -498,15 +498,18 @@ macro_rules! godot_wrap_method_inner {
                 let mut offset = 0;
                 $(
                     let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-                    let $pname = if let Some(val) = <$pty as $crate::FromVariant>::from_variant(_variant) {
-                        val
-                    } else {
-                        godot_error!("Incorrect argument type for argument #{} ({}: {}). Got VariantType::{:?} (non-primitive types may impose structural checks)",
-                            offset + 1,
-                            stringify!($pname),
-                            stringify!($pty),
-                            _variant.get_type());
-                        return $crate::Variant::new().to_sys();
+                    let $pname = match <$pty as $crate::FromVariant>::from_variant(_variant) {
+                        Ok(val) => val,
+                        Err(err) => {
+                            godot_error!(
+                                "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
+                                idx = offset + 1,
+                                name = stringify!($pname),
+                                ty = stringify!($pty),
+                                err = err,
+                            );
+                            return $crate::Variant::new().to_sys();
+                        },
                     };
 
                     offset += 1;

@@ -7,3 +7,10 @@ pub struct Plane {
     pub normal: Vector3,
     pub d: f32,
 }
+
+impl Plane {
+    #[doc(hidden)]
+    pub fn from_sys(c: sys::godot_plane) -> Self {
+        unsafe { std::mem::transmute::<sys::godot_plane, Self>(c) }
+    }
+}
