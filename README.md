@@ -14,7 +14,9 @@ The bindings, while usable, are a work in progress. Some APIs are missing and th
 
 ## Usage
 
-Add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
+The generator makes use of `bindgen`, which depends on Clang. Instructions for installing `bindgen`'s dependencies for popular OSes can be found in their documentation: https://rust-lang.github.io/rust-bindgen/requirements.html.
+
+After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
 
 ```toml
 [dependencies]
