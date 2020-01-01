@@ -308,10 +308,10 @@ fn test_derive_to_variant() -> bool {
             .expect("should be dictionary");
         assert_eq!(Some(true), enum_dict.get(&"Foo".into()).try_to_bool());
         assert_eq!(
-            Some(&data.baz),
+            Ok(&data.baz),
             ToVarEnum::from_variant(&enum_dict.to_variant()).as_ref()
         );
-        assert_eq!(Some(&data), ToVar::from_variant(&variant).as_ref());
+        assert_eq!(Ok(&data), ToVar::from_variant(&variant).as_ref());
     })
     .is_ok();
 

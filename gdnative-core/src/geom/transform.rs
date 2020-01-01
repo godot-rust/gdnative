@@ -12,4 +12,9 @@ pub struct Transform {
     pub origin: Vector3,
 }
 
-// TODO: methods!
+impl Transform {
+    #[doc(hidden)]
+    pub fn from_sys(c: sys::godot_transform) -> Self {
+        unsafe { std::mem::transmute::<sys::godot_transform, Self>(c) }
+    }
+}

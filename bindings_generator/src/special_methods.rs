@@ -105,7 +105,7 @@ impl ToVariant for {name} {{
     fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
 }}
 impl FromVariant for {name} {{
-    fn from_variant(variant: &Variant) -> Option<Self> {{ variant.try_to_object::<Self>() }}
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {{ variant.try_to_object_with_error::<Self>() }}
 }}"#,
         name = class.name,
         addref_if_reference = if class.is_refcounted() {

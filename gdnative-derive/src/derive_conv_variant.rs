@@ -130,10 +130,13 @@ impl VariantRepr {
             VariantRepr::Unit => {
                 quote! {
                     if #variant.is_nil() {
-                        None
+                        Err(FVE::InvalidStructRepr {
+                            expected: VariantStructRepr::Unit,
+                            error: Box::new(FVE::InvalidNil),
+                        })
                     }
                     else {
-                        Some(#ctor)
+                        Ok(#ctor)
                     }
                 }
             }
@@ -144,8 +147,7 @@ impl VariantRepr {
                     // as newtype
                     quote! {
                         {
-                            let __inner = FromVariant::from_variant(#variant)?;
-                            Some(#ctor(__inner))
+                            FromVariant::from_variant(#variant).map(#ctor)
                         }
                     }
                 } else {
@@ -159,16 +161,29 @@ impl VariantRepr {
 
                     quote! {
                         {
-                            let __array = #variant.try_to_array()?;
-                            if __array.len() != #self_len {
-                                None
-                            }
-                            else {
-                                #(
-                                    let #decl_idents = FromVariant::from_variant(__array.get_ref(#indices))?;
-                                )*
-                                Some(#ctor( #(#ctor_idents),* ))
-                            }
+                            ::gdnative::VariantArray::from_variant(#variant)
+                                .map_err(|__err| FVE::InvalidStructRepr {
+                                    expected: VariantStructRepr::Tuple,
+                                    error: Box::new(__err),
+                                })
+                                .and_then(|__array| {
+                                    let __expected = #self_len;
+                                    let __len = __array.len() as usize;
+                                    if __len != __expected {
+                                        Err(FVE::InvalidLength { expected: __expected, len: __len })
+                                    }
+                                    else {
+                                        #(
+                                            let __index = #indices;
+                                            let #decl_idents = FromVariant::from_variant(__array.get_ref(__index))
+                                                .map_err(|err| FromVariantError::InvalidItem {
+                                                    index: __index as usize,
+                                                    error: Box::new(err),
+                                                })?;
+                                        )*
+                                        Ok(#ctor( #(#ctor_idents),* ))
+                                    }
+                                })
                         }
                     }
                 }
@@ -187,12 +202,23 @@ impl VariantRepr {
 
                 quote! {
                     {
-                        let __dict = #variant.try_to_dictionary()?;
-                        #(
-                            let __key = ::gdnative::GodotString::from(#name_string_literals).to_variant();
-                            let #decl_idents = FromVariant::from_variant(__dict.get_ref(&__key))?;
-                        )*
-                        Some(#ctor { #( #ctor_idents ),* })
+                        ::gdnative::Dictionary::from_variant(#variant)
+                            .map_err(|__err| FVE::InvalidStructRepr {
+                                expected: VariantStructRepr::Struct,
+                                error: Box::new(__err),
+                            })
+                            .and_then(|__dict| {
+                                #(
+                                    let __field_name = #name_string_literals;
+                                    let __key = ::gdnative::GodotString::from(__field_name).to_variant();
+                                    let #decl_idents = FromVariant::from_variant(__dict.get_ref(&__key))
+                                        .map_err(|err| FVE::InvalidField {
+                                            field_name: __field_name,
+                                            error: Box::new(err),
+                                        })?;
+                                )*
+                                Ok(#ctor { #( #ctor_idents ),* })
+                            })
                     }
                 }
             }
@@ -444,7 +470,10 @@ pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
 
             let var_ident_string_literals = var_ident_strings
                 .iter()
-                .map(|string| Literal::string(&string));
+                .map(|string| Literal::string(&string))
+                .collect::<Vec<_>>();
+
+            let ref_var_ident_string_literals = &var_ident_string_literals;
 
             let var_from_variants = variants.iter().map(|(var_ident, var_repr)| {
                 var_repr.from_variant(&var_input_ident, &quote! { #ident::#var_ident })
@@ -454,21 +483,42 @@ pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
 
             quote! {
                 {
-                    let __dict = #input_ident.try_to_dictionary()?;
+                    let __dict = ::gdnative::Dictionary::from_variant(#input_ident)
+                        .map_err(|__err| FVE::InvalidEnumRepr {
+                            expected: VariantEnumRepr::ExternallyTagged,
+                            error: Box::new(__err),
+                        })?;
+
                     let __keys = __dict.keys();
                     if __keys.len() != 1 {
-                        None
+                        Err(FVE::InvalidEnumRepr {
+                            expected: VariantEnumRepr::ExternallyTagged,
+                            error: Box::new(FVE::InvalidLength {
+                                expected: 1,
+                                len: __keys.len() as usize,
+                            }),
+                        })
                     }
                     else {
-                        let __key = __keys.get_ref(0).try_to_string()?;
+                        let __key = String::from_variant(__keys.get_ref(0))
+                            .map_err(|__err| FVE::InvalidEnumRepr {
+                                expected: VariantEnumRepr::ExternallyTagged,
+                                error: Box::new(__err),
+                            })?;
                         match __key.as_str() {
                             #(
-                                #var_ident_string_literals => {
+                                #ref_var_ident_string_literals => {
                                     let #var_input_ident_iter = __dict.get_ref(__keys.get_ref(0));
-                                    #var_from_variants
+                                    (#var_from_variants).map_err(|err| FVE::InvalidEnumVariant {
+                                        variant: "Ok",
+                                        error: Box::new(err),
+                                    })
                                 },
                             )*
-                            _ => None,
+                            variant => Err(FVE::UnknownEnumVariant {
+                                variant: variant.to_string(),
+                                expected: &[#(#ref_var_ident_string_literals),*],
+                            }),
                         }
                     }
                 }
@@ -480,9 +530,14 @@ pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
 
     let result = quote! {
         impl #generics ::gdnative::FromVariant for #ident #generics #where_clause {
-            fn from_variant(#input_ident: &::gdnative::Variant) -> ::std::option::Option<Self> {
+            fn from_variant(
+                #input_ident: &::gdnative::Variant
+            ) -> ::std::result::Result<Self, ::gdnative::FromVariantError> {
                 use ::gdnative::ToVariant;
                 use ::gdnative::FromVariant;
+                use ::gdnative::FromVariantError as FVE;
+                use ::gdnative::VariantEnumRepr;
+                use ::gdnative::VariantStructRepr;
 
                 #return_expr
             }
