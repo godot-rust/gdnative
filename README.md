@@ -133,6 +133,7 @@ The [/examples](https://github.com/GodotNativeTools/godot-rust/tree/master/examp
 - [/examples/hello_world](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
 - [/examples/spinning_cube/](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
 - [/examples/scene_create](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
+- [/examples/signals](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
 
 ## Third-party resources
 
