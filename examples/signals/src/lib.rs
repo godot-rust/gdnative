@@ -13,14 +13,19 @@ struct SignalEmitter {
 impl SignalEmitter {
     fn register_signals(builder: &init::ClassBuilder<Self>) {
         builder.add_signal(init::Signal {
-            name: "something_happens",
+            name: "tick",
             args: &[],
         });
 
         builder.add_signal(init::Signal {
-            name: "something_happens_with_data",
-            // optionally user can specify predefined list of signal arguments using init::SignalArgument
-            args: &[],
+            name: "tick_with_data",
+            // Argument list used by the editor for GUI and generation of GDScript handlers. It can be omitted if the signal is only used from code.
+            args: &[init::SignalArgument {
+                name: "data",
+                default: Variant::from_i64(100),
+                hint: init::PropertyHint::None,
+                usage: init::PropertyUsage::DEFAULT,
+            }],
         });
     }
 
@@ -32,9 +37,6 @@ impl SignalEmitter {
     }
 
     #[export]
-    fn _ready(&mut self, _owner: Node) {}
-
-    #[export]
     fn _process(&mut self, mut owner: Node, delta: f64) {
         if self.timer < 1.0 {
             self.timer += delta;
@@ -44,10 +46,10 @@ impl SignalEmitter {
         self.data += 1;
         unsafe {
             if self.data % 2 == 0 {
-                owner.emit_signal(GodotString::from_str("something_happens"), &[]);
+                owner.emit_signal(GodotString::from_str("tick"), &[]);
             } else {
                 owner.emit_signal(
-                    GodotString::from_str("something_happens_with_data"),
+                    GodotString::from_str("tick_with_data"),
                     &[Variant::from_i64(self.data)],
                 );
             }
@@ -75,7 +77,7 @@ impl SignalSubscriber {
         let object = &owner.to_object();
         emitter
             .connect(
-                GodotString::from_str("something_happens"),
+                GodotString::from_str("tick"),
                 Some(*object),
                 GodotString::from_str("notify"),
                 VariantArray::new(),
@@ -84,7 +86,7 @@ impl SignalSubscriber {
             .unwrap();
         emitter
             .connect(
-                GodotString::from_str("something_happens_with_data"),
+                GodotString::from_str("tick_with_data"),
                 Some(*object),
                 GodotString::from_str("notify_with_data"),
                 VariantArray::new(),
@@ -94,21 +96,24 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn notify(&mut self, mut _owner: Label) {
+    fn notify(&mut self, mut owner: Label) {
         self.times_received += 1;
-        let msg = format!("Received signal {} times", self.times_received);
+        let msg = format!("Received signal \"tick\" {} times", self.times_received);
 
         unsafe {
-            _owner.set_text(GodotString::from_str(msg.as_str()));
+            owner.set_text(GodotString::from_str(msg.as_str()));
         }
     }
 
     #[export]
-    fn notify_with_data(&mut self, mut _owner: Label, data: Variant) {
-        let msg = format!("Received data {}", data.try_to_u64().unwrap());
+    fn notify_with_data(&mut self, mut owner: Label, data: Variant) {
+        let msg = format!(
+            "Received signal \"tick_with_data\" with data {}",
+            data.try_to_u64().unwrap()
+        );
 
         unsafe {
-            _owner.set_text(GodotString::from_str(msg.as_str()));
+            owner.set_text(GodotString::from_str(msg.as_str()));
         }
     }
 }
