@@ -24,12 +24,12 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
     native_script::derive_native_class(input)
 }
 
-#[proc_macro_derive(ToVariant)]
+#[proc_macro_derive(ToVariant, attributes(variant))]
 pub fn derive_to_variant(input: TokenStream) -> TokenStream {
     variant::derive_to_variant(input)
 }
 
-#[proc_macro_derive(FromVariant)]
+#[proc_macro_derive(FromVariant, attributes(variant))]
 pub fn derive_from_variant(input: TokenStream) -> TokenStream {
     variant::derive_from_variant(input)
 }
