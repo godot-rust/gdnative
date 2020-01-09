@@ -998,6 +998,24 @@ impl FromVariant for () {
     }
 }
 
+impl<'a, T> ToVariant for &'a T
+where
+    T: ToVariant,
+{
+    fn to_variant(&self) -> Variant {
+        T::to_variant(*self)
+    }
+}
+
+impl<'a, T> ToVariant for &'a mut T
+where
+    T: ToVariant,
+{
+    fn to_variant(&self) -> Variant {
+        T::to_variant(*self)
+    }
+}
+
 macro_rules! from_variant_direct {
     (
         $(
@@ -1139,6 +1157,12 @@ from_variant_from_sys!(
     impl FromVariant for ColorArray : godot_variant_as_pool_color_array;
     impl FromVariant for Dictionary : godot_variant_as_dictionary;
 );
+
+impl ToVariant for str {
+    fn to_variant(&self) -> Variant {
+        Variant::from_str(self)
+    }
+}
 
 impl ToVariant for String {
     fn to_variant(&self) -> Variant {
