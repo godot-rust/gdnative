@@ -91,7 +91,7 @@ pub type ConstantValue = i64;
 #[derive(Deserialize, Debug)]
 pub struct Enum {
     pub name: String,
-    pub values: HashMap<String, u32>,
+    pub values: HashMap<String, i64>,
 }
 
 #[derive(Deserialize, Debug)]
