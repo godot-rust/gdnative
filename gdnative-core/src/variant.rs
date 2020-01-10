@@ -791,6 +791,26 @@ godot_test!(
 /// - `Unit` is represented as an empty `Dictionary` (`{}`)
 /// - `Enum::Variant(a, b, c)` is represented as an externally tagged `Dictionary`
 ///   (`{ "Variant": [a, b, c] }`)
+///
+/// Behavior of the derive macros can be customized using attributes:
+///
+/// ### Field attributes
+///
+/// - `#[variant(to_variant_with = "path::to::func")]`
+///
+/// Use the given function to convert the field to `Variant`. The function's signature is
+/// expected to be `fn(&T) -> Variant`, although it can be generic over `T`.
+///
+/// - `#[variant(from_variant_with = "path::to::func")]`
+///
+/// Use the given function to convert from a `Variant`. The function's signature is
+/// expected to be `fn(&Variant) -> Result<T, FromVariantError>`, although it can be generic
+/// over `T`.
+///
+/// - `#[variant(with = "path::to::mod")]`
+///
+/// Convenience attribute that sets `to_variant_with` to `path::to::mod::to_variant` and
+/// `from_variant_with` to `path::to::mod::from_variant`.
 pub trait ToVariant {
     fn to_variant(&self) -> Variant;
 }

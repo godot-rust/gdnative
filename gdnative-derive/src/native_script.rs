@@ -13,7 +13,62 @@ pub(crate) struct DeriveData {
     pub(crate) properties: HashMap<Ident, PropertyAttrArgs>,
 }
 
-pub(crate) fn parse_derive_input(input: TokenStream) -> DeriveData {
+pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
+    let data = parse_derive_input(input);
+
+    // generate NativeClass impl
+    let trait_impl = {
+        let name = data.name;
+        let base = data.base;
+        let user_data = data.user_data;
+        let register_callback = data
+            .register_callback
+            .map(|function_path| quote!(#function_path(builder);))
+            .unwrap_or(quote!({}));
+        let properties = data.properties.iter().map(|(ident, config)| {
+            let default_value = &config.default;
+            let label = format!("base/{}", ident);
+            quote!({
+                builder.add_property(gdnative::init::Property{
+                    name: #label,
+                    getter: |this: &#name| this.#ident,
+                    setter: |this: &mut #name, v| this.#ident = v,
+                    default: #default_value,
+                    usage: gdnative::init::PropertyUsage::DEFAULT,
+                    hint: gdnative::init::PropertyHint::None
+                });
+            })
+        });
+
+        // string variant needed for the `class_name` function.
+        let name_str = quote!(#name).to_string();
+
+        quote!(
+            impl gdnative::NativeClass for #name {
+                type Base = #base;
+                type UserData = #user_data;
+
+                fn class_name() -> &'static str {
+                    #name_str
+                }
+
+                fn init(owner: Self::Base) -> Self {
+                    Self::_init(owner)
+                }
+
+                fn register_properties(builder: &gdnative::init::ClassBuilder<Self>) {
+                    #(#properties)*;
+                    #register_callback
+                }
+            }
+        )
+    };
+
+    // create output token stream
+    trait_impl.into()
+}
+
+fn parse_derive_input(input: TokenStream) -> DeriveData {
     let input = match syn::parse_macro_input::parse::<DeriveInput>(input) {
         Ok(val) => val,
         Err(err) => {

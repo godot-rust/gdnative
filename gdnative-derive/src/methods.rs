@@ -9,13 +9,55 @@ pub(crate) struct ClassMethodExport {
     pub(crate) methods: Vec<Signature>,
 }
 
+pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
+    let (impl_block, export) = parse_method_export(meta, input);
+
+    let output = {
+        let class_name = export.class_ty;
+
+        let methods = export
+            .methods
+            .into_iter()
+            .map(|m| {
+                let name = m.ident.clone().to_string();
+
+                quote!(
+                    {
+                        let method = gdnative::godot_wrap_method!(
+                            #class_name,
+                            #m
+                        );
+
+                        builder.add_method(#name, method);
+                    }
+                )
+            })
+            .collect::<Vec<_>>();
+
+        quote::quote!(
+
+            #impl_block
+
+            impl gdnative::NativeClassMethods for #class_name {
+
+                fn register(builder: &gdnative::init::ClassBuilder<Self>) {
+                    use gdnative::init::*;
+
+                    #(#methods)*
+                }
+
+            }
+
+        )
+    };
+
+    TokenStream::from(output)
+}
+
 /// Parse the input.
 ///
 /// Returns the TokenStream of the impl block together with a description of methods to export.
-pub(crate) fn parse_method_export(
-    _meta: TokenStream,
-    input: TokenStream,
-) -> (ItemImpl, ClassMethodExport) {
+fn parse_method_export(_meta: TokenStream, input: TokenStream) -> (ItemImpl, ClassMethodExport) {
     let ast = match syn::parse_macro_input::parse::<ItemImpl>(input) {
         Ok(impl_block) => impl_block,
         Err(err) => {
