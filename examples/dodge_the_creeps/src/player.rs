@@ -21,6 +21,7 @@ impl Player {
 
     #[export]
     unsafe fn _ready(&mut self, mut owner: Area2D) {
+        self.screen_size = owner.get_viewport().unwrap().get_size();
         owner.hide();
     }
 
@@ -70,8 +71,8 @@ impl Player {
         }
 
         let change = velocity * delta;
-        let position = owner.get_global_position() + change;
-        // TODO: Clamp position based on screen size
+        let position =
+            (owner.get_global_position() + change).clamp(Vector2::new(0.0, 0.0), self.screen_size);
         owner.set_global_position(position);
     }
 }
