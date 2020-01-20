@@ -1,0 +1,8 @@
+[gd_resource type="NativeScript" load_steps=2 format=2]
+
+[ext_resource path="res://dodge_the_creeps_library.gdnlib" type="GDNativeLibrary" id=1]
+
+[resource]
+resource_name = "Mob"
+class_name = "Mob"
+library = ExtResource( 1 )

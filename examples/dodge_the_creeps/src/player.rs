@@ -3,6 +3,7 @@ use gdnative::*;
 #[derive(NativeClass)]
 #[inherit(Area2D)]
 #[user_data(user_data::MutexData<Player>)]
+#[register_with(Self::register_player)]
 pub struct Player {
     #[property(default = 400.0)]
     speed: f32,
@@ -12,6 +13,13 @@ pub struct Player {
 
 #[methods]
 impl Player {
+    fn register_player(builder: &init::ClassBuilder<Self>) {
+        builder.add_signal(init::Signal {
+            name: "hit",
+            args: &[],
+        });
+    }
+
     fn _init(_owner: Area2D) -> Self {
         Player {
             speed: 400.0,
@@ -23,6 +31,18 @@ impl Player {
     unsafe fn _ready(&mut self, mut owner: Area2D) {
         self.screen_size = owner.get_viewport().unwrap().get_size();
         owner.hide();
+
+        let object = &owner.to_object();
+
+        owner
+            .connect(
+                GodotString::from_str("hit"),
+                Some(*object),
+                GodotString::from_str("player_hit"),
+                VariantArray::new(),
+                0,
+            )
+            .unwrap();
     }
 
     #[export]
@@ -74,5 +94,22 @@ impl Player {
         let position =
             (owner.get_global_position() + change).clamp(Vector2::new(0.0, 0.0), self.screen_size);
         owner.set_global_position(position);
+    }
+
+    #[export]
+    fn _on_Player_body_entered(&self, owner: Area2D, body: PhysicsBody2D) {
+        godot_print!("Body Entered!");
+
+        // hide() # Player disappears after being hit.
+        // emit_signal("hit")
+        // $CollisionShape2D.set_deferred("disabled", true)
+    }
+
+    #[export]
+    unsafe fn start(&self, mut owner: Area2D, pos: Vector2) {
+        godot_print!("Player Start: {:?}", pos);
+        owner.set_global_position(pos);
+        owner.show();
+        // $CollisionShape2D.disabled = false
     }
 }

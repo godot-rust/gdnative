@@ -16,7 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="dodge_the_creeps"
-run/main_scene="res://Player.tscn"
+run/main_scene="res://Main.tscn"
 config/icon="res://icon.png"
 
 [display]
