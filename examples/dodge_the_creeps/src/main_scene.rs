@@ -90,7 +90,7 @@ impl Main {
             .cast::<CanvasLayer>()
             .expect("Unable to cast to CanvasLayer");
         // hud.call("update_score".into(), &[Variant::from(self.score)]);
-        // hud.call("show_message_variant".into(), &[Variant::from("Get Ready")]);
+        // hud.call("show_message".into(), &[Variant::from("Get Ready")]);
     }
 
     #[export]

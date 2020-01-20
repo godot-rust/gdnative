@@ -107,7 +107,6 @@ impl Player {
 
     #[export]
     unsafe fn start(&self, mut owner: Area2D, pos: Vector2) {
-        godot_print!("Player Start: {:?}", pos);
         owner.set_global_position(pos);
         owner.show();
         // $CollisionShape2D.disabled = false

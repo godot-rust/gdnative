@@ -23,14 +23,14 @@ impl HUD {
     unsafe fn _ready(&mut self, owner: CanvasLayer) {}
 
     #[export]
-    unsafe fn show_message(&self, owner: CanvasLayer, text: GodotString) {
+    unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
         let mut message_label = owner
             .get_node("MessageLabel".into())
             .expect("Missing MessageLabel")
             .cast::<Label>()
             .expect("Cannot cast to Label");
 
-        message_label.set_text(text);
+        message_label.set_text(text.into());
         message_label.show();
 
         owner
