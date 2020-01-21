@@ -186,6 +186,12 @@ impl GodotString {
     }
 }
 
+impl Clone for GodotString {
+    fn clone(&self) -> Self {
+        self.new_ref()
+    }
+}
+
 impl_basic_traits!(
     for GodotString as godot_string {
         Drop => godot_string_destroy;
