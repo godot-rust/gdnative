@@ -10,6 +10,11 @@ pub struct Plane {
 
 impl Plane {
     #[doc(hidden)]
+    pub fn sys(&self) -> *const sys::godot_plane {
+        unsafe { std::mem::transmute::<*const Plane, *const sys::godot_plane>(self as *const _) }
+    }
+
+    #[doc(hidden)]
     pub fn from_sys(c: sys::godot_plane) -> Self {
         unsafe { std::mem::transmute::<sys::godot_plane, Self>(c) }
     }

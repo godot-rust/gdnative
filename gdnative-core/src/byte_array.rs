@@ -1,8 +1,6 @@
 use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
-use crate::Variant;
 use crate::VariantArray;
 
 /// A reference-counted vector of bytes that uses Godot's pool allocator.
@@ -125,12 +123,6 @@ impl_basic_traits!(
         Default => godot_pool_byte_array_new;
     }
 );
-
-impl ToVariant for ByteArray {
-    fn to_variant(&self) -> Variant {
-        Variant::from_byte_array(self)
-    }
-}
 
 define_access_guard! {
     pub struct ReadGuard<'a> : sys::godot_pool_byte_array_read_access {

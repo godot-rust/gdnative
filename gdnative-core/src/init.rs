@@ -27,7 +27,7 @@ use crate::FromVariant;
 use crate::Map;
 use crate::MapMut;
 use crate::NativeClass;
-use crate::ToVariant;
+
 use crate::Variant;
 use libc;
 use std::ffi::CString;

@@ -1,11 +1,4 @@
 use crate::{Angle, Rotation2D, Vector2};
-use crate::{ToVariant, Variant};
-
-impl ToVariant for Vector2 {
-    fn to_variant(&self) -> Variant {
-        Variant::from_vector2(self)
-    }
-}
 
 /// Helper methods for `Vector2`.
 ///
@@ -86,6 +79,8 @@ impl Vector2Godot for Vector2 {
 
 godot_test!(
     test_vector2_variants {
+        use crate::ToVariant;
+
         fn test(vector: Vector2, set_to: Vector2) {
             use crate::FromVariant;
             let api = crate::get_api();

@@ -21,20 +21,21 @@ impl Color {
         Color { r, g, b, a: 1.0 }
     }
 
-    fn as_sys_color(&self) -> &sys::godot_color {
-        unsafe { transmute(self) }
-    }
-
     pub fn h(&self) -> f32 {
-        unsafe { (get_api().godot_color_get_h)(self.as_sys_color()) }
+        unsafe { (get_api().godot_color_get_h)(self.sys()) }
     }
 
     pub fn s(&self) -> f32 {
-        unsafe { (get_api().godot_color_get_s)(self.as_sys_color()) }
+        unsafe { (get_api().godot_color_get_s)(self.sys()) }
     }
 
     pub fn v(&self) -> f32 {
-        unsafe { (get_api().godot_color_get_v)(self.as_sys_color()) }
+        unsafe { (get_api().godot_color_get_v)(self.sys()) }
+    }
+
+    #[doc(hidden)]
+    pub fn sys(&self) -> &sys::godot_color {
+        unsafe { transmute(self) }
     }
 
     #[doc(hidden)]

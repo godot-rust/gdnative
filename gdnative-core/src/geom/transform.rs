@@ -14,6 +14,13 @@ pub struct Transform {
 
 impl Transform {
     #[doc(hidden)]
+    pub fn sys(&self) -> *const sys::godot_transform {
+        unsafe {
+            std::mem::transmute::<*const Transform, *const sys::godot_transform>(self as *const _)
+        }
+    }
+
+    #[doc(hidden)]
     pub fn from_sys(c: sys::godot_transform) -> Self {
         unsafe { std::mem::transmute::<sys::godot_transform, Self>(c) }
     }

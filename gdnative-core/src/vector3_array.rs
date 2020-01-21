@@ -1,8 +1,6 @@
 use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
-use crate::Variant;
 use crate::VariantArray;
 use crate::Vector3;
 
@@ -129,12 +127,6 @@ impl_basic_traits!(
         Default => godot_pool_vector3_array_new;
     }
 );
-
-impl ToVariant for Vector3Array {
-    fn to_variant(&self) -> Variant {
-        Variant::from_vector3_array(self)
-    }
-}
 
 define_access_guard! {
     pub struct ReadGuard<'a> : sys::godot_pool_vector3_array_read_access {
