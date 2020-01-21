@@ -1,8 +1,6 @@
 use crate::get_api;
 use crate::sys;
 use crate::GodotString;
-use crate::ToVariant;
-use crate::Variant;
 use std::fmt;
 
 /// A reference-counted relative or absolute path in a scene tree, for use with `Node.get_node()` and similar
@@ -143,12 +141,6 @@ impl_basic_traits!(
         Eq => godot_node_path_operator_equal;
     }
 );
-
-impl ToVariant for NodePath {
-    fn to_variant(&self) -> Variant {
-        Variant::from_node_path(self)
-    }
-}
 
 impl fmt::Debug for NodePath {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {

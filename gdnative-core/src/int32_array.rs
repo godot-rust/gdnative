@@ -1,8 +1,6 @@
 use crate::access::{Aligned, MaybeUnaligned};
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
-use crate::Variant;
 use crate::VariantArray;
 
 /// A reference-counted vector of `i32` that uses Godot's pool allocator.
@@ -125,12 +123,6 @@ impl_basic_traits!(
         Default => godot_pool_int_array_new;
     }
 );
-
-impl ToVariant for Int32Array {
-    fn to_variant(&self) -> Variant {
-        Variant::from_int32_array(self)
-    }
-}
 
 define_access_guard! {
     pub struct ReadGuard<'a> : sys::godot_pool_int_array_read_access {

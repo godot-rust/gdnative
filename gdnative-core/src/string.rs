@@ -1,7 +1,5 @@
 use crate::get_api;
 use crate::sys;
-use crate::ToVariant;
-use crate::Variant;
 
 use std::cmp::Ordering;
 use std::ffi::CStr;
@@ -196,12 +194,6 @@ impl_basic_traits!(
     }
 );
 
-impl ToVariant for GodotString {
-    fn to_variant(&self) -> Variant {
-        Variant::from_godot_string(self)
-    }
-}
-
 impl fmt::Debug for GodotString {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_string().fmt(f)
@@ -339,7 +331,8 @@ where
 }
 
 godot_test!(test_string {
-    use crate::VariantType;
+    use crate::{GodotString, Variant, VariantType};
+
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
 

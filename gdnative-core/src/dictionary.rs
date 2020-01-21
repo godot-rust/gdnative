@@ -1,7 +1,7 @@
 use crate::get_api;
 use crate::sys;
 use crate::GodotString;
-use crate::ToVariant;
+
 use crate::Variant;
 use crate::VariantArray;
 use std::fmt;
@@ -121,12 +121,6 @@ impl_basic_traits!(
         Eq => godot_dictionary_operator_equal;
     }
 );
-
-impl ToVariant for Dictionary {
-    fn to_variant(&self) -> Variant {
-        Variant::from_dictionary(self)
-    }
-}
 
 impl fmt::Debug for Dictionary {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {

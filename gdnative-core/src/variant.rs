@@ -11,44 +11,17 @@ use std::mem::{forget, transmute};
 /// dependning on the size of the type and whether the it is trivially copyable.
 pub struct Variant(pub(crate) sys::godot_variant);
 
-macro_rules! variant_constructors_transmute {
+macro_rules! variant_constructors {
     (
         $(
             $(#[$attr:meta])*
-            pub fn $ctor:ident($Type:ty) -> Self as $GdType:ty : $gd_method:ident;
+            pub fn $ctor:ident($Type:ty) -> Self;
         )*
     ) => (
         $(
             $(#[$attr])*
             pub fn $ctor(val: $Type) -> Variant {
-                unsafe {
-                    let api = get_api();
-                    let mut dest = sys::godot_variant::default();
-                    let gd_val: $GdType = transmute(*val);
-                    (api.$gd_method)(&mut dest, &gd_val);
-                    Variant(dest)
-                }
-            }
-        )*
-    )
-}
-
-macro_rules! variant_constructors_wrap {
-    (
-        $(
-            $(#[$attr:meta])*
-            pub fn $ctor:ident($Type:ty) -> Self as $GdType:ty : $gd_method:ident;
-        )*
-    ) => (
-        $(
-            $(#[$attr])*
-            pub fn $ctor(val: $Type) -> Variant {
-                unsafe {
-                    let api = get_api();
-                    let mut dest = sys::godot_variant::default();
-                    (api.$gd_method)(&mut dest, &val.0);
-                    Variant(dest)
-                }
+                ToVariant::to_variant(val)
             }
         )*
     )
@@ -223,54 +196,51 @@ type I64 = i64;
 type Bool = bool;
 
 impl Variant {
-    variant_constructors_transmute!(
+    variant_constructors!(
         /// Creates a `Variant` wrapping a `Vector2`.
-        pub fn from_vector2(&Vector2) -> Self as sys::godot_vector2 : godot_variant_new_vector2;
+        pub fn from_vector2(&Vector2) -> Self;
         /// Creates a `Variant` wrapping a `Vector3`.
-        pub fn from_vector3(&Vector3) -> Self as sys::godot_vector3 : godot_variant_new_vector3;
+        pub fn from_vector3(&Vector3) -> Self;
         /// Creates a `Variant` wrapping a `Quat`.
-        pub fn from_quat(&Quat) -> Self as sys::godot_quat : godot_variant_new_quat;
+        pub fn from_quat(&Quat) -> Self;
         /// Creates a `Variant` wrapping a `Plane`.
-        pub fn from_plane(&Plane) -> Self as sys::godot_plane : godot_variant_new_plane;
+        pub fn from_plane(&Plane) -> Self;
         /// Creates a `Variant` wrapping a `Rect2`.
-        pub fn from_rect2(&Rect2) -> Self as sys::godot_rect2 : godot_variant_new_rect2;
+        pub fn from_rect2(&Rect2) -> Self;
         /// Creates a `Variant` wrapping a `Transform`.
-        pub fn from_transform(&Transform) -> Self as sys::godot_transform : godot_variant_new_transform;
+        pub fn from_transform(&Transform) -> Self;
         /// Creates a `Variant` wrapping a `Transform2D`.
-        pub fn from_transform2d(&Transform2D) -> Self as sys::godot_transform2d : godot_variant_new_transform2d;
+        pub fn from_transform2d(&Transform2D) -> Self;
         /// Creates a `Variant` wrapping a `Basis`.
-        pub fn from_basis(&Basis) -> Self as sys::godot_basis : godot_variant_new_basis;
+        pub fn from_basis(&Basis) -> Self;
         /// Creates a `Variant` wrapping a `Color`.
-        pub fn from_color(&Color) -> Self as sys::godot_color : godot_variant_new_color;
+        pub fn from_color(&Color) -> Self;
         /// Creates a `Variant` wrapping an `Aabb`.
-        pub fn from_aabb(&Aabb) -> Self as sys::godot_aabb : godot_variant_new_aabb;
-    );
-
-    variant_constructors_wrap!(
+        pub fn from_aabb(&Aabb) -> Self;
         /// Creates a `Variant` wrapping an `Rid`.
-        pub fn from_rid(&Rid) -> Self as sys::godot_rid : godot_variant_new_rid;
+        pub fn from_rid(&Rid) -> Self;
         /// Creates a `Variant` wrapping a `NodePath`.
-        pub fn from_node_path(&NodePath) -> Self as sys::godot_node_path : godot_variant_new_node_path;
+        pub fn from_node_path(&NodePath) -> Self;
         /// Creates a `Variant` wrapping a `GodotString`.
-        pub fn from_godot_string(&GodotString) -> Self as sys::godot_string : godot_variant_new_string;
+        pub fn from_godot_string(&GodotString) -> Self;
         /// Creates an `Variant` wrapping an array of variants.
-        pub fn from_array(&VariantArray) -> Self as sys::godot_array : godot_variant_new_array;
+        pub fn from_array(&VariantArray) -> Self;
         /// Creates a `Variant` wrapping a byte array.
-        pub fn from_byte_array(&ByteArray) -> Self as sys::godot_pool_byte_array : godot_variant_new_pool_byte_array;
+        pub fn from_byte_array(&ByteArray) -> Self;
         /// Creates a `Variant` wrapping an array of 32bit signed integers.
-        pub fn from_int32_array(&Int32Array) -> Self as sys::godot_pool_int_array : godot_variant_new_pool_int_array;
+        pub fn from_int32_array(&Int32Array) -> Self;
         /// Creates a `Variant` wrapping an array of 32bit floats.
-        pub fn from_float32_array(&Float32Array) -> Self as sys::godot_pool_real_array : godot_variant_new_pool_real_array;
+        pub fn from_float32_array(&Float32Array) -> Self;
         /// Creates a `Variant` wrapping an array of godot strings.
-        pub fn from_string_array(&StringArray) -> Self as sys::godot_pool_string_array : godot_variant_new_pool_string_array;
+        pub fn from_string_array(&StringArray) -> Self;
         /// Creates a `Variant` wrapping an array of 2d vectors.
-        pub fn from_vector2_array(&Vector2Array) -> Self as sys::godot_pool_vector2_array : godot_variant_new_pool_vector2_array;
+        pub fn from_vector2_array(&Vector2Array) -> Self;
         /// Creates a `Variant` wrapping an array of 3d vectors.
-        pub fn from_vector3_array(&Vector3Array) -> Self as sys::godot_pool_vector3_array : godot_variant_new_pool_vector3_array;
+        pub fn from_vector3_array(&Vector3Array) -> Self;
         /// Creates a `Variant` wrapping an array of colors.
-        pub fn from_color_array(&ColorArray) -> Self as sys::godot_pool_color_array : godot_variant_new_pool_color_array;
+        pub fn from_color_array(&ColorArray) -> Self;
         /// Creates a `Variant` wrapping a dictionary.
-        pub fn from_dictionary(&Dictionary) -> Self as sys::godot_dictionary : godot_variant_new_dictionary;
+        pub fn from_dictionary(&Dictionary) -> Self;
     );
 
     /// Creates an empty `Variant`.
@@ -1109,6 +1079,72 @@ impl_to_variant_for_num!(
     usize: u64
     f32: f64
 );
+
+macro_rules! to_variant_transmute {
+    (
+        $(impl ToVariant for $ty:ident: $ctor:ident;)*
+    ) => {
+        $(
+            impl ToVariant for $ty {
+                fn to_variant(&self) -> Variant {
+                    unsafe {
+                        let api = get_api();
+                        let mut dest = sys::godot_variant::default();
+                        (api.$ctor)(&mut dest, transmute(self));
+                        Variant::from_sys(dest)
+                    }
+                }
+            }
+        )*
+    }
+}
+
+to_variant_transmute! {
+    impl ToVariant for Vector2 : godot_variant_new_vector2;
+    impl ToVariant for Vector3 : godot_variant_new_vector3;
+    impl ToVariant for Quat : godot_variant_new_quat;
+    impl ToVariant for Rect2 : godot_variant_new_rect2;
+    impl ToVariant for Transform2D : godot_variant_new_transform2d;
+}
+
+macro_rules! to_variant_as_sys {
+    (
+        $(impl ToVariant for $ty:ident: $ctor:ident;)*
+    ) => {
+        $(
+            impl ToVariant for $ty {
+                fn to_variant(&self) -> Variant {
+                    unsafe {
+                        let api = get_api();
+                        let mut dest = sys::godot_variant::default();
+                        (api.$ctor)(&mut dest, self.sys());
+                        Variant::from_sys(dest)
+                    }
+                }
+            }
+        )*
+    }
+}
+
+to_variant_as_sys! {
+    impl ToVariant for Plane : godot_variant_new_plane;
+    impl ToVariant for Transform : godot_variant_new_transform;
+    impl ToVariant for Basis : godot_variant_new_basis;
+    impl ToVariant for Color : godot_variant_new_color;
+    impl ToVariant for Aabb : godot_variant_new_aabb;
+    impl ToVariant for Rid : godot_variant_new_rid;
+    impl ToVariant for NodePath : godot_variant_new_node_path;
+    impl ToVariant for GodotString : godot_variant_new_string;
+    impl ToVariant for VariantArray : godot_variant_new_array;
+    impl ToVariant for ByteArray : godot_variant_new_pool_byte_array;
+    impl ToVariant for Int32Array : godot_variant_new_pool_int_array;
+    impl ToVariant for Float32Array : godot_variant_new_pool_real_array;
+    impl ToVariant for StringArray : godot_variant_new_pool_string_array;
+    impl ToVariant for Vector2Array : godot_variant_new_pool_vector2_array;
+    impl ToVariant for Vector3Array : godot_variant_new_pool_vector3_array;
+    impl ToVariant for ColorArray : godot_variant_new_pool_color_array;
+    impl ToVariant for Dictionary : godot_variant_new_dictionary;
+}
 
 macro_rules! from_variant_transmute {
     (

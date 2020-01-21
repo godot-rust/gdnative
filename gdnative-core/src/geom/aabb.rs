@@ -10,6 +10,11 @@ pub struct Aabb {
 
 impl Aabb {
     #[doc(hidden)]
+    pub fn sys(&self) -> *const sys::godot_aabb {
+        unsafe { std::mem::transmute::<*const Aabb, *const sys::godot_aabb>(self as *const _) }
+    }
+
+    #[doc(hidden)]
     pub fn from_sys(c: sys::godot_aabb) -> Self {
         unsafe { std::mem::transmute::<sys::godot_aabb, Self>(c) }
     }
