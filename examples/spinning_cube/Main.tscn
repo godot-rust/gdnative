@@ -19,10 +19,7 @@ mesh = SubResource( 1 )
 material/0 = SubResource( 2 )
 script = SubResource( 3 )
 base/rotate_speed = 1.0
-test/test_enum = null
-test/test_flags = null
 
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 0.572229, -0.327396, 0.751909, 0, 0.916856, 0.399217, -0.820094, -0.228443, 0.524651, 4.71648, 2.5, 3.45846 )
 current = true
-

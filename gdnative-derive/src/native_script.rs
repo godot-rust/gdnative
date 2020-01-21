@@ -25,18 +25,20 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
             .register_callback
             .map(|function_path| quote!(#function_path(builder);))
             .unwrap_or(quote!({}));
-        let properties = data.properties.iter().map(|(ident, config)| {
-            let default_value = &config.default;
-            let label = format!("base/{}", ident);
+        let properties = data.properties.into_iter().map(|(ident, config)| {
+            let with_default = if let Some(default_value) = &config.default {
+                Some(quote!(.with_default(#default_value)))
+            } else {
+                None
+            };
+
+            let label = config.path.unwrap_or_else(|| format!("{}", ident));
             quote!({
-                builder.add_property(gdnative::init::Property{
-                    name: #label,
-                    getter: |this: &#name| this.#ident,
-                    setter: |this: &mut #name, v| this.#ident = v,
-                    default: #default_value,
-                    usage: gdnative::init::PropertyUsage::DEFAULT,
-                    hint: gdnative::init::PropertyHint::None
-                });
+                builder.add_property(#label)
+                    #with_default
+                    .with_ref_getter(|this: &#name, _| &this.#ident)
+                    .with_setter(|this: &mut #name, _, v| this.#ident = v)
+                    .done();
             })
         });
 
@@ -134,15 +136,22 @@ fn parse_derive_input(input: TokenStream) -> DeriveData {
                     let meta = attr
                         .parse_meta()
                         .expect("should be able to parse attribute arguments");
-                    if let Meta::List(MetaList { nested, .. }) = meta {
-                        property_args
-                            .get_or_insert_with(PropertyAttrArgsBuilder::default)
-                            .extend(nested.iter().map(|arg| match arg {
-                                NestedMeta::Meta(Meta::NameValue(ref pair)) => pair,
-                                _ => panic!("unexpected argument: {:?}", arg),
-                            }));
-                    } else {
-                        panic!("unexpected meta variant: {:?}", meta);
+
+                    match meta {
+                        Meta::List(MetaList { nested, .. }) => {
+                            property_args
+                                .get_or_insert_with(PropertyAttrArgsBuilder::default)
+                                .extend(nested.iter().map(|arg| match arg {
+                                    NestedMeta::Meta(Meta::NameValue(ref pair)) => pair,
+                                    _ => panic!("unexpected argument: {:?}", arg),
+                                }));
+                        }
+                        Meta::Path(_) => {
+                            property_args.get_or_insert_with(PropertyAttrArgsBuilder::default);
+                        }
+                        _ => {
+                            panic!("unexpected meta variant: {:?}", meta);
+                        }
                     }
                 }
 

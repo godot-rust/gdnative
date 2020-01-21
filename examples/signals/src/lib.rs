@@ -23,7 +23,7 @@ impl SignalEmitter {
             args: &[init::SignalArgument {
                 name: "data",
                 default: Variant::from_i64(100),
-                hint: init::PropertyHint::None,
+                export_info: init::ExportInfo::new(VariantType::I64),
                 usage: init::PropertyUsage::DEFAULT,
             }],
         });
