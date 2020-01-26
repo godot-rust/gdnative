@@ -1,5 +1,6 @@
 use gdnative::*;
 
+/// The player "class"
 #[derive(NativeClass)]
 #[inherit(Area2D)]
 #[user_data(user_data::MutexData<Player>)]
@@ -97,11 +98,17 @@ impl Player {
     }
 
     #[export]
-    fn _on_Player_body_entered(&self, owner: Area2D, body: PhysicsBody2D) {
-        godot_print!("Body Entered!");
+    unsafe fn _on_Player_body_entered(&self, mut owner: Area2D, body: PhysicsBody2D) {
+        owner.hide();
+        owner.emit_signal("hit".into(), &[]);
 
-        // hide() # Player disappears after being hit.
-        // emit_signal("hit")
+        let mut collision_shape = owner
+            .get_node("CollisionShape2D".into())
+            .expect("Missing CollisionShape2D")
+            .cast::<PathFollow2D>()
+            .expect("Unable to cast to CollisionShape2D");
+
+        collision_shape.set_deferred("disabled".into(), true.into());
         // $CollisionShape2D.set_deferred("disabled", true)
     }
 

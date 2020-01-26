@@ -2,7 +2,7 @@ use gdnative::*;
 
 #[derive(NativeClass)]
 #[inherit(CanvasLayer)]
-#[user_data(user_data::MutexData<HUD>)]
+#[user_data(user_data::ArcData<HUD>)]
 #[register_with(Self::register_hud)]
 pub struct HUD {}
 
@@ -20,10 +20,10 @@ impl HUD {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, owner: CanvasLayer) {}
+    unsafe fn _ready(&self, owner: CanvasLayer) {}
 
     #[export]
-    unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
+    pub unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
         let mut message_label = owner
             .get_node("MessageLabel".into())
             .expect("Missing MessageLabel")
@@ -66,14 +66,13 @@ impl HUD {
     }
 
     #[export]
-    unsafe fn update_score(&self, owner: CanvasLayer, score: Vector2) {
-        godot_print!("Score: {:?}", score);
-        // owner
-        //     .get_node("ScoreLabel".into())
-        //     .expect("Missing ScoreLabel")
-        //     .cast::<Label>()
-        //     .expect("Cannot cast to Label")
-        //     .set_text(score.to_string().into());
+    pub unsafe fn update_score(&self, owner: CanvasLayer, score: i64) {
+        owner
+            .get_node("ScoreLabel".into())
+            .expect("Missing ScoreLabel")
+            .cast::<Label>()
+            .expect("Cannot cast to Label")
+            .set_text(score.to_string().into());
     }
 
     #[export]

@@ -1,27 +1,38 @@
+use crate::hud;
+use crate::mob;
 use gdnative::*;
+use rand::*;
+use std::f64::consts::PI;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ManageErrs {
+    CouldNotMakeInstance,
+    RootClassNotRigidBody2D(String),
+}
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 #[user_data(user_data::MutexData<Main>)]
-#[register_with(register_main)]
+// #[register_with(register_main)]
 // TODO: Store child nodes in the struct.
 pub struct Main {
+    #[property]
     mob: PackedScene,
     score: i64,
 }
 
 unsafe impl Send for Main {}
 
-fn register_main(builder: &init::ClassBuilder<Main>) {
-    builder.add_property(init::Property {
-        name: "base/mob",
-        default: load_scene("res://Mob.tscn"),
-        hint: init::PropertyHint::None,
-        getter: |this: &Main| this.mob.clone(),
-        setter: |this: &mut Main, v| this.mob = v,
-        usage: init::PropertyUsage::DEFAULT,
-    });
-}
+// fn register_main(builder: &init::ClassBuilder<Main>) {
+//     builder.add_property(init::Property {
+//         name: "base/mob",
+//         default: load_scene("res://Player.tscn"),
+//         hint: init::PropertyHint::None,
+//         getter: |this: &Main| this.mob.clone(),
+//         setter: |this: &mut Main, v| this.mob = v,
+//         usage: init::PropertyUsage::DEFAULT,
+//     });
+// }
 
 #[methods]
 impl Main {
@@ -31,6 +42,9 @@ impl Main {
             score: 0,
         }
     }
+
+    #[export]
+    fn _ready(&self, _owner: Node) {}
 
     #[export]
     unsafe fn game_over(&self, owner: Node) {
@@ -84,13 +98,22 @@ impl Main {
 
         start_timer.start(0.0);
 
-        let mut hud = owner
+        let mut hud_node = owner
             .get_node("HUD".into())
             .expect("Missing HUD")
             .cast::<CanvasLayer>()
             .expect("Unable to cast to CanvasLayer");
-        // hud.call("update_score".into(), &[Variant::from(self.score)]);
-        // hud.call("show_message".into(), &[Variant::from("Get Ready")]);
+
+        match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
+            Some(hud) => {
+                let _ = hud.map(|x, o| {
+                    x.update_score(o, self.score);
+                    x.show_message(o, "Get Ready".to_string())
+                });
+                ()
+            }
+            None => godot_print!("Unable to get hud"),
+        }
     }
 
     #[export]
@@ -102,8 +125,8 @@ impl Main {
             .expect("Unable to cast to Timer")
             .start(0.0);
         owner
-            .get_node("StartTimer".into())
-            .expect("Missing StartTimer")
+            .get_node("ScoreTimer".into())
+            .expect("Missing ScoreTimer")
             .cast::<Timer>()
             .expect("Unable to cast to Timer")
             .start(0.0);
@@ -123,16 +146,45 @@ impl Main {
 
     #[export]
     unsafe fn _on_MobTimer_timeout(&self, mut owner: Node) {
-        let mob_spawn_location = owner
-            .get_node("MobPath/MobSpawnLocation".into())
-            .expect("Missing MobPath/MobSpawnLocation")
+        let mut mob_spawn_location = owner
+            .get_node("MobPath/MobSpawnLocations".into())
+            .expect("Missing MobPath/MobSpawnLocations")
             .cast::<PathFollow2D>()
             .expect("Unable to cast to PathFollow2D");
 
-        let mob = self.mob.instance(0);
-        owner.add_child(mob, false);
+        match instance_scene::<RigidBody2D>(&self.mob) {
+            Ok(mut mob_scene) => {
+                let mut rng = rand::thread_rng();
+                mob_spawn_location.set_offset(rng.gen_range(0.0, std::f32::MAX).into());
+                owner.add_child(Some(mob_scene.to_node()), false);
 
-        // set the direction, rotation and velocity
+                let mut direction = mob_spawn_location.get_rotation() + PI / 2.0;
+
+                mob_scene.set_position(mob_spawn_location.get_position());
+
+                direction += rng.gen_range(-PI / 4.0, PI / 4.0);
+                mob_scene.set_rotation(direction);
+
+                match Instance::<mob::Mob>::try_from_unsafe_base(mob_scene) {
+                    Some(mob) => {
+                        let _ = mob.map(|x, _| {
+                            mob_scene.set_linear_velocity(Vector2::new(
+                                rng.gen_range(x.min_speed, x.max_speed),
+                                0.0,
+                            ));
+                            let d = direction as f32;
+                            mob_scene.set_linear_velocity(
+                                mob_scene
+                                    .get_linear_velocity()
+                                    .rotated(Angle { radians: d }),
+                            );
+                        });
+                    }
+                    None => godot_print!("Unable to get mob"),
+                }
+            }
+            Err(err) => godot_print!("Unable to instance mob: {:?}", err),
+        }
     }
 }
 
@@ -144,4 +196,25 @@ pub fn load_scene(path: &str) -> PackedScene {
     );
 
     scene.and_then(|s| s.cast::<PackedScene>()).unwrap()
+}
+
+/// Root here is needs to be the same type (or a parent type) of the node that you put in the child
+///   scene as the root. For instance Spatial is used for this example.
+unsafe fn instance_scene<Root>(scene: &PackedScene) -> Result<Root, ManageErrs>
+where
+    Root: gdnative::GodotObject,
+{
+    let inst_option = scene.instance(1); // 0 - GEN_EDIT_STATE_DISABLED
+
+    if let Some(instance) = inst_option {
+        if let Some(instance_root) = instance.cast::<Root>() {
+            Ok(instance_root)
+        } else {
+            Err(ManageErrs::RootClassNotRigidBody2D(
+                instance.get_name().to_string(),
+            ))
+        }
+    } else {
+        Err(ManageErrs::CouldNotMakeInstance)
+    }
 }

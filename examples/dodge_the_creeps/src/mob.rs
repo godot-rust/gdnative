@@ -1,13 +1,15 @@
 use gdnative::*;
+use rand::seq::SliceRandom;
+use rand::*;
 
 #[derive(NativeClass)]
 #[inherit(RigidBody2D)]
 #[user_data(user_data::MutexData<Mob>)]
 pub struct Mob {
     #[property(default = 150.0)]
-    min_speed: f32,
+    pub min_speed: f32,
     #[property(default = 250.0)]
-    max_speed: f32,
+    pub max_speed: f32,
 
     animation: MobType,
 }
@@ -20,8 +22,8 @@ enum MobType {
 }
 
 impl MobType {
-    fn to_str(t: MobType) -> String {
-        match t {
+    fn to_str(self) -> String {
+        match self {
             MobType::Walk => "walk".to_string(),
             MobType::Swim => "swim".to_string(),
             MobType::Fly => "fly".to_string(),
@@ -43,7 +45,15 @@ impl Mob {
 
     #[export]
     unsafe fn _ready(&mut self, owner: RigidBody2D) {
-        self.animation = MOB_TYPES[1];
+        let mut rng = thread_rng();
+
+        let mut animated_sprite = owner
+            .get_node("AnimatedSprite".into())
+            .expect("Missing AnimatedSprite")
+            .cast::<AnimatedSprite>()
+            .expect("Unable to cast to AnimatedSprite");
+
+        animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
     }
 
     #[export]

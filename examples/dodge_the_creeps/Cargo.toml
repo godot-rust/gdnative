@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gdnative = { path = "../../gdnative" }
+rand = "0.7.3"
