@@ -22,19 +22,21 @@
 //!
 
 use super::*;
+
+use std::ffi::CString;
+use std::marker::PhantomData;
+use std::ptr;
+
+use libc;
+
 use crate::get_api;
-use crate::FromVariant;
-use crate::Map;
-use crate::MapMut;
 use crate::NativeClass;
 
 use crate::Variant;
-use libc;
-use std::ffi::CString;
-use std::marker::PhantomData;
-use std::mem;
-use std::ops::Range;
-use std::ptr;
+
+pub mod property;
+
+pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
 
 /// A handle that can register new classes to the engine during initialization.
 ///
@@ -242,7 +244,8 @@ pub struct ClassDescriptor<'l> {
     pub destructor: Option<ScriptDestructorFn>,
 }
 
-pub struct ClassBuilder<C: NativeClass> {
+#[derive(Debug)]
+pub struct ClassBuilder<C> {
     #[doc(hidden)]
     pub init_handle: *mut libc::c_void,
     class_name: CString,
@@ -285,62 +288,27 @@ impl<C: NativeClass> ClassBuilder<C> {
         });
     }
 
-    pub fn add_property<T, S, G>(&self, property: Property<T, S, G>)
+    /// Returns a `PropertyBuilder` which can be used to add a property to the class being
+    /// registered.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```ignore
+    /// builder
+    ///     .add_property("foo")
+    ///     .default(0.0)
+    ///     .with_hint((-10.0..=30.0).into())
+    ///     .with_getter(MyType::get_foo)
+    ///     .with_setter(MyType::set_foo)
+    ///     .done();
+    /// ```
+    pub fn add_property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>
     where
-        T: ToVariant + FromVariant,
-        S: PropertySetter<C, T>,
-        G: PropertyGetter<C, T>,
+        T: Export,
     {
-        unsafe {
-            let hint_text = match property.hint {
-                PropertyHint::Range {
-                    ref range,
-                    step,
-                    slider,
-                } => {
-                    if slider {
-                        Some(format!("{},{},{},slider", range.start, range.end, step))
-                    } else {
-                        Some(format!("{},{},{}", range.start, range.end, step))
-                    }
-                }
-                PropertyHint::Enum { values } | PropertyHint::Flags { values } => {
-                    Some(values.join(","))
-                }
-                PropertyHint::NodePathToEditedNode | PropertyHint::None => None,
-            };
-            let hint_string = if let Some(text) = hint_text {
-                GodotString::from_str(text)
-            } else {
-                GodotString::default()
-            };
-
-            let default: Variant = property.default.to_variant();
-            let ty = default.get_type();
-
-            let mut attr = sys::godot_property_attributes {
-                rset_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
-                type_: mem::transmute(ty),
-                hint: property.hint.to_sys(),
-                hint_string: hint_string.to_sys(),
-                usage: property.usage.to_sys(),
-                default_value: default.to_sys(),
-            };
-
-            let path = ::std::ffi::CString::new(property.name).unwrap();
-
-            let set = property.setter.as_godot_function();
-            let get = property.getter.as_godot_function();
-
-            (get_api().godot_nativescript_register_property)(
-                self.init_handle,
-                self.class_name.as_ptr(),
-                path.as_ptr() as *const _,
-                &mut attr,
-                set,
-                get,
-            );
-        }
+        PropertyBuilder::new(self, name)
     }
 
     pub fn add_signal(&self, signal: Signal) {
@@ -351,7 +319,7 @@ impl<C: NativeClass> ClassBuilder<C> {
                 .iter()
                 .map(|arg| {
                     let arg_name = GodotString::from_str(arg.name);
-                    let hint_string = GodotString::new();
+                    let hint_string = arg.export_info.hint_string.clone();
                     (arg, arg_name, hint_string)
                 })
                 .collect::<Vec<_>>();
@@ -360,7 +328,7 @@ impl<C: NativeClass> ClassBuilder<C> {
                 .map(|(arg, arg_name, hint_string)| sys::godot_signal_argument {
                     name: arg_name.to_sys(),
                     type_: arg.default.get_type() as i32,
-                    hint: arg.hint.to_sys(),
+                    hint: arg.export_info.hint_kind,
                     hint_string: hint_string.to_sys(),
                     usage: arg.usage.to_sys(),
                     default_value: arg.default.to_sys(),
@@ -381,258 +349,14 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 }
 
-// TODO: missing property hints.
-pub enum PropertyHint<'l> {
-    None,
-    Range {
-        range: Range<f64>,
-        step: f64,
-        slider: bool,
-    },
-    // ExpRange,
-    Enum {
-        values: &'l [&'l str],
-    },
-    // ExpEasing,
-    // Length,
-    // SpriteFrame,
-    // KeyAccel,
-    Flags {
-        values: &'l [&'l str],
-    },
-    // Layers2DRender,
-    // Layers2DPhysics,
-    // Layers3DRender,
-    // Layers3DPhysics,
-    // File,
-    // Dir,
-    // GlobalFile,
-    // GlobalDir,
-    // ResourceType,
-    // MultilineText,
-    // ColorNoAlpha,
-    // ImageCompressLossy,
-    // IMageCompressLossless,
-    // ObjectID,
-    // TypeString,
-    NodePathToEditedNode,
-    // MethodOfVariantType,
-    // MethodOfBaseType,
-    // MethodOfInstance,
-    // MethodOfScript,
-    // PropertyOfVariantType,
-    // PropertyOfBaseType,
-    // PropertyOfInstance,
-    // PropertyOfScript,
-}
-
-impl<'l> PropertyHint<'l> {
-    pub fn to_sys(&self) -> sys::godot_property_hint {
-        match *self {
-            PropertyHint::None => sys::godot_property_hint_GODOT_PROPERTY_HINT_NONE,
-            PropertyHint::Range { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_RANGE,
-            PropertyHint::Enum { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_ENUM,
-            PropertyHint::Flags { .. } => sys::godot_property_hint_GODOT_PROPERTY_HINT_FLAGS,
-            PropertyHint::NodePathToEditedNode => {
-                sys::godot_property_hint_GODOT_PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE
-            }
-        }
-    }
-}
-
-bitflags! {
-    pub struct PropertyUsage: u32 {
-        const STORAGE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORAGE as u32;
-        const EDITOR = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR as u32;
-        const NETWORK = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_NETWORK as u32;
-        const EDITOR_HELPER = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR_HELPER as u32;
-        const CHECKABLE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_CHECKABLE as u32;
-        const CHECKED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_CHECKED as u32;
-        const INTERNATIONALIZED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_INTERNATIONALIZED as u32;
-        const GROUP = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_GROUP as u32;
-        const CATEGORY = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_CATEGORY as u32;
-        const STORE_IF_NONZERO = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORE_IF_NONZERO as u32;
-        const STORE_IF_NONONE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORE_IF_NONONE as u32;
-        const NO_INSTANCE_STATE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_NO_INSTANCE_STATE as u32;
-        const RESTART_IF_CHANGED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_RESTART_IF_CHANGED as u32;
-        const SCRIPT_VARIABLE  = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_SCRIPT_VARIABLE as u32;
-        const STORE_IF_NULL = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORE_IF_NULL as u32;
-        const ANIMATE_AS_TRIGGER = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_ANIMATE_AS_TRIGGER as u32;
-        const UPDATE_ALL_IF_MODIFIED = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED as u32;
-
-        const DEFAULT = Self::STORAGE.bits | Self::EDITOR.bits | Self::NETWORK.bits as u32;
-        const DEFAULT_INTL = Self::DEFAULT.bits | Self::INTERNATIONALIZED.bits as u32;
-        const NOEDITOR = Self::STORAGE.bits | Self::NETWORK.bits as u32;
-    }
-}
-
-impl PropertyUsage {
-    pub fn to_sys(&self) -> sys::godot_property_usage_flags {
-        unsafe { mem::transmute(*self) }
-    }
-}
-
-pub struct Property<'l, T, S, G> {
-    pub name: &'l str,
-    pub setter: S,
-    pub getter: G,
-    pub default: T,
-    pub hint: PropertyHint<'l>,
-    pub usage: PropertyUsage,
-}
-
-pub struct SignalArgument<'l> {
-    pub name: &'l str,
-    pub default: Variant,
-    pub hint: PropertyHint<'l>,
-    pub usage: PropertyUsage,
-}
-
 pub struct Signal<'l> {
     pub name: &'l str,
     pub args: &'l [SignalArgument<'l>],
 }
 
-pub unsafe trait PropertySetter<C: NativeClass, T: FromVariant> {
-    unsafe fn as_godot_function(self) -> sys::godot_property_set_func;
-}
-
-pub unsafe trait PropertyGetter<C: NativeClass, T: ToVariant> {
-    unsafe fn as_godot_function(self) -> sys::godot_property_get_func;
-}
-
-extern "C" fn empty_setter(
-    _this: *mut sys::godot_object,
-    _method: *mut libc::c_void,
-    _class: *mut libc::c_void,
-    _val: *mut sys::godot_variant,
-) {
-}
-
-extern "C" fn empty_getter(
-    _this: *mut sys::godot_object,
-    _method: *mut libc::c_void,
-    _class: *mut libc::c_void,
-) -> sys::godot_variant {
-    Variant::new().forget()
-}
-
-extern "C" fn empty_free_func(_data: *mut libc::c_void) {}
-
-unsafe impl<C: NativeClass, T: FromVariant> PropertySetter<C, T> for () {
-    unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
-        let mut set = sys::godot_property_set_func::default();
-        set.set_func = Some(empty_setter);
-        set.free_func = Some(empty_free_func);
-        set
-    }
-}
-
-unsafe impl<C: NativeClass, T: ToVariant> PropertyGetter<C, T> for () {
-    unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
-        let mut get = sys::godot_property_get_func::default();
-        get.get_func = Some(empty_getter);
-        get.free_func = Some(empty_free_func);
-        get
-    }
-}
-
-unsafe impl<F, C, T> PropertySetter<C, T> for F
-where
-    C: NativeClass,
-    C::UserData: MapMut,
-    T: FromVariant,
-    F: Fn(&mut C, T),
-{
-    unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
-        let mut set = sys::godot_property_set_func::default();
-        let data = Box::new(self);
-        set.method_data = Box::into_raw(data) as *mut _;
-
-        extern "C" fn invoke<C, F, T>(
-            _this: *mut sys::godot_object,
-            method: *mut libc::c_void,
-            class: *mut libc::c_void,
-            val: *mut sys::godot_variant,
-        ) where
-            C: NativeClass,
-            C::UserData: MapMut,
-            T: FromVariant,
-            F: Fn(&mut C, T),
-        {
-            unsafe {
-                let rust_ty = C::UserData::clone_from_user_data_unchecked(class as *const _);
-                let func = &mut *(method as *mut F);
-
-                match T::from_variant(Variant::cast_ref(val)) {
-                    Ok(val) => {
-                        if let Err(err) = rust_ty.map_mut(|rust_ty| func(rust_ty, val)) {
-                            godot_error!("gdnative-core: cannot call property setter: {:?}", err);
-                        }
-                    }
-                    Err(err) => {
-                        godot_error!("Incorrect type passed to property: {}", err);
-                    }
-                }
-            }
-        }
-        set.set_func = Some(invoke::<C, F, T>);
-
-        extern "C" fn free_func<F>(data: *mut libc::c_void) {
-            unsafe {
-                drop(Box::from_raw(data as *mut F));
-            }
-        }
-        set.free_func = Some(free_func::<F>);
-
-        set
-    }
-}
-
-unsafe impl<F, C, T> PropertyGetter<C, T> for F
-where
-    C: NativeClass,
-    C::UserData: Map,
-    T: ToVariant,
-    F: Fn(&C) -> T,
-{
-    unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
-        let mut get = sys::godot_property_get_func::default();
-        let data = Box::new(self);
-        get.method_data = Box::into_raw(data) as *mut _;
-
-        extern "C" fn invoke<C, F, T>(
-            _this: *mut sys::godot_object,
-            method: *mut libc::c_void,
-            class: *mut libc::c_void,
-        ) -> sys::godot_variant
-        where
-            C: NativeClass,
-            C::UserData: Map,
-            T: ToVariant,
-            F: Fn(&C) -> T,
-        {
-            unsafe {
-                let rust_ty = C::UserData::clone_from_user_data_unchecked(class as *const _);
-                let func = &mut *(method as *mut F);
-                match rust_ty.map(|rust_ty| func(rust_ty)) {
-                    Ok(ret) => ret.to_variant().forget(),
-                    Err(err) => {
-                        godot_error!("gdnative-core: cannot call property getter: {:?}", err);
-                        Variant::new().to_sys()
-                    }
-                }
-            }
-        }
-        get.get_func = Some(invoke::<C, F, T>);
-
-        extern "C" fn free_func<F>(data: *mut libc::c_void) {
-            unsafe {
-                drop(Box::from_raw(data as *mut F));
-            }
-        }
-        get.free_func = Some(free_func::<F>);
-
-        get
-    }
+pub struct SignalArgument<'l> {
+    pub name: &'l str,
+    pub default: Variant,
+    pub export_info: ExportInfo,
+    pub usage: PropertyUsage,
 }

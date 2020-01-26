@@ -1,52 +1,54 @@
 #[macro_use]
-extern crate gdnative as godot;
+extern crate gdnative;
 
-#[derive(godot::NativeClass)]
-#[inherit(godot::MeshInstance)]
-#[user_data(godot::user_data::MutexData<RustTest>)]
+use gdnative::init::property::{EnumHint, IntHint, StringHint};
+
+#[derive(gdnative::NativeClass)]
+#[inherit(gdnative::MeshInstance)]
+#[user_data(gdnative::user_data::MutexData<RustTest>)]
 #[register_with(my_register_function)]
 struct RustTest {
-    start: godot::Vector3,
+    start: gdnative::Vector3,
     time: f32,
-    #[property(default = 0.05)]
+    #[property(path = "base/rotate_speed")]
     rotate_speed: f64,
 }
 
-fn my_register_function(builder: &godot::init::ClassBuilder<RustTest>) {
-    builder.add_property(godot::init::Property {
-        name: "test/test_enum",
-        default: godot::GodotString::from_str("Hello"),
-        hint: godot::init::PropertyHint::Enum {
-            values: &["Hello", "World", "Testing"],
-        },
-        getter: |_: &RustTest| godot::GodotString::from_str("Hello"),
-        setter: (),
-        usage: godot::init::PropertyUsage::DEFAULT,
-    });
-    builder.add_property(godot::init::Property {
-        name: "test/test_flags",
-        default: 0,
-        hint: godot::init::PropertyHint::Flags {
-            values: &["A", "B", "C", "D"],
-        },
-        getter: |_: &RustTest| 0,
-        setter: (),
-        usage: godot::init::PropertyUsage::DEFAULT,
-    });
+fn my_register_function(builder: &gdnative::init::ClassBuilder<RustTest>) {
+    builder
+        .add_property::<String>("test/test_enum")
+        .with_hint(StringHint::Enum(EnumHint::new(vec![
+            "Hello".into(),
+            "World".into(),
+            "Testing".into(),
+        ])))
+        .with_getter(|_: &RustTest, _| "Hello".to_string())
+        .done();
+
+    builder
+        .add_property("test/test_flags")
+        .with_hint(IntHint::Flags(EnumHint::new(vec![
+            "A".into(),
+            "B".into(),
+            "C".into(),
+            "D".into(),
+        ])))
+        .with_getter(|_: &RustTest, _| 0)
+        .done();
 }
 
-#[godot::methods]
+#[gdnative::methods]
 impl RustTest {
-    fn _init(_owner: godot::MeshInstance) -> Self {
+    fn _init(_owner: gdnative::MeshInstance) -> Self {
         RustTest {
-            start: godot::Vector3::new(0.0, 0.0, 0.0),
+            start: gdnative::Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
             rotate_speed: 0.05,
         }
     }
 
     #[export]
-    unsafe fn _ready(&mut self, mut owner: godot::MeshInstance) {
+    unsafe fn _ready(&mut self, mut owner: gdnative::MeshInstance) {
         owner.set_physics_process(true);
         self.start = owner.get_translation();
         godot_warn!("Start: {:?}", self.start);
@@ -57,8 +59,8 @@ impl RustTest {
     }
 
     #[export]
-    unsafe fn _physics_process(&mut self, mut owner: godot::MeshInstance, delta: f64) {
-        use godot::{Color, SpatialMaterial, Vector3};
+    unsafe fn _physics_process(&mut self, mut owner: gdnative::MeshInstance, delta: f64) {
+        use gdnative::{Color, SpatialMaterial, Vector3};
 
         self.time += delta as f32;
         owner.rotate_y(self.rotate_speed * delta);
@@ -73,7 +75,7 @@ impl RustTest {
     }
 }
 
-fn init(handle: godot::init::InitHandle) {
+fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<RustTest>();
 }
 

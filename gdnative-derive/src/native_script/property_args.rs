@@ -1,9 +1,11 @@
 pub struct PropertyAttrArgs {
-    pub default: syn::Lit,
+    pub path: Option<String>,
+    pub default: Option<syn::Lit>,
 }
 
 #[derive(Default)]
 pub struct PropertyAttrArgsBuilder {
+    path: Option<String>,
     default: Option<syn::Lit>,
 }
 
@@ -24,6 +26,17 @@ impl<'a> Extend<&'a syn::MetaNameValue> for PropertyAttrArgsBuilder {
                         panic!("there is already a default value set: {:?}", old);
                     }
                 }
+                "path" => {
+                    let string = if let syn::Lit::Str(lit_str) = &pair.lit {
+                        lit_str.value()
+                    } else {
+                        panic!("path value is not a string literal");
+                    };
+
+                    if let Some(old) = self.path.replace(string) {
+                        panic!("there is already a path set: {:?}", old);
+                    }
+                }
                 _ => panic!("unexpected argument: {}", &name),
             }
         }
@@ -33,7 +46,8 @@ impl<'a> Extend<&'a syn::MetaNameValue> for PropertyAttrArgsBuilder {
 impl PropertyAttrArgsBuilder {
     pub fn done(self) -> PropertyAttrArgs {
         PropertyAttrArgs {
-            default: self.default.expect("`default` value is required"),
+            path: self.path,
+            default: self.default,
         }
     }
 }
