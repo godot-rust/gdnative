@@ -12,20 +12,21 @@ fn main() {
 mod header_binding {
     use std::path::PathBuf;
 
-    #[cfg(any(target_os = "macos", target_os = "ios"))]
     fn osx_include_path() -> Result<String, std::io::Error> {
         use std::process::Command;
 
         let output = Command::new("xcode-select").arg("-p").output()?.stdout;
         let prefix_str = std::str::from_utf8(&output).expect("invalid output from `xcode-select`");
-        let prefix = prefix_str.trim_right();
+        let prefix = prefix_str.trim_end();
 
-        let platform = if cfg!(target_os = "macos") {
+        let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
+
+        let platform = if target_os == "macos" {
             "MacOSX"
-        } else if cfg!(target_os = "ios") {
+        } else if target_os == "ios" {
             "iPhoneOS"
         } else {
-            unreachable!();
+            panic!("not building for macOS or iOS");
         };
 
         let infix = if prefix == "/Library/Developer/CommandLineTools" {
@@ -58,12 +59,24 @@ mod header_binding {
             .ctypes_prefix("libc")
             .clang_arg(format!("-I{}/godot_headers", manifest_dir));
 
-        #[cfg(any(target_os = "macos", target_os = "ios"))]
-        match osx_include_path() {
-            Ok(osx_include_path) => {
-                builder = builder.clang_arg("-I").clang_arg(osx_include_path);
+        let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
+        let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+
+        // Workaround: x86_64 architecture is unsupported by the iPhone SDK, but cargo-lipo will
+        // try to build it anyway. This leads to a clang error, so we'll skip the SDK.
+        if target_os == "macos" || (target_os == "ios" && target_arch != "x86_64") {
+            match osx_include_path() {
+                Ok(osx_include_path) => {
+                    builder = builder.clang_arg("-I").clang_arg(osx_include_path);
+                }
+                _ => {}
             }
-            _ => {}
+        }
+
+        // Workaround for https://github.com/rust-lang/rust-bindgen/issues/1211: manually set
+        // target triple to `arm64-apple-ios` in place of `aarch64-apple-ios`.
+        if target_arch == "aarch64" && target_os == "ios" {
+            builder = builder.clang_arg("--target=arm64-apple-ios");
         }
 
         let bindings = builder.generate().expect("Unable to generate bindings");
