@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Field attribute `property` on derived `NativeClass` types, which can be used to quickly export simple properties.
+
+- The behavior of derived `FromVariant` and `ToVariant` implementations can be customized with the `variant` field attribute.
+
+- New example projects.
+
+### Changed
+
+- The `FromVariant` trait now reports detailed information on failure.
+
+- The API for property registration is reworked to provide better ergonomics and static type checking for editor hints.
+
+### Removed
+
+### Fixed
+
+- Fixed an `unused_parens` warning when using the `NativeClass` derive macro.
+
+- Fixed handling of unknown enums with duplicate values, which prevented code generation for Godot version `3.2`.
+
 ## [0.7.0] - 2019-12-22
 
 ### Added
