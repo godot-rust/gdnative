@@ -26,7 +26,7 @@ impl Transform {
     pub fn from_sys(c: sys::godot_transform) -> Self {
         unsafe { std::mem::transmute::<sys::godot_transform, Self>(c) }
     }
-    
+
     pub fn translate(origin: Vector3) -> Transform {
         Transform {
             basis: Basis::identity(),

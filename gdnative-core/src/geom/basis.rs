@@ -86,13 +86,13 @@ mod tests {
                 Vector3::new(1.0, 2.0, 3.0),
                 Vector3::new(2.0, 3.0, 4.0),
                 Vector3::new(3.0, 4.0, 5.0),
-            ]
+            ],
         };
 
         let vector = Vector3::new(4.0, 5.0, 6.0);
 
-	    assert!((basis.tdotx(vector) - 32.0).abs() < std::f32::EPSILON);
-	    assert!((basis.tdoty(vector) - 47.0).abs() < std::f32::EPSILON);
-	    assert!((basis.tdotz(vector) - 62.0).abs() < std::f32::EPSILON);
+        assert!((basis.tdotx(vector) - 32.0).abs() < std::f32::EPSILON);
+        assert!((basis.tdoty(vector) - 47.0).abs() < std::f32::EPSILON);
+        assert!((basis.tdotz(vector) - 62.0).abs() < std::f32::EPSILON);
     }
 }
