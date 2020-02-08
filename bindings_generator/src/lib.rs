@@ -159,9 +159,6 @@ fn generate_class_bindings(
 
         if class.is_refcounted() {
             generate_reference_clone(output_trait_impls, class)?;
-        }
-
-        if class.is_refcounted() && class.instanciable {
             generate_drop(output_trait_impls, class)?;
         }
 
