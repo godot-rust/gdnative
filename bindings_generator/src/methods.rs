@@ -587,7 +587,7 @@ fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
     if ret.is_null() {{
         None
     }} else {{
-        Some({}::from_sys(ret))
+        Some({}::from_return_position_sys(ret))
     }}"#,
                 name
             )?;

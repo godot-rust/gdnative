@@ -10,6 +10,14 @@ pub unsafe trait GodotObject {
     unsafe fn to_sys(&self) -> *mut sys::godot_object;
     #[doc(hidden)]
     unsafe fn from_sys(obj: *mut sys::godot_object) -> Self;
+
+    /// Convert from a pointer returned from a ptrcall. For reference-counted types, this takes
+    /// the ownership of the returned reference, in Rust parlance. For non-reference-counted
+    /// types, its behavior should be exactly the same as `from_sys`. This is needed for
+    /// reference-counted types to be properly freed, since any references returned from
+    /// ptrcalls are leaked in the process of being cast into a pointer.
+    #[doc(hidden)]
+    unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self;
 }
 
 /// GodotObjects that have a zero argument constructor.
