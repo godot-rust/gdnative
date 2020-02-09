@@ -146,14 +146,11 @@ mod api_wrapper {
 
     impl Api {
         fn nexts(&self) -> Vec<&Api> {
-            let mut result = Vec::new();
             let mut api = self;
-            loop {
-                result.push(api);
-                if api.next.is_none() {
-                    break;
-                }
-                api = &api.next.as_ref().unwrap();
+            let mut result = vec![api];
+            while let Some(next) = api.next.as_ref() {
+                result.push(next);
+                api = next;
             }
             result
         }
