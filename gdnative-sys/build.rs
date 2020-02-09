@@ -90,10 +90,8 @@ mod header_binding {
 }
 
 mod api_wrapper {
-    use lazy_static::lazy_static;
     use proc_macro2::{Ident, TokenStream};
     use quote::{format_ident, quote, ToTokens};
-    use regex::Regex;
     use std::convert::AsRef;
     use std::fs::File;
     use std::io::Write as _;
@@ -324,28 +322,32 @@ mod api_wrapper {
         }
     }
 
-    fn c_type_to_rust_type(c_type: &str) -> TokenStream {
-        lazy_static! {
-            static ref RE: Regex = Regex::new(r"(const )?\s*([\w\s]+?)\s*([\s\*]*)$").unwrap();
+    fn parse_c_type(mut c_type: &str) -> (bool, i8, &str) {
+        let is_const = c_type.starts_with("const ");
+        if is_const {
+            c_type = c_type.trim_start_matches("const ");
         }
-        let caps = RE
-            .captures(c_type)
-            .expect(&format!("Unknown C type: {:?}", c_type));
-        let ptr_count = caps
-            .get(3)
-            .unwrap()
-            .as_str()
-            .chars()
-            .filter(|c| c == &'*')
-            .count();
-        let rust_ptrs = match (ptr_count, caps.get(1).is_some()) {
+        let mut ptr_count = 0;
+        if c_type.ends_with("**") {
+            ptr_count = 2;
+            c_type = c_type.trim_end_matches("**");
+        } else if c_type.ends_with("*") {
+            ptr_count = 1;
+            c_type = c_type.trim_end_matches("*");
+        }
+        (is_const, ptr_count, c_type.trim())
+    }
+
+    fn c_type_to_rust_type(c_type: &str) -> TokenStream {
+        let (is_const, ptr_count, base_c_type) = parse_c_type(c_type);
+        let rust_ptrs = match (ptr_count, is_const) {
             (0, _) => quote!(),
             (1, true) => quote!(*const ),
             (1, false) => quote!(*mut ),
             (2, true) => quote!(*mut *const ),
             _ => panic!("Unknown C type (Too many pointers?): {:?}", c_type),
         };
-        let rust_type = match caps.get(2).unwrap().as_str() {
+        let rust_type = match base_c_type {
             "void" => {
                 if ptr_count == 0 {
                     quote!(())
