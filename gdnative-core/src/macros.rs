@@ -141,6 +141,33 @@ macro_rules! godot_print {
     });
 }
 
+/// Prints and returns the value of a given expression for quick and dirty debugging,
+/// using the engine's logging system (visible in the editor).
+///
+/// This behaves similarly to the `std::dbg!` macro.
+#[macro_export]
+macro_rules! godot_dbg {
+    () => {
+        $crate::godot_print!("[{}:{}]", ::std::file!(), ::std::line!());
+    };
+    ($val:expr) => {
+        // Use of `match` here is intentional because it affects the lifetimes
+        // of temporaries - https://stackoverflow.com/a/48732525/1063961
+        match $val {
+            tmp => {
+                $crate::godot_print!("[{}:{}] {} = {:#?}",
+                    ::std::file!(), ::std::line!(), ::std::stringify!($val), &tmp);
+                tmp
+            }
+        }
+    };
+    // Trailing comma with single argument is ignored
+    ($val:expr,) => { $crate::godot_dbg!($val) };
+    ($($val:expr),+ $(,)?) => {
+        ($($crate::godot_dbg!($val)),+,)
+    };
+}
+
 /// Print a warning using the engine's logging system (visible in the editor).
 #[macro_export]
 macro_rules! godot_warn {
