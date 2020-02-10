@@ -96,6 +96,10 @@ unsafe impl GodotObject for {name} {{
         Self {{ this: obj, }}
     }}
 
+    unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self {{
+        Self {{ this: obj, }}
+    }}
+
     unsafe fn to_sys(&self) -> *mut sys::godot_object {{
         self.this
     }}
