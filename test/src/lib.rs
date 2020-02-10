@@ -3,6 +3,7 @@ use gdnative::*;
 mod test_derive;
 mod test_free_ub;
 mod test_register;
+mod test_return_leak;
 mod test_variant_call_args;
 
 #[no_mangle]
@@ -47,6 +48,7 @@ pub extern "C" fn run_tests(
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
     status &= test_register::run_tests();
+    status &= test_return_leak::run_tests();
     status &= test_variant_call_args::run_tests();
 
     gdnative::Variant::from_bool(status).forget()
@@ -180,6 +182,7 @@ fn init(handle: init::InitHandle) {
     test_derive::register(&handle);
     test_free_ub::register(&handle);
     test_register::register(&handle);
+    test_return_leak::register(&handle);
     test_variant_call_args::register(&handle);
 }
 
