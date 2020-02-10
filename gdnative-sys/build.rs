@@ -322,19 +322,18 @@ mod api_wrapper {
     }
 
     fn parse_c_type(mut c_type: &str) -> (bool, i8, &str) {
+        c_type = c_type.trim();
         let is_const = c_type.starts_with("const ");
         if is_const {
             c_type = c_type.trim_start_matches("const ");
         }
+        c_type = c_type.trim();
         let mut ptr_count = 0;
-        if c_type.ends_with("**") {
-            ptr_count = 2;
-            c_type = c_type.trim_end_matches("**");
-        } else if c_type.ends_with("*") {
-            ptr_count = 1;
-            c_type = c_type.trim_end_matches("*");
+        while c_type.ends_with("*") {
+            ptr_count += 1;
+            c_type = c_type[..c_type.len() - 1].trim();
         }
-        (is_const, ptr_count, c_type.trim())
+        (is_const, ptr_count, c_type)
     }
 
     fn c_type_to_rust_type(c_type: &str) -> TokenStream {
