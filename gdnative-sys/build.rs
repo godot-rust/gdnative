@@ -226,6 +226,9 @@ mod api_wrapper {
                 format_ident!("godot_gdnative_ext_nativescript_{}_{}_api_struct", maj, min)
             }
             ("PLUGINSCRIPT", 1, 0) => format_ident!("godot_gdnative_ext_pluginscript_api_struct"),
+            // The Android 1.0 API in Godot 3.1 was "reversioned" to be the Android 1.1 API in Godot 3.2.
+            // Godot 3.2 does not have an Android 1.0 API.
+            // Both Android 1.0, and Android 1.1 refer to the same struct in either case.
             ("ANDROID", 1, 0) => format_ident!("godot_gdnative_ext_android_api_struct"),
             ("ANDROID", 1, 1) => format_ident!("godot_gdnative_ext_android_api_struct"),
             ("ARVR", 1, 1) => format_ident!("godot_gdnative_ext_arvr_api_struct"),
