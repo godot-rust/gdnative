@@ -138,6 +138,16 @@ mod api_wrapper {
             let mut result = Vec::new();
             result.extend(self.core.nexts());
             for extension in &self.extensions {
+                // Workaround: Interface for the ANDROID extension is broken in Godot 3.2,
+                // making it impossible to support the extension in a forward compatible manner.
+                // The extension is disabled until the compatibility policy is figured out in
+                // upstream.
+                //
+                // Related issue: #296
+                if extension.type_ == "ANDROID" {
+                    continue;
+                }
+
                 result.extend(extension.nexts());
             }
             result
