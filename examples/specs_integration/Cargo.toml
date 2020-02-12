@@ -1,7 +1,7 @@
 [package]
 name = "specs_integration"
 version = "0.1.0"
-authors = ["tom.leys <tom@crump-leys.com>", "karroffel <therzog@mail.de>"]
+authors = ["The godot-rust developers"]
 
 [lib]
 crate-type = ["cdylib"]
@@ -16,7 +16,4 @@ specs = {version="0.15.1", features = [] }
 #   Error messages...
 #specs = {version="0.15.1", features = ["nightly"] }
 
-# specs-physics = { path = "../../lib/specs-physics" }
 nalgebra = "0.18.1"
-# ncollide3d = "0.19"
-# nphysics3d = "0.11.1"
