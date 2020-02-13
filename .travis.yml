@@ -8,16 +8,19 @@ matrix:
 
   include:
     - name: cargo fmt
+      os: linux
       rust: stable
       env: CI_STAGE_CARGO_FMT=yes
       before_script:
        - rustup component add rustfmt
 
     - name: cargo test (stable)
+      os: linux
       rust: stable
       env: CI_STAGE_CARGO_TEST=yes
 
     - name: Godot test (stable)
+      os: linux
       rust: stable
       env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
       before_script:
@@ -26,10 +29,12 @@ matrix:
         - export PATH=$PATH:$PWD/godot_bin/
 
     - name: cargo test (nightly)
+      os: linux
       rust: nightly
       env: CI_STAGE_CARGO_TEST=yes
 
     - name: Godot test (nightly)
+      os: linux
       rust: nightly
       env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
       before_script:
@@ -37,6 +42,15 @@ matrix:
         - unzip /tmp/godot.zip -d godot_bin
         - export PATH=$PATH:$PWD/godot_bin/
 
+    - name: cargo test (stable, windows)
+      os: windows
+      rust: stable
+      env: CI_STAGE_CARGO_TEST=yes
+
+    - name: cargo test (nightly, windows)
+      os: windows
+      rust: nightly
+      env: CI_STAGE_CARGO_TEST=yes
 
 script:
   - if [[ "$CI_STAGE_CARGO_FMT" == "yes" ]]; then

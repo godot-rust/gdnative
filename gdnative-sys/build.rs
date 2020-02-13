@@ -45,6 +45,16 @@ mod header_binding {
         Ok(directory)
     }
 
+    fn is_travis_ci() -> bool {
+        if let Ok(is_ci) = std::env::var("CI") {
+            if let Ok(is_travis) = std::env::var("TRAVIS") {
+                return is_ci == "true" && is_travis == "true";
+            }
+        }
+
+        false
+    }
+
     pub(crate) fn generate(manifest_dir: &str, out_dir: &str) {
         // on mac/iOS this will be modified, so it is marked as mutable.
         // on all other targets, this `mut` will be unused and the complainer compiles.t s
@@ -78,6 +88,23 @@ mod header_binding {
         // target triple to `arm64-apple-ios` in place of `aarch64-apple-ios`.
         if target_arch == "aarch64" && target_os == "ios" {
             builder = builder.clang_arg("--target=arm64-apple-ios");
+        }
+
+        // Workaround: Somehow, Microsoft extensions aren't enabled by default on Travis's
+        // Windows environment. We need to enable it manually, or MSVC headers will fail to
+        // parse. We also need to manually define architecture macros, or the build will fail
+        // with an "Unsupported architecture" error.
+        //
+        // This does not happen with "normal" Windows environments.
+        if target_os == "windows" && is_travis_ci() {
+            if target_arch != "x86_64" {
+                panic!("Windows environment on Travis CI should be x86_64")
+            }
+
+            builder = builder
+                .clang_arg("-fms-extensions")
+                .clang_arg("-fmsc-version=1300")
+                .clang_arg("-D_M_X64=100");
         }
 
         let bindings = builder.generate().expect("Unable to generate bindings");
