@@ -97,7 +97,7 @@ pub trait MapMut: UserData {
 
 /// The default user data wrapper used by derive macro, when no `user_data` attribute is present.
 /// This may change in the future.
-pub type DefaultUserData<T> = MutexData<T, DefaultLockPolicy>;
+pub type DefaultUserData<T> = LocalCellData<T>;
 
 /// Error type indicating that an operation can't fail.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

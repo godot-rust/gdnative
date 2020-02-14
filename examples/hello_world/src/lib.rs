@@ -3,7 +3,6 @@ extern crate gdnative;
 
 #[derive(gdnative::NativeClass)]
 #[inherit(gdnative::Node)]
-#[user_data(gdnative::user_data::ArcData<HelloWorld>)]
 struct HelloWorld;
 
 #[gdnative::methods]
