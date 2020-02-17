@@ -71,7 +71,6 @@ use gdnative::*;
 /// The HelloWorld "class"
 #[derive(NativeClass)]
 #[inherit(Node)]
-#[user_data(user_data::ArcData<HelloWorld>)]
 pub struct HelloWorld;
 
 // __One__ `impl` block can have the `#[methods]` attribute, which will generate

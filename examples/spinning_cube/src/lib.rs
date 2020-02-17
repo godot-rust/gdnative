@@ -5,7 +5,6 @@ use gdnative::init::property::{EnumHint, IntHint, StringHint};
 
 #[derive(gdnative::NativeClass)]
 #[inherit(gdnative::MeshInstance)]
-#[user_data(gdnative::user_data::MutexData<RustTest>)]
 #[register_with(my_register_function)]
 struct RustTest {
     start: gdnative::Vector3,
