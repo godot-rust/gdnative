@@ -9,7 +9,7 @@
 //!
 //! Godot is written in C++, and unlike Rust, it doesn't have the same strict reference aliasing
 //! constraints. This user-data pointer can be aliased mutably, and called freely from different
-//! threads by the engine or other scripts. Thus, to maintain safety, wrapper types are be used
+//! threads by the engine or other scripts. Thus, to maintain safety, wrapper types are to be used
 //! to make sure that the Rust rules for references are always held for the `self` argument, and
 //! no UB can occur because we freed `owner` or put another script on it.
 //!
