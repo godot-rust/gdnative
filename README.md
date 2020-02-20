@@ -141,6 +141,7 @@ Several third-party resources have been created for the bindings. Open a PR to h
 ### Tutorials
 
 - In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
+- Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
 
 ### Open-source projects
 
