@@ -41,8 +41,7 @@ impl HUD {
             .start(0.0)
     }
 
-    #[export]
-    unsafe fn show_game_over(&self, owner: CanvasLayer) {
+    pub unsafe fn show_game_over(&self, owner: CanvasLayer) {
         self.show_message(owner, "Game Over".into());
         // yield($MessageTimer, "timeout")
 

@@ -60,4 +60,9 @@ impl Mob {
     unsafe fn _on_Visibility_screen_exited(&self, mut owner: RigidBody2D) {
         owner.queue_free()
     }
+
+    #[export]
+    unsafe fn _on_start_game(&self, mut owner: RigidBody2D) {
+        owner.queue_free();
+    }
 }

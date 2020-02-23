@@ -29,6 +29,8 @@ one_shot = true
 position = Vector2( 240, 450 )
 
 [node name="MobPath" type="Path2D" parent="."]
+position = Vector2( -14.8249, -12.98 )
+scale = Vector2( 1.06523, 1.03339 )
 curve = SubResource( 1 )
 
 [node name="MobSpawnLocations" type="PathFollow2D" parent="MobPath"]

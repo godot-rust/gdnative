@@ -1,5 +1,6 @@
 use crate::hud;
 use crate::mob;
+use crate::player;
 use gdnative::*;
 use rand::*;
 use std::f64::consts::PI;
@@ -22,17 +23,6 @@ pub struct Main {
 }
 
 unsafe impl Send for Main {}
-
-// fn register_main(builder: &init::ClassBuilder<Main>) {
-//     builder.add_property(init::Property {
-//         name: "base/mob",
-//         default: load_scene("res://Player.tscn"),
-//         hint: init::PropertyHint::None,
-//         getter: |this: &Main| this.mob.clone(),
-//         setter: |this: &mut Main, v| this.mob = v,
-//         usage: init::PropertyUsage::DEFAULT,
-//     });
-// }
 
 #[methods]
 impl Main {
@@ -63,12 +53,21 @@ impl Main {
         score_timer.stop();
         mob_timer.stop();
 
-        owner
+        let mut hud_node = owner
             .get_node("HUD".into())
             .expect("Missing HUD")
             .cast::<CanvasLayer>()
-            .expect("Unable to cast to CanvasLayer")
-            .call("show_game_over".into(), &[]);
+            .expect("Unable to cast to CanvasLayer");
+
+        match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
+            Some(hud) => {
+                let _ = hud.map(|x, o| {
+                    x.show_game_over(o);
+                });
+                ()
+            }
+            None => godot_print!("Unable to get hud"),
+        }
     }
 
     #[export]
@@ -91,10 +90,18 @@ impl Main {
 
         self.score = 0;
 
-        player.call(
-            GodotString::from_str("start"),
-            &[Variant::from(&start_position.get_position())],
-        );
+        // player.call(
+        //     GodotString::from_str("start"),
+        //     &[Variant::from(&start_position.get_position())],
+        // );
+
+        match Instance::<player::Player>::try_from_unsafe_base(player) {
+            Some(player) => {
+                let _ = player.map(|x, o| x.start(o, start_position.get_position()));
+                ()
+            }
+            None => godot_print!("Unable to get hud"),
+        }
 
         start_timer.start(0.0);
 
@@ -136,12 +143,20 @@ impl Main {
     unsafe fn _on_ScoreTimer_timeout(&mut self, owner: Node) {
         self.score += 1;
 
-        owner
+        let hud_node = owner
             .get_node("HUD".into())
             .expect("Missing HUD")
             .cast::<CanvasLayer>()
-            .expect("Unable to cast to CanvasLayer")
-            .call("update_score".into(), &[Variant::from(self.score)]);
+            .expect("Unable to cast to CanvasLayer");
+        // .call("update_score".into(), &[Variant::from(self.score)]);
+
+        match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
+            Some(hud) => {
+                let _ = hud.map(|x, o| x.update_score(o, self.score));
+                ()
+            }
+            None => godot_print!("Unable to get hud"),
+        }
     }
 
     #[export]
@@ -164,20 +179,43 @@ impl Main {
 
                 direction += rng.gen_range(-PI / 4.0, PI / 4.0);
                 mob_scene.set_rotation(direction);
+                let d = direction as f32;
 
                 match Instance::<mob::Mob>::try_from_unsafe_base(mob_scene) {
                     Some(mob) => {
-                        let _ = mob.map(|x, _| {
+                        let _ = mob.map(|x, mob_owner| {
                             mob_scene.set_linear_velocity(Vector2::new(
                                 rng.gen_range(x.min_speed, x.max_speed),
                                 0.0,
                             ));
-                            let d = direction as f32;
+
                             mob_scene.set_linear_velocity(
                                 mob_scene
                                     .get_linear_velocity()
                                     .rotated(Angle { radians: d }),
                             );
+
+                            let mut hud_node = owner
+                                .get_node("HUD".into())
+                                .expect("Missing HUD")
+                                .cast::<CanvasLayer>()
+                                .expect("Unable to cast to CanvasLayer");
+
+                            match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
+                                Some(hud) => {
+                                    let _ = hud.map(|_, mut o| {
+                                        let _ = o.connect(
+                                            "start_game".into(),
+                                            Some(mob_owner.to_object()),
+                                            "_on_start_game".into(),
+                                            VariantArray::new(),
+                                            0,
+                                        );
+                                    });
+                                    ()
+                                }
+                                None => godot_print!("Unable to get hud"),
+                            }
                         });
                     }
                     None => godot_print!("Unable to get mob"),
