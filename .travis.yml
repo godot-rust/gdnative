@@ -22,7 +22,7 @@ matrix:
     - name: Godot test (stable)
       os: linux
       rust: stable
-      env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
+      env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.2 GODOT_REL=stable
       before_script:
         - 'wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip'
         - unzip /tmp/godot.zip -d godot_bin
@@ -36,7 +36,7 @@ matrix:
     - name: Godot test (nightly)
       os: linux
       rust: nightly
-      env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.1.1 GODOT_REL=stable
+      env: CI_STAGE_GODOT_TEST=yes RUST_BACKTRACE=1 GODOT_VER=3.2 GODOT_REL=stable
       before_script:
         - 'wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip'
         - unzip /tmp/godot.zip -d godot_bin
