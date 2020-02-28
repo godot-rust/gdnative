@@ -5,7 +5,7 @@ description = "Generates bindings for the Godot engine's gdnative classes from a
 documentation = "https://docs.rs/crate/gdnative_bindings_generator"
 repository = "https://github.com/GodotNativeTools/godot-rust"
 license = "MIT"
-version = "0.7.0"
+version = "0.8.0"
 workspace = ".."
 edition = "2018"
 
