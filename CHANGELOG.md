@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the old-style `godot_class!` macro.
+
 ### Fixed
 
 - Fixed an `unused_parens` warning when using the `NativeClass` derive macro.
