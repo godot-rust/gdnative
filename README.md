@@ -4,26 +4,57 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
-**[API Documentation](https://docs.rs/gdnative/0.7.0/gdnative/)** 
+**[API Documentation](https://docs.rs/gdnative/0.8.0/gdnative/)** 
 
-- Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.1/classes/) but you have to do casting between classes and subclasses manually.
+- Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.2/classes/) but you have to do casting between classes and subclasses manually.
 
-## Work in progress
+## Stability
 
-The bindings, while usable, are a work in progress. Some APIs are missing and the existing ones are still in flux.
+The bindings cover most of the exposed API of Godot 3.2, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases.
+
+## Engine compatibility
+
+We are serious about engine compatibility. We are committed to keeping compatibility with the latest stable patch releases of all minor versions of the engine, starting from Godot 3.2.
+
+The current minimum compatible version, with `api.json` replacement, is Godot 3.1.1-stable. Changes to this will be considered a breaking change, and will be called out in the release notes.
+
+## Requirements
+
+The generator makes use of `bindgen`, which depends on Clang. Instructions for installing `bindgen`'s dependencies for popular OSes can be found in their documentation: https://rust-lang.github.io/rust-bindgen/requirements.html.
 
 ## Usage
 
-The generator makes use of `bindgen`, which depends on Clang. Instructions for installing `bindgen`'s dependencies for popular OSes can be found in their documentation: https://rust-lang.github.io/rust-bindgen/requirements.html.
+### Godot 3.2
 
 After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
 
 ```toml
 [dependencies]
-gdnative = "0.7"
+gdnative = "0.8"
 
 [lib]
 crate-type = ["cdylib"]
+```
+
+### Other versions or custom builds
+
+The bindings are currently generated from the API description of Godot 3.2 by default. To use the bindings with another version or a custom build, one currently has to use the bindings as a local dependency:
+
+```
+# Clone the repository and check out version 0.8.0
+git clone https://github.com/GodotNativeTools/godot-rust/
+cd godot-rust
+git checkout 0.8.0
+
+# Update the API description file
+godot --gdnative-generate-json-api bindings_generator/api.json
+```
+
+Then, add the `gdnative` crate as a local dependency instead:
+
+```toml
+[dependencies]
+gdnative = { path = "path/to/godot-rust/gdnative" }
 ```
 
 ## Example
@@ -41,7 +72,7 @@ As is tradition, a simple "Hello World" should serve as an introduction. A copy 
 
 ### The project setup
 
-Starting with an empty Godot project, a `cargo` project can be created inside the project folder.
+Starting with an empty Godot 3.2 project, a `cargo` project can be created inside the project folder.
 
 ```sh
 cargo init --lib
@@ -51,7 +82,7 @@ To use the GDNative bindings in your project you have to add the `gdnative` crat
 
 ```toml
 [dependencies]
-gdnative = "0.7"
+gdnative = "0.8"
 ```
 
 Since GDNative can only use C-compatible dynamic libraries, the crate type has to be set accordingly.
