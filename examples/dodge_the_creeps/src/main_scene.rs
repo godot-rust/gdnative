@@ -146,62 +146,51 @@ impl Main {
             .get_typed_node("mob_path/mob_spawn_locations")
             .expect("Unable to cast to PathFollow2D");
 
-        match instance_scene::<RigidBody2D>(&self.mob) {
-            Ok(mut mob_scene) => {
-                let mut rng = rand::thread_rng();
-                let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
+        let mut mob_scene: RigidBody2D = instance_scene(&self.mob).unwrap();
 
-                mob_spawn_location.set_offset(offset.into());
-                owner.add_child(Some(mob_scene.to_node()), false);
+        let mut rng = rand::thread_rng();
+        let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
 
-                let mut direction = mob_spawn_location.get_rotation() + PI / 2.0;
+        mob_spawn_location.set_offset(offset.into());
+        owner.add_child(Some(mob_scene.to_node()), false);
 
-                mob_scene.set_position(mob_spawn_location.get_position());
+        let mut direction = mob_spawn_location.get_rotation() + PI / 2.0;
 
-                direction += rng.gen_range(-PI / 4.0, PI / 4.0);
-                mob_scene.set_rotation(direction);
-                let d = direction as f32;
+        mob_scene.set_position(mob_spawn_location.get_position());
 
-                match Instance::<mob::Mob>::try_from_unsafe_base(mob_scene) {
-                    Some(mob) => {
-                        let _ = mob.map(|x, mob_owner| {
-                            mob_scene.set_linear_velocity(Vector2::new(
-                                rng.gen_range(x.min_speed, x.max_speed),
-                                0.0,
-                            ));
+        direction += rng.gen_range(-PI / 4.0, PI / 4.0);
+        mob_scene.set_rotation(direction);
+        let d = direction as f32;
 
-                            mob_scene.set_linear_velocity(
-                                mob_scene
-                                    .get_linear_velocity()
-                                    .rotated(Angle { radians: d }),
-                            );
+        let mob = Instance::<mob::Mob>::try_from_unsafe_base(mob_scene).unwrap();
 
-                            let hud_node: CanvasLayer = owner
-                                .get_typed_node("hud")
-                                .expect("Unable to cast to CanvasLayer");
+        let _ = mob.map(|x, mob_owner| {
+            mob_scene
+                .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
-                            match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
-                                Some(hud) => {
-                                    let _ = hud.map(|_, mut o| {
-                                        let _ = o.connect(
-                                            "start_game".into(),
-                                            Some(mob_owner.to_object()),
-                                            "on_start_game".into(),
-                                            VariantArray::new(),
-                                            0,
-                                        );
-                                    });
-                                    ()
-                                }
-                                None => godot_print!("Unable to get hud"),
-                            }
-                        });
-                    }
-                    None => godot_print!("Unable to get mob"),
-                }
-            }
-            Err(err) => godot_print!("Unable to instance mob: {:?}", err),
-        }
+            mob_scene.set_linear_velocity(
+                mob_scene
+                    .get_linear_velocity()
+                    .rotated(Angle { radians: d }),
+            );
+
+            let hud_node: CanvasLayer = owner
+                .get_typed_node("hud")
+                .expect("Unable to cast to CanvasLayer");
+
+            let hud = Instance::<hud::HUD>::try_from_unsafe_base(hud_node).unwrap();
+
+            let _ = hud.map(|_, mut o| {
+                let _ = o.connect(
+                    "start_game".into(),
+                    Some(mob_owner.to_object()),
+                    "on_start_game".into(),
+                    VariantArray::new(),
+                    0,
+                );
+            });
+            ()
+        });
     }
 }
 
