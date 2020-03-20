@@ -1,6 +1,5 @@
 use gdnative::*;
 use rand::seq::SliceRandom;
-use rand::*;
 
 #[derive(NativeClass)]
 #[inherit(RigidBody2D)]
@@ -10,8 +9,6 @@ pub struct Mob {
     pub min_speed: f32,
     #[property(default = 250.0)]
     pub max_speed: f32,
-
-    animation: MobType,
 }
 
 #[derive(Copy, Clone)]
@@ -39,19 +36,17 @@ impl Mob {
         Mob {
             min_speed: 150.0,
             max_speed: 250.0,
-            animation: MobType::Walk,
         }
     }
 
     #[export]
     unsafe fn _ready(&mut self, owner: RigidBody2D) {
-        let mut rng = thread_rng();
-
+        let mut rng = rand::thread_rng();
         let mut animated_sprite = owner
             .get_node("animated_sprite".into())
             .expect("Missing animated_sprite")
             .cast::<AnimatedSprite>()
-            .expect("Unable to cast to animated_sprite");
+            .expect("Unable to cast to AnimatedSprite");
 
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
     }

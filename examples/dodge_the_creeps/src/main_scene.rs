@@ -53,7 +53,7 @@ impl Main {
         score_timer.stop();
         mob_timer.stop();
 
-        let mut hud_node = owner
+        let hud_node = owner
             .get_node("hud".into())
             .expect("Missing hud")
             .cast::<CanvasLayer>()
@@ -72,12 +72,12 @@ impl Main {
 
     #[export]
     unsafe fn new_game(&mut self, owner: Node) {
-        let mut start_position = owner
+        let start_position = owner
             .get_node(NodePath::from_str("start_position"))
             .expect("Missing start_position")
             .cast::<Position2D>()
             .expect("Unable to cast to Position2D");
-        let mut player = owner
+        let player = owner
             .get_node(NodePath::from_str("player"))
             .expect("Missing player")
             .cast::<Area2D>()
@@ -105,7 +105,7 @@ impl Main {
 
         start_timer.start(0.0);
 
-        let mut hud_node = owner
+        let hud_node = owner
             .get_node("hud".into())
             .expect("Missing hud")
             .cast::<CanvasLayer>()
@@ -197,7 +197,7 @@ impl Main {
                                     .rotated(Angle { radians: d }),
                             );
 
-                            let mut hud_node = owner
+                            let hud_node = owner
                                 .get_node("hud".into())
                                 .expect("Missing hud")
                                 .cast::<CanvasLayer>()
@@ -226,16 +226,6 @@ impl Main {
             Err(err) => godot_print!("Unable to instance mob: {:?}", err),
         }
     }
-}
-
-pub fn load_scene(path: &str) -> PackedScene {
-    let scene = ResourceLoader::godot_singleton().load(
-        GodotString::from_str(path), // could also use path.into() here
-        GodotString::from_str("PackedScene"),
-        false,
-    );
-
-    scene.and_then(|s| s.cast::<PackedScene>()).unwrap()
 }
 
 /// Root here is needs to be the same type (or a parent type) of the node that you put in the child

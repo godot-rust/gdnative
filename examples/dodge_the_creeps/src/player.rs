@@ -86,7 +86,7 @@ impl Player {
     }
 
     #[export]
-    unsafe fn on_player_body_entered(&self, mut owner: Area2D, body: PhysicsBody2D) {
+    unsafe fn on_player_body_entered(&self, mut owner: Area2D, _body: PhysicsBody2D) {
         owner.hide();
         owner.emit_signal("hit".into(), &[]);
 

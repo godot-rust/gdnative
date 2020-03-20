@@ -20,9 +20,6 @@ impl HUD {
     }
 
     #[export]
-    unsafe fn _ready(&self, owner: CanvasLayer) {}
-
-    #[export]
     pub unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
         let mut message_label = owner
             .get_node("message_label".into())
