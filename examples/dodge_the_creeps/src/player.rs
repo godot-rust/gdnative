@@ -40,7 +40,7 @@ impl Player {
             .get_node(NodePath::from_str("animated_sprite"))
             .expect("Missing animated_sprite")
             .cast::<AnimatedSprite>()
-            .expect("Unable to cast to animated_sprite");
+            .expect("Unable to cast to AnimatedSprite");
 
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
@@ -94,7 +94,7 @@ impl Player {
             .get_node("collision_shape_2d".into())
             .expect("Missing collision_shape_2d")
             .cast::<CollisionShape2D>()
-            .expect("Unable to cast to collision_shape_2d");
+            .expect("Unable to cast to CollisionShape2D");
 
         collision_shape.set_deferred("disabled".into(), true.into());
     }
@@ -108,7 +108,7 @@ impl Player {
             .get_node("collision_shape_2d".into())
             .expect("Missing collision_shape_2d")
             .cast::<CollisionShape2D>()
-            .expect("Unable to cast to collision_shape_2d");
+            .expect("Unable to cast to CollisionShape2D");
 
         collision_shape.set_disabled(false);
     }
