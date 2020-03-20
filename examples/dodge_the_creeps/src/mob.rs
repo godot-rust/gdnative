@@ -48,21 +48,21 @@ impl Mob {
         let mut rng = thread_rng();
 
         let mut animated_sprite = owner
-            .get_node("AnimatedSprite".into())
-            .expect("Missing AnimatedSprite")
+            .get_node("animated_sprite".into())
+            .expect("Missing animated_sprite")
             .cast::<AnimatedSprite>()
-            .expect("Unable to cast to AnimatedSprite");
+            .expect("Unable to cast to animated_sprite");
 
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
     }
 
     #[export]
-    unsafe fn _on_Visibility_screen_exited(&self, mut owner: RigidBody2D) {
+    unsafe fn on_visibility_screen_exited(&self, mut owner: RigidBody2D) {
         owner.queue_free()
     }
 
     #[export]
-    unsafe fn _on_start_game(&self, mut owner: RigidBody2D) {
+    unsafe fn on_start_game(&self, mut owner: RigidBody2D) {
         owner.queue_free();
     }
 }

@@ -10,27 +10,27 @@
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [ ExtResource( 2 ), ExtResource( 3 ) ],
+"frames": [ ExtResource( 6 ), ExtResource( 7 ) ],
 "loop": true,
-"name": "fly",
-"speed": 3.0
+"name": "swim",
+"speed": 4.0
 }, {
 "frames": [ ExtResource( 4 ), ExtResource( 5 ) ],
 "loop": true,
 "name": "walk",
 "speed": 4.0
 }, {
-"frames": [ ExtResource( 6 ), ExtResource( 7 ) ],
+"frames": [ ExtResource( 2 ), ExtResource( 3 ) ],
 "loop": true,
-"name": "swim",
-"speed": 4.0
+"name": "fly",
+"speed": 3.0
 } ]
 
 [sub_resource type="CapsuleShape2D" id=2]
 radius = 36.8519
 height = 27.2707
 
-[node name="Mob" type="RigidBody2D"]
+[node name="mob" type="RigidBody2D"]
 collision_mask = 0
 gravity_scale = 0.0
 script = ExtResource( 1 )
@@ -38,13 +38,16 @@ __meta__ = {
 "_edit_group_": true
 }
 
-[node name="AnimatedSprite" type="AnimatedSprite" parent="."]
+[node name="animated_sprite" type="AnimatedSprite" parent="."]
 scale = Vector2( 0.75, 0.75 )
 frames = SubResource( 1 )
 animation = "walk"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="collision_shape_2d" type="CollisionShape2D" parent="."]
 rotation = 1.5708
 shape = SubResource( 2 )
 
-[node name="VisibilityEnabler2D" type="VisibilityEnabler2D" parent="."]
+[node name="visibility" type="VisibilityEnabler2D" parent="."]
+position = Vector2( 0.664333, -0.166085 )
+scale = Vector2( 4.95279, 3.62412 )
+[connection signal="screen_exited" from="visibility" to="." method="on_visibility_screen_exited"]

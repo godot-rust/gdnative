@@ -39,14 +39,14 @@ impl Main {
     #[export]
     unsafe fn game_over(&self, owner: Node) {
         let mut score_timer = owner
-            .get_node(NodePath::from_str("ScoreTimer"))
-            .expect("Missing ScoreTimer")
+            .get_node(NodePath::from_str("score_timer"))
+            .expect("Missing score_timer")
             .cast::<Timer>()
             .expect("Unable to cast to Timer");
 
         let mut mob_timer = owner
-            .get_node(NodePath::from_str("MobTimer"))
-            .expect("Missing MobTimer")
+            .get_node(NodePath::from_str("mob_timer"))
+            .expect("Missing mob_timer")
             .cast::<Timer>()
             .expect("Unable to cast to Timer");
 
@@ -54,8 +54,8 @@ impl Main {
         mob_timer.stop();
 
         let mut hud_node = owner
-            .get_node("HUD".into())
-            .expect("Missing HUD")
+            .get_node("hud".into())
+            .expect("Missing hud")
             .cast::<CanvasLayer>()
             .expect("Unable to cast to CanvasLayer");
 
@@ -73,18 +73,18 @@ impl Main {
     #[export]
     unsafe fn new_game(&mut self, owner: Node) {
         let mut start_position = owner
-            .get_node(NodePath::from_str("StartPosition"))
-            .expect("Missing StartPosition")
+            .get_node(NodePath::from_str("start_position"))
+            .expect("Missing start_position")
             .cast::<Position2D>()
             .expect("Unable to cast to Position2D");
         let mut player = owner
-            .get_node(NodePath::from_str("Player"))
-            .expect("Missing Player")
+            .get_node(NodePath::from_str("player"))
+            .expect("Missing player")
             .cast::<Area2D>()
             .expect("Unable to cast to Area2D");
         let mut start_timer = owner
-            .get_node(NodePath::from_str("StartTimer"))
-            .expect("Missing StartTimer")
+            .get_node(NodePath::from_str("start_timer"))
+            .expect("Missing start_timer")
             .cast::<Timer>()
             .expect("Unable to cast to Timer");
 
@@ -106,8 +106,8 @@ impl Main {
         start_timer.start(0.0);
 
         let mut hud_node = owner
-            .get_node("HUD".into())
-            .expect("Missing HUD")
+            .get_node("hud".into())
+            .expect("Missing hud")
             .cast::<CanvasLayer>()
             .expect("Unable to cast to CanvasLayer");
 
@@ -124,28 +124,28 @@ impl Main {
     }
 
     #[export]
-    unsafe fn _on_StartTimer_timeout(&self, owner: Node) {
+    unsafe fn on_start_timer_timeout(&self, owner: Node) {
         owner
-            .get_node("MobTimer".into())
-            .expect("Missing MobTimer")
+            .get_node("mob_timer".into())
+            .expect("Missing mob_timer")
             .cast::<Timer>()
             .expect("Unable to cast to Timer")
             .start(0.0);
         owner
-            .get_node("ScoreTimer".into())
-            .expect("Missing ScoreTimer")
+            .get_node("score_timer".into())
+            .expect("Missing score_timer")
             .cast::<Timer>()
             .expect("Unable to cast to Timer")
             .start(0.0);
     }
 
     #[export]
-    unsafe fn _on_ScoreTimer_timeout(&mut self, owner: Node) {
+    unsafe fn on_score_timer_timeout(&mut self, owner: Node) {
         self.score += 1;
 
         let hud_node = owner
-            .get_node("HUD".into())
-            .expect("Missing HUD")
+            .get_node("hud".into())
+            .expect("Missing hud")
             .cast::<CanvasLayer>()
             .expect("Unable to cast to CanvasLayer");
         // .call("update_score".into(), &[Variant::from(self.score)]);
@@ -160,10 +160,10 @@ impl Main {
     }
 
     #[export]
-    unsafe fn _on_MobTimer_timeout(&self, mut owner: Node) {
+    unsafe fn on_mob_timer_timeout(&self, mut owner: Node) {
         let mut mob_spawn_location = owner
-            .get_node("MobPath/MobSpawnLocations".into())
-            .expect("Missing MobPath/MobSpawnLocations")
+            .get_node("mob_path/mob_spawn_locations".into())
+            .expect("Missing mob_path/mob_spawn_locations")
             .cast::<PathFollow2D>()
             .expect("Unable to cast to PathFollow2D");
 
@@ -198,8 +198,8 @@ impl Main {
                             );
 
                             let mut hud_node = owner
-                                .get_node("HUD".into())
-                                .expect("Missing HUD")
+                                .get_node("hud".into())
+                                .expect("Missing hud")
                                 .cast::<CanvasLayer>()
                                 .expect("Unable to cast to CanvasLayer");
 
@@ -209,7 +209,7 @@ impl Main {
                                         let _ = o.connect(
                                             "start_game".into(),
                                             Some(mob_owner.to_object()),
-                                            "_on_start_game".into(),
+                                            "on_start_game".into(),
                                             VariantArray::new(),
                                             0,
                                         );

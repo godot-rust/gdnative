@@ -37,10 +37,10 @@ impl Player {
     #[export]
     unsafe fn _process(&mut self, mut owner: Area2D, delta: f32) {
         let mut animated_sprite = owner
-            .get_node(NodePath::from_str("AnimatedSprite"))
-            .expect("Missing AnimatedSprite")
+            .get_node(NodePath::from_str("animated_sprite"))
+            .expect("Missing animated_sprite")
             .cast::<AnimatedSprite>()
-            .expect("Unable to cast to AnimatedSprite");
+            .expect("Unable to cast to animated_sprite");
 
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
@@ -86,15 +86,15 @@ impl Player {
     }
 
     #[export]
-    unsafe fn _on_Player_body_entered(&self, mut owner: Area2D, body: PhysicsBody2D) {
+    unsafe fn on_player_body_entered(&self, mut owner: Area2D, body: PhysicsBody2D) {
         owner.hide();
         owner.emit_signal("hit".into(), &[]);
 
         let mut collision_shape = owner
-            .get_node("CollisionShape2D".into())
-            .expect("Missing CollisionShape2D")
+            .get_node("collision_shape_2d".into())
+            .expect("Missing collision_shape_2d")
             .cast::<CollisionShape2D>()
-            .expect("Unable to cast to CollisionShape2D");
+            .expect("Unable to cast to collision_shape_2d");
 
         collision_shape.set_deferred("disabled".into(), true.into());
     }
@@ -105,10 +105,10 @@ impl Player {
         owner.show();
 
         let mut collision_shape = owner
-            .get_node("CollisionShape2D".into())
-            .expect("Missing CollisionShape2D")
+            .get_node("collision_shape_2d".into())
+            .expect("Missing collision_shape_2d")
             .cast::<CollisionShape2D>()
-            .expect("Unable to cast to CollisionShape2D");
+            .expect("Unable to cast to collision_shape_2d");
 
         collision_shape.set_disabled(false);
     }

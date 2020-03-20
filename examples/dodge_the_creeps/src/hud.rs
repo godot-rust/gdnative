@@ -25,8 +25,8 @@ impl HUD {
     #[export]
     pub unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
         let mut message_label = owner
-            .get_node("MessageLabel".into())
-            .expect("Missing MessageLabel")
+            .get_node("message_label".into())
+            .expect("Missing message_label")
             .cast::<Label>()
             .expect("Cannot cast to Label");
 
@@ -34,8 +34,8 @@ impl HUD {
         message_label.show();
 
         owner
-            .get_node("MessageTimer".into())
-            .expect("Missing MessageTimer")
+            .get_node("message_timer".into())
+            .expect("Missing message_timer")
             .cast::<Timer>()
             .expect("Cannot cast to Timer")
             .start(0.0)
@@ -43,11 +43,11 @@ impl HUD {
 
     pub unsafe fn show_game_over(&self, owner: CanvasLayer) {
         self.show_message(owner, "Game Over".into());
-        // yield($MessageTimer, "timeout")
+        // yield($message_timer, "timeout")
 
         let mut message_label = owner
-            .get_node("MessageLabel".into())
-            .expect("Missing MessageLabel")
+            .get_node("message_label".into())
+            .expect("Missing message_label")
             .cast::<Label>()
             .expect("Cannot cast to Label");
 
@@ -57,8 +57,8 @@ impl HUD {
         // yield(get_tree().create_timer(1), 'timeout')
 
         owner
-            .get_node("StartButton".into())
-            .expect("Missing StartButton")
+            .get_node("start_button".into())
+            .expect("Missing start_button")
             .cast::<Button>()
             .expect("Cannot cast to Button")
             .show();
@@ -67,20 +67,20 @@ impl HUD {
     #[export]
     pub unsafe fn update_score(&self, owner: CanvasLayer, score: i64) {
         owner
-            .get_node("ScoreLabel".into())
-            .expect("Missing ScoreLabel")
+            .get_node("score_label".into())
+            .expect("Missing score_label")
             .cast::<Label>()
             .expect("Cannot cast to Label")
             .set_text(score.to_string().into());
     }
 
     #[export]
-    unsafe fn _on_StartButton_pressed(&self, mut owner: CanvasLayer) {
+    unsafe fn on_start_button_pressed(&self, mut owner: CanvasLayer) {
         godot_print!("Start Button Pressed!");
 
         owner
-            .get_node("StartButton".into())
-            .expect("Missing StartButton")
+            .get_node("start_button".into())
+            .expect("Missing start_button")
             .cast::<Button>()
             .expect("Cannot cast to Button")
             .hide();
@@ -89,10 +89,10 @@ impl HUD {
     }
 
     #[export]
-    unsafe fn _on_MessageTimer_timeout(&self, owner: CanvasLayer) {
+    unsafe fn on_message_timer_timeout(&self, owner: CanvasLayer) {
         owner
-            .get_node("MessageLabel".into())
-            .expect("Missing MessageLabel")
+            .get_node("message_label".into())
+            .expect("Missing message_label")
             .cast::<Label>()
             .expect("Cannot cast to Label")
             .hide()
