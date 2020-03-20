@@ -1,3 +1,4 @@
+use crate::extensions::NodeExt as _;
 use crate::hud;
 use crate::mob;
 use crate::player;
@@ -38,25 +39,19 @@ impl Main {
 
     #[export]
     unsafe fn game_over(&self, owner: Node) {
-        let mut score_timer = owner
-            .get_node(NodePath::from_str("score_timer"))
-            .expect("Missing score_timer")
-            .cast::<Timer>()
+        let mut score_timer: Timer = owner
+            .get_typed_node("score_timer")
             .expect("Unable to cast to Timer");
 
-        let mut mob_timer = owner
-            .get_node(NodePath::from_str("mob_timer"))
-            .expect("Missing mob_timer")
-            .cast::<Timer>()
+        let mut mob_timer: Timer = owner
+            .get_typed_node("mob_timer")
             .expect("Unable to cast to Timer");
 
         score_timer.stop();
         mob_timer.stop();
 
-        let hud_node = owner
-            .get_node("hud".into())
-            .expect("Missing hud")
-            .cast::<CanvasLayer>()
+        let hud_node: CanvasLayer = owner
+            .get_typed_node("hud")
             .expect("Unable to cast to CanvasLayer");
 
         match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
@@ -72,20 +67,14 @@ impl Main {
 
     #[export]
     unsafe fn new_game(&mut self, owner: Node) {
-        let start_position = owner
-            .get_node(NodePath::from_str("start_position"))
-            .expect("Missing start_position")
-            .cast::<Position2D>()
+        let start_position: Position2D = owner
+            .get_typed_node("start_position")
             .expect("Unable to cast to Position2D");
-        let player = owner
-            .get_node(NodePath::from_str("player"))
-            .expect("Missing player")
-            .cast::<Area2D>()
+        let player: Area2D = owner
+            .get_typed_node("player")
             .expect("Unable to cast to Area2D");
-        let mut start_timer = owner
-            .get_node(NodePath::from_str("start_timer"))
-            .expect("Missing start_timer")
-            .cast::<Timer>()
+        let mut start_timer: Timer = owner
+            .get_typed_node("start_timer")
             .expect("Unable to cast to Timer");
 
         self.score = 0;
@@ -105,10 +94,8 @@ impl Main {
 
         start_timer.start(0.0);
 
-        let hud_node = owner
-            .get_node("hud".into())
-            .expect("Missing hud")
-            .cast::<CanvasLayer>()
+        let hud_node: CanvasLayer = owner
+            .get_typed_node("hud")
             .expect("Unable to cast to CanvasLayer");
 
         match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
@@ -126,15 +113,11 @@ impl Main {
     #[export]
     unsafe fn on_start_timer_timeout(&self, owner: Node) {
         owner
-            .get_node("mob_timer".into())
-            .expect("Missing mob_timer")
-            .cast::<Timer>()
+            .get_typed_node::<Timer, _>("mob_timer")
             .expect("Unable to cast to Timer")
             .start(0.0);
         owner
-            .get_node("score_timer".into())
-            .expect("Missing score_timer")
-            .cast::<Timer>()
+            .get_typed_node::<Timer, _>("score_timer")
             .expect("Unable to cast to Timer")
             .start(0.0);
     }
@@ -143,10 +126,8 @@ impl Main {
     unsafe fn on_score_timer_timeout(&mut self, owner: Node) {
         self.score += 1;
 
-        let hud_node = owner
-            .get_node("hud".into())
-            .expect("Missing hud")
-            .cast::<CanvasLayer>()
+        let hud_node: CanvasLayer = owner
+            .get_typed_node("hud")
             .expect("Unable to cast to CanvasLayer");
         // .call("update_score".into(), &[Variant::from(self.score)]);
 
@@ -161,10 +142,8 @@ impl Main {
 
     #[export]
     unsafe fn on_mob_timer_timeout(&self, mut owner: Node) {
-        let mut mob_spawn_location = owner
-            .get_node("mob_path/mob_spawn_locations".into())
-            .expect("Missing mob_path/mob_spawn_locations")
-            .cast::<PathFollow2D>()
+        let mut mob_spawn_location: PathFollow2D = owner
+            .get_typed_node("mob_path/mob_spawn_locations")
             .expect("Unable to cast to PathFollow2D");
 
         match instance_scene::<RigidBody2D>(&self.mob) {
@@ -197,10 +176,8 @@ impl Main {
                                     .rotated(Angle { radians: d }),
                             );
 
-                            let hud_node = owner
-                                .get_node("hud".into())
-                                .expect("Missing hud")
-                                .cast::<CanvasLayer>()
+                            let hud_node: CanvasLayer = owner
+                                .get_typed_node("hud")
                                 .expect("Unable to cast to CanvasLayer");
 
                             match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {

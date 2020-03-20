@@ -1,3 +1,4 @@
+use crate::extensions::NodeExt as _;
 use gdnative::*;
 
 /// The player "class"
@@ -36,10 +37,8 @@ impl Player {
 
     #[export]
     unsafe fn _process(&mut self, mut owner: Area2D, delta: f32) {
-        let mut animated_sprite = owner
-            .get_node(NodePath::from_str("animated_sprite"))
-            .expect("Missing animated_sprite")
-            .cast::<AnimatedSprite>()
+        let mut animated_sprite: AnimatedSprite = owner
+            .get_typed_node("animated_sprite")
             .expect("Unable to cast to AnimatedSprite");
 
         let input = Input::godot_singleton();
@@ -90,10 +89,8 @@ impl Player {
         owner.hide();
         owner.emit_signal("hit".into(), &[]);
 
-        let mut collision_shape = owner
-            .get_node("collision_shape_2d".into())
-            .expect("Missing collision_shape_2d")
-            .cast::<CollisionShape2D>()
+        let mut collision_shape: CollisionShape2D = owner
+            .get_typed_node("collision_shape_2d")
             .expect("Unable to cast to CollisionShape2D");
 
         collision_shape.set_deferred("disabled".into(), true.into());
@@ -104,10 +101,8 @@ impl Player {
         owner.set_global_position(pos);
         owner.show();
 
-        let mut collision_shape = owner
-            .get_node("collision_shape_2d".into())
-            .expect("Missing collision_shape_2d")
-            .cast::<CollisionShape2D>()
+        let mut collision_shape: CollisionShape2D = owner
+            .get_typed_node("collision_shape_2d")
             .expect("Unable to cast to CollisionShape2D");
 
         collision_shape.set_disabled(false);

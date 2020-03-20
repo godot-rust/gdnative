@@ -1,3 +1,4 @@
+use crate::extensions::NodeExt;
 use gdnative::*;
 use rand::seq::SliceRandom;
 
@@ -42,10 +43,8 @@ impl Mob {
     #[export]
     unsafe fn _ready(&mut self, owner: RigidBody2D) {
         let mut rng = rand::thread_rng();
-        let mut animated_sprite = owner
-            .get_node("animated_sprite".into())
-            .expect("Missing animated_sprite")
-            .cast::<AnimatedSprite>()
+        let mut animated_sprite: AnimatedSprite = owner
+            .get_typed_node("animated_sprite")
             .expect("Unable to cast to AnimatedSprite");
 
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())

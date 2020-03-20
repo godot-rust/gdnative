@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate gdnative;
 
+mod extensions;
 mod hud;
 mod main_scene;
 mod mob;
