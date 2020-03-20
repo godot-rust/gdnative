@@ -170,7 +170,9 @@ impl Main {
         match instance_scene::<RigidBody2D>(&self.mob) {
             Ok(mut mob_scene) => {
                 let mut rng = rand::thread_rng();
-                mob_spawn_location.set_offset(rng.gen_range(0.0, std::f32::MAX).into());
+                let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
+
+                mob_spawn_location.set_offset(offset.into());
                 owner.add_child(Some(mob_scene.to_node()), false);
 
                 let mut direction = mob_spawn_location.get_rotation() + PI / 2.0;
