@@ -89,7 +89,7 @@ impl Main {
                 let _ = player.map(|x, o| x.start(o, start_position.get_position()));
                 ()
             }
-            None => godot_print!("Unable to get hud"),
+            None => godot_print!("Unable to get player"),
         }
 
         start_timer.start(0.0);
