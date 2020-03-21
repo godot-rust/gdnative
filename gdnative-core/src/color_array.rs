@@ -116,7 +116,6 @@ impl ColorArray {
     }
 
     impl_common_methods! {
-        /// Creates a new reference to this array.
         pub fn new_ref(&self) -> ColorArray : godot_pool_color_array_new_copy;
     }
 }

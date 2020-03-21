@@ -109,7 +109,6 @@ impl Dictionary {
     }
 
     impl_common_methods! {
-        /// Creates a new reference to this dictionary.
         pub fn new_ref(&self) -> Dictionary : godot_dictionary_new_copy;
     }
 }

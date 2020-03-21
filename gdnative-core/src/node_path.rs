@@ -103,7 +103,6 @@ impl NodePath {
     }
 
     impl_common_methods! {
-        /// Creates a new reference to this node path.
         pub fn new_ref(&self) -> NodePath : godot_node_path_new_copy;
     }
 }

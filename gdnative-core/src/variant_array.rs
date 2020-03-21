@@ -175,7 +175,6 @@ impl VariantArray {
     }
 
     impl_common_methods! {
-        /// Creates a new reference to this array.
         pub fn new_ref(&self) -> VariantArray : godot_array_new_copy;
     }
 }

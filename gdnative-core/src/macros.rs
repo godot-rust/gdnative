@@ -293,6 +293,7 @@ macro_rules! impl_common_method {
         pub fn new_ref(&self) -> $Type:ident : $gd_method:ident
     ) => {
         $(#[$attr])*
+        /// Creates a new reference to this reference-counted instance.
         pub fn new_ref(&self) -> $Type {
             unsafe {
                 let mut result = Default::default();
