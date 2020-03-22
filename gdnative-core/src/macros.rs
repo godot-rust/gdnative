@@ -312,8 +312,8 @@ macro_rules! impl_common_methods {
         )*
     ) => (
         $(
-            $(#[$attr])*
             impl_common_method!(
+                $(#[$attr])*
                 pub fn $name(&self $(,$pname : $pty)*) -> $Ty : $gd_method
             );
         )*
