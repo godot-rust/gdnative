@@ -181,7 +181,6 @@ impl GodotString {
     // TODO: many missing methods.
 
     impl_common_methods! {
-        /// Creates a new reference to this array.
         pub fn new_ref(&self) -> GodotString : godot_string_new_copy;
     }
 }

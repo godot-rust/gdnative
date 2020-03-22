@@ -112,7 +112,6 @@ impl ByteArray {
     }
 
     impl_common_methods! {
-        /// Creates a new reference to this array.
         pub fn new_ref(& self) -> ByteArray : godot_pool_byte_array_new_copy;
     }
 }

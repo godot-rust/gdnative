@@ -112,7 +112,6 @@ impl Float32Array {
     }
 
     impl_common_methods! {
-        /// Creates a new reference to this array.
         pub fn new_ref(&self) -> Float32Array : godot_pool_real_array_new_copy;
     }
 }
