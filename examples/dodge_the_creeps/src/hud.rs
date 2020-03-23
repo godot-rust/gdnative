@@ -37,7 +37,6 @@ impl HUD {
 
     pub unsafe fn show_game_over(&self, owner: CanvasLayer) {
         self.show_message(owner, "Game Over".into());
-        // yield($message_timer, "timeout")
 
         let mut message_label: Label = owner
             .get_typed_node("message_label")
@@ -45,8 +44,6 @@ impl HUD {
 
         message_label.set_text("Dodge the\nCreeps!".into());
         message_label.show();
-
-        // yield(get_tree().create_timer(1), 'timeout')
 
         owner
             .get_typed_node::<Button, _>("start_button")
