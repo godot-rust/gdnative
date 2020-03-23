@@ -18,7 +18,7 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(
     NativeClass,
-    attributes(inherit, export, user_data, property, register_with)
+    attributes(inherit, export, opt, user_data, property, register_with)
 )]
 pub fn derive_native_class(input: TokenStream) -> TokenStream {
     native_script::derive_native_class(input)
