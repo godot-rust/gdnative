@@ -31,7 +31,14 @@ macro_rules! godot_gdnative_init {
         #[doc(hidden)]
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
             unsafe {
-                $crate::GODOT_API = Some($crate::GodotApi::from_raw((*options).api_struct));
+                let api = match $crate::GodotApi::from_raw((*options).api_struct) {
+                    Ok(api) => api,
+                    Err(e) => {
+                        $crate::report_init_error(options, e);
+                        return;
+                    }
+                };
+                $crate::GODOT_API = Some(api);
                 $crate::GDNATIVE_LIBRARY_SYS = Some((*options).gd_native_library);
             }
             let api = $crate::get_api();
@@ -81,6 +88,9 @@ macro_rules! godot_gdnative_terminate {
         #[no_mangle]
         #[doc(hidden)]
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_terminate_options) {
+            if unsafe { $crate::GODOT_API.is_none() } {
+                return;
+            }
             $callback(options);
 
             unsafe {
@@ -120,6 +130,9 @@ macro_rules! godot_nativescript_init {
         #[no_mangle]
         #[doc(hidden)]
         pub extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
+            if unsafe { $crate::GODOT_API.is_none() } {
+                return;
+            }
             unsafe {
                 $callback($crate::init::InitHandle::new(handle));
             }

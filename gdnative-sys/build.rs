@@ -337,26 +337,26 @@ mod api_wrapper {
             let v_min = api.version.minor;
             let gd_api_struct = api.godot_api_struct();
             godot_apis.extend(quote! {
-                let #i = find_api_ptr(core_api_struct, #gd_api_type, #v_maj, #v_min) as *const #gd_api_struct;
+                let #i = find_api_ptr(core_api_struct, #gd_api_type, #v_maj, #v_min)? as *const #gd_api_struct;
             });
             for function in &api.functions {
                 let function_name = function.rust_name();
-                let expect_msg = format!(
+                let message = format!(
                     "API function missing: {}.{}",
                     api.godot_api_struct(),
                     function_name
                 );
                 constructed_struct_fields.extend(quote! {
-                    #function_name: (*#i).#function_name.expect(#expect_msg),
+                    #function_name: map_option_to_init_error((*#i).#function_name, #message)?,
                 });
             }
         }
         quote! {
-            pub unsafe fn from_raw(core_api_struct: *const godot_gdnative_core_api_struct) -> Self {
+            pub unsafe fn from_raw(core_api_struct: *const godot_gdnative_core_api_struct) -> Result<Self, InitError> {
                 #godot_apis
-                GodotApi{
+                Ok(GodotApi{
                     #constructed_struct_fields
-                }
+                })
             }
         }
     }

@@ -185,3 +185,34 @@ pub fn result_from_sys(err: sys::godot_error) -> GodotResult {
 
     Err(unsafe { mem::transmute(err as u32) })
 }
+
+pub unsafe fn report_init_error(
+    options: *const sys::godot_gdnative_init_options,
+    error: sys::InitError,
+) {
+    use std::ffi::CString;
+    match error {
+        sys::InitError::VersionMismatch {
+            api_type,
+            want,
+            got,
+        } => {
+            if let Some(f) = (*options).report_version_mismatch {
+                f(
+                    (*options).gd_native_library,
+                    CString::new(format!("{}", api_type)).unwrap().as_ptr(),
+                    want,
+                    got,
+                );
+            }
+        }
+        sys::InitError::Generic { message } => {
+            if let Some(f) = (*options).report_loading_error {
+                f(
+                    (*options).gd_native_library,
+                    CString::new(message).unwrap().as_ptr(),
+                );
+            }
+        }
+    }
+}
