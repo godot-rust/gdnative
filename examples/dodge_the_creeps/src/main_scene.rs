@@ -181,7 +181,7 @@ unsafe fn instance_scene<Root>(scene: &PackedScene) -> Result<Root, ManageErrs>
 where
     Root: gdnative::GodotObject,
 {
-    let inst_option = scene.instance(1); // 0 - GEN_EDIT_STATE_DISABLED
+    let inst_option = scene.instance(PackedScene::GEN_EDIT_STATE_DISABLED);
 
     if let Some(instance) = inst_option {
         if let Some(instance_root) = instance.cast::<Root>() {
