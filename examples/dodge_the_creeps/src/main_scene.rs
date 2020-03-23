@@ -15,8 +15,6 @@ pub enum ManageErrs {
 #[derive(NativeClass)]
 #[inherit(Node)]
 #[user_data(user_data::MutexData<Main>)]
-// #[register_with(register_main)]
-// TODO: Store child nodes in the struct.
 pub struct Main {
     #[property]
     mob: PackedScene,
@@ -54,15 +52,9 @@ impl Main {
             .get_typed_node("hud")
             .expect("Unable to cast to CanvasLayer");
 
-        match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
-            Some(hud) => {
-                let _ = hud.map(|x, o| {
-                    x.show_game_over(o);
-                });
-                ()
-            }
-            None => godot_print!("Unable to get hud"),
-        }
+        Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
+            .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
+            .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
@@ -79,18 +71,13 @@ impl Main {
 
         self.score = 0;
 
-        // player.call(
-        //     GodotString::from_str("start"),
-        //     &[Variant::from(&start_position.get_position())],
-        // );
-
-        match Instance::<player::Player>::try_from_unsafe_base(player) {
-            Some(player) => {
-                let _ = player.map(|x, o| x.start(o, start_position.get_position()));
-                ()
-            }
-            None => godot_print!("Unable to get player"),
-        }
+        Instance::<player::Player>::try_from_unsafe_base(player)
+            .and_then(|player| {
+                player
+                    .map(|x, o| x.start(o, start_position.get_position()))
+                    .ok()
+            })
+            .unwrap_or_else(|| godot_print!("Unable to get player"));
 
         start_timer.start(0.0);
 
@@ -98,16 +85,15 @@ impl Main {
             .get_typed_node("hud")
             .expect("Unable to cast to CanvasLayer");
 
-        match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
-            Some(hud) => {
-                let _ = hud.map(|x, o| {
+        Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
+            .and_then(|hud| {
+                hud.map(|x, o| {
                     x.update_score(o, self.score);
-                    x.show_message(o, "Get Ready".to_string())
-                });
-                ()
-            }
-            None => godot_print!("Unable to get hud"),
-        }
+                    x.show_message(o, "Get Ready".into());
+                })
+                .ok()
+            })
+            .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
@@ -129,15 +115,10 @@ impl Main {
         let hud_node: CanvasLayer = owner
             .get_typed_node("hud")
             .expect("Unable to cast to CanvasLayer");
-        // .call("update_score".into(), &[Variant::from(self.score)]);
 
-        match Instance::<hud::HUD>::try_from_unsafe_base(hud_node) {
-            Some(hud) => {
-                let _ = hud.map(|x, o| x.update_score(o, self.score));
-                ()
-            }
-            None => godot_print!("Unable to get hud"),
-        }
+        Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
+            .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
+            .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
