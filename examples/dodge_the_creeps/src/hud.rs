@@ -22,12 +22,6 @@ impl HUD {
 
     #[export]
     pub unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
-        // let mut message_label = owner
-        //     .get_node("message_label".into())
-        //     .expect("Missing message_label")
-        //     .cast::<Label>()
-        //     .expect("Cannot cast to Label");
-
         let mut message_label: Label = owner
             .get_typed_node("message_label")
             .expect("Cannot cast to Label");
