@@ -14,14 +14,12 @@ pub enum ManageErrs {
 
 #[derive(NativeClass)]
 #[inherit(Node)]
-#[user_data(user_data::MutexData<Main>)]
+#[user_data(user_data::LocalCellData<Main>)]
 pub struct Main {
     #[property]
     mob: PackedScene,
     score: i64,
 }
-
-unsafe impl Send for Main {}
 
 #[methods]
 impl Main {
