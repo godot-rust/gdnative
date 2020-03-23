@@ -5,7 +5,7 @@ use gdnative::*;
 #[inherit(CanvasLayer)]
 #[user_data(user_data::ArcData<HUD>)]
 #[register_with(Self::register_hud)]
-pub struct HUD {}
+pub struct HUD;
 
 #[methods]
 impl HUD {
@@ -17,7 +17,7 @@ impl HUD {
     }
 
     fn _init(_owner: CanvasLayer) -> Self {
-        HUD {}
+        HUD
     }
 
     #[export]
