@@ -6,7 +6,18 @@ use syn::export::Span;
 
 pub(crate) struct ClassMethodExport {
     pub(crate) class_ty: Box<Type>,
-    pub(crate) methods: Vec<Signature>,
+    pub(crate) methods: Vec<ExportMethod>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub(crate) struct ExportMethod {
+    pub(crate) sig: Signature,
+    pub(crate) args: ExportArgs,
+}
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub(crate) struct ExportArgs {
+    pub(crate) optional_args: Option<usize>,
 }
 
 pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
@@ -18,17 +29,50 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
         let methods = export
             .methods
             .into_iter()
-            .map(|m| {
-                let name = m.ident.clone().to_string();
+            .map(|ExportMethod { sig, args }| {
+                let name = sig.ident;
+                let name_string = name.to_string();
+                let ret_ty = match sig.output {
+                    syn::ReturnType::Default => quote!(()),
+                    syn::ReturnType::Type(_, ty) => quote!( #ty ),
+                };
+
+                let arg_count = sig.inputs.len();
+
+                if arg_count < 2 {
+                    panic!("exported methods must take self and owner as arguments.");
+                }
+
+                let optional_args = match args.optional_args {
+                    Some(count) => {
+                        let max_optional = arg_count - 2; // self and owner
+                        if count > max_optional {
+                            panic!(
+                                "there can be at most {} optional arguments, got {}",
+                                max_optional, count
+                            );
+                        }
+                        count
+                    }
+                    None => 0,
+                };
+
+                let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
+                    if n < arg_count - optional_args {
+                        quote!(#arg ,)
+                    } else {
+                        quote!(#[opt] #arg ,)
+                    }
+                });
 
                 quote!(
                     {
                         let method = gdnative::godot_wrap_method!(
                             #class_name,
-                            #m
+                            fn #name ( #( #args )* ) -> #ret_ty
                         );
 
-                        builder.add_method(#name, method);
+                        builder.add_method(#name_string, method);
                     }
                 )
             })
@@ -85,34 +129,115 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         methods: vec![],
     };
 
-    let mut methods_to_export = Vec::<Signature>::new();
+    let mut methods_to_export: Vec<ExportMethod> = Vec::new();
 
     // extract all methods that have the #[export] attribute.
     // add all items back to the impl block again.
     for func in ast.items {
         let item = match func {
             ImplItem::Method(mut method) => {
+                let mut export_args = None;
+
                 // only allow the "outer" style, aka #[thing] item.
-                let attribute_pos = method.attrs.iter().position(|attr| {
+                method.attrs.retain(|attr| {
                     let correct_style = match attr.style {
                         syn::AttrStyle::Outer => true,
                         _ => false,
                     };
 
-                    for path in attr.path.segments.iter() {
-                        if path.ident.to_string() == "export" {
-                            return correct_style;
+                    if correct_style {
+                        let last_seg = attr
+                            .path
+                            .segments
+                            .iter()
+                            .last()
+                            .map(|i| i.ident.to_string());
+
+                        if let Some("export") = last_seg.as_ref().map(String::as_str) {
+                            let _export_args = export_args.get_or_insert_with(ExportArgs::default);
+                            if !attr.tokens.is_empty() {
+                                use quote::ToTokens;
+                                use syn::{Meta, MetaNameValue, NestedMeta};
+
+                                let meta =
+                                    attr.parse_meta().expect("cannot parse attribute arguments");
+
+                                let pairs: Vec<_> = match meta {
+                                    Meta::List(list) => list
+                                        .nested
+                                        .into_pairs()
+                                        .map(|p| match p.into_value() {
+                                            NestedMeta::Meta(Meta::NameValue(pair)) => pair,
+                                            unexpected => panic!(
+                                                "unexpected argument in list: {}",
+                                                unexpected.into_token_stream()
+                                            ),
+                                        })
+                                        .collect(),
+                                    Meta::NameValue(pair) => vec![pair],
+                                    meta => panic!(
+                                        "unexpected attribute argument: {}",
+                                        meta.into_token_stream()
+                                    ),
+                                };
+
+                                for MetaNameValue { path, .. } in pairs.into_iter() {
+                                    let last =
+                                        path.segments.last().expect("the path should not be empty");
+                                    match last.ident.to_string().as_str() {
+                                        unexpected => {
+                                            panic!("unknown option for export: `{}`", unexpected)
+                                        }
+                                    }
+                                }
+                            }
+
+                            return false;
                         }
                     }
 
-                    false
+                    true
                 });
 
-                if let Some(idx) = attribute_pos {
-                    // TODO renaming? rpc modes?
-                    let _attr = method.attrs.remove(idx);
+                if let Some(mut export_args) = export_args.take() {
+                    let mut optional_args = None;
 
-                    methods_to_export.push(method.sig.clone());
+                    for (n, arg) in method.sig.inputs.iter_mut().enumerate() {
+                        let attrs = match arg {
+                            FnArg::Receiver(a) => &mut a.attrs,
+                            FnArg::Typed(a) => &mut a.attrs,
+                        };
+
+                        let mut is_optional = false;
+
+                        attrs.retain(|attr| {
+                            if attr.path.is_ident("opt") {
+                                is_optional = true;
+                                false
+                            } else {
+                                true
+                            }
+                        });
+
+                        if is_optional {
+                            if n < 2 {
+                                panic!("self and owner cannot be optional");
+                            }
+
+                            *optional_args.get_or_insert(0) += 1;
+                        } else {
+                            if optional_args.is_some() {
+                                panic!("cannot add required parameters after optional ones");
+                            }
+                        }
+                    }
+
+                    export_args.optional_args = optional_args;
+
+                    methods_to_export.push(ExportMethod {
+                        sig: method.sig.clone(),
+                        args: export_args,
+                    });
                 }
 
                 ImplItem::Method(method)
@@ -127,7 +252,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     // into the list of things to export.
     {
         for mut method in methods_to_export {
-            let generics = &method.generics;
+            let generics = &method.sig.generics;
 
             if generics.type_params().count() > 0 {
                 eprintln!("type parameters not allowed in exported functions");
@@ -145,6 +270,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
             // remove "mut" from arguments.
             // give every wildcard a (hopefully) unique name.
             method
+                .sig
                 .inputs
                 .iter_mut()
                 .enumerate()
@@ -172,7 +298,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
             // The calling site is already in an unsafe block, so removing it from just the
             // exported binding is fine.
-            method.unsafety = None;
+            method.sig.unsafety = None;
 
             export.methods.push(method);
         }

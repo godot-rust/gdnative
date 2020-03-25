@@ -513,6 +513,7 @@ macro_rules! godot_wrap_method_inner {
             $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
         ) -> $retty:ty
     ) => {
         {
@@ -530,9 +531,18 @@ macro_rules! godot_wrap_method_inner {
 
                 let __instance: Instance<$type_name> = Instance::from_raw(this, user_data);
 
-                let num_params = godot_wrap_method_parameter_count!($($pname,)*);
-                if num_args != num_params {
-                    godot_error!("Incorrect number of parameters: expected {} but got {}", num_params, num_args);
+                let num_args = num_args as isize;
+
+                let num_required_params = godot_wrap_method_parameter_count!($($pname,)*);
+                if num_args < num_required_params {
+                    godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
+                    return $crate::Variant::new().to_sys();
+                }
+
+                let num_optional_params = godot_wrap_method_parameter_count!($($opt_pname,)*);
+                let num_max_params = num_required_params + num_optional_params;
+                if num_args > num_max_params {
+                    godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
                     return $crate::Variant::new().to_sys();
                 }
 
@@ -556,9 +566,36 @@ macro_rules! godot_wrap_method_inner {
                     offset += 1;
                 )*
 
+                $(
+                    let $opt_pname = if offset < num_args {
+                        let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
+
+                        let $opt_pname = match <$opt_pty as $crate::FromVariant>::from_variant(_variant) {
+                            Ok(val) => val,
+                            Err(err) => {
+                                godot_error!(
+                                    "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
+                                    idx = offset + 1,
+                                    name = stringify!($opt_pname),
+                                    ty = stringify!($opt_pty),
+                                    err = err,
+                                );
+                                return $crate::Variant::new().to_sys();
+                            },
+                        };
+
+                        offset += 1;
+
+                        $opt_pname
+                    }
+                    else {
+                        <$opt_pty as ::std::default::Default>::default()
+                    };
+                )*
+
                 let rust_ret = match panic::catch_unwind(AssertUnwindSafe(move || {
                     let ret = __instance.$map_method(|__rust_val, $owner| {
-                        let ret = __rust_val.$method_name($owner, $($pname,)*);
+                        let ret = __rust_val.$method_name($owner, $($pname,)* $($opt_pname,)*);
                         <$retty as $crate::ToVariant>::to_variant(&ret)
                     });
                     std::mem::drop(__instance);
@@ -596,6 +633,7 @@ macro_rules! godot_wrap_method {
             &mut $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
         ) -> $retty:ty
     ) => {
@@ -606,6 +644,7 @@ macro_rules! godot_wrap_method {
                 $self,
                 $owner: $owner_ty
                 $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
             ) -> $retty
         )
     };
@@ -616,6 +655,7 @@ macro_rules! godot_wrap_method {
             & $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
         ) -> $retty:ty
     ) => {
@@ -626,6 +666,7 @@ macro_rules! godot_wrap_method {
                 $self,
                 $owner: $owner_ty
                 $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
             ) -> $retty
         )
     };
@@ -636,6 +677,7 @@ macro_rules! godot_wrap_method {
             &mut $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
         )
     ) => {
@@ -645,6 +687,7 @@ macro_rules! godot_wrap_method {
                 &mut $self,
                 $owner: $owner_ty
                 $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
             ) -> ()
         )
     };
@@ -655,6 +698,7 @@ macro_rules! godot_wrap_method {
             & $self:ident,
             $owner:ident : $owner_ty:ty
             $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
         )
     ) => {
@@ -664,6 +708,7 @@ macro_rules! godot_wrap_method {
                 & $self,
                 $owner: $owner_ty
                 $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
             ) -> ()
         )
     };

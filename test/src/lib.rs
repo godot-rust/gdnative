@@ -176,8 +176,35 @@ fn test_rust_class_construction() -> bool {
     ok
 }
 
+#[derive(NativeClass)]
+#[inherit(Reference)]
+struct OptionalArgs;
+
+impl OptionalArgs {
+    fn _init(_owner: Reference) -> Self {
+        OptionalArgs
+    }
+}
+
+#[methods]
+impl OptionalArgs {
+    #[export]
+    fn opt_sum(
+        &self,
+        _owner: Reference,
+        a: i64,
+        b: i64,
+        #[opt] c: i64,
+        #[opt] d: i64,
+        #[opt] e: i64,
+    ) -> i64 {
+        a + b + c + d + e
+    }
+}
+
 fn init(handle: init::InitHandle) {
     handle.add_class::<Foo>();
+    handle.add_class::<OptionalArgs>();
 
     test_derive::register(&handle);
     test_free_ub::register(&handle);
