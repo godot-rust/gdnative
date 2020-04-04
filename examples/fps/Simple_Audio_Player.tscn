@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="AudioStreamSample" id=1]
+
+format = 0
+loop_mode = 0
+loop_begin = 0
+loop_end = 0
+mix_rate = 44100
+stereo = false
+data = PoolByteArray(  )
+
+[node name="Simple_Audio_Player" type="Spatial" index="0"]
+
+[node name="Audio_Stream_Player" type="AudioStreamPlayer" parent="." index="0"]
+
+stream = SubResource( 1 )
+volume_db = -4.0
+autoplay = false
+mix_target = 0
+bus = "Master"
+_sections_unfolded = [ "Attenuation Filter" ]
+
+

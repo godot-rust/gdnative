@@ -1,0 +1,18 @@
+[entry]
+
+X11.64="res://../../target/debug/libfps.so"
+OSX.64="res://../../target/debug/libfps.dylib"
+Windows.64="res://../../target/debug/fps.dll"
+
+
+[dependencies]
+
+X11.64=[  ]
+OSX.64=[  ]
+
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true
