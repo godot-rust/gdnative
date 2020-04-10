@@ -75,6 +75,42 @@ impl Basis {
     pub fn tdotz(&self, v: Vector3) -> f32 {
         self.elements[0].z * v.x + self.elements[1].z * v.y + self.elements[2].z * v.z
     }
+
+    /// Get the x axis of the matrix
+    pub fn x(&self) -> Vector3 {
+        Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x)
+    }
+
+    /// Set the x axis of the matrix
+    pub fn set_x(&mut self, v: Vector3) {
+        self.elements[0].x = v.x;
+        self.elements[1].x = v.y;
+        self.elements[2].x = v.z;
+    }
+
+    /// Get the y axis of the matrix
+    pub fn y(&self) -> Vector3 {
+        Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y)
+    }
+
+    /// Set the y axis of the matrix
+    pub fn set_y(&mut self, v: Vector3) {
+        self.elements[0].y = v.x;
+        self.elements[1].y = v.y;
+        self.elements[2].y = v.z;
+    }
+
+    /// Get the z axis of the matrix
+    pub fn z(&self) -> Vector3 {
+        Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z)
+    }
+
+    /// Set the z access of the matrix
+    pub fn set_z(&mut self, v: Vector3) {
+        self.elements[0].z = v.x;
+        self.elements[1].z = v.y;
+        self.elements[2].z = v.z;
+    }
 }
 
 #[cfg(test)]
@@ -96,5 +132,36 @@ mod tests {
         assert!((basis.tdotx(vector) - 32.0).abs() < std::f32::EPSILON);
         assert!((basis.tdoty(vector) - 47.0).abs() < std::f32::EPSILON);
         assert!((basis.tdotz(vector) - 62.0).abs() < std::f32::EPSILON);
+    }
+
+    #[test]
+    fn retrieval_is_sane() {
+        let basis = Basis {
+            elements: [
+                Vector3::new(1.0, 2.0, 3.0),
+                Vector3::new(4.0, 5.0, 6.0),
+                Vector3::new(7.0, 8.0, 9.0),
+            ],
+        };
+
+        assert!(basis.x() == Vector3::new(1.0, 4.0, 7.0));
+        assert!(basis.y() == Vector3::new(2.0, 5.0, 8.0));
+        assert!(basis.z() == Vector3::new(3.0, 6.0, 9.0));
+    }
+
+    #[test]
+
+    fn set_is_sane() {
+        let mut basis = Basis {
+            elements: [Vector3::zero(), Vector3::zero(), Vector3::zero()],
+        };
+
+        basis.set_x(Vector3::new(1.0, 4.0, 7.0));
+        basis.set_y(Vector3::new(2.0, 5.0, 8.0));
+        basis.set_z(Vector3::new(3.0, 6.0, 9.0));
+
+        assert!(basis.elements[0] == Vector3::new(1.0, 2.0, 3.0));
+        assert!(basis.elements[1] == Vector3::new(4.0, 5.0, 6.0));
+        assert!(basis.elements[2] == Vector3::new(7.0, 8.0, 9.0));
     }
 }
