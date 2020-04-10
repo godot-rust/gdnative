@@ -77,7 +77,7 @@ impl Basis {
     }
 
     /// Get the x axis of the matrix
-    pub fn get_x(&self) -> Vector3 {
+    pub fn x(&self) -> Vector3 {
         Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x)
     }
 
@@ -89,7 +89,7 @@ impl Basis {
     }
 
     /// Get the y axis of the matrix
-    pub fn get_y(&self) -> Vector3 {
+    pub fn y(&self) -> Vector3 {
         Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y)
     }
 
@@ -101,7 +101,7 @@ impl Basis {
     }
 
     /// Get the z axis of the matrix
-    pub fn get_z(&self) -> Vector3 {
+    pub fn z(&self) -> Vector3 {
         Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z)
     }
 
@@ -135,7 +135,7 @@ mod tests {
     }
 
     #[test]
-    fn get_is_sane() {
+    fn retrieval_is_sane() {
         let basis = Basis {
             elements: [
                 Vector3::new(1.0, 2.0, 3.0),
@@ -144,9 +144,9 @@ mod tests {
             ],
         };
 
-        assert!(basis.get_x() == Vector3::new(1.0, 4.0, 7.0));
-        assert!(basis.get_y() == Vector3::new(2.0, 5.0, 8.0));
-        assert!(basis.get_z() == Vector3::new(3.0, 6.0, 9.0));
+        assert!(basis.x() == Vector3::new(1.0, 4.0, 7.0));
+        assert!(basis.y() == Vector3::new(2.0, 5.0, 8.0));
+        assert!(basis.z() == Vector3::new(3.0, 6.0, 9.0));
     }
 
     #[test]
