@@ -143,7 +143,7 @@ impl Main {
 
         let mob = Instance::<mob::Mob>::try_from_unsafe_base(mob_scene).unwrap();
 
-        let _ = mob.map(|x, mob_owner| {
+        mob.map(|x, mob_owner| {
             mob_scene
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
@@ -159,17 +159,19 @@ impl Main {
 
             let hud = Instance::<hud::HUD>::try_from_unsafe_base(hud_node).unwrap();
 
-            let _ = hud.map(|_, mut o| {
-                let _ = o.connect(
+            hud.map(|_, mut o| {
+                o.connect(
                     "start_game".into(),
                     Some(mob_owner.to_object()),
                     "on_start_game".into(),
                     VariantArray::new(),
                     0,
-                );
-            });
-            ()
-        });
+                )
+                .unwrap();
+            })
+            .unwrap();
+        })
+        .unwrap();
     }
 }
 
