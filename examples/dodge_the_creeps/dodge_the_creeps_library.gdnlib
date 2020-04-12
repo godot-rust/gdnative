@@ -1,0 +1,17 @@
+[entry]
+
+X11.64="res://../../target/debug/libdodge_the_creeps.so"
+OSX.64="res://../../target/debug/libdodge_the_creeps.dylib"
+Windows.64="res://../../target/debug/dodge_the_creeps.dll"
+
+[dependencies]
+
+X11.64=[  ]
+OSX.64=[  ]
+
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true
