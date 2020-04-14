@@ -7,6 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 include!(concat!(env!("OUT_DIR"), "/api_wrapper.rs"));
 
+#[derive(Debug)]
 pub enum InitError {
     VersionMismatch {
         api_type: GDNATIVE_API_TYPES,
