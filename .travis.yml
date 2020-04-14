@@ -19,6 +19,11 @@ matrix:
       rust: stable
       env: CI_STAGE_CARGO_TEST=yes
 
+    - name: cargo build --release (stable)
+      os: linux
+      rust: stable
+      env: CI_STAGE_BUILD_RELEASE=yes
+
     - name: Godot test (stable)
       os: linux
       rust: stable
@@ -32,6 +37,11 @@ matrix:
       os: linux
       rust: nightly
       env: CI_STAGE_CARGO_TEST=yes
+
+    - name: cargo build --release (nightly)
+      os: linux
+      rust: nightly
+      env: CI_STAGE_BUILD_RELEASE=yes
 
     - name: Godot test (nightly)
       os: linux
@@ -47,10 +57,20 @@ matrix:
       rust: stable
       env: CI_STAGE_CARGO_TEST=yes
 
+    - name: cargo build --release (stable, windows)
+      os: windows
+      rust: stable
+      env: CI_STAGE_BUILD_RELEASE=yes
+
     - name: cargo test (nightly, windows)
       os: windows
       rust: nightly
       env: CI_STAGE_CARGO_TEST=yes
+
+    - name: cargo build --release (nightly, windows)
+      os: windows
+      rust: nightly
+      env: CI_STAGE_BUILD_RELEASE=yes
 
 script:
   - if [[ "$CI_STAGE_CARGO_FMT" == "yes" ]]; then
@@ -59,6 +79,10 @@ script:
 
   - if [[ "$CI_STAGE_CARGO_TEST" == "yes" ]]; then
       cargo test --all --all-features;
+    fi
+
+  - if [[ "$CI_STAGE_BUILD_RELEASE" == "yes" ]]; then
+      cargo build --release;
     fi
 
   - if [[ "$CI_STAGE_GODOT_TEST" == "yes" ]]; then
