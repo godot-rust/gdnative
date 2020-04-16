@@ -329,6 +329,7 @@ mod api_wrapper {
 
     fn api_constructor(api: &ApiRoot) -> TokenStream {
         let mut godot_apis = TokenStream::new();
+        let mut struct_field_bindings = TokenStream::new();
         let mut constructed_struct_fields = TokenStream::new();
         for api in api.all_apis() {
             let i = api.macro_ident();
@@ -346,14 +347,22 @@ mod api_wrapper {
                     api.godot_api_struct(),
                     function_name
                 );
+
+                // Workaround: rustc has trouble dealing with a large amount of returns within the
+                // same expression when optimization is enabled, causing the build to appear to halt.
+                // Separating the try expressions into let bindings resolved this problem.
+                struct_field_bindings.extend(quote! {
+                    let #function_name = map_option_to_init_error((*#i).#function_name, #message)?;
+                });
                 constructed_struct_fields.extend(quote! {
-                    #function_name: map_option_to_init_error((*#i).#function_name, #message)?,
+                    #function_name,
                 });
             }
         }
         quote! {
             pub unsafe fn from_raw(core_api_struct: *const godot_gdnative_core_api_struct) -> Result<Self, InitError> {
                 #godot_apis
+                #struct_field_bindings
                 Ok(GodotApi{
                     #constructed_struct_fields
                 })
