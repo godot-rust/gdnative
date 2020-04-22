@@ -24,6 +24,25 @@ The generator makes use of `bindgen`, which depends on Clang. Instructions for i
 
 ## Usage
 
+### The Book (Work-in-Progress)
+
+This branch (`book`) is the working branch for the godot-rust book, the user guide that will accompany the 0.9.0 release. The book is currently an early work-in-progress, and contributions are very welcome.
+
+The book is built with [mdBook](https://github.com/rust-lang-nursery/mdBook). There is currently no online version available. To build the book locally, you can run:
+
+```
+$ cargo install mdbook
+$ mdbook build book
+```
+
+To run a local server with automatic updates while editing the book, run:
+
+```
+$ mdbook serve book
+```
+
+This branch is for documentation only. Please make pull requests for the library itself against `master` instead.
+
 ### Godot 3.2
 
 After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:

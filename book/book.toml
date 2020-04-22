@@ -1,0 +1,5 @@
+[book]
+authors = ["The godot-rust developers"]
+multilingual = false
+src = "src"
+title = "The godot-rust Book"
