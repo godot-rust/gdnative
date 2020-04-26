@@ -107,7 +107,7 @@ godot_test!(
         test(Vector2::new(1.0, 2.0), Vector2::new(3.0, 4.0));
         test(Vector2::new(3.0, 4.0), Vector2::new(5.0, 6.0));
     }
-    );
+);
 
 #[cfg(test)]
 mod tests {
