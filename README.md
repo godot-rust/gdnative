@@ -4,7 +4,7 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
-**[API Documentation](https://docs.rs/gdnative/0.8.0/gdnative/)** 
+**[API Documentation](https://docs.rs/gdnative/0.8.0/gdnative/)**
 
 - Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.2/classes/) but you have to do casting between classes and subclasses manually.
 
@@ -62,7 +62,7 @@ gdnative = { path = "path/to/godot-rust/gdnative" }
 The most general use-case of the bindings will be to interact with Godot using the generated wrapper
 classes, as well as providing custom functionality by exposing Rust types as *NativeScript*s.
 
-NativeScript is an extension for GDNative that allows a dynamic library to register "script classes" 
+NativeScript is an extension for GDNative that allows a dynamic library to register "script classes"
 to Godot.
 
 (The following section is a very quick-and-dirty rundown of how to get started with the Rust bindings.
@@ -108,16 +108,16 @@ pub struct HelloWorld;
 // code to automatically bind any exported methods to Godot.
 #[methods]
 impl HelloWorld {
-    
+
     /// The "constructor" of the class.
     fn _init(_owner: Node) -> Self {
         HelloWorld
     }
-    
-    // In order to make a method known to Godot, the #[export] attribute has to be used.
-    // In Godot script-classes do not actually inherit the parent class.
-    // Instead they are"attached" to the parent object, called the "owner".
-    // The owner is passed to every single exposed method.
+
+    // In order to enable access, the owner is passed as the second argument
+    // to every single exposed method. As a result, all exposed methods
+    // MUST have `owner: BaseClass` as their second arguments,
+    // before all other arguments in the signature.
     #[export]
     fn _ready(&self, _owner: Node) {
         // The `godot_print!` macro works like `println!` but prints to the Godot-editor
