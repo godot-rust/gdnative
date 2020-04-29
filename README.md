@@ -114,9 +114,13 @@ impl HelloWorld {
         HelloWorld
     }
 
-    // In order to enable access, the owner is passed as the second argument
-    // to every single exposed method. As a result, all exposed methods
-    // MUST have `owner: BaseClass` as their second arguments,
+    // To make a method known to Godot, use the #[export] attribute.
+    // In Godot, script "classes" do not actually inherit the parent class.
+    // Instead, they are "attached" to the parent object, called the "owner".
+    //
+    // In order to enable access to the owner, it is passed as the second
+    // argument to every single exposed method. As a result, all exposed
+    // methods MUST have `owner: BaseClass` as their second arguments,
     // before all other arguments in the signature.
     #[export]
     fn _ready(&self, _owner: Node) {
