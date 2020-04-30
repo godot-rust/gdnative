@@ -1,18 +1,20 @@
 # Android
 
-To export GDNative/Rust based games on Android, we first need to compile Rust source for the appropriate targets. While Google [now requires to have a 64-bit compatible version](https://android-developers.googleblog.com/2019/01/get-your-apps-ready-for-64-bit.html) for any new published apps on Play Store since August 1, 2019, and will stop serving 32-bit apps in 2021, we need to understand what are the different Android device architectures so the following sections will be easier to follow.
+To export GDNative/Rust based games on Android, we first need to compile Rust source for the appropriate targets. Since August 1, 2019, Google [now requires to have a 64-bit compatible version](https://android-developers.googleblog.com/2019/01/get-your-apps-ready-for-64-bit.html) for any new published apps on Play Store, and will stop serving 32-bit apps in 2021. Before diving into setting up Cargo and Godot Engine, we need to understand what are the existing Android CPU architectures so the following sections will be easier to follow.
 
 ## A bit of context
 
 Historically, there are two major CPU providers in Android ecosystem : ARM and Intel. 
 
-They were primarily supporting 32-bit OS, with notably [**ARMv7**](https://en.wikipedia.org/wiki/ARM_architecture#32-bit_architecture) and [**x86**](https://en.wikipedia.org/wiki/X86) architectures, until they started supporting 64-bit OS, by introducing [**ARMv8-A**](https://en.wikipedia.org/wiki/ARM_architecture#64/32-bit_architecture) (often called **ARM64**) and [**x86-64**](https://en.wikipedia.org/wiki/X86-64) (often called **Intel 64** or **AMD64**, in reference to a [long-time conflict](https://en.wikipedia.org/wiki/X86-64#History_2) between Intel and AMD). **Aarch64** is the 64-bit execution state that is introduced in ARM64 chips.
+They were primarily supporting 32-bit OS, with notably [**ARMv7**](https://en.wikipedia.org/wiki/ARM_architecture#32-bit_architecture) and [**x86**](https://en.wikipedia.org/wiki/X86) architectures, until they started supporting 64-bit OS, by introducing [**ARMv8-A**](https://en.wikipedia.org/wiki/ARM_architecture#64/32-bit_architecture) (often called **ARM64**) and [**x86-64**](https://en.wikipedia.org/wiki/X86-64) (often called **Intel 64** or **AMD64**, in reference to a [long-time conflict](https://en.wikipedia.org/wiki/X86-64#History_2) between Intel and AMD). 
+
+**Aarch64** is the 64-bit execution state that is introduced in ARM64 chips. [**i686**](https://en.wikipedia.org/wiki/P6_%28microarchitecture%29) (also called **P6**) is actually the sixth-generation Intel x86 microarchitecture.
 
 Generally speaking, 32-bit programs can run on 64-bit systems, but 64-bit programs won't run on 32-bit systems.
 
 ## Setting up Cargo
 
-**Disclaimer** : _The following steps are confirmed to work on Linux._
+**Disclaimer** : _Currently, the following steps are tested and confirmed to work on Linux only._
 
 First, we need to install **Android SDK** with **NDK** enabled, which comes with adequate **LLVM** toolchains with archivers (`ar`) and linkers (`linker`) for each architecture.
 
@@ -66,7 +68,7 @@ Compiling `gdnative-sys` crate for Android targets will also need some bindings 
   - Windows : `$JAVA_HOME\include\win32\` (assuming `$JAVA_HOME` is the installed JDK instance)
   - UNIX : `$JAVA_HOME/include/linux/`
 
-We can use `C_INCLUDE_PATH` as a environment variable, with both the `jni.h` and `jni_md.h` parent folder paths as values. Note these commands are only valid for the current shell session.
+We can use `C_INCLUDE_PATH` as a environment variable, with both the `jni.h` and `jni_md.h` parent folder paths as values.
 
 ```bash
 # Bash
@@ -82,14 +84,32 @@ Finally, build the GDNative library with Cargo for one or multiple targets.
 cargo build --release --target x86_64-linux-android
 ```
 
-**Important note** : Remember that for the reason ARM and x86 are, by design, different architectures, running into syntax errors while running `cargo test` command on an ARMv7 compatible Rust library with a x86-64 CPU for example is an expected behavior, since the CPU is unable to handle it.
+**Important note** : Remember that for the reason ARM and x86 are, by design, different architectures, getting syntax errors while running `cargo test` command on an ARMv7 compatible Rust library with a x86-64 CPU for example is an expected behavior, since the CPU is unable to handle it.
 
 ## Setting up Godot
 
+After building the GDNative libraries, we need to link them to Godot, by adding new entries in the GDNative library declaration file (`*.gdnlib`) for `Android.armeabi-v7a` (ARMv7),  `arm64-v8a` (ARM64), `Android.x86` (x86) and/or `Android.x86_64` (x86-64), depending of the toolchains we actually used in previous steps.
+
+```
+[entry]
+
+Android.armeabi-v7a="res://target/armv7-linux-androideabi/release/lib.so"
+Android.arm64-v8a="res://target/aarch64-linux-android/release/lib.so"
+Android.x86="res://target/i686-linux-android/release/lib.so"
+Android.x86_64="res://target/x86_64-linux-android/release/lib.so"
+
+[dependencies]
+
+Android.armeabi-v7a=[  ]
+Android.arm64-v8a=[  ]
+Android.x86=[  ]
+Android.x86_64=[  ]
+```
+
 When we installed Android SDK, it usually comes with :
 
-- a **Android Debug Bridge** (`adb`) executable
-- a **JRE**, which comes with :
+- an **Android Debug Bridge** (`adb`) executable
+- a **Java Runtime Environment** (**JRE**), which comes with :
   - a **JAR Signing and Verification Tool** (`jarsigner`) executable
   - a **Java Keytool** (`keytool`) executable
 - a **debug Java keystore** (`debug.keystore`) 
@@ -112,7 +132,7 @@ Godot Engine requires at least the **absolute paths** for `adb`, `jarsigner` and
 - Windows : `AppData\Roaming\Godot\`
 - UNIX : `~/.config/godot/`
 
-```toml
+```
 # Example based on Ubuntu
 export/android/adb = "/usr/local/lib/android/sdk/platform-tools/adb"
 export/android/jarsigner = "/usr/bin/jarsigner"
@@ -131,7 +151,7 @@ keytool -genkeypair -v -keystore path/to/my.keystore -alias some-alias -keyalg R
 
 - Register the release keystore in `export_presets.cfg` 
 
-```toml
+```
 # Remember to not commit the password as is in VCS !
 keystore/release="path/to/my.keystore"
 keystore/release_user="some-alias"
