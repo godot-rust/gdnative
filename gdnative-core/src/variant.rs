@@ -781,6 +781,19 @@ godot_test!(
 ///
 /// Convenience attribute that sets `to_variant_with` to `path::to::mod::to_variant` and
 /// `from_variant_with` to `path::to::mod::from_variant`.
+///
+/// - `#[variant(skip_to_variant)]`
+///
+/// Skip the field when converting to `Variant`.
+///
+/// - `#[variant(skip_from_variant)]`
+///
+/// Skip the field when converting from `Variant`. A default vale will be obtained using
+/// `Default::default()`.
+///
+/// - `#[variant(skip)]`
+///
+/// Convenience attribute that sets `skip_to_variant` and `skip_from_variant`.
 pub trait ToVariant {
     fn to_variant(&self) -> Variant;
 }

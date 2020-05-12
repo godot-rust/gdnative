@@ -4,8 +4,14 @@ use syn::visit::{self, Visit};
 use syn::{Generics, Ident, Type, TypePath};
 
 use super::repr::{Field, Repr, VariantRepr};
+use super::Direction;
 
-pub(crate) fn extend_bounds(generics: Generics, repr: &Repr, bound: &syn::Path) -> Generics {
+pub(crate) fn extend_bounds(
+    generics: Generics,
+    repr: &Repr,
+    bound: &syn::Path,
+    dir: Direction,
+) -> Generics {
     // recursively visit all the field types to find what types should be bounded
     struct Visitor<'ast> {
         all_type_params: HashSet<Ident>,
@@ -46,17 +52,21 @@ pub(crate) fn extend_bounds(generics: Generics, repr: &Repr, bound: &syn::Path) 
     };
 
     // iterate through parsed variant representations and visit the types of each field
-    fn visit_var_repr<'ast>(visitor: &mut Visitor<'ast>, repr: &'ast VariantRepr) {
+    fn visit_var_repr<'ast>(visitor: &mut Visitor<'ast>, repr: &'ast VariantRepr, dir: Direction) {
         match repr {
             VariantRepr::Unit => {}
             VariantRepr::Tuple(tys) => {
-                for Field { ty, .. } in tys.iter() {
-                    visitor.visit_type(ty);
+                for Field { ty, attr, .. } in tys.iter() {
+                    if !attr.skip_bounds(dir) {
+                        visitor.visit_type(ty);
+                    }
                 }
             }
             VariantRepr::Struct(fields) => {
-                for Field { ty, .. } in fields.iter() {
-                    visitor.visit_type(ty);
+                for Field { ty, attr, .. } in fields.iter() {
+                    if !attr.skip_bounds(dir) {
+                        visitor.visit_type(ty);
+                    }
                 }
             }
         }
@@ -65,11 +75,11 @@ pub(crate) fn extend_bounds(generics: Generics, repr: &Repr, bound: &syn::Path) 
     match repr {
         Repr::Enum(ref variants) => {
             for (_, var_repr) in variants.iter() {
-                visit_var_repr(&mut visitor, var_repr);
+                visit_var_repr(&mut visitor, var_repr, dir);
             }
         }
         Repr::Struct(var_repr) => {
-            visit_var_repr(&mut visitor, var_repr);
+            visit_var_repr(&mut visitor, var_repr, dir);
         }
     }
 
