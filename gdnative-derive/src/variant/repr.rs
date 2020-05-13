@@ -96,9 +96,20 @@ impl VariantRepr {
             VariantRepr::Tuple(fields) => {
                 if fields.len() == 1 {
                     // as newtype
-                    fields.get(0).unwrap().to_variant()
+                    let field = fields.get(0).unwrap();
+                    if field.attr.skip_to_variant {
+                        panic!("cannot skip the only field in a tuple");
+                    }
+                    field.to_variant()
                 } else {
-                    let exprs = fields.iter().map(Field::to_variant);
+                    let exprs = fields.iter().filter_map(|f| {
+                        if f.attr.skip_to_variant {
+                            None
+                        } else {
+                            Some(f.to_variant())
+                        }
+                    });
+
                     quote! {
                         {
                             let mut __array = ::gdnative::VariantArray::new();
@@ -111,15 +122,16 @@ impl VariantRepr {
                 }
             }
             VariantRepr::Struct(fields) => {
-                let names: Vec<&Ident> = fields.iter().map(|f| &f.ident).collect();
+                let fields: Vec<&Field> =
+                    fields.iter().filter(|f| !f.attr.skip_to_variant).collect();
 
                 let name_strings: Vec<String> =
-                    names.iter().map(|ident| format!("{}", ident)).collect();
+                    fields.iter().map(|f| format!("{}", &f.ident)).collect();
 
                 let name_string_literals =
                     name_strings.iter().map(|string| Literal::string(&string));
 
-                let exprs = fields.iter().map(Field::to_variant);
+                let exprs = fields.iter().map(|f| f.to_variant());
 
                 quote! {
                     {
@@ -155,24 +167,37 @@ impl VariantRepr {
             VariantRepr::Tuple(fields) => {
                 if fields.len() == 1 {
                     // as newtype
-                    let expr = fields.get(0).unwrap().from_variant(&quote!(#variant));
+                    let field = fields.get(0).unwrap();
+                    if field.attr.skip_from_variant {
+                        panic!("cannot skip the only field in a tuple");
+                    }
+                    let expr = field.from_variant(&quote!(#variant));
                     quote! {
                         {
                             #expr.map(#ctor)
                         }
                     }
                 } else {
-                    let types: Vec<&Type> = fields.iter().map(|f| &f.ty).collect();
-                    let idents: Vec<&Ident> = fields.iter().map(|f| &f.ident).collect();
+                    let skipped_fields: Vec<&Field> =
+                        fields.iter().filter(|f| f.attr.skip_from_variant).collect();
 
-                    let decl_idents = idents.iter();
-                    let ctor_idents = idents.iter();
+                    let non_skipped_fields: Vec<&Field> = fields
+                        .iter()
+                        .filter(|f| !f.attr.skip_from_variant)
+                        .collect();
 
-                    let self_len = Literal::i32_suffixed(types.len() as i32);
-                    let indices = (0..fields.len() as i32).map(|n| Literal::i32_suffixed(n));
+                    let skipped_idents = skipped_fields.iter().map(|f| &f.ident);
+                    let non_skipped_idents = non_skipped_fields.iter().map(|f| &f.ident);
+                    let ctor_idents = fields.iter().map(|f| &f.ident);
+
+                    let expected_len = Literal::usize_suffixed(non_skipped_fields.len());
+                    let indices =
+                        (0..non_skipped_fields.len() as i32).map(|n| Literal::i32_suffixed(n));
 
                     let expr_variant = &quote!(__array.get_ref(__index));
-                    let exprs = fields.iter().map(|f| f.from_variant(expr_variant));
+                    let non_skipped_exprs = non_skipped_fields
+                        .iter()
+                        .map(|f| f.from_variant(expr_variant));
 
                     quote! {
                         {
@@ -182,7 +207,7 @@ impl VariantRepr {
                                     error: Box::new(__err),
                                 })
                                 .and_then(|__array| {
-                                    let __expected = #self_len;
+                                    let __expected = #expected_len;
                                     let __len = __array.len() as usize;
                                     if __len != __expected {
                                         Err(FVE::InvalidLength { expected: __expected, len: __len })
@@ -190,11 +215,14 @@ impl VariantRepr {
                                     else {
                                         #(
                                             let __index = #indices;
-                                            let #decl_idents = #exprs
+                                            let #non_skipped_idents = #non_skipped_exprs
                                                 .map_err(|err| FromVariantError::InvalidItem {
                                                     index: __index as usize,
                                                     error: Box::new(err),
                                                 })?;
+                                        )*
+                                        #(
+                                            let #skipped_idents = ::std::default::Default::default();
                                         )*
                                         Ok(#ctor( #(#ctor_idents),* ))
                                     }
@@ -204,19 +232,31 @@ impl VariantRepr {
                 }
             }
             VariantRepr::Struct(fields) => {
-                let names: Vec<&Ident> = fields.iter().map(|f| &f.ident).collect();
+                let skipped_fields: Vec<&Field> =
+                    fields.iter().filter(|f| f.attr.skip_from_variant).collect();
 
-                let name_strings: Vec<String> =
-                    names.iter().map(|ident| format!("{}", ident)).collect();
+                let non_skipped_fields: Vec<&Field> = fields
+                    .iter()
+                    .filter(|f| !f.attr.skip_from_variant)
+                    .collect();
+
+                let skipped_idents = skipped_fields.iter().map(|f| &f.ident);
+                let non_skipped_idents: Vec<&Ident> =
+                    non_skipped_fields.iter().map(|f| &f.ident).collect();
+                let ctor_idents = fields.iter().map(|f| &f.ident);
+
+                let name_strings: Vec<String> = non_skipped_idents
+                    .iter()
+                    .map(|ident| format!("{}", ident))
+                    .collect();
 
                 let name_string_literals =
                     name_strings.iter().map(|string| Literal::string(&string));
 
-                let decl_idents = names.iter();
-                let ctor_idents = names.iter();
-
                 let expr_variant = &quote!(__dict.get_ref(&__key));
-                let exprs = fields.iter().map(|f| f.from_variant(expr_variant));
+                let exprs = non_skipped_fields
+                    .iter()
+                    .map(|f| f.from_variant(expr_variant));
 
                 quote! {
                     {
@@ -229,11 +269,14 @@ impl VariantRepr {
                                 #(
                                     let __field_name = #name_string_literals;
                                     let __key = ::gdnative::GodotString::from(__field_name).to_variant();
-                                    let #decl_idents = #exprs
+                                    let #non_skipped_idents = #exprs
                                         .map_err(|err| FVE::InvalidField {
                                             field_name: __field_name,
                                             error: Box::new(err),
                                         })?;
+                                )*
+                                #(
+                                    let #skipped_idents = ::std::default::Default::default();
                                 )*
                                 Ok(#ctor { #( #ctor_idents ),* })
                             })

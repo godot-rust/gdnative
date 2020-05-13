@@ -101,6 +101,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
     let where_clause = &generics.where_clause;
 
     let result = quote! {
+        #[allow(unused_variables)]
         impl #generics ::gdnative::FromVariant for #ident #generics #where_clause {
             fn from_variant(
                 #input_ident: &::gdnative::Variant
