@@ -11,7 +11,7 @@ fn main() {
 }
 
 mod header_binding {
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     fn osx_include_path() -> Result<String, std::io::Error> {
         use std::process::Command;
@@ -43,6 +43,113 @@ mod header_binding {
         let directory = format!("{}/{}/{}", prefix, infix, suffix);
 
         Ok(directory)
+    }
+
+    fn add_android_include_paths(mut builder: bindgen::Builder) -> bindgen::Builder {
+        let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
+        let target_triple = std::env::var("TARGET").unwrap();
+
+        assert_eq!("android", &target_os);
+
+        let java_home =
+            std::env::var("JAVA_HOME").expect("JAVA_HOME and ANDROID_SDK_ROOT must be set");
+        let java_home = Path::new(&java_home).to_path_buf();
+        let android_sdk_root =
+            std::env::var("ANDROID_SDK_ROOT").expect("JAVA_HOME and ANDROID_SDK_ROOT must be set");
+        let android_sdk_root = Path::new(&android_sdk_root).to_path_buf();
+
+        // Note: cfg!(target_os) and cfg!(target_arch) refer to the target of the build script:
+        // in other words, the host machine instead of the target of gdnative-sys. They are confusing
+        // and have been erroneously used for target platforms in this library in the past. Make sure
+        // to double-check them wherever they occur.
+
+        if !cfg!(target_arch = "x86_64") {
+            panic!("unsupported host architecture: build from x86_64 instead");
+        }
+
+        builder = builder
+            .clang_arg("-I")
+            .clang_arg(Path::join(&java_home, "include/").to_string_lossy());
+
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(
+                &java_home,
+                format!("include/{}/", {
+                    if cfg!(target_os = "windows") {
+                        "win32"
+                    } else if cfg!(target_os = "macos") {
+                        "darwin"
+                    } else if cfg!(target_os = "linux") {
+                        "linux"
+                    } else {
+                        panic!("unsupported host OS: build from Windows, MacOS, or Linux instead");
+                    }
+                }),
+            )
+            .to_string_lossy(),
+        );
+
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(&android_sdk_root, "ndk-bundle/sysroot/usr/include").to_string_lossy(),
+        );
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(
+                &android_sdk_root,
+                "ndk-bundle/sources/cxx-stl/llvm-libc++/include",
+            )
+            .to_string_lossy(),
+        );
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(
+                &android_sdk_root,
+                "ndk-bundle/sources/cxx-stl/llvm-libc++abi/include",
+            )
+            .to_string_lossy(),
+        );
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(
+                &android_sdk_root,
+                "ndk-bundle/sources/android/support/include",
+            )
+            .to_string_lossy(),
+        );
+
+        let host_tag = {
+            if cfg!(target_os = "windows") {
+                "windows-x86_64"
+            } else if cfg!(target_os = "macos") {
+                "darwin-x86_64"
+            } else if cfg!(target_os = "linux") {
+                "linux-x86_64"
+            } else {
+                panic!("unsupported host OS: build from Windows, MacOS, or Linux instead");
+            }
+        };
+
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(
+                &android_sdk_root,
+                format!(
+                    "ndk-bundle/toolchains/llvm/prebuilt/{}/sysroot/usr/include",
+                    &host_tag
+                ),
+            )
+            .to_string_lossy(),
+        );
+
+        builder = builder.clang_arg("-I").clang_arg(
+            Path::join(
+                &android_sdk_root,
+                format!(
+            "ndk-bundle/toolchains/llvm/prebuilt/{host}/sysroot/usr/include/{target_triple}",
+            host = &host_tag,
+            target_triple = &target_triple,
+        ),
+            )
+            .to_string_lossy(),
+        );
+
+        builder
     }
 
     fn is_travis_ci() -> bool {
@@ -105,6 +212,10 @@ mod header_binding {
                 .clang_arg("-fms-extensions")
                 .clang_arg("-fmsc-version=1300")
                 .clang_arg("-D_M_X64=100");
+        }
+
+        if target_os == "android" {
+            builder = add_android_include_paths(builder);
         }
 
         let bindings = builder.generate().expect("Unable to generate bindings");
