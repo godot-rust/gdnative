@@ -56,10 +56,10 @@ To make Cargo aware of the proper platform-specific linkers that it needs to use
 linker = "/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi29-clang"
 ```
 
-... where the value of `linker` is an **absolute path** to the Android SDK linker for the target triple. Assuming `$ANDROID_HOME` is the Android SDK path, these binaries can be found at:
+... where the value of `linker` is an **absolute path** to the Android SDK linker for the target triple. Assuming `$ANDROID_SDK_ROOT` is the Android SDK path, these binaries can be found at:
 
-- Windows: `$ANDROID_HOME\ndk\<NDK-VERSION>\toolchains\llvm\prebuilt\windows-x86_64\bin\`, where `<NDK-VERSION>` is the installed NDK instance version
-- UNIX-like systems: `$ANDROID_HOME/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/`
+- Windows: `$ANDROID_SDK_ROOT\ndk\<NDK-VERSION>\toolchains\llvm\prebuilt\windows-x86_64\bin\`, where `<NDK-VERSION>` is the installed NDK instance version
+- UNIX-like systems: `$ANDROID_SDK_ROOT/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/`
 
 Repeat for all targets installed in the previous step, until we get something that looks like:
 
@@ -81,25 +81,23 @@ linker = "/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x
 
 ## Setting up environment variables for `gdnative-sys`
 
-Compiling `gdnative-sys` crate for Android targets also requires a few header files of the **Java Native Interface (JNI)**:
+The `gdnative-sys` crate can infer include paths for Android targets, but it requires the following environment variables:
 
-- `jni.h`
-  - Windows : `$JAVA_HOME\include\` (assuming `$JAVA_HOME` is the installed JDK instance)
-  - UNIX : `$JAVA_HOME/include/`
-- `jni_md.h`
-  - Windows : `$JAVA_HOME\include\win32\` (assuming `$JAVA_HOME` is the installed JDK instance)
-  - UNIX : `$JAVA_HOME/include/linux/`
+- `$JAVA_HOME`, which should point to the installed JDK instance.
+- `$ANDROID_SDK_ROOT`, which should point to the Android SDK root (which contains the `ndk-bundle` directory).
 
-We can make `bindgen` aware of the headers using the `C_INCLUDE_PATH` environment variable. The variable may be set in bash:
+Depending on your installation, these environment variables might have already been set. Otherwise, the variables may be set in bash:
 
 ```bash
-export C_INCLUDE_PATH=.:$JAVA_HOME/include/:$JAVA_HOME/include/linux/
+export JAVA_HOME=/path/to/jdk
+export ANDROID_SDK_ROOT=/path/to/android/sdk
 ```
 
 ... or in PowerShell on Windows:
 
 ```powershell
-$env:C_INCLUDE_PATH = "$env:JAVA_HOME\include;$env:JAVA_HOME\include\win32"
+$env:JAVA_HOME = "C:\path\to\jdk"
+$env:ANDROID_SDK_ROOT = "C:\path\to\android\sdk"
 ```
 
 ## Building the GDNative library
