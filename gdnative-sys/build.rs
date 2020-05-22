@@ -13,34 +13,31 @@ fn main() {
 mod header_binding {
     use std::path::{Path, PathBuf};
 
-    fn osx_include_path() -> Result<String, std::io::Error> {
+    fn apple_include_path() -> Result<String, std::io::Error> {
         use std::process::Command;
 
-        let output = Command::new("xcode-select").arg("-p").output()?.stdout;
-        let prefix_str = std::str::from_utf8(&output).expect("invalid output from `xcode-select`");
-        let prefix = prefix_str.trim_end();
-
-        let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
-
-        let platform = if target_os == "macos" {
-            "MacOSX"
-        } else if target_os == "ios" {
-            "iPhoneOS"
+        let target = std::env::var("TARGET").unwrap();
+        let platform = if target.contains("apple-darwin") {
+            "macosx"
+        } else if target == "x86_64-apple-ios" {
+            "iphonesimulator"
+        } else if target == "aarch64-apple-ios" {
+            "iphoneos"
         } else {
             panic!("not building for macOS or iOS");
         };
 
-        let infix = if prefix == "/Library/Developer/CommandLineTools" {
-            format!("SDKs/{}.sdk", platform)
-        } else {
-            format!(
-                "Platforms/{}.platform/Developer/SDKs/{}.sdk",
-                platform, platform
-            )
-        };
+        // run `xcrun --sdk iphoneos --show-sdk-path`
+        let output = Command::new("xcrun")
+            .args(&["--sdk", platform, "--show-sdk-path"])
+            .output()?
+            .stdout;
+        let prefix = std::str::from_utf8(&output)
+            .expect("invalid output from `xcrun`")
+            .trim_end();
 
         let suffix = "usr/include";
-        let directory = format!("{}/{}/{}", prefix, infix, suffix);
+        let directory = format!("{}/{}", prefix, suffix);
 
         Ok(directory)
     }
@@ -179,11 +176,12 @@ mod header_binding {
 
         let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
         let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+        let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR").unwrap();
 
         // Workaround: x86_64 architecture is unsupported by the iPhone SDK, but cargo-lipo will
         // try to build it anyway. This leads to a clang error, so we'll skip the SDK.
-        if target_os == "macos" || (target_os == "ios" && target_arch != "x86_64") {
-            match osx_include_path() {
+        if target_vendor == "apple" {
+            match apple_include_path() {
                 Ok(osx_include_path) => {
                     builder = builder.clang_arg("-I").clang_arg(osx_include_path);
                 }
