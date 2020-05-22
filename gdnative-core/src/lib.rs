@@ -1,6 +1,6 @@
 //! # Rust bindings for the Godot game engine
 //!
-//! This crate contains high-level wrappers around the Godot game engine's gdnaive API.
+//! This crate contains high-level wrappers around the Godot game engine's gdnative API.
 //! Some of the types were automatically generated from the engine's JSON API description,
 //! and some other types are hand made wrappers around the core C types.
 //!
