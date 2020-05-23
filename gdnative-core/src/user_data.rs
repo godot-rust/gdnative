@@ -54,11 +54,15 @@ pub unsafe trait UserData: Sized + Clone {
     type Target: NativeClass;
 
     /// Creates a new owned wrapper from a `NativeClass` instance.
+    ///
+    /// This operation must never fail.
     fn new(val: Self::Target) -> Self;
 
     /// Takes a native instance and returns an opaque pointer that can be used to recover it.
     ///
     /// This gives "ownership" to the engine.
+    ///
+    /// This operation must never fail.
     unsafe fn into_user_data(self) -> *const libc::c_void;
 
     /// Takes an opaque pointer produced by `into_user_data` and "consumes" it to produce the
@@ -66,12 +70,20 @@ pub unsafe trait UserData: Sized + Clone {
     ///
     /// This should be used when "ownership" is taken from the engine, i.e. destructors.
     /// Use elsewhere can lead to premature drops of the instance contained inside.
+    ///
+    /// `ptr` is guaranteed to be non-null.
+    ///
+    /// This operation must never fail.
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self;
 
     /// Takes an opaque pointer produced by `into_user_data` and "clones" it to produce the
     /// original instance, increasing the reference count.
     ///
     /// This should be used when user data is "borrowed" from the engine.
+    ///
+    /// `ptr` is guaranteed to be non-null.
+    ///
+    /// This operation must never fail.
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self;
 }
 
@@ -80,6 +92,9 @@ pub trait Map: UserData {
     type Err: Debug;
 
     /// Maps a `&T` to `U`. Called for methods that take `&self`.
+    ///
+    /// Implementations of this method must not panic. Failures should be indicated by
+    /// returning `Err`.
     fn map<F, U>(&self, op: F) -> Result<U, Self::Err>
     where
         F: FnOnce(&Self::Target) -> U;
@@ -90,6 +105,9 @@ pub trait MapMut: UserData {
     type Err: Debug;
 
     /// Maps a `&mut T` to `U`. Called for methods that take `&mut self`.
+    ///
+    /// Implementations of this method must not panic. Failures should be indicated by
+    /// returning `Err`.
     fn map_mut<F, U>(&self, op: F) -> Result<U, Self::Err>
     where
         F: FnOnce(&mut Self::Target) -> U;

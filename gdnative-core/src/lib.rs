@@ -98,16 +98,25 @@ use std::mem;
 pub static mut GODOT_API: Option<GodotApi> = None;
 #[doc(hidden)]
 pub static mut GDNATIVE_LIBRARY_SYS: Option<*mut sys::godot_object> = None;
+
+/// Returns a reference to the current API struct.
+///
+/// This function is intended to be part of the internal API. It should only be called after
+/// `gdnative_init` and before `gdnative_terminate`. **Calling this function when the API is
+/// not bound will lead to an abort**, since in most cases there is simply no point to continue
+/// if `get_api` failed. This allows it to be used in FFI contexts without a `catch_unwind`.
 #[inline]
 #[doc(hidden)]
 pub fn get_api() -> &'static GodotApi {
-    unsafe { GODOT_API.as_ref().expect("API not bound") }
+    unsafe { GODOT_API.as_ref().unwrap_or_else(|| std::process::abort()) }
 }
+
 #[inline]
 #[doc(hidden)]
 pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
     unsafe { GDNATIVE_LIBRARY_SYS.expect("GDNativeLibrary not bound") }
 }
+
 #[inline]
 #[doc(hidden)]
 pub unsafe fn cleanup_internal_state() {
