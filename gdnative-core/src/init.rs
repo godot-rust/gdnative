@@ -54,9 +54,6 @@ impl InitHandle {
     }
 
     /// Registers a new class to the engine.
-    ///
-    /// The return `ClassBuilder` can be used to add methods, signals and properties
-    /// to the class.
     pub fn add_class<C>(&self)
     where
         C: NativeClassMethods,
@@ -128,9 +125,6 @@ impl InitHandle {
     }
 
     /// Registers a new tool class to the engine.
-    ///
-    /// The return `ClassBuilder` can be used to add methods, signals and properties
-    /// to the class.
     pub fn add_tool_class<C>(&self)
     where
         C: NativeClassMethods,
