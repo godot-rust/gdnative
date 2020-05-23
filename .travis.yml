@@ -72,9 +72,29 @@ matrix:
       rust: nightly
       env: CI_STAGE_BUILD_RELEASE=yes
 
+    - name: cargo test ios-simulator
+      os: osx
+      osx_image: xcode11.4
+      rust: stable
+      env: CI_STAGE_IOS_SIMULATOR_TEST=yes
+      before_script:
+       - rustup target add x86_64-apple-ios
+       - cargo install cargo-dinghy
+
 script:
   - if [[ "$CI_STAGE_CARGO_FMT" == "yes" ]]; then
       cargo fmt --all -- --check;
+    fi
+
+  - if [[ "$CI_STAGE_IOS_SIMULATOR_TEST" == "yes" ]]; then
+      RUNTIME_ID=$(xcrun simctl list runtimes | grep iOS | cut -d ' ' -f 7 | tail -1);
+      export SIM_ID=$(xcrun simctl create My-iphone11 com.apple.CoreSimulator.SimDeviceType.iPhone-11 $RUNTIME_ID);
+      xcrun simctl boot $SIM_ID;
+      cd gdnative-core;
+      cargo dinghy --platform auto-ios-x86_64 test;
+      cd ..;
+      cd gdnative-sys;
+      cargo dinghy --platform auto-ios-x86_64 test;
     fi
 
   - if [[ "$CI_STAGE_CARGO_TEST" == "yes" ]]; then
