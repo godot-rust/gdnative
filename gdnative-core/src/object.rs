@@ -25,6 +25,16 @@ pub trait Instanciable: GodotObject {
     fn construct() -> Self;
 }
 
+/// Manually managed Godot classes implementing `free`.
+pub trait Free {
+    unsafe fn godot_free(self);
+}
+
+/// Manually managed Godot classes implementing `queue_free`.
+pub trait QueueFree {
+    unsafe fn godot_queue_free(&mut self);
+}
+
 // This function assumes the godot_object is reference counted.
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
