@@ -189,9 +189,17 @@ pub type ScriptMethodFn = unsafe extern "C" fn(
     *mut *mut sys::godot_variant,
 ) -> sys::godot_variant;
 
+#[deprecated(
+    since = "0.8.1",
+    note = "This type isn't used in the API anymore. It will be removed in 0.9"
+)]
 pub type ScriptConstructorFn =
     unsafe extern "C" fn(*mut sys::godot_object, *mut libc::c_void) -> *mut libc::c_void;
 
+#[deprecated(
+    since = "0.8.1",
+    note = "This type isn't used in the API anymore. It will be removed in 0.9"
+)]
 pub type ScriptDestructorFn =
     unsafe extern "C" fn(*mut sys::godot_object, *mut libc::c_void, *mut libc::c_void) -> ();
 
@@ -216,6 +224,11 @@ pub struct ScriptMethod<'l> {
     pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
 }
 
+#[deprecated(
+    since = "0.8.1",
+    note = "This type isn't used in the API anymore. It will be removed in 0.9"
+)]
+#[allow(deprecated)]
 pub struct ClassDescriptor<'l> {
     pub name: &'l str,
     pub base_class: &'l str,
