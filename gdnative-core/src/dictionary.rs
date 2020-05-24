@@ -1,4 +1,4 @@
-use crate::get_api;
+use crate::private::get_api;
 use crate::sys;
 use crate::GodotString;
 

@@ -1,5 +1,5 @@
 use crate::access::{Aligned, MaybeUnaligned};
-use crate::get_api;
+use crate::private::get_api;
 use crate::sys;
 use crate::GodotString;
 use crate::VariantArray;

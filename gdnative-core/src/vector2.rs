@@ -83,7 +83,7 @@ godot_test!(
 
         fn test(vector: Vector2, set_to: Vector2) {
             use crate::FromVariant;
-            let api = crate::get_api();
+            let api = crate::private::get_api();
 
             let copied = vector;
             unsafe {

@@ -2,8 +2,8 @@
 
 use std::mem;
 
-use crate::get_api;
 use crate::object::GodotObject;
+use crate::private::get_api;
 use crate::GodotString;
 use crate::NativeClass;
 use crate::ToVariant;

@@ -1,5 +1,7 @@
 use gdnative::*;
 
+use gdnative::private::get_api;
+
 mod test_derive;
 mod test_free_ub;
 mod test_register;

@@ -1,5 +1,5 @@
-use crate::get_api;
 use crate::object;
+use crate::private::get_api;
 use crate::sys;
 use crate::FromVariant;
 use crate::FromVariantError;
@@ -115,7 +115,7 @@ impl<T: NativeClass> Instance<T> {
                 std::ptr::null_mut(),
             );
 
-            let mut args: [*const libc::c_void; 1] = [crate::get_gdnative_library_sys()];
+            let mut args: [*const libc::c_void; 1] = [crate::private::get_gdnative_library_sys()];
             (gd_api.godot_method_bind_ptrcall)(
                 set_library,
                 native_script,

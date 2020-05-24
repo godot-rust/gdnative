@@ -3,7 +3,7 @@
 
 pub use gdnative_core::*;
 
-use crate::get_api;
+use crate::private::get_api;
 use crate::sys;
 
 use libc;

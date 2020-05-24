@@ -31,22 +31,11 @@ macro_rules! godot_gdnative_init {
         #[doc(hidden)]
         #[allow(unused_unsafe)]
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
-            unsafe {
-                let api = match $crate::GodotApi::from_raw((*options).api_struct) {
-                    Ok(api) => api,
-                    Err(e) => {
-                        $crate::report_init_error(options, e);
-                        return;
-                    }
-                };
-                $crate::GODOT_API = Some(api);
-                $crate::GDNATIVE_LIBRARY_SYS = Some((*options).gd_native_library);
+            if unsafe { !$crate::private::bind_api(options) } {
+                // Can't use godot_error here because the API is not bound.
+                // Init errors should be reported by bind_api.
+                return;
             }
-            let api = $crate::get_api();
-            // Force the initialization of the method table of common types. This way we can
-            // assume that if the api object is alive we can fetch the method of these types
-            // without checking for initialization.
-            $crate::ReferenceMethodTable::get(api);
 
             let __result = ::std::panic::catch_unwind(|| unsafe {
                 $callback(options);
@@ -96,7 +85,7 @@ macro_rules! godot_gdnative_terminate {
         #[doc(hidden)]
         #[allow(unused_unsafe)]
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_terminate_options) {
-            if unsafe { $crate::GODOT_API.is_none() } {
+            if unsafe { !$crate::private::is_api_bound() } {
                 return;
             }
 
@@ -109,7 +98,7 @@ macro_rules! godot_gdnative_terminate {
             }
 
             unsafe {
-                $crate::cleanup_internal_state();
+                $crate::private::cleanup_internal_state();
             }
         }
     };
@@ -146,7 +135,7 @@ macro_rules! godot_nativescript_init {
         #[doc(hidden)]
         #[allow(unused_unsafe)]
         pub extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
-            if unsafe { $crate::GODOT_API.is_none() } {
+            if unsafe { !$crate::private::is_api_bound() } {
                 return;
             }
 
@@ -170,7 +159,7 @@ macro_rules! godot_print {
         #[allow(unused_unsafe)]
         unsafe {
             let msg = $crate::GodotString::from_str(msg);
-            ($crate::get_api().godot_print)(&msg.to_sys() as *const _);
+            ($crate::private::get_api().godot_print)(&msg.to_sys() as *const _);
         }
     });
 }
@@ -221,7 +210,7 @@ macro_rules! godot_warn {
             let msg = ::std::ffi::CString::new(msg).unwrap();
             let file = ::std::ffi::CString::new(file).unwrap();
             let func = b"<native>\0";
-            ($crate::get_api().godot_print_warning)(
+            ($crate::private::get_api().godot_print_warning)(
                 msg.as_ptr() as *const _,
                 func.as_ptr() as *const _,
                 file.as_ptr() as *const _,
@@ -250,7 +239,7 @@ macro_rules! godot_error {
             let msg = ::std::ffi::CString::new(msg).unwrap();
             let file = ::std::ffi::CString::new(file).unwrap();
             let func = b"<native>\0";
-            ($crate::get_api().godot_print_error)(
+            ($crate::private::get_api().godot_print_error)(
                 msg.as_ptr() as *const _,
                 func.as_ptr() as *const _,
                 file.as_ptr() as *const _,
@@ -375,7 +364,7 @@ macro_rules! impl_guard_common_trait {
         impl<'a> Drop for $Type<'a> {
             fn drop(&mut self) {
                 unsafe {
-                    ($crate::get_api().$gd_method)(self.$access);
+                    ($crate::private::get_api().$gd_method)(self.$access);
                 }
             }
         }
@@ -386,7 +375,7 @@ macro_rules! impl_guard_common_trait {
     ) => {
         impl<'a> Clone for $Type<'a> {
             fn clone(&self) -> Self {
-                let $access = unsafe { ($crate::get_api().$gd_method)(self.$access) };
+                let $access = unsafe { ($crate::private::get_api().$gd_method)(self.$access) };
 
                 $Type {
                     $access,
@@ -415,8 +404,8 @@ macro_rules! define_access_guard {
 
         impl<'a> $Type<'a> {
             unsafe fn new(arr: $BasePtr) -> Self {
-                let $len = ($crate::get_api().$len_gd_method)(arr) as usize;
-                let $access = ($crate::get_api().$access_gd_method)(arr);
+                let $len = ($crate::private::get_api().$len_gd_method)(arr) as usize;
+                let $access = ($crate::private::get_api().$access_gd_method)(arr);
                 $Type {
                     $access,
                     $len,
@@ -430,7 +419,7 @@ macro_rules! define_access_guard {
             fn len(&self) -> usize { self.$len }
             fn read_ptr(&self) -> *const Self::Target {
                 unsafe {
-                    let orig_ptr: $OrigPtr = ($crate::get_api().$guard_gd_method)(self.$access);
+                    let orig_ptr: $OrigPtr = ($crate::private::get_api().$guard_gd_method)(self.$access);
                     orig_ptr as *const Self::Target
                 }
             }

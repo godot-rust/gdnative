@@ -340,7 +340,7 @@ pub fn generate_gdnative_library_singleton_getter(
 /// See also `Instance::new` for a typed API.
 #[inline]
 pub fn current_library() -> Self {{
-    let this = get_gdnative_library_sys();
+    let this = gdnative_core::private::get_gdnative_library_sys();
 
     Self {{
         this

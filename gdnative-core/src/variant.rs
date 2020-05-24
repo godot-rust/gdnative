@@ -3,6 +3,8 @@ use std::default::Default;
 use std::fmt;
 use std::mem::{forget, transmute};
 
+use crate::private::get_api;
+
 // TODO: implement Debug, PartialEq, etc.
 
 /// A `Variant` can represent many of godot's core types.

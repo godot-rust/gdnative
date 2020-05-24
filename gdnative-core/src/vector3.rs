@@ -3,7 +3,7 @@ godot_test!(
         use crate::{FromVariant, ToVariant, Vector3};
 
         fn test(vector: Vector3, set_to: Vector3) {
-            let api = crate::get_api();
+            let api = crate::private::get_api();
 
             let copied = vector;
             unsafe {
