@@ -291,6 +291,8 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     pub fn add_signal(&self, signal: Signal) {
+        // FIXME(#357): Temporary allow for ExportInfo fields.
+        #[allow(deprecated)]
         unsafe {
             let name = GodotString::from_str(signal.name);
             let owned = signal
