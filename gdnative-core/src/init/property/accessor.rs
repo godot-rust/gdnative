@@ -183,7 +183,15 @@ where
             T: FromVariant,
             SelfArg: MapSet<C, F, T>,
         {
-            unsafe {
+            if class.is_null() {
+                godot_error!(
+                    "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
+                    C::class_name(),
+                );
+                return;
+            }
+
+            let result = std::panic::catch_unwind(|| unsafe {
                 let user_data = C::UserData::clone_from_user_data_unchecked(class as *const _);
                 let owner = C::Base::from_sys(this);
                 let func = &*(method as *const F);
@@ -198,7 +206,11 @@ where
                         godot_error!("Incorrect type passed to property: {}", err);
                     }
                 }
-            }
+            });
+
+            result.unwrap_or_else(|_| {
+                godot_error!("gdnative-core: property setter panicked (check stderr for output)");
+            })
         }
         set.set_func = Some(invoke::<SelfArg, C, F, T>);
 
@@ -234,18 +246,32 @@ where
             T: ToVariant,
             (SelfArg, RetKind): MapGet<C, F, T>,
         {
-            unsafe {
+            if class.is_null() {
+                godot_error!(
+                    "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
+                    C::class_name(),
+                );
+                return Variant::new().forget();
+            }
+
+            let result = std::panic::catch_unwind(|| unsafe {
                 let user_data = C::UserData::clone_from_user_data_unchecked(class as *const _);
                 let owner = C::Base::from_sys(this);
                 let func = &*(method as *const F);
+
                 match <(SelfArg, RetKind)>::map_get(&user_data, func, owner) {
                     Ok(variant) => variant.forget(),
                     Err(err) => {
                         godot_error!("gdnative-core: cannot call property getter: {:?}", err);
-                        Variant::new().to_sys()
+                        Variant::new().forget()
                     }
                 }
-            }
+            });
+
+            result.unwrap_or_else(|_| {
+                godot_error!("gdnative-core: property getter panicked (check stderr for output)");
+                Variant::new().forget()
+            })
         }
         get.get_func = Some(invoke::<SelfArg, RetKind, C, F, T>);
 

@@ -29,6 +29,7 @@ macro_rules! godot_gdnative_init {
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
+        #[allow(unused_unsafe)]
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
             unsafe {
                 let api = match $crate::GodotApi::from_raw((*options).api_struct) {
@@ -47,7 +48,13 @@ macro_rules! godot_gdnative_init {
             // without checking for initialization.
             $crate::ReferenceMethodTable::get(api);
 
-            $callback(options);
+            let __result = ::std::panic::catch_unwind(|| unsafe {
+                $callback(options);
+            });
+
+            if __result.is_err() {
+                godot_error!("gdnative-core: gdnative_init callback panicked");
+            }
         }
     };
 }
@@ -87,11 +94,19 @@ macro_rules! godot_gdnative_terminate {
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
+        #[allow(unused_unsafe)]
         pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_terminate_options) {
             if unsafe { $crate::GODOT_API.is_none() } {
                 return;
             }
-            $callback(options);
+
+            let __result = ::std::panic::catch_unwind(|| unsafe {
+                $callback(options);
+            });
+
+            if __result.is_err() {
+                godot_error!("gdnative-core: nativescript_init callback panicked");
+            }
 
             unsafe {
                 $crate::cleanup_internal_state();
@@ -129,12 +144,18 @@ macro_rules! godot_nativescript_init {
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
         #[doc(hidden)]
+        #[allow(unused_unsafe)]
         pub extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
             if unsafe { $crate::GODOT_API.is_none() } {
                 return;
             }
-            unsafe {
+
+            let __result = ::std::panic::catch_unwind(|| unsafe {
                 $callback($crate::init::InitHandle::new(handle));
+            });
+
+            if __result.is_err() {
+                godot_error!("gdnative-core: nativescript_init callback panicked");
             }
         }
     };
@@ -182,6 +203,13 @@ macro_rules! godot_dbg {
 }
 
 /// Print a warning using the engine's logging system (visible in the editor).
+///
+/// # Guarantees
+///
+/// It's guaranteed that the expansion result of this macro may *only* panic if:
+///
+/// - Any of the arguments for the message panicked in `fmt`.
+/// - The formatted message contains the NUL byte (`\0`) anywhere.
 #[macro_export]
 macro_rules! godot_warn {
     ($($args:tt)*) => ({
@@ -204,6 +232,13 @@ macro_rules! godot_warn {
 }
 
 /// Print an error using the engine's logging system (visible in the editor).
+///
+/// # Guarantees
+///
+/// It's guaranteed that the expansion result of this macro may *only* panic if:
+///
+/// - Any of the arguments for the message panicked in `fmt`.
+/// - The formatted message contains the NUL byte (`\0`) anywhere.
 #[macro_export]
 macro_rules! godot_error {
     ($($args:tt)*) => ({
@@ -452,43 +487,29 @@ macro_rules! godot_test {
     }
 }
 
-/// Convenience macro to wrap an object's constructor into a function pointer
-/// that can be passed to the engine when registering a class.
+/// Old low-level registration macro that is no longer in use. Use the NativeClass trait
+/// instead.
+#[deprecated(
+    since = "0.8.1",
+    note = "Low-level registration is no longer supported. Use the NativeClass trait instead."
+)]
 #[macro_export]
 macro_rules! godot_wrap_constructor {
     ($_name:ty, $c:expr) => {{
-        unsafe extern "C" fn constructor(
-            this: *mut $crate::sys::godot_object,
-            _method_data: *mut $crate::libc::c_void,
-        ) -> *mut $crate::libc::c_void {
-            // let val = $c($crate::NativeInstanceHeader{ this: this });
-            let val = $c();
-
-            let wrapper = <$_name as $crate::NativeClass>::UserData::new(val);
-            wrapper.into_user_data() as *mut $crate::libc::c_void
-        }
-
-        constructor
+        panic!("godot_wrap_constructor macro used")
     }};
 }
 
-/// Convenience macro to wrap an object's destructor into a function pointer
-/// that can be passed to the engine when registering a class.
+/// Old low-level registration macro that is no longer in use. Use the NativeClass trait
+/// instead.
+#[deprecated(
+    since = "0.8.1",
+    note = "Low-level registration is no longer supported. Use the NativeClass trait instead."
+)]
 #[macro_export]
 macro_rules! godot_wrap_destructor {
     ($name:ty) => {{
-        #[allow(unused_unsafe)]
-        unsafe extern "C" fn destructor(
-            _this: *mut $crate::sys::godot_object,
-            _method_data: *mut $crate::libc::c_void,
-            user_data: *mut $crate::libc::c_void,
-        ) -> () {
-            let wrapper =
-                <$_name as $crate::NativeClass>::UserData::consume_user_data_unchecked(user_data);
-            drop(wrapper)
-        }
-
-        destructor
+        panic!("godot_wrap_destructor macro used")
     }};
 }
 
@@ -529,92 +550,101 @@ macro_rules! godot_wrap_method_inner {
                 use std::panic::{self, AssertUnwindSafe};
                 use $crate::Instance;
 
-                let __instance: Instance<$type_name> = Instance::from_raw(this, user_data);
-
-                let num_args = num_args as isize;
-
-                let num_required_params = godot_wrap_method_parameter_count!($($pname,)*);
-                if num_args < num_required_params {
-                    godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
-                    return $crate::Variant::new().to_sys();
+                if user_data.is_null() {
+                    godot_error!(
+                        "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
+                        stringify!($type_name),
+                    );
+                    return $crate::Variant::new().forget();
                 }
 
-                let num_optional_params = godot_wrap_method_parameter_count!($($opt_pname,)*);
-                let num_max_params = num_required_params + num_optional_params;
-                if num_args > num_max_params {
-                    godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
-                    return $crate::Variant::new().to_sys();
-                }
+                let __catch_result = panic::catch_unwind(move || {
+                    let __instance: Instance<$type_name> = Instance::from_raw(this, user_data);
 
-                let mut offset = 0;
-                $(
-                    let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-                    let $pname = match <$pty as $crate::FromVariant>::from_variant(_variant) {
-                        Ok(val) => val,
-                        Err(err) => {
-                            godot_error!(
-                                "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
-                                idx = offset + 1,
-                                name = stringify!($pname),
-                                ty = stringify!($pty),
-                                err = err,
-                            );
-                            return $crate::Variant::new().to_sys();
-                        },
-                    };
+                    let num_args = num_args as isize;
 
-                    offset += 1;
-                )*
+                    let num_required_params = godot_wrap_method_parameter_count!($($pname,)*);
+                    if num_args < num_required_params {
+                        godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
+                        return $crate::Variant::new();
+                    }
 
-                $(
-                    let $opt_pname = if offset < num_args {
+                    let num_optional_params = godot_wrap_method_parameter_count!($($opt_pname,)*);
+                    let num_max_params = num_required_params + num_optional_params;
+                    if num_args > num_max_params {
+                        godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
+                        return $crate::Variant::new();
+                    }
+
+                    let mut offset = 0;
+                    $(
                         let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-
-                        let $opt_pname = match <$opt_pty as $crate::FromVariant>::from_variant(_variant) {
+                        let $pname = match <$pty as $crate::FromVariant>::from_variant(_variant) {
                             Ok(val) => val,
                             Err(err) => {
                                 godot_error!(
                                     "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
                                     idx = offset + 1,
-                                    name = stringify!($opt_pname),
-                                    ty = stringify!($opt_pty),
+                                    name = stringify!($pname),
+                                    ty = stringify!($pty),
                                     err = err,
                                 );
-                                return $crate::Variant::new().to_sys();
+                                return $crate::Variant::new();
                             },
                         };
 
                         offset += 1;
+                    )*
 
-                        $opt_pname
-                    }
-                    else {
-                        <$opt_pty as ::std::default::Default>::default()
-                    };
-                )*
+                    $(
+                        let $opt_pname = if offset < num_args {
+                            let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
 
-                let rust_ret = match panic::catch_unwind(AssertUnwindSafe(move || {
-                    let ret = __instance.$map_method(|__rust_val, $owner| {
-                        let ret = __rust_val.$method_name($owner, $($pname,)* $($opt_pname,)*);
-                        <$retty as $crate::ToVariant>::to_variant(&ret)
-                    });
+                            let $opt_pname = match <$opt_pty as $crate::FromVariant>::from_variant(_variant) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    godot_error!(
+                                        "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
+                                        idx = offset + 1,
+                                        name = stringify!($opt_pname),
+                                        ty = stringify!($opt_pty),
+                                        err = err,
+                                    );
+                                    return $crate::Variant::new();
+                                },
+                            };
+
+                            offset += 1;
+
+                            $opt_pname
+                        }
+                        else {
+                            <$opt_pty as ::std::default::Default>::default()
+                        };
+                    )*
+
+                    let __ret = __instance
+                        .$map_method(|__rust_val, $owner| {
+                            let ret = __rust_val.$method_name($owner, $($pname,)* $($opt_pname,)*);
+                            <$retty as $crate::ToVariant>::to_variant(&ret)
+                        })
+                        .unwrap_or_else(|err| {
+                            godot_error!("gdnative-core: method call failed with error: {:?}", err);
+                            godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                            $crate::Variant::new()
+                        });
+
                     std::mem::drop(__instance);
-                    ret
-                })) {
-                    Ok(val) => val,
-                    Err(err) => {
-                        return $crate::Variant::new().to_sys();
-                    }
-                };
 
-                match rust_ret {
-                    Ok(val) => val.forget(),
-                    Err(err) => {
-                        godot_error!("gdnative-core: method call failed with error: {:?}", err);
-                        godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                        $crate::Variant::new().to_sys()
-                    }
-                }
+                    __ret
+                });
+
+                __catch_result
+                    .unwrap_or_else(|_err| {
+                        godot_error!("gdnative-core: method panicked (check stderr for output)");
+                        $crate::Variant::new()
+                    })
+                    .forget()
             }
 
             method
