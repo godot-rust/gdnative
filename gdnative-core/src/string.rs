@@ -199,15 +199,16 @@ impl_basic_traits!(
     }
 );
 
-impl fmt::Debug for GodotString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        self.to_string().fmt(f)
+impl fmt::Display for GodotString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let utf8 = self.to_utf8();
+        f.write_str(utf8.as_str())
     }
 }
 
-impl ToString for GodotString {
-    fn to_string(&self) -> String {
-        self.to_utf8().to_string()
+impl fmt::Debug for GodotString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        self.to_string().fmt(f)
     }
 }
 
@@ -340,6 +341,7 @@ godot_test!(test_string {
 
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
+    assert_eq!(foo.to_string(), String::from("foo"));
 
     let foo2 = foo.new_ref();
     assert!(foo == foo2);
