@@ -3,6 +3,8 @@ use crate::private::get_api;
 use crate::sys;
 use crate::VariantArray;
 
+use std::fmt;
+
 /// A reference-counted vector of `f32` that uses Godot's pool allocator.
 pub struct Float32Array(pub(crate) sys::godot_pool_real_array);
 
@@ -116,6 +118,12 @@ impl Float32Array {
     }
 }
 
+impl fmt::Debug for Float32Array {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.read().iter()).finish()
+    }
+}
+
 impl_basic_traits!(
     for Float32Array as godot_pool_real_array {
         Drop => godot_pool_real_array_destroy;
@@ -171,5 +179,16 @@ godot_test!(
 
         // the write shouldn't have affected the original array
         assert_eq!(&[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], original_read.as_slice());
+    }
+);
+
+godot_test!(
+    test_float32_array_debug {
+        let mut arr = Float32Array::new();
+        for i in 0..8 {
+            arr.push(i as f32);
+        }
+
+        assert_eq!(format!("{:?}", arr), "[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]");
     }
 );

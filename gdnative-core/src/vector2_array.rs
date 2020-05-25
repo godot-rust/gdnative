@@ -4,6 +4,7 @@ use crate::sys;
 use crate::VariantArray;
 use crate::Vector2;
 
+use std::fmt;
 use std::mem::transmute;
 
 /// A reference-counted vector of `Vector2` that uses Godot's pool allocator.
@@ -120,6 +121,12 @@ impl Vector2Array {
     }
 }
 
+impl fmt::Debug for Vector2Array {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.read().iter()).finish()
+    }
+}
+
 impl_basic_traits!(
     for Vector2Array as godot_pool_vector2_array {
         Drop => godot_pool_vector2_array_destroy;
@@ -183,5 +190,16 @@ godot_test!(
             Vector2::new(3.0, 4.0),
             Vector2::new(5.0, 6.0),
         ], original_read.as_slice());
+    }
+);
+
+godot_test!(
+    test_vector2_array_debug {
+        let mut arr = Vector2Array::new();
+        arr.push(&Vector2::new(1.0, 2.0));
+        arr.push(&Vector2::new(3.0, 4.0));
+        arr.push(&Vector2::new(5.0, 6.0));
+
+        assert_eq!(format!("{:?}", arr), "[(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)]");
     }
 );

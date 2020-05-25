@@ -3,6 +3,8 @@ use crate::private::get_api;
 use crate::sys;
 use crate::VariantArray;
 
+use std::fmt;
+
 /// A reference-counted vector of bytes that uses Godot's pool allocator.
 pub struct ByteArray(pub(crate) sys::godot_pool_byte_array);
 
@@ -116,6 +118,12 @@ impl ByteArray {
     }
 }
 
+impl fmt::Debug for ByteArray {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.read().iter()).finish()
+    }
+}
+
 impl_basic_traits!(
     for ByteArray as godot_pool_byte_array {
         Drop => godot_pool_byte_array_destroy;
@@ -171,5 +179,16 @@ godot_test!(
 
         // the write shouldn't have affected the original array
         assert_eq!(&[0, 1, 2, 3, 4, 5, 6, 7], original_read.as_slice());
+    }
+);
+
+godot_test!(
+    test_byte_array_debug {
+        let mut arr = ByteArray::new();
+        for i in 0..8 {
+            arr.push(i);
+        }
+
+        assert_eq!(format!("{:?}", arr), "[0, 1, 2, 3, 4, 5, 6, 7]");
     }
 );

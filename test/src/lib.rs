@@ -20,6 +20,7 @@ pub extern "C" fn run_tests(
     // status &= gdnative::test_dictionary_clone_clear();
 
     status &= gdnative::test_array();
+    status &= gdnative::test_array_debug();
     // status &= gdnative::test_array_clone_clear();
 
     status &= gdnative::test_variant_nil();
@@ -36,12 +37,19 @@ pub extern "C" fn run_tests(
     status &= gdnative::test_variant_tuple();
 
     status &= gdnative::test_byte_array_access();
+    status &= gdnative::test_byte_array_debug();
     status &= gdnative::test_int32_array_access();
+    status &= gdnative::test_int32_array_debug();
     status &= gdnative::test_float32_array_access();
+    status &= gdnative::test_float32_array_debug();
     status &= gdnative::test_color_array_access();
+    status &= gdnative::test_color_array_debug();
     status &= gdnative::test_string_array_access();
+    status &= gdnative::test_string_array_debug();
     status &= gdnative::test_vector2_array_access();
+    status &= gdnative::test_vector2_array_debug();
     status &= gdnative::test_vector3_array_access();
+    status &= gdnative::test_vector3_array_debug();
 
     status &= test_constructor();
     status &= test_underscore_method_binding();
