@@ -4,6 +4,7 @@ use crate::sys;
 use crate::Color;
 use crate::VariantArray;
 
+use std::fmt;
 use std::mem::transmute;
 
 /// A reference-counted vector of `ColorArray` that uses Godot's pool allocator.
@@ -120,6 +121,12 @@ impl ColorArray {
     }
 }
 
+impl fmt::Debug for ColorArray {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.read().iter()).finish()
+    }
+}
+
 impl_basic_traits!(
     for ColorArray as godot_pool_color_array {
         Drop => godot_pool_color_array_destroy;
@@ -183,5 +190,16 @@ godot_test!(
             Color::rgb(0.0, 1.0, 0.0),
             Color::rgb(0.0, 0.0, 1.0),
         ], original_read.as_slice());
+    }
+);
+
+godot_test!(
+    test_color_array_debug {
+        let mut arr = ColorArray::new();
+        arr.push(&Color::rgb(1.0, 0.0, 0.0));
+        arr.push(&Color::rgb(0.0, 1.0, 0.0));
+        arr.push(&Color::rgb(0.0, 0.0, 1.0));
+
+        assert_eq!(format!("{:?}", arr), "[Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 1.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }]");
     }
 );

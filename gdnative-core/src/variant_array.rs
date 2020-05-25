@@ -3,6 +3,8 @@ use crate::sys;
 
 use crate::Variant;
 
+use std::fmt;
+
 /// A reference-counted `Variant` vector. Godot's generic array data type.
 /// Negative indices can be used to count from the right.
 pub struct VariantArray(pub(crate) sys::godot_array);
@@ -186,6 +188,12 @@ impl_basic_traits!(
     }
 );
 
+impl fmt::Debug for VariantArray {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+
 pub struct Iter<'a> {
     arr: &'a VariantArray,
     range: std::ops::Range<i32>,
@@ -302,6 +310,17 @@ godot_test!(test_array {
         array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
     );
 });
+
+godot_test!(
+    test_array_debug {
+        let mut arr = VariantArray::new(); // []
+        arr.push(&Variant::from_str("hello world"));
+        arr.push(&Variant::from_bool(true));
+        arr.push(&Variant::from_i64(42));
+
+        assert_eq!(format!("{:?}", arr), "[GodotString(hello world), Bool(True), I64(42)]");
+    }
+);
 
 // TODO: clear arrays without affecting clones
 //godot_test!(test_array_clone_clear {

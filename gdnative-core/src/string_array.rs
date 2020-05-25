@@ -4,6 +4,8 @@ use crate::sys;
 use crate::GodotString;
 use crate::VariantArray;
 
+use std::fmt;
+
 /// A vector of `GodotString` that uses Godot's pool allocator.
 pub struct StringArray(pub(crate) sys::godot_pool_string_array);
 
@@ -117,6 +119,12 @@ impl StringArray {
     }
 }
 
+impl fmt::Debug for StringArray {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.read().iter()).finish()
+    }
+}
+
 impl_basic_traits!(
     for StringArray as godot_pool_string_array {
         Drop => godot_pool_string_array_destroy;
@@ -180,5 +188,16 @@ godot_test!(
             GodotString::from("bar"),
             GodotString::from("baz"),
         ], original_read.as_slice());
+    }
+);
+
+godot_test!(
+    test_string_array_debug {
+        let mut arr = StringArray::new();
+        arr.push(&GodotString::from("foo"));
+        arr.push(&GodotString::from("bar"));
+        arr.push(&GodotString::from("baz"));
+
+        assert_eq!(format!("{:?}", arr), "[\"foo\", \"bar\", \"baz\"]");
     }
 );
