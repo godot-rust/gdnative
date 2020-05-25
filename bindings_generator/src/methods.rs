@@ -596,7 +596,7 @@ fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
             writeln!(
                 w,
                 r#"
-    result_from_sys(ret)"#
+    GodotError::result_from_sys(ret)"#
             )?;
         }
         &Ty::Enum(_) => {

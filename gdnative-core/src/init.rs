@@ -29,7 +29,7 @@ use std::ptr;
 
 use libc;
 
-use crate::get_api;
+use crate::private::get_api;
 use crate::NativeClass;
 
 use crate::Variant;

@@ -28,7 +28,7 @@ pub trait Instanciable: GodotObject {
 // This function assumes the godot_object is reference counted.
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
-    let api = crate::get_api();
+    let api = crate::private::get_api();
     let addref_method = ReferenceMethodTable::unchecked_get().reference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
@@ -53,7 +53,7 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut last_reference = false;
     let ret_ptr = &mut last_reference as *mut bool;
-    (crate::get_api().godot_method_bind_ptrcall)(
+    (crate::private::get_api().godot_method_bind_ptrcall)(
         unref_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
@@ -70,7 +70,7 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
     let ret_ptr = &mut ok as *mut bool;
-    (crate::get_api().godot_method_bind_ptrcall)(
+    (crate::private::get_api().godot_method_bind_ptrcall)(
         init_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
@@ -82,7 +82,7 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
 
 pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     unsafe {
-        let api = crate::get_api();
+        let api = crate::private::get_api();
         let method_bind = ObjectMethodTable::get(api).is_class;
 
         let mut class_name = (api.godot_string_chars_to_utf8_with_len)(
