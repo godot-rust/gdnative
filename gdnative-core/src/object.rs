@@ -3,8 +3,14 @@ use crate::ObjectMethodTable;
 use libc;
 use std::ptr;
 
-/// Internal details.
-pub unsafe trait GodotObject {
+/// Trait for Godot API objects. This trait is sealed, and implemented for generated wrapper
+/// types.
+///
+/// # Remarks
+///
+/// The `cast` method on Godot object types is only for conversion between engine types.
+/// To downcast a `NativeScript` type from its base type, see `Instance::try_from_base`.
+pub unsafe trait GodotObject: crate::private::godot_object::Sealed {
     fn class_name() -> &'static str;
     #[doc(hidden)]
     unsafe fn to_sys(&self) -> *mut sys::godot_object;
