@@ -95,3 +95,7 @@ unsafe fn report_init_error(
         }
     }
 }
+
+pub mod godot_object {
+    pub trait Sealed {}
+}

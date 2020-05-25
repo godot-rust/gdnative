@@ -86,6 +86,8 @@ pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -
     writeln!(
         output,
         r#"
+impl crate::private::godot_object::Sealed for {name} {{}}
+
 unsafe impl GodotObject for {name} {{
     fn class_name() -> &'static str {{
         "{name}"
