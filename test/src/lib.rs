@@ -65,8 +65,9 @@ fn test_constructor() -> bool {
     let _ = lib.is_singleton();
 
     unsafe {
-        let path = FreeOnDrop::new(Path2D::new());
+        let path = Path2D::new();
         let _ = path.get_z_index();
+        path.free();
     }
 
     return true;

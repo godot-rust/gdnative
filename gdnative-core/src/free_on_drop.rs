@@ -1,17 +1,16 @@
+#![allow(deprecated)]
+
 use std::mem;
 use std::ops::{Deref, DerefMut};
 
-/// Manually managed Godot classes implementing `free`.
-pub trait Free {
-    unsafe fn godot_free(self);
-}
-
-/// Manually managed Godot classes implementing `queue_free`.
-pub trait QueueFree {
-    unsafe fn godot_queue_free(&mut self);
-}
+#[doc(inline)]
+pub use crate::object::{Free, QueueFree};
 
 /// A wrapper that automatically frees the object when dropped.
+#[deprecated(
+    since = "0.8.1",
+    note = "Use of free-on-drop wrappers is no longer recommended due to upcoming changes in ownership semantics in 0.9. Call free manually instead. This will be removed in 0.9"
+)]
 pub struct FreeOnDrop<T: Free + Clone> {
     ptr: T,
 }
@@ -63,6 +62,10 @@ where
 }
 
 /// A wrapper that automatically enqueues the object for deletion when dropped.
+#[deprecated(
+    since = "0.8.1",
+    note = "Use of free-on-drop wrappers is no longer recommended due to upcoming changes in ownership semantics in 0.9. Call queue_free manually instead. This will be removed in 0.9"
+)]
 pub struct QueueFreeOnDrop<T: QueueFree + Clone> {
     ptr: T,
 }
