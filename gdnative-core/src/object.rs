@@ -18,6 +18,25 @@ pub unsafe trait GodotObject {
     /// ptrcalls are leaked in the process of being cast into a pointer.
     #[doc(hidden)]
     unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self;
+
+    /// Creates a wrapper around the same Godot object that has `'static` lifetime.
+    ///
+    /// Most Godot APIs expect object arguments with `'static` lifetime. This method may be used
+    /// to produce a `'static` wrapper given a reference. For reference-counted types, or classes
+    /// that extend `Reference`, this increments the reference count. For manually-managed types,
+    /// including all classes that inherit `Node`, this creates an alias.
+    ///
+    /// # Remarks
+    ///
+    /// Although manually-managed types are already `unsafe` to use, like raw pointers, this is
+    /// `unsafe` because some methods expect `&mut self` receivers. In `0.9.0`, all methods will
+    /// take shared references instead, making this safe to call.
+    unsafe fn claim(&self) -> Self
+    where
+        Self: Sized,
+    {
+        Self::from_sys(self.to_sys())
+    }
 }
 
 /// GodotObjects that have a zero argument constructor.
