@@ -87,8 +87,14 @@ godot_test!(
 
             let copied = vector;
             unsafe {
-                assert_eq!(vector.x, (api.godot_vector2_get_x)(&copied as *const _ as *const sys::godot_vector2));
-                assert_eq!(vector.y, (api.godot_vector2_get_y)(&copied as *const _ as *const sys::godot_vector2));
+                assert_relative_eq!(
+                    vector.x,
+                    (api.godot_vector2_get_x)(&copied as *const _ as *const sys::godot_vector2),
+                );
+                assert_relative_eq!(
+                    vector.y,
+                    (api.godot_vector2_get_y)(&copied as *const _ as *const sys::godot_vector2),
+                );
             }
             assert_eq!(vector, copied);
 

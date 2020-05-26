@@ -204,7 +204,9 @@ pub fn generate_dynamic_cast(output: &mut impl Write, class: &GodotClass) -> Gen
         r#"
     /// Generic dynamic cast.
     pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
-        object::godot_cast::<T>(self.this)
+    unsafe {{
+            object::godot_cast::<T>(self.this)
+        }}
     }}"#,
         maybe_unsafe = if class.is_pointer_safe() {
             ""

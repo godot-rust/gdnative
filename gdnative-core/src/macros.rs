@@ -30,17 +30,14 @@ macro_rules! godot_gdnative_init {
         #[no_mangle]
         #[doc(hidden)]
         #[allow(unused_unsafe)]
-        pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
-            if unsafe { !$crate::private::bind_api(options) } {
+        pub unsafe extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
+            if !$crate::private::bind_api(options) {
                 // Can't use godot_error here because the API is not bound.
                 // Init errors should be reported by bind_api.
                 return;
             }
 
-            let __result = ::std::panic::catch_unwind(|| unsafe {
-                $callback(options);
-            });
-
+            let __result = ::std::panic::catch_unwind(|| $callback(options));
             if __result.is_err() {
                 godot_error!("gdnative-core: gdnative_init callback panicked");
             }
@@ -84,22 +81,19 @@ macro_rules! godot_gdnative_terminate {
         #[no_mangle]
         #[doc(hidden)]
         #[allow(unused_unsafe)]
-        pub extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_terminate_options) {
-            if unsafe { !$crate::private::is_api_bound() } {
+        pub unsafe extern "C" fn $fn_name(
+            options: *mut $crate::sys::godot_gdnative_terminate_options,
+        ) {
+            if !$crate::private::is_api_bound() {
                 return;
             }
 
-            let __result = ::std::panic::catch_unwind(|| unsafe {
-                $callback(options);
-            });
-
+            let __result = ::std::panic::catch_unwind(|| $callback(options));
             if __result.is_err() {
                 godot_error!("gdnative-core: nativescript_init callback panicked");
             }
 
-            unsafe {
-                $crate::private::cleanup_internal_state();
-            }
+            $crate::private::cleanup_internal_state();
         }
     };
 }
@@ -134,12 +128,12 @@ macro_rules! godot_nativescript_init {
         #[no_mangle]
         #[doc(hidden)]
         #[allow(unused_unsafe)]
-        pub extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
-            if unsafe { !$crate::private::is_api_bound() } {
+        pub unsafe extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
+            if !$crate::private::is_api_bound() {
                 return;
             }
 
-            let __result = ::std::panic::catch_unwind(|| unsafe {
+            let __result = ::std::panic::catch_unwind(|| {
                 $callback($crate::init::InitHandle::new(handle));
             });
 
@@ -528,6 +522,7 @@ macro_rules! godot_wrap_method_inner {
     ) => {
         {
             #[allow(unused_unsafe, unused_variables, unused_assignments, unused_mut)]
+            #[allow(clippy::transmute_ptr_to_ptr)]
             unsafe extern "C" fn method(
                 this: *mut $crate::sys::godot_object,
                 method_data: *mut $crate::libc::c_void,

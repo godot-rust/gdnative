@@ -7,15 +7,15 @@ godot_test!(
 
             let copied = vector;
             unsafe {
-                assert_eq!(vector.x, (api.godot_vector3_get_axis)(
+                assert_relative_eq!(vector.x, (api.godot_vector3_get_axis)(
                     &copied as *const _ as *const sys::godot_vector3,
                     crate::Vector3Axis::X as u32 as sys::godot_vector3_axis
                 ));
-                assert_eq!(vector.y, (api.godot_vector3_get_axis)(
+                assert_relative_eq!(vector.y, (api.godot_vector3_get_axis)(
                     &copied as *const _ as *const sys::godot_vector3,
                     crate::Vector3Axis::Y as u32 as sys::godot_vector3_axis
                 ));
-                assert_eq!(vector.z, (api.godot_vector3_get_axis)(
+                assert_relative_eq!(vector.z, (api.godot_vector3_get_axis)(
                     &copied as *const _ as *const sys::godot_vector3,
                     crate::Vector3Axis::Z as u32 as sys::godot_vector3_axis
                 ));
