@@ -1,3 +1,5 @@
+#![allow(clippy::blacklisted_name)]
+
 use gdnative::*;
 
 use gdnative::private::get_api;
@@ -200,6 +202,7 @@ impl OptionalArgs {
 #[methods]
 impl OptionalArgs {
     #[export]
+    #[allow(clippy::many_single_char_names)]
     fn opt_sum(
         &self,
         _owner: Reference,

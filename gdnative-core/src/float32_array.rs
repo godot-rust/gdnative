@@ -159,7 +159,9 @@ godot_test!(
 
         let original_read = {
             let read = arr.read();
-            assert_eq!(&[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], read.as_slice());
+            for (n, i) in read.as_slice().iter().enumerate() {
+                assert_relative_eq!(n as f32, i);
+            }
             read.clone()
         };
 
@@ -174,11 +176,13 @@ godot_test!(
         }
 
         for i in 0..8 {
-            assert_eq!(i as f32 * 2.0, cow_arr.get(i as i32));
+            assert_relative_eq!(i as f32 * 2., cow_arr.get(i as i32));
         }
 
         // the write shouldn't have affected the original array
-        assert_eq!(&[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], original_read.as_slice());
+        for (n, i) in original_read.as_slice().iter().enumerate() {
+            assert_relative_eq!(n as f32, i);
+        }
     }
 );
 

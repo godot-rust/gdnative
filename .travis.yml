@@ -14,6 +14,13 @@ matrix:
       before_script:
        - rustup component add rustfmt
 
+    - name: cargo clippy (stable)
+      os: linux
+      rust: stable
+      env: CI_STAGE_CARGO_CLIPPY=yes
+      before_script:
+       - rustup component add clippy
+
     - name: cargo test (stable)
       os: linux
       rust: stable
@@ -37,6 +44,13 @@ matrix:
       os: linux
       rust: nightly
       env: CI_STAGE_CARGO_TEST=yes
+
+    - name: cargo clippy (nightly)
+      os: linux
+      rust: nightly
+      env: CI_STAGE_CARGO_CLIPPY=yes
+      before_script:
+       - rustup component add clippy
 
     - name: cargo build --release (nightly)
       os: linux
@@ -95,6 +109,10 @@ script:
       cd ..;
       cd gdnative-sys;
       cargo dinghy --platform auto-ios-x86_64 test;
+    fi
+
+  - if [[ "$CI_STAGE_CARGO_CLIPPY" == "yes" ]]; then
+      cargo clippy --all --all-features;
     fi
 
   - if [[ "$CI_STAGE_CARGO_TEST" == "yes" ]]; then

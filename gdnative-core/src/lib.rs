@@ -24,6 +24,9 @@
 //! engine or the object must be carefully deallocated using the object's `free`  method.
 //!
 
+#![allow(clippy::transmute_ptr_to_ptr)]
+#![cfg_attr(feature = "gd_test", allow(clippy::blacklisted_name))]
+
 #[doc(hidden)]
 pub extern crate gdnative_sys as sys;
 #[doc(hidden)]
@@ -31,6 +34,10 @@ pub extern crate libc;
 #[macro_use]
 extern crate bitflags;
 extern crate parking_lot;
+
+#[cfg(feature = "gd_test")]
+#[macro_use]
+extern crate approx;
 
 pub mod geom;
 

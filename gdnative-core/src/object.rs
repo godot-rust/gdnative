@@ -115,43 +115,39 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     debug_assert!(ok);
 }
 
-pub fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
-    unsafe {
-        let api = crate::private::get_api();
-        let method_bind = ObjectMethodTable::get(api).is_class;
+pub unsafe fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
+    let api = crate::private::get_api();
+    let method_bind = ObjectMethodTable::get(api).is_class;
 
-        let mut class_name = (api.godot_string_chars_to_utf8_with_len)(
-            class_name.as_ptr() as *const _,
-            class_name.len() as _,
-        );
+    let mut class_name = (api.godot_string_chars_to_utf8_with_len)(
+        class_name.as_ptr() as *const _,
+        class_name.len() as _,
+    );
 
-        let mut argument_buffer = [ptr::null() as *const libc::c_void; 1];
-        argument_buffer[0] = (&class_name) as *const _ as *const _;
+    let mut argument_buffer = [ptr::null() as *const libc::c_void; 1];
+    argument_buffer[0] = (&class_name) as *const _ as *const _;
 
-        let mut ret = false;
-        let ret_ptr = &mut ret as *mut _;
-        (api.godot_method_bind_ptrcall)(
-            method_bind,
-            obj,
-            argument_buffer.as_mut_ptr() as *mut _,
-            ret_ptr as *mut _,
-        );
+    let mut ret = false;
+    let ret_ptr = &mut ret as *mut _;
+    (api.godot_method_bind_ptrcall)(
+        method_bind,
+        obj,
+        argument_buffer.as_mut_ptr() as *mut _,
+        ret_ptr as *mut _,
+    );
 
-        (api.godot_string_destroy)(&mut class_name);
+    (api.godot_string_destroy)(&mut class_name);
 
-        ret
-    }
+    ret
 }
 
-pub fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T>
+pub unsafe fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T>
 where
     T: GodotObject,
 {
-    unsafe {
-        if !is_class(from, T::class_name()) {
-            return None;
-        }
-
-        Some(T::from_sys(from))
+    if !is_class(from, T::class_name()) {
+        return None;
     }
+
+    Some(T::from_sys(from))
 }

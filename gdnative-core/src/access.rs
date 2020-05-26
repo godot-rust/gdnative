@@ -219,6 +219,9 @@ mod tests {
     fn it_detects_unaligned_ptrs() {
         let vec: Vec<i64> = vec![1, 2, 3, 4, 5, 6, 7, 8];
         let aligned = vec.as_ptr();
+
+        // That's exactly what's being tested here. Thanks clippy!
+        #[allow(clippy::cast_ptr_alignment)]
         let unaligned = unsafe { (aligned as *const u8).add(1) as *const i64 };
 
         assert_eq!(
@@ -243,6 +246,8 @@ mod tests {
     fn it_can_copy_back_owned() {
         let mut arr: [u8; 512] = [0; 512];
 
+        // That's exactly what's being tested here. Thanks clippy!
+        #[allow(clippy::cast_ptr_alignment)]
         let unaligned_ptr = unsafe {
             let mut ptr = &mut arr[0] as *mut u8;
             for _ in 0..(512 - 64) {

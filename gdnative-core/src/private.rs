@@ -77,20 +77,14 @@ unsafe fn report_init_error(
             got,
         } => {
             if let Some(f) = (*options).report_version_mismatch {
-                f(
-                    (*options).gd_native_library,
-                    CString::new(format!("{}", api_type)).unwrap().as_ptr(),
-                    want,
-                    got,
-                );
+                let message = CString::new(format!("{}", api_type)).unwrap();
+                f((*options).gd_native_library, message.as_ptr(), want, got);
             }
         }
         sys::InitError::Generic { message } => {
             if let Some(f) = (*options).report_loading_error {
-                f(
-                    (*options).gd_native_library,
-                    CString::new(message).unwrap().as_ptr(),
-                );
+                let message = CString::new(message).unwrap();
+                f((*options).gd_native_library, message.as_ptr());
             }
         }
     }

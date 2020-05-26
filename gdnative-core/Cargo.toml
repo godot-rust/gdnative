@@ -10,7 +10,7 @@ workspace = ".."
 edition = "2018"
 
 [features]
-gd_test = []
+gd_test = ["approx"]
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.8.0" }
@@ -18,6 +18,9 @@ libc = "0.2"
 bitflags = "1.2"
 euclid = "0.20.1"
 parking_lot = "0.9.0"
+
+# Used for float comparisons in godot tests
+approx = { version = "0.3.2", optional = true }
 
 [build-dependencies]
 gdnative_bindings_generator = { path = "../bindings_generator", version = "0.8.0" }
