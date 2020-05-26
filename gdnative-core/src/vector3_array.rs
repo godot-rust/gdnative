@@ -201,6 +201,6 @@ godot_test!(
         arr.push(&Vector3::new(3.0, 4.0, 5.0));
         arr.push(&Vector3::new(5.0, 6.0, 7.0));
 
-        assert_eq!(format!("{:?}", arr), "[(1.0, 2.0, 3.0), (3.0, 4.0, 5.0), (5.0, 6.0, 7.0)]");
+        assert_eq!(format!("{:?}", arr), format!("{:?}", &[Vector3::new(1.0, 2.0, 3.0), Vector3::new(3.0, 4.0, 5.0), Vector3::new(5.0, 6.0, 7.0)]));
     }
 );
