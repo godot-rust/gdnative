@@ -1,5 +1,5 @@
-use crate::Vector3;
-use euclid::{default, Transform3D, UnknownUnit, Vector3D};
+use crate::{Quat, Vector3};
+use euclid::{approxeq::ApproxEq, default, Transform3D, UnknownUnit, Vector3D};
 
 /// A 3x3 matrix.
 #[repr(C)]
@@ -8,7 +8,26 @@ pub struct Basis {
     pub elements: [Vector3; 3],
 }
 
+impl Default for Basis {
+    fn default() -> Self {
+        Self::identity()
+    }
+}
+
 impl Basis {
+    /// The identity basis.
+    ///
+    /// Identical to calling [`Basis::default()`](#method.default).
+    pub const fn identity() -> Basis {
+        Self {
+            elements: [
+                Vector3::new(1.0, 0.0, 0.0),
+                Vector3::new(0.0, 1.0, 0.0),
+                Vector3::new(0.0, 0.0, 1.0),
+            ],
+        }
+    }
+
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_basis {
         unsafe { std::mem::transmute::<*const Basis, *const sys::godot_basis>(self as *const _) }
@@ -19,17 +38,23 @@ impl Basis {
         unsafe { std::mem::transmute::<sys::godot_basis, Self>(c) }
     }
 
-    pub fn identity() -> Basis {
-        Basis {
-            elements: [
-                Vector3::new(1.0, 0.0, 0.0),
-                Vector3::new(0.0, 1.0, 0.0),
-                Vector3::new(0.0, 0.0, 1.0),
-            ],
-        }
+    /// The basis that will flip something along the **X Axis** when used in a transformation.
+    pub const fn flip_x() -> Basis {
+        Basis::from_diagonal(Vector3::new(-1.0, 1.0, 1.0))
     }
 
-    pub fn from_diagonal(p_diag: Vector3) -> Basis {
+    /// The basis that will flip something along the **Y axis** when used in a transformation.
+    pub const fn flip_y() -> Basis {
+        Basis::from_diagonal(Vector3::new(1.0, -1.0, 1.0))
+    }
+
+    /// The basis that will flip something along the **Z axis** when used in a transformation.
+    pub const fn flip_z() -> Basis {
+        Basis::from_diagonal(Vector3::new(1.0, 1.0, -1.0))
+    }
+
+    /// Creates a Basis from the given [`Vector3`](./type.Vector3.html)
+    pub const fn from_diagonal(p_diag: Vector3) -> Basis {
         Basis {
             elements: [
                 Vector3::new(p_diag.x, 0.0, 0.0),
@@ -37,6 +62,384 @@ impl Basis {
                 Vector3::new(0.0, 0.0, p_diag.z),
             ],
         }
+    }
+
+    /// Creates a `Basis` from 3 [`Vector3`](./type.Vector3.html)s
+    pub const fn from_elements(elements: [Vector3; 3]) -> Self {
+        Self { elements }
+    }
+
+    /// Creates a rotation matrix.
+    pub fn from_euler(euler: Vector3) -> Self {
+        let mut b = Basis::default();
+        b.set_euler_yxz(&euler);
+        b
+    }
+
+    /// Rotation matrix from axis and angle.
+    ///
+    /// See <https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_angle>
+    ///
+    /// # Panics
+    ///
+    /// If `axis` is not normalized.
+    pub fn from_axis_angle(axis: &Vector3, phi: f32) -> Self {
+        assert!(
+            axis.length().approx_eq(&1.0),
+            "The axis Vector3 must be normalized."
+        );
+
+        let mut basis = Basis::default();
+        let [x, y, z] = &mut basis.elements;
+
+        let axis_sq = Vector3::new(axis.x * axis.x, axis.y * axis.y, axis.z * axis.z);
+        let cosine = phi.cos();
+
+        x.x = axis_sq.x + cosine * (1.0 - axis_sq.x);
+        y.y = axis_sq.y + cosine * (1.0 - axis_sq.y);
+        z.z = axis_sq.z + cosine * (1.0 - axis_sq.z);
+
+        let sine = phi.sin();
+        let t = 1.0 - cosine;
+
+        let mut xyzt = axis.x * axis.y * t;
+        let mut zyxs = axis.z * sine;
+        x.y = xyzt - zyxs;
+        y.x = xyzt + zyxs;
+
+        xyzt = axis.x * axis.z * t;
+        zyxs = axis.y * sine;
+        x.z = xyzt + zyxs;
+        z.x = xyzt - zyxs;
+
+        xyzt = axis.y * axis.z * t;
+        zyxs = axis.x * sine;
+        y.z = xyzt - zyxs;
+        z.y = xyzt + zyxs;
+
+        basis
+    }
+
+    /// Inverts the matrix.
+    ///
+    /// # Panics
+    ///
+    /// If the determinant of `self` is zero.
+    pub fn invert(&mut self) {
+        let [x, y, z] = self.elements;
+
+        let co = [
+            y.y * z.z - y.z * z.y,
+            y.z * z.x - y.x * z.z,
+            y.x * z.y - y.y * z.x,
+        ];
+
+        let det: f32 = x.x * co[0] + x.y * co[1] + x.z * co[2];
+        assert!(!det.approx_eq(&0.0), "Determinant was zero");
+
+        let s: f32 = 1.0 / det;
+
+        self.set_x(Vector3::new(co[0] * s, co[1] * s, co[2] * s));
+        self.set_y(Vector3::new(
+            (x.z * z.y - x.y * z.z) * s,
+            (x.x * z.z - x.z * z.x) * s,
+            (x.y * z.x - x.x * z.y) * s,
+        ));
+        self.set_z(Vector3::new(
+            (x.y * y.z - x.z * y.y) * s,
+            (x.z * y.x - x.x * y.z) * s,
+            (x.x * y.y - x.y * y.x) * s,
+        ));
+    }
+
+    /// Returns the inverse of the matrix.
+    ///
+    /// # Panics
+    ///
+    /// If the determinant of `self` is zero.
+    pub fn inverted(mut self) -> Basis {
+        self.invert();
+        self
+    }
+
+    /// Transposes the matrix.
+    pub fn transpose(&mut self) {
+        std::mem::swap(&mut self.elements[0].y, &mut self.elements[1].x);
+        std::mem::swap(&mut self.elements[0].z, &mut self.elements[2].x);
+        std::mem::swap(&mut self.elements[1].z, &mut self.elements[2].y);
+    }
+
+    /// Returns the transposed version of the matrix.
+    pub fn transposed(mut self) -> Basis {
+        self.transpose();
+        self
+    }
+
+    /// Returns the determinant of the matrix.
+    pub fn determinant(&self) -> f32 {
+        let [x, y, z] = &self.elements;
+        x.x * (y.y * z.z - z.y * y.z) // x
+            - y.x * (x.y * z.z - z.y * x.z) // y
+            + z.x * (x.y * y.z - y.y * x.z) // z
+    }
+
+    /// Orthonormalizes the matrix.
+    ///
+    /// Performs a [Gram-Schmidt orthonormalization](https://en.wikipedia.org/wiki/Gram-Schmidt_process) on the basis of the matrix.
+    /// This can be useful to call from time to time to avoid rounding errors for orthogonal matrices.
+    ///
+    /// # Panics
+    ///
+    /// If the determinant of `self` is zero.
+    pub fn orthonormalize(&mut self) {
+        assert!(
+            !self.determinant().approx_eq(&0.0),
+            "Determinant should not be zero."
+        );
+
+        // Gram-Schmidt Process
+        let mut x = self.x();
+        let mut y = self.y();
+        let mut z = self.z();
+
+        x = x.normalize();
+        y = y - x * (x.dot(y));
+        y = y.normalize();
+        z = z - x * (x.dot(z)) - y * (y.dot(z));
+        z = z.normalize();
+
+        self.set_x(x);
+        self.set_y(y);
+        self.set_z(z);
+    }
+
+    /// Returns an orthonormalized version of the matrix.
+    ///
+    /// See [`Basis::orthonormalize()`](#method.orthonormalize)
+    pub fn orthonormalized(mut self) -> Basis {
+        self.orthonormalize();
+        self
+    }
+
+    /// Returns `true` if `self` and `other` are approximately equal.
+    pub fn approx_eq(&self, other: &Basis) -> bool {
+        return self.elements[0].approx_eq(&other.elements[0])
+            && self.elements[1].approx_eq(&other.elements[1])
+            && self.elements[2].approx_eq(&other.elements[2]);
+    }
+
+    fn is_orthogonal(&self) -> bool {
+        let identity = Self::identity();
+        let m = (*self) * self.transposed();
+        m.approx_eq(&identity)
+    }
+
+    fn is_rotation(&self) -> bool {
+        let det = self.determinant();
+        det.approx_eq(&1.0) && self.is_orthogonal()
+    }
+
+    /// Multiplies the matrix from left by the rotation matrix: M -> R.M
+    ///
+    /// The main use of `Basis` is as a `Transform.basis`, which is used as the transformation matrix
+    /// of the 3D object. `rotated()` here refers to rotation of the object (which is `R * self`), not the matrix itself.
+    pub fn rotated(self, axis: Vector3, phi: f32) -> Basis {
+        let rot = Basis::from_axis_angle(&axis, phi);
+        rot * self
+    }
+
+    /// Rotates the matrix.
+    ///
+    /// If object rotation is needed, see [`Basis::rotated()`](#method.rotated)
+    pub fn rotate(&mut self, axis: Vector3, phi: f32) {
+        *self = self.rotated(axis, phi);
+    }
+
+    /// Converts matrix into a [Quaternion](./type.Quat.html)
+    ///
+    /// Quaternions are frequently used in 3D graphics, because they enable easy and cheap interpolation. However, they are less human-readable. For Euler angles, see [`Basis::to_euler()`](#method.to_euler).
+    ///
+    /// # Panics
+    ///
+    /// If `self` is not normalized.
+    pub fn to_quat(&self) -> Quat {
+        // Assumes that the matrix can be decomposed into a proper rotation and scaling matrix as M = R.S,
+        // and returns the Euler angles corresponding to the rotation part, complementing get_scale().
+        // See the comment in get_scale() for further information.
+        let mut m = self.orthonormalized();
+        let det = m.determinant();
+        if det < 0.0 {
+            // Ensure that the determinant is 1, such that result is a proper rotation matrix which can be represented by Euler angles.
+            m.scale(&Vector3::new(-1.0, -1.0, -1.0));
+        }
+
+        assert!(m.is_rotation(), "Basis must be normalized in order to be casted to a Quaternion. Use to_quat() or call orthonormalized() instead.");
+
+        // Allow getting a quaternion from an unnormalized transform
+        let trace = m.elements[0].x + m.elements[1].y + m.elements[2].z;
+        let mut temp = [0_f32; 4];
+
+        if trace > 0.0 {
+            let mut s = (trace + 1.0).sqrt();
+            temp[3] = s * 0.5;
+            s = 0.5 / s;
+
+            temp[0] = (m.elements[2].y - m.elements[1].z) * s;
+            temp[1] = (m.elements[0].z - m.elements[2].x) * s;
+            temp[2] = (m.elements[1].x - m.elements[0].y) * s;
+        } else {
+            let i = if m.elements[0].x < m.elements[1].y {
+                if m.elements[1].y < m.elements[2].z {
+                    2
+                } else {
+                    1
+                }
+            } else {
+                if m.elements[0].x < m.elements[2].z {
+                    2
+                } else {
+                    0
+                }
+            };
+
+            let j = (i + 1) % 3;
+            let k = (i + 2) % 3;
+
+            let elements_arr: [[f32; 3]; 3] = [
+                m.elements[0].to_array(),
+                m.elements[1].to_array(),
+                m.elements[2].to_array(),
+            ];
+
+            let mut s = (elements_arr[i][i] - elements_arr[j][j] - elements_arr[k][k] + 1.0).sqrt();
+            temp[i] = s * 0.5;
+            s = 0.5 / s;
+
+            temp[3] = (elements_arr[k][j] - elements_arr[j][k]) * s;
+            temp[j] = (elements_arr[j][i] + elements_arr[i][j]) * s;
+            temp[k] = (elements_arr[k][i] + elements_arr[i][k]) * s;
+        }
+
+        let [a, b, c, r] = temp;
+        Quat::quaternion(a, b, c, r)
+    }
+
+    /// Returns the scale of the matrix.
+    pub fn to_scale(&self) -> Vector3 {
+        let det = self.determinant();
+        let det_sign = if det < 0.0 { -1.0 } else { 1.0 };
+        Vector3::new(
+            Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x).length(),
+            Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y).length(),
+            Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z).length(),
+        ) * det_sign
+    }
+
+    /// Multiplies the matrix from left by the scaling matrix: M -> S.M
+    ///
+    /// See the comment for [Basis::rotated](#method.rotated) for further explanation.
+    fn scale(&mut self, s: &Vector3) {
+        self.elements[0] *= s.x;
+        self.elements[1] *= s.y;
+        self.elements[2] *= s.z;
+    }
+
+    /// Introduce an additional scaling specified by the given 3D scaling factor.
+    pub fn scaled(mut self, scale: &Vector3) -> Basis {
+        self.scale(scale);
+        self
+    }
+
+    /// Returns the `Basis`’s rotation in the form of Euler angles.
+    ///
+    /// In the YXZ convention: first **Z**, then **X**, and **Y** last.
+    ///
+    /// The returned `Vector3` contains the rotation angles in the format (**X** angle, **Y** angle, **Z** angle).
+    ///
+    /// See [`Basis::to_quat`](#method.to_quat) if you need a quaternion instead.
+    pub fn to_euler(&self) -> Vector3 {
+        let mut euler = Vector3::zero();
+
+        let m12 = self.elements[1].z;
+        if m12 < 1.0 {
+            if m12 > -1.0 {
+                // is this a pure X rotation?
+                if self.elements[1].x.approx_eq(&0.0)
+                    && self.elements[0].y.approx_eq(&0.0)
+                    && self.elements[0].z.approx_eq(&0.0)
+                    && self.elements[2].x.approx_eq(&0.0)
+                    && self.elements[0].x.approx_eq(&1.0)
+                {
+                    // return the simplest form (human friendlier in editor and scripts)
+                    euler.x = (-m12).atan2(self.elements[1].y);
+                    euler.y = 0.0;
+                    euler.z = 0.0;
+                } else {
+                    euler.x = (-m12).asin();
+                    euler.y = self.elements[0].z.atan2(self.elements[2].z);
+                    euler.z = self.elements[1].x.atan2(self.elements[1].y);
+                }
+            } else {
+                // m12 == -1
+                euler.x = core::f32::consts::PI * 0.5;
+                euler.y = -(-self.elements[0].y).atan2(self.elements[0].x);
+                euler.z = 0.0;
+            }
+        } else {
+            // m12 == 1
+            euler.x = -core::f32::consts::PI * 0.5;
+            euler.y = -(-self.elements[0].y).atan2(self.elements[0].x);
+            euler.z = 0.0;
+        }
+
+        euler
+    }
+
+    fn set_euler_yxz(&mut self, euler: &Vector3) {
+        let c = euler.x.cos();
+        let s = euler.x.sin();
+        let xmat = Basis::from_elements([
+            Vector3::new(1.0, 0.0, 0.0),
+            Vector3::new(0.0, c, -s),
+            Vector3::new(0.0, s, c),
+        ]);
+        let c = euler.y.cos();
+        let s = euler.y.sin();
+        let ymat = Basis::from_elements([
+            Vector3::new(c, 0.0, s),
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(-s, 0.0, c),
+        ]);
+
+        let c = euler.z.cos();
+        let s = euler.z.sin();
+        let zmat = Basis::from_elements([
+            Vector3::new(c, -s, 0.0),
+            Vector3::new(s, c, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+        ]);
+
+        *self = ymat * xmat * zmat;
+    }
+
+    /// Returns a vector transformed (multiplied) by the matrix.
+    pub fn xform(&self, v: Vector3) -> Vector3 {
+        Vector3::new(
+            self.elements[0].dot(v),
+            self.elements[1].dot(v),
+            self.elements[2].dot(v),
+        )
+    }
+
+    /// Returns a vector transformed (multiplied) by the transposed matrix.
+    ///
+    /// Note: This results in a multiplication by the inverse of the matrix only if it represents a rotation-reflection.
+    pub fn xform_inv(&self, v: Vector3) -> Vector3 {
+        Vector3::new(
+            (self.elements[0].x * v.x) + (self.elements[1].x * v.y) + (self.elements[2].x * v.z),
+            (self.elements[0].y * v.x) + (self.elements[1].y * v.y) + (self.elements[2].y * v.z),
+            (self.elements[0].z * v.x) + (self.elements[1].z * v.y) + (self.elements[2].z * v.z),
+        )
     }
 
     /// Creates a `Basis` from the rotation and scaling of the provided transform.
@@ -61,55 +464,78 @@ impl Basis {
         }
     }
 
-    /// Transposed dot product with the x axis of the matrix.
+    /// Transposed dot product with the **X Axis** of the matrix.
     pub fn tdotx(&self, v: Vector3) -> f32 {
         self.elements[0].x * v.x + self.elements[1].x * v.y + self.elements[2].x * v.z
     }
 
-    /// Transposed dot product with the y axis of the matrix.
+    /// Transposed dot product with the **Y axis** of the matrix.
     pub fn tdoty(&self, v: Vector3) -> f32 {
         self.elements[0].y * v.x + self.elements[1].y * v.y + self.elements[2].y * v.z
     }
 
-    /// Transposed dot product with the z axis of the matrix.
+    /// Transposed dot product with the **Z axis** of the matrix.
     pub fn tdotz(&self, v: Vector3) -> f32 {
         self.elements[0].z * v.x + self.elements[1].z * v.y + self.elements[2].z * v.z
     }
 
-    /// Get the x axis of the matrix
+    /// Get the **X Axis** of the matrix
     pub fn x(&self) -> Vector3 {
         Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x)
     }
 
-    /// Set the x axis of the matrix
+    /// Set the **X Axis** of the matrix
     pub fn set_x(&mut self, v: Vector3) {
         self.elements[0].x = v.x;
         self.elements[1].x = v.y;
         self.elements[2].x = v.z;
     }
 
-    /// Get the y axis of the matrix
+    /// Get the **Y axis** of the matrix
     pub fn y(&self) -> Vector3 {
         Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y)
     }
 
-    /// Set the y axis of the matrix
+    /// Set the **Y axis** of the matrix
     pub fn set_y(&mut self, v: Vector3) {
         self.elements[0].y = v.x;
         self.elements[1].y = v.y;
         self.elements[2].y = v.z;
     }
 
-    /// Get the z axis of the matrix
+    /// Get the **Z axis** of the matrix
     pub fn z(&self) -> Vector3 {
         Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z)
     }
 
-    /// Set the z access of the matrix
+    /// Set the **Z axis** of the matrix
     pub fn set_z(&mut self, v: Vector3) {
         self.elements[0].z = v.x;
         self.elements[1].z = v.y;
         self.elements[2].z = v.z;
+    }
+}
+
+impl core::ops::Mul<Basis> for Basis {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self {
+        return Basis::from_elements([
+            Vector3::new(
+                rhs.tdotx(self.elements[0]),
+                rhs.tdoty(self.elements[0]),
+                rhs.tdotz(self.elements[0]),
+            ),
+            Vector3::new(
+                rhs.tdotx(self.elements[1]),
+                rhs.tdoty(self.elements[1]),
+                rhs.tdotz(self.elements[1]),
+            ),
+            Vector3::new(
+                rhs.tdotx(self.elements[2]),
+                rhs.tdoty(self.elements[2]),
+                rhs.tdotz(self.elements[2]),
+            ),
+        ]);
     }
 }
 
@@ -150,7 +576,6 @@ mod tests {
     }
 
     #[test]
-
     fn set_is_sane() {
         let mut basis = Basis {
             elements: [Vector3::zero(), Vector3::zero(), Vector3::zero()],
@@ -163,5 +588,123 @@ mod tests {
         assert!(basis.elements[0] == Vector3::new(1.0, 2.0, 3.0));
         assert!(basis.elements[1] == Vector3::new(4.0, 5.0, 6.0));
         assert!(basis.elements[2] == Vector3::new(7.0, 8.0, 9.0));
+    }
+
+    fn test_inputs() -> (Basis, Basis) {
+        let v = Vector3::new(37.51756, 20.39467, 49.96816);
+        let vn = v.normalize();
+        let b = Basis::from_euler(v);
+        let bn = Basis::from_euler(vn);
+        (b, bn)
+    }
+
+    #[test]
+    fn determinant() {
+        let (b, _bn) = test_inputs();
+
+        assert!(b.determinant().approx_eq(&1.0), "Determinant should be 1.0");
+    }
+
+    #[test]
+    fn euler() {
+        let (_b, bn) = test_inputs();
+
+        assert!(Vector3::new(0.57079, 0.310283, 0.760213).approx_eq(&bn.to_euler()));
+    }
+
+    #[test]
+    fn orthonormalized() {
+        let (b, _bn) = test_inputs();
+
+        let expected = Basis::from_elements([
+            Vector3::new(0.077431, -0.165055, 0.98324),
+            Vector3::new(-0.288147, 0.94041, 0.180557),
+            Vector3::new(-0.95445, -0.297299, 0.025257),
+        ]);
+        assert!(expected.approx_eq(&b.orthonormalized()));
+    }
+
+    #[test]
+    fn scaled() {
+        let (b, _bn) = test_inputs();
+
+        let expected = Basis::from_elements([
+            Vector3::new(0.052484, -0.111876, 0.666453),
+            Vector3::new(0.012407, -0.040492, -0.007774),
+            Vector3::new(-0.682131, -0.212475, 0.018051),
+        ]);
+        assert!(expected.approx_eq(&b.scaled(&Vector3::new(0.677813, -0.043058, 0.714685))));
+    }
+
+    #[test]
+    fn rotated() {
+        let (b, _bn) = test_inputs();
+
+        let r = Vector3::new(-50.167156, 60.677813, -70.043058).normalize();
+        let expected = Basis::from_elements([
+            Vector3::new(-0.676245, 0.113805, 0.727833),
+            Vector3::new(-0.467094, 0.697765, -0.54309),
+            Vector3::new(-0.569663, -0.707229, -0.418703),
+        ]);
+        assert!(expected.approx_eq(&b.rotated(r, 1.0)));
+    }
+
+    #[test]
+    fn to_quat() {
+        let (b, _bn) = test_inputs();
+
+        assert!(Quat::quaternion(-0.167156, 0.677813, -0.043058, 0.714685).approx_eq(&b.to_quat()));
+    }
+
+    #[test]
+    fn scale() {
+        let (b, _bn) = test_inputs();
+
+        assert!(Vector3::new(1.0, 1.0, 1.0).approx_eq(&b.to_scale()));
+    }
+
+    #[test]
+    fn approx_eq() {
+        let (b, _bn) = test_inputs();
+        assert!(!b.approx_eq(&Basis::from_euler(Vector3::new(37.517, 20.394, 49.968))));
+    }
+
+    #[test]
+    fn transposed() {
+        let (b, _bn) = test_inputs();
+        let expected = Basis::from_elements([
+            Vector3::new(0.077431, -0.288147, -0.95445),
+            Vector3::new(-0.165055, 0.94041, -0.297299),
+            Vector3::new(0.98324, 0.180557, 0.025257),
+        ]);
+        assert!(expected.approx_eq(&b.transposed()));
+    }
+
+    #[test]
+    fn xform() {
+        let (b, _bn) = test_inputs();
+
+        assert!(Vector3::new(-0.273471, 0.478102, -0.690386)
+            .approx_eq(&b.xform(Vector3::new(0.5, 0.7, -0.2))));
+    }
+
+    #[test]
+    fn xform_inv() {
+        let (b, _bn) = test_inputs();
+
+        assert!(Vector3::new(-0.884898, -0.460316, 0.071165)
+            .approx_eq(&b.xform_inv(Vector3::new(0.077431, -0.165055, 0.98324))));
+    }
+
+    #[test]
+    fn inverse() {
+        let (b, _bn) = test_inputs();
+
+        let expected = Basis::from_elements([
+            Vector3::new(0.077431, -0.288147, -0.95445),
+            Vector3::new(-0.165055, 0.94041, -0.297299),
+            Vector3::new(0.98324, 0.180557, 0.025257),
+        ]);
+        assert!(expected.approx_eq(&b.inverted()));
     }
 }
