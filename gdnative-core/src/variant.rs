@@ -605,11 +605,11 @@ impl Variant {
     }
 
     pub(crate) fn cast_ref<'l>(ptr: *const sys::godot_variant) -> &'l Variant {
-        unsafe { transmute(ptr) }
+        unsafe { &*(ptr as *const variant::Variant) }
     }
 
     pub(crate) fn cast_mut_ref<'l>(ptr: *mut sys::godot_variant) -> &'l mut Variant {
-        unsafe { transmute(ptr) }
+        unsafe { &mut *(ptr as *mut variant::Variant) }
     }
 
     /// Returns the internal ffi representation of the variant and consumes
