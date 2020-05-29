@@ -37,6 +37,11 @@
 //!
 //! - Your `NativeClass` type is not `Send`, and you will only ever use it from the thread where
 //!   it's originally created.
+//!
+//! ### Use `Aether<T>` when:
+//!
+//! - Your `NativeClass` type is a zero-sized type (ZST) that is `Copy + Default`.
+//! - You don't need to do anything special in `Drop`.
 
 use parking_lot::{Mutex, RwLock};
 use std::fmt::Debug;
@@ -545,5 +550,70 @@ impl<T> Clone for LocalCellData<T> {
         LocalCellData {
             inner: self.inner.clone(),
         }
+    }
+}
+
+/// Special user-data wrapper intended for zero-sized types, that does not perform any
+/// allocation or synchronization at runtime. Does not implement `MapMut`.
+///
+/// `Aether` produces a value using `Default` each time it's mapped. This is most useful when
+/// used with auto-load scripts to simulate static functions, since actual static functions
+/// can't be exported in GDNative.
+#[derive(Copy, Debug)]
+pub struct Aether<T> {
+    _marker: PhantomData<T>,
+}
+
+unsafe impl<T> Send for Aether<T> {}
+unsafe impl<T> Sync for Aether<T> {}
+
+impl<T> Clone for Aether<T> {
+    fn clone(&self) -> Self {
+        Aether::default()
+    }
+}
+
+impl<T> Default for Aether<T> {
+    fn default() -> Self {
+        Aether {
+            _marker: PhantomData,
+        }
+    }
+}
+
+unsafe impl<T> UserData for Aether<T>
+where
+    T: NativeClass + Copy + Default,
+{
+    type Target = T;
+
+    fn new(_val: Self::Target) -> Self {
+        Aether::default()
+    }
+
+    unsafe fn into_user_data(self) -> *const libc::c_void {
+        1 as *const libc::c_void
+    }
+
+    unsafe fn consume_user_data_unchecked(_ptr: *const libc::c_void) -> Self {
+        Aether::default()
+    }
+
+    unsafe fn clone_from_user_data_unchecked(_ptr: *const libc::c_void) -> Self {
+        Aether::default()
+    }
+}
+
+impl<T> Map for Aether<T>
+where
+    T: NativeClass + Copy + Default,
+{
+    type Err = Infallible;
+
+    fn map<F, U>(&self, op: F) -> Result<U, Infallible>
+    where
+        F: FnOnce(&T) -> U,
+    {
+        Ok(op(&Default::default()))
     }
 }
