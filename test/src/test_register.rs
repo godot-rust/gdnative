@@ -13,11 +13,12 @@ pub(crate) fn register(handle: &init::InitHandle) {
     handle.add_class::<RegisterProperty>();
 }
 
+#[derive(Copy, Clone, Debug, Default)]
 struct RegisterSignal;
 
 impl NativeClass for RegisterSignal {
     type Base = Reference;
-    type UserData = user_data::ArcData<RegisterSignal>;
+    type UserData = user_data::Aether<RegisterSignal>;
     fn class_name() -> &'static str {
         "RegisterSignal"
     }
