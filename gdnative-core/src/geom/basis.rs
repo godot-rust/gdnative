@@ -223,9 +223,9 @@ impl Basis {
 
     /// Returns `true` if `self` and `other` are approximately equal.
     pub fn approx_eq(&self, other: &Basis) -> bool {
-        return self.elements[0].approx_eq(&other.elements[0])
+        self.elements[0].approx_eq(&other.elements[0])
             && self.elements[1].approx_eq(&other.elements[1])
-            && self.elements[2].approx_eq(&other.elements[2]);
+            && self.elements[2].approx_eq(&other.elements[2])
     }
 
     fn is_orthogonal(&self) -> bool {
@@ -266,17 +266,17 @@ impl Basis {
         // Assumes that the matrix can be decomposed into a proper rotation and scaling matrix as M = R.S,
         // and returns the Euler angles corresponding to the rotation part, complementing get_scale().
         // See the comment in get_scale() for further information.
-        let mut m = self.orthonormalized();
-        let det = m.determinant();
+        let mut matrix = self.orthonormalized();
+        let det = matrix.determinant();
         if det < 0.0 {
             // Ensure that the determinant is 1, such that result is a proper rotation matrix which can be represented by Euler angles.
-            m.scale(&Vector3::new(-1.0, -1.0, -1.0));
+            matrix.scale(&Vector3::new(-1.0, -1.0, -1.0));
         }
 
-        assert!(m.is_rotation(), "Basis must be normalized in order to be casted to a Quaternion. Use to_quat() or call orthonormalized() instead.");
+        assert!(matrix.is_rotation(), "Basis must be normalized in order to be casted to a Quaternion. Use to_quat() or call orthonormalized() instead.");
 
         // Allow getting a quaternion from an unnormalized transform
-        let trace = m.elements[0].x + m.elements[1].y + m.elements[2].z;
+        let trace = matrix.elements[0].x + matrix.elements[1].y + matrix.elements[2].z;
         let mut temp = [0_f32; 4];
 
         if trace > 0.0 {
@@ -284,31 +284,29 @@ impl Basis {
             temp[3] = s * 0.5;
             s = 0.5 / s;
 
-            temp[0] = (m.elements[2].y - m.elements[1].z) * s;
-            temp[1] = (m.elements[0].z - m.elements[2].x) * s;
-            temp[2] = (m.elements[1].x - m.elements[0].y) * s;
+            temp[0] = (matrix.elements[2].y - matrix.elements[1].z) * s;
+            temp[1] = (matrix.elements[0].z - matrix.elements[2].x) * s;
+            temp[2] = (matrix.elements[1].x - matrix.elements[0].y) * s;
         } else {
-            let i = if m.elements[0].x < m.elements[1].y {
-                if m.elements[1].y < m.elements[2].z {
+            let i = if matrix.elements[0].x < matrix.elements[1].y {
+                if matrix.elements[1].y < matrix.elements[2].z {
                     2
                 } else {
                     1
                 }
+            } else if matrix.elements[0].x < matrix.elements[2].z {
+                2
             } else {
-                if m.elements[0].x < m.elements[2].z {
-                    2
-                } else {
-                    0
-                }
+                0
             };
 
             let j = (i + 1) % 3;
             let k = (i + 2) % 3;
 
             let elements_arr: [[f32; 3]; 3] = [
-                m.elements[0].to_array(),
-                m.elements[1].to_array(),
-                m.elements[2].to_array(),
+                matrix.elements[0].to_array(),
+                matrix.elements[1].to_array(),
+                matrix.elements[2].to_array(),
             ];
 
             let mut s = (elements_arr[i][i] - elements_arr[j][j] - elements_arr[k][k] + 1.0).sqrt();
@@ -519,7 +517,7 @@ impl Basis {
 impl core::ops::Mul<Basis> for Basis {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self {
-        return Basis::from_elements([
+        Basis::from_elements([
             Vector3::new(
                 rhs.tdotx(self.elements[0]),
                 rhs.tdoty(self.elements[0]),
@@ -535,7 +533,7 @@ impl core::ops::Mul<Basis> for Basis {
                 rhs.tdoty(self.elements[2]),
                 rhs.tdotz(self.elements[2]),
             ),
-        ]);
+        ])
     }
 }
 

@@ -231,15 +231,12 @@ impl ExpEasingHint {
     pub fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
-        let mut is_second = false;
-
         if self.is_attenuation {
             s.push_str("attenuation");
-            is_second = true;
         }
 
         if self.is_in_out {
-            if is_second {
+            if self.is_attenuation {
                 s.push(',');
             }
             s.push_str("inout");

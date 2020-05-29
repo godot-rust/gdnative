@@ -80,7 +80,7 @@ fn test_constructor() -> bool {
         path.free();
     }
 
-    return true;
+    true
 }
 
 fn test_underscore_method_binding() -> bool {

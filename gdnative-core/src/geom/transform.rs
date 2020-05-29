@@ -44,7 +44,7 @@ impl Transform {
             basis: Basis::from_typed_transform(transform),
             origin: transform
                 .transform_point3d(Point3D::origin())
-                .unwrap_or(Point3D::origin())
+                .unwrap_or_else(Point3D::origin)
                 .to_vector()
                 .to_untyped(),
         }

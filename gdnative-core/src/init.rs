@@ -36,8 +36,6 @@ use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
 
-use libc;
-
 use crate::private::get_api;
 use crate::NativeClass;
 
@@ -132,7 +130,7 @@ impl InitHandle {
                     _this: *mut sys::godot_object,
                     _method_data: *mut libc::c_void,
                     user_data: *mut libc::c_void,
-                ) -> () {
+                ) {
                     if user_data.is_null() {
                         godot_error!(
                             "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
@@ -176,16 +174,16 @@ impl InitHandle {
                 crate::type_tag::create::<C>(),
             );
 
-            let mut builder = ClassBuilder {
+            let builder = ClassBuilder {
                 init_handle: self.handle,
                 class_name,
                 _marker: PhantomData,
             };
 
-            C::register_properties(&mut builder);
+            C::register_properties(&builder);
 
             // register methods
-            C::register(&mut builder);
+            C::register(&builder);
         }
     }
 }
@@ -279,7 +277,7 @@ impl<C: NativeClass> ClassBuilder<C> {
 
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
         self.add_method_advanced(ScriptMethod {
-            name: name,
+            name,
             method_ptr: Some(method),
             attributes: ScriptMethodAttributes {
                 rpc_mode: RpcMode::Disabled,

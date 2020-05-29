@@ -2,8 +2,6 @@
 
 use std::mem;
 
-use libc;
-
 use crate::FromVariant;
 use crate::NativeClass;
 use crate::ToVariant;
