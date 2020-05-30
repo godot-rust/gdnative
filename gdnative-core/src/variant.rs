@@ -42,6 +42,7 @@ macro_rules! variant_to_type_transmute {
             $(#[$to_attr])*
             pub fn $to_method(&self) -> $ToType {
                 unsafe {
+                    #[allow(clippy::useless_transmute)]
                     transmute((get_api().$to_gd_method)(&self.0))
                 }
             }
@@ -1105,6 +1106,7 @@ macro_rules! to_variant_transmute {
                     unsafe {
                         let api = get_api();
                         let mut dest = sys::godot_variant::default();
+                        #[allow(clippy::useless_transmute)]
                         (api.$ctor)(&mut dest, transmute(self));
                         Variant::from_sys(dest)
                     }
