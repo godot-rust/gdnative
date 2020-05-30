@@ -88,7 +88,7 @@ impl StringArray {
         unsafe { (get_api().godot_pool_string_array_size)(&self.0) }
     }
 
-    pub fn read<'a>(&'a self) -> Read<'a> {
+    pub fn read(&self) -> Read {
         unsafe {
             MaybeUnaligned::new(ReadGuard::new(self.sys()))
                 .try_into_aligned()
@@ -96,7 +96,7 @@ impl StringArray {
         }
     }
 
-    pub fn write<'a>(&'a mut self) -> Write<'a> {
+    pub fn write(&mut self) -> Write {
         unsafe {
             MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
                 .try_into_aligned()
