@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2020-05-31
+
+### Added
+
+- Exported methods can now have optional arguments. Arguments with the `#[opt]` attribute are optional in the scripting API. Default values are obtained using `Default` if not provided by the caller.
+
+- Added a `claim` method on the `GodotObject` trait, which clones the reference if the underlying type is reference-counted (extends from `Reference`), or aliases it if it isn't. This replaces the `Class::from_sys(object.to_sys())` "idiom" that relied on hidden public items (`from_sys` and `to_sys`) that are not actually intended to be part of the public API.
+
+- Fields can now be skipped with the `#[variant(skip)]` attribute when deriving `FromVariant` and `ToVariant`.
+
+- Implemented various methods on `Basis`.
+
+- Implemented `Display` for `GodotString`.
+
+- Implemented `Debug` for core typed arrays.
+
+- Added `Aether<T>`, a special `UserData` wrapper for ZSTs. This type does not perform any allocation or synchronization at runtime, but produces a value using `Default` each time it's mapped.
+
+- Include paths for the Android SDK can now be inferred from environment variables.
+
+- A dodge-the-creeps example has been added to the repo.
+
+### Changed
+
+- Initialization errors are now reported using GDNative APIs, instead of panics. This includes situations where API struct versions mismatch, or if some API functions are unavailable.
+
+- Paths to SDKs for Apple platforms are now obtained using `xcrun`.
+
+- The public fields of `ExportInfo` are now deprecated. They will become private in 0.9. Use one of the constructors or `Export::export_info` instead.
+
+- Several public types that are unused in the current API have been deprecated.
+
+- Free-on-drop wrappers are now deprecated. Use of free-on-drop wrappers is no longer recommended due to upcoming changes in ownership semantics in 0.9. Users are suggested to call `free` or `queue_free` manually instead. They will be removed in 0.9.
+
+### Fixed
+
+- Fixed a problem where the build script for `gdnative-sys` will try to include macOS headers when building for mobile targets from a Mac, causing the build to fail.
+
+- Fixed SDK include paths for the iOS Simulator, whose SDK was separate from the one for real iOS devices. This allows building for the iOS Simulator platform.
+
+- Fixed a case of undefined behavior (UB) when Rust scripts are attached to incompatible base classes in the Godot Editor (e.g. attaching a `NativeClass` with `Base = Node2D` to a `Spatial` node).
+
 ## [0.8.0] - 2020-03-09
 
 ### Added
