@@ -9,6 +9,7 @@ mod test_free_ub;
 mod test_register;
 mod test_return_leak;
 mod test_variant_call_args;
+mod test_variant_ops;
 
 #[no_mangle]
 pub extern "C" fn run_tests(
@@ -62,6 +63,7 @@ pub extern "C" fn run_tests(
     status &= test_register::run_tests();
     status &= test_return_leak::run_tests();
     status &= test_variant_call_args::run_tests();
+    status &= test_variant_ops::run_tests();
 
     gdnative::Variant::from_bool(status).forget()
 }
@@ -225,6 +227,7 @@ fn init(handle: init::InitHandle) {
     test_register::register(&handle);
     test_return_leak::register(&handle);
     test_variant_call_args::register(&handle);
+    test_variant_ops::register(&handle);
 }
 
 godot_gdnative_init!();

@@ -149,44 +149,69 @@ impl CallError {
     }
 }
 
-// TODO: Looks like this is missing from the godot_headers bindings.
-// It's risky to redefine it here and count on the fact that the integer
-// constants will be the same.
+/// Godot variant operator kind.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VariantOperator {
-    //comparison
-    Equal,        // = OP_EQUAL,
-    NotEqual,     // = OP_NOT_EQUAL,
-    Less,         // = OP_LESS,
-    LessEqual,    // =  OP_LESS_EQUAL,
-    Greater,      // =  OP_GREATER,
-    GreaterEqual, // =  OP_GREATER_EQUAL,
-    //mathematic
-    Add,      // = OP_ADD,
-    Subtact,  // = OP_SUBTRACT,
-    Multiply, // = OP_MULTIPLY,
-    Divide,   // = OP_DIVIDE,
-    Negate,   // = OP_NEGATE,
-    Positive, // = OP_POSITIVE,
-    Module,   // = OP_MODULE,
-    Concat,   // = OP_STRING_CONCAT,
-    //bitwise
-    ShiftLeft,  // = OP_SHIFT_LEFT,
-    ShiftRight, // = OP_SHIFT_RIGHT,
-    BitAnd,     // = OP_BIT_AND,
-    BitOr,      // = OP_BIT_OR,
-    BitXor,     // = OP_BIT_XOR,
-    BitNegate,  // = OP_BIT_NEGATE,
-    //logic
-    And, // = OP_AND,
-    Or,  // = OP_OR,
-    Xor, // = OP_XOR,
-    Not, // = OP_NOT,
-    //containment
-    In,  // = OP_IN,
-    Max, // = OP_MAX
+    // Comparison
+    Equal = sys::godot_variant_operator_GODOT_VARIANT_OP_EQUAL as u32,
+    NotEqual = sys::godot_variant_operator_GODOT_VARIANT_OP_NOT_EQUAL as u32,
+    Less = sys::godot_variant_operator_GODOT_VARIANT_OP_LESS as u32,
+    LessEqual = sys::godot_variant_operator_GODOT_VARIANT_OP_LESS_EQUAL as u32,
+    Greater = sys::godot_variant_operator_GODOT_VARIANT_OP_GREATER as u32,
+    GreaterEqual = sys::godot_variant_operator_GODOT_VARIANT_OP_GREATER_EQUAL as u32,
+
+    // Mathematic
+    Add = sys::godot_variant_operator_GODOT_VARIANT_OP_ADD as u32,
+    Subtract = sys::godot_variant_operator_GODOT_VARIANT_OP_SUBTRACT as u32,
+    Multiply = sys::godot_variant_operator_GODOT_VARIANT_OP_MULTIPLY as u32,
+    Divide = sys::godot_variant_operator_GODOT_VARIANT_OP_DIVIDE as u32,
+    Negate = sys::godot_variant_operator_GODOT_VARIANT_OP_NEGATE as u32,
+    Positive = sys::godot_variant_operator_GODOT_VARIANT_OP_POSITIVE as u32,
+    Module = sys::godot_variant_operator_GODOT_VARIANT_OP_MODULE as u32,
+    StringConcat = sys::godot_variant_operator_GODOT_VARIANT_OP_STRING_CONCAT as u32,
+
+    // Bitwise
+    ShiftLeft = sys::godot_variant_operator_GODOT_VARIANT_OP_SHIFT_LEFT as u32,
+    ShiftRight = sys::godot_variant_operator_GODOT_VARIANT_OP_SHIFT_RIGHT as u32,
+    BitAnd = sys::godot_variant_operator_GODOT_VARIANT_OP_BIT_AND as u32,
+    BitOr = sys::godot_variant_operator_GODOT_VARIANT_OP_BIT_OR as u32,
+    BitXor = sys::godot_variant_operator_GODOT_VARIANT_OP_BIT_XOR as u32,
+    BitNegate = sys::godot_variant_operator_GODOT_VARIANT_OP_BIT_NEGATE as u32,
+
+    // Logic
+    And = sys::godot_variant_operator_GODOT_VARIANT_OP_AND as u32,
+    Or = sys::godot_variant_operator_GODOT_VARIANT_OP_OR as u32,
+    Xor = sys::godot_variant_operator_GODOT_VARIANT_OP_XOR as u32,
+    Not = sys::godot_variant_operator_GODOT_VARIANT_OP_NOT as u32,
+
+    // Containment
+    In = sys::godot_variant_operator_GODOT_VARIANT_OP_IN as u32,
 }
+
+impl VariantOperator {
+    const MAX: u32 = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX as u32;
+
+    #[doc(hidden)]
+    pub fn to_sys(self) -> sys::godot_variant_operator {
+        self as u32 as sys::godot_variant_operator
+    }
+
+    #[doc(hidden)]
+    pub fn try_from_sys(op: sys::godot_variant_operator) -> Option<Self> {
+        let op = op as u32;
+        if op >= Self::MAX {
+            return None;
+        }
+
+        // SAFETY: Max value is checked, and Self is repr(u32)
+        unsafe { std::mem::transmute(op) }
+    }
+}
+
+/// Error indicating that an operator result is invalid.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Default, Debug)]
+pub struct InvalidOp;
 
 //fn to_godot_varianty_type(v: VariantType) -> sys::godot_variant_type {
 //    unsafe { transmute(v) }
@@ -552,6 +577,33 @@ impl Variant {
         }
     }
 
+    /// Evaluates a variant operator on `self` and `rhs` and returns the result on success.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(InvalidOp)` if the result is not valid.
+    pub fn evaluate(&self, op: VariantOperator, rhs: &Self) -> Result<Variant, InvalidOp> {
+        unsafe {
+            let api = get_api();
+            let mut ret = Variant::new();
+            let mut valid = false;
+
+            (api.godot_variant_evaluate)(
+                op.to_sys(),
+                self.sys(),
+                rhs.sys(),
+                ret.sys_mut(),
+                &mut valid,
+            );
+
+            if valid {
+                Ok(ret)
+            } else {
+                Err(InvalidOp)
+            }
+        }
+    }
+
     pub(crate) fn cast_ref<'l>(ptr: *const sys::godot_variant) -> &'l Variant {
         unsafe { transmute(ptr) }
     }
@@ -584,6 +636,11 @@ impl Variant {
     #[doc(hidden)]
     pub fn sys(&self) -> *const sys::godot_variant {
         &self.0
+    }
+
+    #[doc(hidden)]
+    pub fn sys_mut(&mut self) -> *mut sys::godot_variant {
+        &mut self.0
     }
 
     #[doc(hidden)]
