@@ -178,11 +178,12 @@ Several third-party resources have been created for the bindings. Open a PR to h
 - In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
 - Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
 - Writup/Tutorial on how to port GDScript to Rust - [Porting Godot Games to Rust](https://paytonrules.com/post/games-in-rust-with-godot-part-one/)
+- Guide and sample CI powered multi-platform Rust/GDNative based boilerplate project - https://github.com/tommywalkie/sample-godot-rust-app
 
 ### Open-source projects
 
 - Pong - https://github.com/you-win/godot-pong-rust
-- Air Combat - https://github.com/paytonrules/AirCombat - The end result of the porting tutorial above.
+- Air Combat - https://github.com/paytonrules/AirCombat - The end result of the porting tutorial by @paytonrules.
 
 ### Utilities
 
