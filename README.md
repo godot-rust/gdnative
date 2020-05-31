@@ -4,7 +4,7 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
-**[API Documentation](https://docs.rs/gdnative/0.8.0/gdnative/)**
+**[API Documentation](https://docs.rs/gdnative/0.8.1/gdnative/)**
 
 - Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.2/classes/) but you have to do casting between classes and subclasses manually.
 
@@ -41,10 +41,10 @@ crate-type = ["cdylib"]
 The bindings are currently generated from the API description of Godot 3.2 by default. To use the bindings with another version or a custom build, one currently has to use the bindings as a local dependency:
 
 ```
-# Clone the repository and check out version 0.8.0
+# Clone the repository and check out version 0.8.1
 git clone https://github.com/GodotNativeTools/godot-rust/
 cd godot-rust
-git checkout 0.8.0
+git checkout 0.8.1
 
 # Update the API description file
 godot --gdnative-generate-json-api bindings_generator/api.json
