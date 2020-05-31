@@ -4,7 +4,7 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
-**[API Documentation](https://docs.rs/gdnative/0.8.0/gdnative/)**
+**[API Documentation](https://docs.rs/gdnative/0.8.1/gdnative/)**
 
 - Note that this generally matches the [Godot API](https://docs.godotengine.org/en/3.2/classes/) but you have to do casting between classes and subclasses manually.
 
@@ -41,10 +41,10 @@ crate-type = ["cdylib"]
 The bindings are currently generated from the API description of Godot 3.2 by default. To use the bindings with another version or a custom build, one currently has to use the bindings as a local dependency:
 
 ```
-# Clone the repository and check out version 0.8.0
-git clone https://github.com/GodotNativeTools/godot-rust/
+# Clone the repository and check out version 0.8.1
+git clone https://github.com/godot-rust/godot-rust/
 cd godot-rust
-git checkout 0.8.0
+git checkout 0.8.1
 
 # Update the API description file
 godot --gdnative-generate-json-api bindings_generator/api.json
@@ -162,12 +162,12 @@ Make sure to set click the "library" field in the Inspector and "load" the libra
 
 ### Further examples
 
-The [/examples](https://github.com/GodotNativeTools/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
+The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
-- [/examples/hello_world](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
-- [/examples/spinning_cube/](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
-- [/examples/scene_create](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
-- [/examples/signals](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
+- [/examples/hello_world](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
+- [/examples/spinning_cube/](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
+- [/examples/scene_create](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
+- [/examples/signals](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
 
 ## Third-party resources
 
@@ -178,11 +178,12 @@ Several third-party resources have been created for the bindings. Open a PR to h
 - In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
 - Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
 - Writup/Tutorial on how to port GDScript to Rust - [Porting Godot Games to Rust](https://paytonrules.com/post/games-in-rust-with-godot-part-one/)
+- Guide and sample CI powered multi-platform Rust/GDNative based boilerplate project - https://github.com/tommywalkie/sample-godot-rust-app
 
 ### Open-source projects
 
 - Pong - https://github.com/you-win/godot-pong-rust
-- Air Combat - https://github.com/paytonrules/AirCombat - The end result of the porting tutorial above.
+- Air Combat - https://github.com/paytonrules/AirCombat - The end result of the porting tutorial by @paytonrules.
 
 ### Utilities
 

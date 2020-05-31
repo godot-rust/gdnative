@@ -3,17 +3,17 @@ name = "gdnative-bindings"
 authors = ["The godot-rust developers"]
 description = "The Godot game engine's automatcally generated bindings to Godot classes."
 documentation = "https://docs.rs/crate/gdnative-bindings"
-repository = "https://github.com/GodotNativeTools/godot-rust"
-version = "0.8.0"
+repository = "https://github.com/godot-rust/godot-rust"
+version = "0.8.1"
 license = "MIT"
 workspace = ".."
 edition = "2018"
 
 [dependencies]
-gdnative-sys = { path = "../gdnative-sys", version = "0.8.0" }
-gdnative-core = { path = "../gdnative-core", version = "0.8.0" }
+gdnative-sys = { path = "../gdnative-sys", version = "0.8.1" }
+gdnative-core = { path = "../gdnative-core", version = "0.8.1" }
 libc = "0.2"
 bitflags = "1.2"
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator", version = "0.8.0" }
+gdnative_bindings_generator = { path = "../bindings_generator", version = "0.8.1" }

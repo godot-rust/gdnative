@@ -10,16 +10,25 @@
 //!
 //! All three must be present.
 //!
-//! ## Registering a class using the `godot_class` macro
+//! ## Registering script classes
 //!
-//! See the [spinning_cube example](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube)
-//! in the repositiory.
+//! To register script classes, call `InitHandle::add_class` or `InitHandle::add_tool_class`
+//! in your `godot_nativescript_init` callback:
 //!
-//! ## Registering a class manually
+//! ```ignore
+//! // - snip -
 //!
-//! See the [manually_registered example](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/manually_registered)
-//! in the repositiory.
+//! fn init(handle: gdnative::init::InitHandle) {
+//!     handle.add_class::<HelloWorld>();
+//! }
 //!
+//! godot_nativescript_init!(init);
+//!
+//! // - snip -
+//! ```
+//!
+//! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
+//! in the godot-rust repository.
 
 use super::*;
 

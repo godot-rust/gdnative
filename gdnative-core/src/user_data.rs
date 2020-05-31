@@ -13,6 +13,25 @@
 //! to make sure that the Rust rules for references are always held for the `self` argument, and
 //! no UB can occur because we freed `owner` or put another script on it.
 //!
+//! ## Choosing a wrapper type
+//!
+//! The default user data wrapper used by derive macro, when no `user_data` attribute is present,
+//! is defined as the type alias `DefaultUserData<T>`. Currently, it is `LocalCellData<T>`. This
+//! may change in the future, and changes to it will not be considered breaking changes.
+//!
+//! To choose another wrapper type, put the `#[user_data]` attribute on your `NativeScript` type
+//! if you are using the derive macro:
+//!
+//! ```ignore
+//! #[derive(NativeClass)]
+//! #[inherit(gdnative::Node)]
+//! #[user_data(gdnative::user_data::MutexData<HelloWorld>)]
+//! struct HelloWorld;
+//! ```
+//!
+//! ...or, if you are implementing `NativeScript` manually, set the `UserData` associated type
+//! to the type you choose.
+//!
 //! ## Which wrapper to use?
 //!
 //! ### Use a `MutexData<T>` when:
