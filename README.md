@@ -42,7 +42,7 @@ The bindings are currently generated from the API description of Godot 3.2 by de
 
 ```
 # Clone the repository and check out version 0.8.1
-git clone https://github.com/GodotNativeTools/godot-rust/
+git clone https://github.com/godot-rust/godot-rust/
 cd godot-rust
 git checkout 0.8.1
 
@@ -162,12 +162,12 @@ Make sure to set click the "library" field in the Inspector and "load" the libra
 
 ### Further examples
 
-The [/examples](https://github.com/GodotNativeTools/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
+The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
-- [/examples/hello_world](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
-- [/examples/spinning_cube/](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
-- [/examples/scene_create](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
-- [/examples/signals](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
+- [/examples/hello_world](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
+- [/examples/spinning_cube/](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
+- [/examples/scene_create](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
+- [/examples/signals](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
 
 ## Third-party resources
 

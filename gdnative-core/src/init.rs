@@ -12,12 +12,12 @@
 //!
 //! ## Registering a class using the `godot_class` macro
 //!
-//! See the [spinning_cube example](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/spinning_cube)
+//! See the [spinning_cube example](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube)
 //! in the repositiory.
 //!
 //! ## Registering a class manually
 //!
-//! See the [manually_registered example](https://github.com/GodotNativeTools/godot-rust/tree/master/examples/manually_registered)
+//! See the [manually_registered example](https://github.com/godot-rust/godot-rust/tree/master/examples/manually_registered)
 //! in the repositiory.
 //!
 

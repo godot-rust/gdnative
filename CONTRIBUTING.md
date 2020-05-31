@@ -11,7 +11,7 @@ Should you wish to work on an issue, please claim it first by commenting on the 
 
 ## Getting started
 
-Have a look at the [issues](https://github.com/GodotNativeTools/godot-rust/issues) to find good tasks to start with.
+Have a look at the [issues](https://github.com/godot-rust/godot-rust/issues) to find good tasks to start with.
 
 ## Pull Request Checklist
 
