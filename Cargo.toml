@@ -11,5 +11,6 @@ members = [
     "examples/spinning_cube",
     "examples/scene_create",
     "examples/signals",
-    "examples/dodge_the_creeps"
+    "examples/dodge_the_creeps",
+    "impl/proc_macros"
 ]

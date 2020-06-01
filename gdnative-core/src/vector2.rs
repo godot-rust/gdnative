@@ -19,6 +19,19 @@ pub trait Vector2Godot {
     fn snapped(self, by: Self) -> Self;
     /// Returns a perpendicular vector.
     fn tangent(self) -> Self;
+
+    /// Internal API for converting to `sys` representation. Makes it possible to remove
+    /// `transmute`s elsewhere.
+    #[doc(hidden)]
+    fn to_sys(self) -> sys::godot_vector2;
+    /// Internal API for converting to `sys` representation. Makes it possible to remove
+    /// `transmute`s elsewhere.
+    #[doc(hidden)]
+    fn sys(&self) -> *const sys::godot_vector2;
+    /// Internal API for converting from `sys` representation. Makes it possible to remove
+    /// `transmute`s elsewhere.
+    #[doc(hidden)]
+    fn from_sys(v: sys::godot_vector2) -> Self;
 }
 
 impl Vector2Godot for Vector2 {
@@ -74,6 +87,21 @@ impl Vector2Godot for Vector2 {
     #[inline]
     fn tangent(self) -> Self {
         Vector2::new(self.y, -self.x)
+    }
+
+    #[inline]
+    fn to_sys(self) -> sys::godot_vector2 {
+        unsafe { std::mem::transmute(self) }
+    }
+
+    #[inline]
+    fn sys(&self) -> *const sys::godot_vector2 {
+        self as *const _ as *const _
+    }
+
+    #[inline]
+    fn from_sys(v: sys::godot_vector2) -> Self {
+        unsafe { std::mem::transmute(v) }
     }
 }
 
