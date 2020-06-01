@@ -1,3 +1,41 @@
+use crate::{Angle, Rotation2D, Vector3};
+
+/// Helper methods for `Vector3`.
+///
+/// Trait used to provide additional methods that are equivalent to Godot's methods.
+/// See the official [`Godot documentation`](https://docs.godotengine.org/en/3.1/classes/class_vector3.html).
+pub trait Vector3Godot {
+    /// Internal API for converting to `sys` representation. Makes it possible to remove
+    /// `transmute`s elsewhere.
+    #[doc(hidden)]
+    fn to_sys(self) -> sys::godot_vector3;
+    /// Internal API for converting to `sys` representation. Makes it possible to remove
+    /// `transmute`s elsewhere.
+    #[doc(hidden)]
+    fn sys(&self) -> *const sys::godot_vector3;
+    /// Internal API for converting from `sys` representation. Makes it possible to remove
+    /// `transmute`s elsewhere.
+    #[doc(hidden)]
+    fn from_sys(v: sys::godot_vector3) -> Self;
+}
+
+impl Vector3Godot for Vector3 {
+    #[inline]
+    fn to_sys(self) -> sys::godot_vector3 {
+        unsafe { std::mem::transmute(self) }
+    }
+
+    #[inline]
+    fn sys(&self) -> *const sys::godot_vector3 {
+        self as *const _ as *const _
+    }
+
+    #[inline]
+    fn from_sys(v: sys::godot_vector3) -> Self {
+        unsafe { std::mem::transmute(v) }
+    }
+}
+
 godot_test!(
     test_vector3_variants {
         use crate::{FromVariant, ToVariant, Vector3};

@@ -39,6 +39,11 @@ impl Color {
     }
 
     #[doc(hidden)]
+    pub fn to_sys(self) -> sys::godot_color {
+        unsafe { transmute(self) }
+    }
+
+    #[doc(hidden)]
     pub fn from_sys(c: sys::godot_color) -> Self {
         unsafe { transmute::<sys::godot_color, Self>(c) }
     }
