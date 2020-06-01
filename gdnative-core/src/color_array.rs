@@ -1,164 +1,15 @@
-use crate::access::{Aligned, MaybeUnaligned};
-use crate::private::get_api;
-use crate::sys;
+use crate::typed_array::TypedArray;
 use crate::Color;
-use crate::VariantArray;
 
-use std::fmt;
-use std::mem::transmute;
-
-/// A reference-counted vector of `ColorArray` that uses Godot's pool allocator.
-pub struct ColorArray(pub(crate) sys::godot_pool_color_array);
-
-pub type Read<'a> = Aligned<ReadGuard<'a>>;
-pub type Write<'a> = Aligned<WriteGuard<'a>>;
-
-impl ColorArray {
-    /// Creates an empty `ColorArray`.
-    pub fn new() -> Self {
-        ColorArray::default()
-    }
-
-    /// Creates an array by trying to convert each variant.
-    ///
-    /// See `Variant::to_color_array`.
-    pub fn from_variant_array(array: &VariantArray) -> Self {
-        unsafe {
-            let mut result = sys::godot_pool_color_array::default();
-            (get_api().godot_pool_color_array_new_with_array)(&mut result, &array.0);
-            ColorArray(result)
-        }
-    }
-
-    /// Appends an element at the end of the array
-    pub fn push(&mut self, color: &Color) {
-        unsafe {
-            (get_api().godot_pool_color_array_append)(&mut self.0, transmute(color));
-        }
-    }
-
-    /// Appends a `ColorArray` at the end of this array.
-    pub fn push_array(&mut self, array: &ColorArray) {
-        unsafe {
-            (get_api().godot_pool_color_array_append_array)(&mut self.0, transmute(array));
-        }
-    }
-
-    // TODO(error handling)
-    /// Insert a new int at a given position in the array.
-    pub fn insert(&mut self, offset: i32, color: &Color) -> bool {
-        unsafe {
-            let status =
-                (get_api().godot_pool_color_array_insert)(&mut self.0, offset, transmute(color));
-            status != sys::godot_error_GODOT_OK
-        }
-    }
-
-    /// Inverts the order of the elements in the array.
-    pub fn invert(&mut self) {
-        unsafe { (get_api().godot_pool_color_array_invert)(&mut self.0) }
-    }
-
-    /// Removes an element at the given offset.
-    pub fn remove(&mut self, idx: i32) {
-        unsafe {
-            (get_api().godot_pool_color_array_remove)(&mut self.0, idx);
-        }
-    }
-
-    /// Changes the size of the array, possibly removing elements or pushing default values.
-    pub fn resize(&mut self, size: i32) {
-        unsafe {
-            (get_api().godot_pool_color_array_resize)(&mut self.0, size);
-        }
-    }
-
-    /// Returns a copy of the element at the given offset.
-    pub fn get(&self, idx: i32) -> Color {
-        unsafe { transmute((get_api().godot_pool_color_array_get)(&self.0, idx)) }
-    }
-
-    /// Sets the value of the element at the given offset.
-    pub fn set(&mut self, idx: i32, color: &Color) {
-        unsafe {
-            (get_api().godot_pool_color_array_set)(&mut self.0, idx, transmute(color));
-        }
-    }
-
-    /// Returns the number of elements in the array.
-    pub fn len(&self) -> i32 {
-        unsafe { (get_api().godot_pool_color_array_size)(&self.0) }
-    }
-
-    pub fn read(&self) -> Read {
-        unsafe {
-            MaybeUnaligned::new(ReadGuard::new(self.sys()))
-                .try_into_aligned()
-                .expect("Pool array access should be aligned. This indicates a bug in Godot")
-        }
-    }
-
-    pub fn write(&mut self) -> Write {
-        unsafe {
-            MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
-                .try_into_aligned()
-                .expect("Pool array access should be aligned. This indicates a bug in Godot")
-        }
-    }
-
-    #[doc(hidden)]
-    pub fn sys(&self) -> *const sys::godot_pool_color_array {
-        &self.0
-    }
-
-    #[doc(hidden)]
-    pub fn from_sys(sys: sys::godot_pool_color_array) -> Self {
-        ColorArray(sys)
-    }
-
-    impl_common_methods! {
-        pub fn new_ref(&self) -> ColorArray : godot_pool_color_array_new_copy;
-    }
-}
-
-impl fmt::Debug for ColorArray {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.read().iter()).finish()
-    }
-}
-
-impl_basic_traits!(
-    for ColorArray as godot_pool_color_array {
-        Drop => godot_pool_color_array_destroy;
-        Default => godot_pool_color_array_new;
-    }
-);
-
-define_access_guard! {
-    pub struct ReadGuard<'a> : sys::godot_pool_color_array_read_access {
-        access = godot_pool_color_array_read(*const sys::godot_pool_color_array),
-        len = godot_pool_color_array_size,
-    }
-    Guard<Target=Color> => godot_pool_color_array_read_access_ptr -> *const sys::godot_color;
-    Drop => godot_pool_color_array_read_access_destroy;
-    Clone => godot_pool_color_array_read_access_copy;
-}
-
-define_access_guard! {
-    pub struct WriteGuard<'a> : sys::godot_pool_color_array_write_access {
-        access = godot_pool_color_array_write(*mut sys::godot_pool_color_array),
-        len = godot_pool_color_array_size,
-    }
-    Guard<Target=Color> + WritePtr => godot_pool_color_array_write_access_ptr -> *mut sys::godot_color;
-    Drop => godot_pool_color_array_write_access_destroy;
-}
+/// A reference-counted vector of `Color` that uses Godot's pool allocator.
+pub type ColorArray = TypedArray<Color>;
 
 godot_test!(
     test_color_array_access {
         let mut arr = ColorArray::new();
-        arr.push(&Color::rgb(1.0, 0.0, 0.0));
-        arr.push(&Color::rgb(0.0, 1.0, 0.0));
-        arr.push(&Color::rgb(0.0, 0.0, 1.0));
+        arr.push_ref(&Color::rgb(1.0, 0.0, 0.0));
+        arr.push_ref(&Color::rgb(0.0, 1.0, 0.0));
+        arr.push_ref(&Color::rgb(0.0, 0.0, 1.0));
 
         let original_read = {
             let read = arr.read();
@@ -196,9 +47,9 @@ godot_test!(
 godot_test!(
     test_color_array_debug {
         let mut arr = ColorArray::new();
-        arr.push(&Color::rgb(1.0, 0.0, 0.0));
-        arr.push(&Color::rgb(0.0, 1.0, 0.0));
-        arr.push(&Color::rgb(0.0, 0.0, 1.0));
+        arr.push_ref(&Color::rgb(1.0, 0.0, 0.0));
+        arr.push_ref(&Color::rgb(0.0, 1.0, 0.0));
+        arr.push_ref(&Color::rgb(0.0, 0.0, 1.0));
 
         assert_eq!(format!("{:?}", arr), "[Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 1.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }]");
     }
