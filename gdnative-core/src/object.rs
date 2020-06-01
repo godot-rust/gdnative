@@ -1,6 +1,5 @@
 use crate::sys;
 use crate::ObjectMethodTable;
-use libc;
 use std::ptr;
 
 /// Trait for Godot API objects. This trait is sealed, and implemented for generated wrapper

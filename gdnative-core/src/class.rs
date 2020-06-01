@@ -72,6 +72,7 @@ pub trait NativeClassMethods: NativeClass {
 }
 
 /// A reference to a GodotObject with a rust NativeClass attached.
+#[allow(clippy::new_without_default)]
 #[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub struct Instance<T: NativeClass> {
     owner: T::Base,

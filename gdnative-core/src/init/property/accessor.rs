@@ -3,8 +3,6 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use libc;
-
 use crate::object::GodotObject;
 use crate::user_data::UserData;
 use crate::FromVariant;
