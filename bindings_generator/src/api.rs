@@ -182,6 +182,7 @@ pub enum Ty {
     Float32Array,
     Result,
     VariantType,
+    VariantOperator,
     Enum(String),
     Object(String),
 }
@@ -218,6 +219,7 @@ impl Ty {
             "PoolRealArray" => Ty::Float32Array,
             "enum.Error" => Ty::Result,
             "enum.Variant::Type" => Ty::VariantType,
+            "enum.Variant::Operator" => Ty::VariantOperator,
             ty if ty.starts_with("enum.") => {
                 let mut split = ty[5..].split("::");
                 let mut class = split.next().unwrap();
@@ -262,6 +264,7 @@ impl Ty {
             &Ty::Float32Array => Some(String::from("Float32Array")),
             &Ty::Result => Some(String::from("GodotResult")),
             &Ty::VariantType => Some(String::from("VariantType")),
+            &Ty::VariantOperator => Some(String::from("VariantOperator")),
             &Ty::Enum(ref name) => Some(String::from(name.clone())),
             &Ty::Object(ref name) => Some(format!("Option<{}>", name)),
         }
@@ -298,6 +301,7 @@ impl Ty {
             &Ty::Float32Array => Some(String::from("sys::godot_pool_real_array")),
             &Ty::Result => Some(String::from("sys::godot_error")),
             &Ty::VariantType => Some(String::from("sys::variant_type")),
+            &Ty::VariantOperator => Some(String::from("sys::godot_variant_operator")),
             &Ty::Enum(_) => None, // TODO
             &Ty::Object(_) => Some(String::from("sys::godot_object")),
         }

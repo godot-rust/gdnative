@@ -524,6 +524,14 @@ fn generate_return_pre(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
     let ret_ptr = (&mut ret) as *mut _;"#
             )?;
         }
+        &Ty::VariantOperator => {
+            // An invalid value is used here, so that `try_from_sys` can detect the error in case
+            // the pointer is not written to.
+            writeln!(w, r#"
+    let mut ret: sys::godot_variant_operator = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX;
+    let ret_ptr = (&mut ret) as *mut _;"#
+            )?;
+        }
         &Ty::Enum(ref name) => {
             writeln!(w, r#"
     let mut ret: {} = mem::transmute(0);
@@ -611,6 +619,13 @@ fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
                 w,
                 r#"
     VariantType::from_sys(ret)"#
+            )?;
+        }
+        &Ty::VariantOperator => {
+            writeln!(
+                w,
+                r#"
+    VariantOperator::try_from_sys(ret).expect("enum variant should be valid")"#
             )?;
         }
     }
