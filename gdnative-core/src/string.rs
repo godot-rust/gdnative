@@ -228,6 +228,11 @@ impl Utf8String {
         unsafe { (get_api().godot_char_string_length)(&self.0) }
     }
 
+    /// Returns `true` if `self` has a length of zero.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     fn data(&self) -> &u8 {
         unsafe {
             // casting from *const i8 to &u8

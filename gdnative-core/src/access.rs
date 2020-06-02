@@ -31,6 +31,7 @@ where
 
 /// Trait for array access guards
 #[doc(hidden)]
+#[allow(clippy::len_without_is_empty)]
 pub unsafe trait Guard: Drop {
     type Target;
     fn len(&self) -> usize;
