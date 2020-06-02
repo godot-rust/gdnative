@@ -4,7 +4,7 @@ use crate::sys;
 use std::cmp::Ordering;
 use std::ffi::CStr;
 use std::fmt;
-use std::mem::{forget, transmute};
+use std::mem::forget;
 use std::ops::Range;
 use std::slice;
 use std::str;
@@ -231,7 +231,7 @@ impl Utf8String {
     fn data(&self) -> &u8 {
         unsafe {
             // casting from *const i8 to &u8
-            transmute((get_api().godot_char_string_get_data)(&self.0))
+            &*((get_api().godot_char_string_get_data)(&self.0) as *const u8)
         }
     }
 
