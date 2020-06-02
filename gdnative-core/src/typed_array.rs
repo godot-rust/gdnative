@@ -298,6 +298,20 @@ impl<T: Element> Extend<T> for TypedArray<T> {
     }
 }
 
+impl<T: Element + PartialEq> PartialEq for TypedArray<T> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        let left = self.read();
+        let right = other.read();
+
+        left.as_slice() == right.as_slice()
+    }
+}
+impl<T: Element + Eq> Eq for TypedArray<T> {}
+
 /// RAII read guard.
 pub struct ReadGuard<'a, T: Element> {
     access: *mut T::SysReadAccess,

@@ -1,7 +1,11 @@
+use std::iter::{Extend, FromIterator};
+
 use crate::private::get_api;
 use crate::sys;
 use crate::GodotString;
 
+use crate::ToVariant;
+use crate::ToVariantEq;
 use crate::Variant;
 use crate::VariantArray;
 use std::fmt;
@@ -124,6 +128,46 @@ impl_basic_traits!(
 impl fmt::Debug for Dictionary {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_json().to_string().fmt(f)
+    }
+}
+
+impl<K, V> FromIterator<(K, V)> for Dictionary
+where
+    K: ToVariantEq,
+    V: ToVariant,
+{
+    fn from_iter<I: IntoIterator<Item = (K, V)>>(iter: I) -> Self {
+        let mut dic = Dictionary::new();
+        dic.extend(iter);
+        dic
+    }
+}
+
+impl FromIterator<(Variant, Variant)> for Dictionary {
+    fn from_iter<I: IntoIterator<Item = (Variant, Variant)>>(iter: I) -> Self {
+        let mut dic = Dictionary::new();
+        dic.extend(iter);
+        dic
+    }
+}
+
+impl<K, V> Extend<(K, V)> for Dictionary
+where
+    K: ToVariantEq,
+    V: ToVariant,
+{
+    fn extend<I: IntoIterator<Item = (K, V)>>(&mut self, iter: I) {
+        for (key, value) in iter {
+            self.set(&key.to_variant(), &value.to_variant());
+        }
+    }
+}
+
+impl Extend<(Variant, Variant)> for Dictionary {
+    fn extend<I: IntoIterator<Item = (Variant, Variant)>>(&mut self, iter: I) {
+        for (key, value) in iter {
+            self.set(&key.to_variant(), &value.to_variant());
+        }
     }
 }
 

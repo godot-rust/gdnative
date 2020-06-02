@@ -858,6 +858,32 @@ pub trait ToVariant {
     fn to_variant(&self) -> Variant;
 }
 
+/// Trait for types whose `ToVariant` implementations preserve equivalence.
+///
+/// This means that for all values `a` and `b`, `a == b` is equivalent to
+/// `a.to_variant() == b.to_variant()`. Most of the time, this means that `to_variant` must
+/// return a "value" type, such as a primitive `i32`, a `GodotString`, or a `TypedArray`.
+///
+/// This is mostly useful as a bound for `Dictionary` keys, where the difference between Rust's
+/// structural equality and Godot's referential equality semantics can lead to surprising
+/// behaviors.
+///
+/// This property cannot be checked by the compiler, so `ToVariantEq` has no extra methods.
+///
+/// ## Implementing `ToVariantEq`
+///
+/// The `ToVariantEq` trait is not derivable, because most derived implementations of
+/// `ToVariant` don't satisfy the requirements. If you are sure that your type satisfies the
+/// trait, specify that your type implements it with an empty `impl`:
+///
+/// ```ignore
+/// #[derive(Eq, PartialEq, ToVariant)]
+/// struct MyTypedInt(i32);
+///
+/// impl ToVariantEq for MyTypedInt {}
+/// ```
+pub trait ToVariantEq: ToVariant + Eq {}
+
 /// Types that can be converted from a `Variant`.
 ///
 /// ## `Option<T>` and `MaybeNot<T>`
@@ -1054,6 +1080,7 @@ impl ToVariant for () {
         Variant::new()
     }
 }
+impl ToVariantEq for () {}
 
 impl FromVariant for () {
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
@@ -1069,6 +1096,7 @@ where
         T::to_variant(*self)
     }
 }
+impl<'a, T> ToVariantEq for &'a T where T: ToVariantEq {}
 
 impl<'a, T> ToVariant for &'a mut T
 where
@@ -1078,6 +1106,7 @@ where
         T::to_variant(*self)
     }
 }
+impl<'a, T> ToVariantEq for &'a mut T where T: ToVariantEq {}
 
 macro_rules! from_variant_direct {
     (
@@ -1108,12 +1137,14 @@ impl ToVariant for i64 {
         Variant::from_i64(*self)
     }
 }
+impl ToVariantEq for i64 {}
 
 impl ToVariant for u64 {
     fn to_variant(&self) -> Variant {
         Variant::from_u64(*self)
     }
 }
+impl ToVariantEq for u64 {}
 
 impl ToVariant for f64 {
     fn to_variant(&self) -> Variant {
@@ -1152,6 +1183,15 @@ impl_to_variant_for_num!(
     usize: u64
     f32: f64
 );
+
+impl ToVariantEq for i8 {}
+impl ToVariantEq for i16 {}
+impl ToVariantEq for i32 {}
+impl ToVariantEq for isize {}
+impl ToVariantEq for u8 {}
+impl ToVariantEq for u16 {}
+impl ToVariantEq for u32 {}
+impl ToVariantEq for usize {}
 
 macro_rules! to_variant_transmute {
     (
@@ -1210,15 +1250,12 @@ to_variant_as_sys! {
     impl ToVariant for NodePath : godot_variant_new_node_path;
     impl ToVariant for GodotString : godot_variant_new_string;
     impl ToVariant for VariantArray : godot_variant_new_array;
-    impl ToVariant for ByteArray : godot_variant_new_pool_byte_array;
-    impl ToVariant for Int32Array : godot_variant_new_pool_int_array;
-    impl ToVariant for Float32Array : godot_variant_new_pool_real_array;
-    impl ToVariant for StringArray : godot_variant_new_pool_string_array;
-    impl ToVariant for Vector2Array : godot_variant_new_pool_vector2_array;
-    impl ToVariant for Vector3Array : godot_variant_new_pool_vector3_array;
-    impl ToVariant for ColorArray : godot_variant_new_pool_color_array;
     impl ToVariant for Dictionary : godot_variant_new_dictionary;
 }
+
+impl ToVariantEq for Rid {}
+impl ToVariantEq for NodePath {}
+impl ToVariantEq for GodotString {}
 
 macro_rules! from_variant_transmute {
     (
@@ -1278,27 +1315,45 @@ from_variant_from_sys!(
     impl FromVariant for GodotString : godot_variant_as_string;
     impl FromVariant for Rid : godot_variant_as_rid;
     impl FromVariant for VariantArray : godot_variant_as_array;
-    impl FromVariant for ByteArray : godot_variant_as_pool_byte_array;
-    impl FromVariant for Int32Array : godot_variant_as_pool_int_array;
-    impl FromVariant for Float32Array : godot_variant_as_pool_real_array;
-    impl FromVariant for StringArray : godot_variant_as_pool_string_array;
-    impl FromVariant for Vector2Array : godot_variant_as_pool_vector2_array;
-    impl FromVariant for Vector3Array : godot_variant_as_pool_vector3_array;
-    impl FromVariant for ColorArray : godot_variant_as_pool_color_array;
     impl FromVariant for Dictionary : godot_variant_as_dictionary;
 );
+
+impl<T: crate::typed_array::Element> ToVariant for TypedArray<T> {
+    fn to_variant(&self) -> Variant {
+        unsafe {
+            let api = get_api();
+            let mut dest = sys::godot_variant::default();
+            (T::array_to_variant_fn(api))(&mut dest, self.sys());
+            Variant::from_sys(dest)
+        }
+    }
+}
+impl<T: crate::typed_array::Element + Eq> ToVariantEq for TypedArray<T> {}
+
+impl<T: crate::typed_array::Element> FromVariant for TypedArray<T> {
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        unsafe {
+            variant
+                .try_as_sys_of_type(VariantType::from_sys(T::SYS_VARIANT_TYPE))
+                .map(|v| (T::array_from_variant_fn(get_api()))(v))
+                .map(Self::from_sys)
+        }
+    }
+}
 
 impl ToVariant for str {
     fn to_variant(&self) -> Variant {
         Variant::from_str(self)
     }
 }
+impl ToVariantEq for str {}
 
 impl ToVariant for String {
     fn to_variant(&self) -> Variant {
         Variant::from_str(&self)
     }
 }
+impl ToVariantEq for String {}
 
 impl FromVariant for String {
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
@@ -1311,6 +1366,7 @@ impl ToVariant for bool {
         Variant::from_bool(*self)
     }
 }
+impl ToVariantEq for bool {}
 
 impl ToVariant for Variant {
     fn to_variant(&self) -> Variant {
@@ -1329,6 +1385,7 @@ impl<T> ToVariant for std::marker::PhantomData<T> {
         Variant::new()
     }
 }
+impl<T> ToVariantEq for std::marker::PhantomData<T> {}
 
 impl<T> FromVariant for std::marker::PhantomData<T> {
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
@@ -1346,6 +1403,7 @@ impl<T: ToVariant> ToVariant for Option<T> {
         }
     }
 }
+impl<T: ToVariantEq> ToVariantEq for Option<T> {}
 
 impl<T: FromVariant> FromVariant for Option<T> {
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
