@@ -6,10 +6,11 @@ pub type ColorArray = TypedArray<Color>;
 
 godot_test!(
     test_color_array_access {
-        let mut arr = ColorArray::new();
-        arr.push_ref(&Color::rgb(1.0, 0.0, 0.0));
-        arr.push_ref(&Color::rgb(0.0, 1.0, 0.0));
-        arr.push_ref(&Color::rgb(0.0, 0.0, 1.0));
+        let arr = ColorArray::from_vec(vec![
+            Color::rgb(1.0, 0.0, 0.0),
+            Color::rgb(0.0, 1.0, 0.0),
+            Color::rgb(0.0, 0.0, 1.0),
+        ]);
 
         let original_read = {
             let read = arr.read();
@@ -46,10 +47,11 @@ godot_test!(
 
 godot_test!(
     test_color_array_debug {
-        let mut arr = ColorArray::new();
-        arr.push_ref(&Color::rgb(1.0, 0.0, 0.0));
-        arr.push_ref(&Color::rgb(0.0, 1.0, 0.0));
-        arr.push_ref(&Color::rgb(0.0, 0.0, 1.0));
+        let arr = ColorArray::from_vec(vec![
+            Color::rgb(1.0, 0.0, 0.0),
+            Color::rgb(0.0, 1.0, 0.0),
+            Color::rgb(0.0, 0.0, 1.0),
+        ]);
 
         assert_eq!(format!("{:?}", arr), "[Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 1.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }]");
     }

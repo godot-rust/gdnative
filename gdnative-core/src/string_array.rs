@@ -6,10 +6,11 @@ pub type StringArray = TypedArray<GodotString>;
 
 godot_test!(
     test_string_array_access {
-        let mut arr = StringArray::new();
-        arr.push_ref(&GodotString::from("foo"));
-        arr.push_ref(&GodotString::from("bar"));
-        arr.push_ref(&GodotString::from("baz"));
+        let arr = StringArray::from_vec(vec![
+            GodotString::from("foo"),
+            GodotString::from("bar"),
+            GodotString::from("baz"),
+        ]);
 
         let original_read = {
             let read = arr.read();
@@ -46,10 +47,11 @@ godot_test!(
 
 godot_test!(
     test_string_array_debug {
-        let mut arr = StringArray::new();
-        arr.push_ref(&GodotString::from("foo"));
-        arr.push_ref(&GodotString::from("bar"));
-        arr.push_ref(&GodotString::from("baz"));
+        let arr = StringArray::from_vec(vec![
+            GodotString::from("foo"),
+            GodotString::from("bar"),
+            GodotString::from("baz"),
+        ]);
 
         assert_eq!(format!("{:?}", arr), "[\"foo\", \"bar\", \"baz\"]");
     }
