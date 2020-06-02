@@ -233,15 +233,11 @@ impl Utf8String {
         self.len() == 0
     }
 
-    fn data(&self) -> &u8 {
-        unsafe {
-            // casting from *const i8 to &u8
-            &*((get_api().godot_char_string_get_data)(&self.0) as *const u8)
-        }
-    }
-
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.data(), self.len() as usize) }
+        unsafe {
+            let data = (get_api().godot_char_string_get_data)(&self.0) as _;
+            slice::from_raw_parts(data, self.len() as usize)
+        }
     }
 
     pub fn as_str(&self) -> &str {
