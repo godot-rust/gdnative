@@ -6,10 +6,11 @@ pub type Vector3Array = TypedArray<Vector3>;
 
 godot_test!(
     test_vector3_array_access {
-        let mut arr = Vector3Array::new();
-        arr.push_ref(&Vector3::new(1.0, 2.0, 3.0));
-        arr.push_ref(&Vector3::new(3.0, 4.0, 5.0));
-        arr.push_ref(&Vector3::new(5.0, 6.0, 7.0));
+        let arr = Vector3Array::from_vec(vec![
+            Vector3::new(1.0, 2.0, 3.0),
+            Vector3::new(3.0, 4.0, 5.0),
+            Vector3::new(5.0, 6.0, 7.0),
+        ]);
 
         let original_read = {
             let read = arr.read();
@@ -47,10 +48,11 @@ godot_test!(
 
 godot_test!(
     test_vector3_array_debug {
-        let mut arr = Vector3Array::new();
-        arr.push_ref(&Vector3::new(1.0, 2.0, 3.0));
-        arr.push_ref(&Vector3::new(3.0, 4.0, 5.0));
-        arr.push_ref(&Vector3::new(5.0, 6.0, 7.0));
+        let arr = Vector3Array::from_vec(vec![
+            Vector3::new(1.0, 2.0, 3.0),
+            Vector3::new(3.0, 4.0, 5.0),
+            Vector3::new(5.0, 6.0, 7.0),
+        ]);
 
         assert_eq!(format!("{:?}", arr), format!("{:?}", &[Vector3::new(1.0, 2.0, 3.0), Vector3::new(3.0, 4.0, 5.0), Vector3::new(5.0, 6.0, 7.0)]));
     }

@@ -1,4 +1,6 @@
+use std::convert::TryFrom;
 use std::fmt;
+use std::iter::{Extend, FromIterator};
 
 use gdnative_impl_proc_macros as macros;
 
@@ -6,8 +8,15 @@ use crate::access::{Aligned, MaybeUnaligned};
 use crate::private::get_api;
 use crate::{Color, GodotString, VariantArray, Vector2, Vector2Godot, Vector3, Vector3Godot};
 
-/// A reference-counted typed vector using Godot's pool allocator, generic over possible
+/// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
 /// element types.
+///
+/// This type is CoW. The `Clone` implementation of this type creates a new reference without
+/// copying the contents.
+///
+/// When using this type, it's generally better to perform mutations in batch using `write`,
+/// or the `append` methods, as opposed to `push` or `set`, because the latter ones trigger
+/// CoW behavior each time they are called.
 pub struct TypedArray<T: Element> {
     inner: T::SysArray,
 }
@@ -20,6 +29,7 @@ pub type Read<'a, T> = Aligned<ReadGuard<'a, T>>;
 pub type Write<'a, T> = Aligned<WriteGuard<'a, T>>;
 
 impl<T: Element> Drop for TypedArray<T> {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             (T::destroy_fn(get_api()))(self.sys_mut());
@@ -28,6 +38,7 @@ impl<T: Element> Drop for TypedArray<T> {
 }
 
 impl<T: Element> Default for TypedArray<T> {
+    #[inline]
     fn default() -> Self {
         TypedArray::new()
     }
@@ -39,8 +50,16 @@ impl<T: Element + fmt::Debug> fmt::Debug for TypedArray<T> {
     }
 }
 
+impl<T: Element> Clone for TypedArray<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        self.new_ref()
+    }
+}
+
 impl<T: Element> TypedArray<T> {
     /// Creates an empty array.
+    #[inline]
     pub fn new() -> Self {
         unsafe {
             let mut inner = T::SysArray::default();
@@ -50,6 +69,7 @@ impl<T: Element> TypedArray<T> {
     }
 
     /// Creates from a `VariantArray` by making a best effort to convert each variant.
+    #[inline]
     pub fn from_variant_array(array: &VariantArray) -> Self {
         unsafe {
             let mut inner = T::SysArray::default();
@@ -58,7 +78,16 @@ impl<T: Element> TypedArray<T> {
         }
     }
 
+    /// Creates a `TypedArray` moving elements from `src`.
+    #[inline]
+    pub fn from_vec(mut src: Vec<T>) -> Self {
+        let mut arr = Self::new();
+        arr.append_vec(&mut src);
+        arr
+    }
+
     /// Creates a new reference to this reference-counted instance.
+    #[inline]
     pub fn new_ref(&self) -> Self {
         unsafe {
             let mut inner = T::SysArray::default();
@@ -93,6 +122,25 @@ impl<T: Element> TypedArray<T> {
         unsafe {
             (T::append_array_fn(get_api()))(self.sys_mut(), src.sys());
         }
+    }
+
+    /// Moves all the elements from `src` into `self`, leaving `src` empty.
+    ///
+    /// # Panics
+    ///
+    /// If the resulting length would not fit in `i32`.
+    pub fn append_vec(&mut self, src: &mut Vec<T>) {
+        let start = self.len() as usize;
+        let new_len = start + src.len();
+        self.resize(i32::try_from(new_len).expect("new length should fit in i32"));
+
+        let mut write = self.write();
+        let mut drain = src.drain(..);
+        for dst in &mut write[start..] {
+            *dst = drain.next().unwrap();
+        }
+
+        assert!(drain.next().is_none());
     }
 
     /// Inserts an element at the given offset and returns `true` if successful.
@@ -154,15 +202,18 @@ impl<T: Element> TypedArray<T> {
     }
 
     /// Returns the number of elements in the array.
+    #[inline]
     pub fn len(&self) -> i32 {
         unsafe { (T::size_fn(get_api()))(self.sys()) }
     }
 
     /// Returns `true` if the container is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Returns a RAII read access into this array.
     pub fn read(&self) -> Read<'_, T> {
         unsafe {
             MaybeUnaligned::new(ReadGuard::new(self.sys()))
@@ -171,6 +222,8 @@ impl<T: Element> TypedArray<T> {
         }
     }
 
+    /// Returns a RAII write access into this array. This triggers CoW once per lock, instead
+    /// of once each mutation.
     pub fn write(&mut self) -> Write<'_, T> {
         unsafe {
             MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
@@ -180,20 +233,84 @@ impl<T: Element> TypedArray<T> {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const T::SysArray {
         &self.inner
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys_mut(&mut self) -> *mut T::SysArray {
         &mut self.inner
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: T::SysArray) -> Self {
         TypedArray { inner: sys }
     }
 }
+
+impl<T: Element + Copy> TypedArray<T> {
+    /// Creates a new `TypedArray` by copying from `src`.
+    ///
+    /// # Panics
+    ///
+    /// If the length of `src` does not fit in `i32`.
+    #[inline]
+    pub fn from_slice(src: &[T]) -> Self {
+        let mut arr = Self::new();
+        arr.append_slice(src);
+        arr
+    }
+
+    /// Copies and appends all values in `src` to the end of the array.
+    ///
+    /// # Panics
+    ///
+    /// If the resulting length would not fit in `i32`.
+    pub fn append_slice(&mut self, src: &[T]) {
+        let start = self.len() as usize;
+        let new_len = start + src.len();
+        self.resize(i32::try_from(new_len).expect("new length should fit in i32"));
+
+        let mut write = self.write();
+        write[start..].copy_from_slice(src)
+    }
+}
+
+// `FromIterator` and `Extend` implementations collect into `Vec` first, because Rust `Vec`s
+// are better at handling unknown lengths than the Godot arrays (`push` CoWs every time!)
+
+impl<T: Element> FromIterator<T> for TypedArray<T> {
+    #[inline]
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let vec = iter.into_iter().collect::<Vec<_>>();
+        Self::from_vec(vec)
+    }
+}
+
+impl<T: Element> Extend<T> for TypedArray<T> {
+    #[inline]
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        let mut vec = iter.into_iter().collect::<Vec<_>>();
+        self.append_vec(&mut vec);
+    }
+}
+
+impl<T: Element + PartialEq> PartialEq for TypedArray<T> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        let left = self.read();
+        let right = other.read();
+
+        left.as_slice() == right.as_slice()
+    }
+}
+impl<T: Element + Eq> Eq for TypedArray<T> {}
 
 /// RAII read guard.
 pub struct ReadGuard<'a, T: Element> {

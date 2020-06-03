@@ -5,10 +5,7 @@ pub type Float32Array = TypedArray<f32>;
 
 godot_test!(
     test_float32_array_access {
-        let mut arr = Float32Array::new();
-        for i in 0..8 {
-            arr.push(i as f32);
-        }
+        let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
 
         let original_read = {
             let read = arr.read();
@@ -41,11 +38,7 @@ godot_test!(
 
 godot_test!(
     test_float32_array_debug {
-        let mut arr = Float32Array::new();
-        for i in 0..8 {
-            arr.push(i as f32);
-        }
-
+        let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
         assert_eq!(format!("{:?}", arr), "[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]");
     }
 );

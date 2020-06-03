@@ -258,6 +258,24 @@ fn expand(input: Args) -> Result<TokenStream, syn::Error> {
     );
     let sys_write_access: Type = parse_quote!(sys::#sys_write_access);
 
+    let array_to_variant_fn_symbol = Ident::new(
+        &format!("godot_variant_new_pool_{}_array", &godot_type),
+        Span::call_site(),
+    );
+
+    let array_from_variant_fn_symbol = Ident::new(
+        &format!("godot_variant_as_pool_{}_array", &godot_type),
+        Span::call_site(),
+    );
+
+    let sys_variant_type_symbol = Ident::new(
+        &format!(
+            "godot_variant_type_GODOT_VARIANT_TYPE_POOL_{}_ARRAY",
+            godot_type.to_ascii_uppercase()
+        ),
+        Span::call_site(),
+    );
+
     let functions = METHODS.iter().map(|method| {
         let fn_symbol = fn_symbol(&godot_type, method);
         let fn_ty = fn_ty(method);
@@ -281,10 +299,26 @@ fn expand(input: Args) -> Result<TokenStream, syn::Error> {
             type SysTy = #sys_ty;
             type SysRefTy = #sys_ref_ty;
 
+            const SYS_VARIANT_TYPE: sys::godot_variant_type = sys::#sys_variant_type_symbol;
+
             #to_sys_fn
             #from_sys_fn
             #to_sys_ref_fn
             #from_sys_ref_fn
+
+            #[inline(always)]
+            fn array_to_variant_fn(
+                api: &sys::GodotApi,
+            ) -> unsafe extern "C" fn (*mut sys::godot_variant, *const Self::SysArray) {
+                api.#array_to_variant_fn_symbol
+            }
+
+            #[inline(always)]
+            fn array_from_variant_fn(
+                api: &sys::GodotApi,
+            ) -> unsafe extern "C" fn (*const sys::godot_variant) -> Self::SysArray {
+                api.#array_from_variant_fn_symbol
+            }
 
             #(#functions)*
         }
@@ -366,6 +400,9 @@ pub fn decl_element(input: proc_macro::TokenStream) -> Result<TokenStream, syn::
             type SysRefTy;
 
             #[doc(hidden)]
+            const SYS_VARIANT_TYPE: sys::godot_variant_type;
+
+            #[doc(hidden)]
             fn element_to_sys(self) -> Self::SysTy;
 
             #[doc(hidden)]
@@ -376,6 +413,16 @@ pub fn decl_element(input: proc_macro::TokenStream) -> Result<TokenStream, syn::
 
             #[doc(hidden)]
             unsafe fn element_from_sys_ref(sys: Self::SysRefTy) -> Self;
+
+            #[doc(hidden)]
+            fn array_to_variant_fn(
+                api: &sys::GodotApi,
+            ) -> unsafe extern "C" fn (*mut sys::godot_variant, *const Self::SysArray);
+
+            #[doc(hidden)]
+            fn array_from_variant_fn(
+                api: &sys::GodotApi,
+            ) -> unsafe extern "C" fn (*const sys::godot_variant) -> Self::SysArray;
 
             #(#functions)*
         }

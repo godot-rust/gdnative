@@ -5,10 +5,7 @@ pub type Int32Array = TypedArray<i32>;
 
 godot_test!(
     test_int32_array_access {
-        let mut arr = Int32Array::new();
-        for i in 0..8 {
-            arr.push(i);
-        }
+        let arr = (0..8).collect::<Int32Array>();
 
         let original_read = {
             let read = arr.read();
@@ -37,10 +34,7 @@ godot_test!(
 
 godot_test!(
     test_int32_array_debug {
-        let mut arr = Int32Array::new();
-        for i in 0..8 {
-            arr.push(i);
-        }
+        let arr = (0..8).collect::<Int32Array>();
         assert_eq!(format!("{:?}", arr), "[0, 1, 2, 3, 4, 5, 6, 7]");
     }
 );

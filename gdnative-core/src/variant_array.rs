@@ -1,6 +1,9 @@
+use std::iter::{Extend, FromIterator};
+
 use crate::private::get_api;
 use crate::sys;
 
+use crate::ToVariant;
 use crate::Variant;
 
 use std::fmt;
@@ -226,6 +229,22 @@ impl<'a> Iterator for IterMut<'a> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
+    }
+}
+
+impl<T: ToVariant> FromIterator<T> for VariantArray {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut arr = Self::new();
+        arr.extend(iter);
+        arr
+    }
+}
+
+impl<T: ToVariant> Extend<T> for VariantArray {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        for elem in iter {
+            self.push(&elem.to_variant());
+        }
     }
 }
 
