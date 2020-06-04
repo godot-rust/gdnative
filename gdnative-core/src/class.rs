@@ -62,6 +62,7 @@ pub trait NativeClass: Sized + 'static {
     fn init(owner: Self::Base) -> Self;
 
     /// Register any exported properties to Godot.
+    #[inline]
     fn register_properties(_builder: &crate::init::ClassBuilder<Self>) {}
 }
 
@@ -84,6 +85,7 @@ impl<T: NativeClass> Instance<T> {
     /// argument constructors.
     ///
     /// Must be called after the library is initialized.
+    #[inline]
     pub fn new() -> Self
     where
         T::Base: Instanciable,
@@ -157,28 +159,34 @@ impl<T: NativeClass> Instance<T> {
         }
     }
 
+    #[inline]
     pub fn into_base(self) -> T::Base {
         self.owner
     }
 
+    #[inline]
     pub fn into_script(self) -> T::UserData {
         self.script
     }
 
+    #[inline]
     pub fn decouple(self) -> (T::Base, T::UserData) {
         (self.owner, self.script)
     }
 
+    #[inline]
     pub fn base(&self) -> &T::Base {
         &self.owner
     }
 
+    #[inline]
     pub fn script(&self) -> &T::UserData {
         &self.script
     }
 
     /// Try to downcast `T::Base` to `Instance<T>`. This safe version can only be used with
     /// reference counted base classes.
+    #[inline]
     pub fn try_from_base(owner: T::Base) -> Option<Self>
     where
         T::Base: Clone,
@@ -193,6 +201,7 @@ impl<T: NativeClass> Instance<T> {
     /// It's up to the caller to ensure that `owner` points to a valid Godot object, and
     /// that it will not be freed until this function returns. Otherwise, it is undefined
     /// behavior to call this function and/or use its return value.
+    #[inline]
     pub unsafe fn try_from_unsafe_base(owner: T::Base) -> Option<Self> {
         let type_tag = (get_api().godot_nativescript_get_type_tag)(owner.to_sys());
         if type_tag.is_null() {
@@ -208,6 +217,7 @@ impl<T: NativeClass> Instance<T> {
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
+    #[inline]
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::Base: Clone,
@@ -219,6 +229,7 @@ impl<T: NativeClass> Instance<T> {
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
+    #[inline]
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::Base: Clone,
@@ -241,6 +252,7 @@ impl<T: NativeClass> Instance<T> {
     /// ```
     ///
     /// For reference-counted types behaves like the safe `map`, which should be preferred.
+    #[inline]
     pub unsafe fn map_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
@@ -262,6 +274,7 @@ impl<T: NativeClass> Instance<T> {
     /// ```
     ///
     /// For reference-counted types behaves like the safe `map_mut`, which should be preferred.
+    #[inline]
     pub unsafe fn map_mut_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
@@ -271,6 +284,7 @@ impl<T: NativeClass> Instance<T> {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub unsafe fn from_sys_unchecked(ptr: *mut sys::godot_object) -> Self {
         let api = get_api();
         let user_data = (api.godot_nativescript_get_userdata)(ptr);
@@ -278,6 +292,7 @@ impl<T: NativeClass> Instance<T> {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub unsafe fn from_raw(ptr: *mut sys::godot_object, user_data: *mut libc::c_void) -> Self {
         let owner = T::Base::from_sys(ptr);
         let script_ptr = user_data as *const libc::c_void;
@@ -291,6 +306,7 @@ where
     T: NativeClass,
     T::Base: Clone,
 {
+    #[inline]
     fn clone(&self) -> Self {
         Instance {
             owner: self.owner.clone(),
@@ -304,6 +320,7 @@ where
     T: NativeClass,
     T::Base: ToVariant,
 {
+    #[inline]
     fn to_variant(&self) -> Variant {
         self.owner.to_variant()
     }
@@ -314,6 +331,7 @@ where
     T: NativeClass,
     T::Base: FromVariant + Clone,
 {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         let owner = T::Base::from_variant(variant)?;
         Self::try_from_base(owner).ok_or(FromVariantError::InvalidInstance {

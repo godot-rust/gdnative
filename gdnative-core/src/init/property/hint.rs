@@ -38,6 +38,7 @@ where
     T: fmt::Display,
 {
     /// Creates a new `RangeHint`.
+    #[inline]
     pub fn new(min: T, max: T) -> Self {
         RangeHint {
             min,
@@ -49,24 +50,28 @@ where
     }
 
     /// Builder-style method that returns `self` with the given step.
+    #[inline]
     pub fn with_step(mut self, step: T) -> Self {
         self.step.replace(step);
         self
     }
 
     /// Builder-style method that returns `self` with the `or_greater` hint.
+    #[inline]
     pub fn or_greater(mut self) -> Self {
         self.or_greater = true;
         self
     }
 
     /// Builder-style method that returns `self` with the `or_lesser` hint.
+    #[inline]
     pub fn or_lesser(mut self) -> Self {
         self.or_lesser = true;
         self
     }
 
     /// Formats the hint as a Godot hint string.
+    #[inline]
     pub fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
@@ -90,6 +95,7 @@ impl<T> From<RangeInclusive<T>> for RangeHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     fn from(range: RangeInclusive<T>) -> Self {
         let (min, max) = range.into_inner();
         RangeHint::new(min, max)
@@ -114,11 +120,13 @@ pub struct EnumHint {
 }
 
 impl EnumHint {
+    #[inline]
     pub fn new(values: Vec<String>) -> Self {
         EnumHint { values }
     }
 
     /// Formats the hint as a Godot hint string.
+    #[inline]
     pub fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
@@ -161,6 +169,7 @@ impl<T> IntHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     pub fn export_info(self) -> ExportInfo {
         use IntHint as IH;
 
@@ -193,6 +202,7 @@ impl<T> From<RangeHint<T>> for IntHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     fn from(hint: RangeHint<T>) -> Self {
         Self::Range(hint)
     }
@@ -202,12 +212,14 @@ impl<T> From<RangeInclusive<T>> for IntHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     fn from(range: RangeInclusive<T>) -> Self {
         Self::Range(range.into())
     }
 }
 
 impl<T> From<EnumHint> for IntHint<T> {
+    #[inline]
     fn from(hint: EnumHint) -> Self {
         Self::Enum(hint)
     }
@@ -223,11 +235,13 @@ pub struct ExpEasingHint {
 }
 
 impl ExpEasingHint {
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Formats the hint as a Godot hint string.
+    #[inline]
     pub fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
@@ -263,6 +277,7 @@ impl<T> FloatHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     pub fn export_info(self) -> ExportInfo {
         use FloatHint as FH;
 
@@ -291,6 +306,7 @@ impl<T> From<RangeHint<T>> for FloatHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     fn from(hint: RangeHint<T>) -> Self {
         Self::Range(hint)
     }
@@ -300,18 +316,21 @@ impl<T> From<RangeInclusive<T>> for FloatHint<T>
 where
     T: fmt::Display,
 {
+    #[inline]
     fn from(range: RangeInclusive<T>) -> Self {
         Self::Range(range.into())
     }
 }
 
 impl<T> From<EnumHint> for FloatHint<T> {
+    #[inline]
     fn from(hint: EnumHint) -> Self {
         Self::Enum(hint)
     }
 }
 
 impl<T> From<ExpEasingHint> for FloatHint<T> {
+    #[inline]
     fn from(hint: ExpEasingHint) -> Self {
         Self::ExpEasing(hint)
     }
@@ -337,6 +356,7 @@ pub enum StringHint {
 }
 
 impl StringHint {
+    #[inline]
     pub fn export_info(self) -> ExportInfo {
         use StringHint as SH;
 
@@ -372,6 +392,7 @@ pub enum ColorHint {
 }
 
 impl ColorHint {
+    #[inline]
     pub fn export_info(self) -> ExportInfo {
         ExportInfo {
             variant_type: VariantType::Color,

@@ -78,10 +78,12 @@ impl {name}MethodTable {{
         &mut TABLE
     }}
 
+    #[inline]
     pub unsafe fn unchecked_get() -> &'static Self {{
         Self::get_mut()
     }}
 
+    #[inline]
     pub fn get(gd_api: &GodotApi) -> &'static Self {{
         unsafe {{
             let table = Self::get_mut();
@@ -175,6 +177,7 @@ pub fn generate_method_impl(
         r#"
 
 #[doc(hidden)]
+#[inline]
 pub unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
     let gd_api = get_api();
 

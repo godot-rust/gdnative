@@ -19,10 +19,12 @@ impl<T> FreeOnDrop<T>
 where
     T: Free + Clone,
 {
+    #[inline]
     pub unsafe fn new(ptr: T) -> Self {
         FreeOnDrop { ptr }
     }
 
+    #[inline]
     pub fn forget(self) -> T {
         let ptr = self.ptr.clone();
         mem::forget(self);
@@ -35,6 +37,7 @@ impl<T> Drop for FreeOnDrop<T>
 where
     T: Free + Clone,
 {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             self.ptr.clone().godot_free();
@@ -47,6 +50,8 @@ where
     T: Free + Clone,
 {
     type Target = T;
+
+    #[inline]
     fn deref(&self) -> &T {
         &self.ptr
     }
@@ -56,6 +61,7 @@ impl<T> DerefMut for FreeOnDrop<T>
 where
     T: Free + Clone,
 {
+    #[inline]
     fn deref_mut(&mut self) -> &mut T {
         &mut self.ptr
     }
@@ -74,10 +80,12 @@ impl<T> QueueFreeOnDrop<T>
 where
     T: QueueFree + Clone,
 {
+    #[inline]
     pub unsafe fn new(ptr: T) -> Self {
         QueueFreeOnDrop { ptr }
     }
 
+    #[inline]
     pub fn forget(self) -> T {
         let ptr = self.ptr.clone();
         mem::forget(self);
@@ -90,6 +98,7 @@ impl<T> Drop for QueueFreeOnDrop<T>
 where
     T: QueueFree + Clone,
 {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             self.ptr.godot_queue_free();
@@ -102,6 +111,8 @@ where
     T: QueueFree + Clone,
 {
     type Target = T;
+
+    #[inline]
     fn deref(&self) -> &T {
         &self.ptr
     }
@@ -111,6 +122,7 @@ impl<T> DerefMut for QueueFreeOnDrop<T>
 where
     T: QueueFree + Clone,
 {
+    #[inline]
     fn deref_mut(&mut self) -> &mut T {
         &mut self.ptr
     }

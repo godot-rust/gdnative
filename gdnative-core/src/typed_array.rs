@@ -45,6 +45,7 @@ impl<T: Element> Default for TypedArray<T> {
 }
 
 impl<T: Element + fmt::Debug> fmt::Debug for TypedArray<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.read().iter()).finish()
     }
@@ -129,6 +130,7 @@ impl<T: Element> TypedArray<T> {
     /// # Panics
     ///
     /// If the resulting length would not fit in `i32`.
+    #[inline]
     pub fn append_vec(&mut self, src: &mut Vec<T>) {
         let start = self.len() as usize;
         let new_len = start + src.len();
@@ -214,6 +216,7 @@ impl<T: Element> TypedArray<T> {
     }
 
     /// Returns a RAII read access into this array.
+    #[inline]
     pub fn read(&self) -> Read<'_, T> {
         unsafe {
             MaybeUnaligned::new(ReadGuard::new(self.sys()))
@@ -224,6 +227,7 @@ impl<T: Element> TypedArray<T> {
 
     /// Returns a RAII write access into this array. This triggers CoW once per lock, instead
     /// of once each mutation.
+    #[inline]
     pub fn write(&mut self) -> Write<'_, T> {
         unsafe {
             MaybeUnaligned::new(WriteGuard::new(self.sys() as *mut _))
@@ -269,6 +273,7 @@ impl<T: Element + Copy> TypedArray<T> {
     /// # Panics
     ///
     /// If the resulting length would not fit in `i32`.
+    #[inline]
     pub fn append_slice(&mut self, src: &[T]) {
         let start = self.len() as usize;
         let new_len = start + src.len();
@@ -299,6 +304,7 @@ impl<T: Element> Extend<T> for TypedArray<T> {
 }
 
 impl<T: Element + PartialEq> PartialEq for TypedArray<T> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         if self.len() != other.len() {
             return false;
@@ -320,6 +326,7 @@ pub struct ReadGuard<'a, T: Element> {
 }
 
 impl<'a, T: Element> ReadGuard<'a, T> {
+    #[inline]
     unsafe fn new(arr: *const T::SysArray) -> Self {
         let len = (T::size_fn(get_api()))(arr) as usize;
         let access = (T::read_fn(get_api()))(arr);
@@ -334,9 +341,13 @@ impl<'a, T: Element> ReadGuard<'a, T> {
 
 unsafe impl<'a, T: Element> crate::access::Guard for ReadGuard<'a, T> {
     type Target = T;
+
+    #[inline]
     fn len(&self) -> usize {
         self.len
     }
+
+    #[inline]
     fn read_ptr(&self) -> *const Self::Target {
         unsafe {
             let orig_ptr: *const T::SysTy = (T::read_access_ptr_fn(get_api()))(self.access);
@@ -346,6 +357,7 @@ unsafe impl<'a, T: Element> crate::access::Guard for ReadGuard<'a, T> {
 }
 
 impl<'a, T: Element> Drop for ReadGuard<'a, T> {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             (T::read_access_destroy_fn(get_api()))(self.access);
@@ -354,6 +366,7 @@ impl<'a, T: Element> Drop for ReadGuard<'a, T> {
 }
 
 impl<'a, T: Element> Clone for ReadGuard<'a, T> {
+    #[inline]
     fn clone(&self) -> Self {
         let access = unsafe { (T::read_access_copy_fn(get_api()))(self.access) };
 
@@ -373,6 +386,7 @@ pub struct WriteGuard<'a, T: Element> {
 }
 
 impl<'a, T: Element> WriteGuard<'a, T> {
+    #[inline]
     unsafe fn new(arr: *mut T::SysArray) -> Self {
         let len = (T::size_fn(get_api()))(arr) as usize;
         let access = (T::write_fn(get_api()))(arr);
@@ -387,9 +401,12 @@ impl<'a, T: Element> WriteGuard<'a, T> {
 
 unsafe impl<'a, T: Element> crate::access::Guard for WriteGuard<'a, T> {
     type Target = T;
+
+    #[inline]
     fn len(&self) -> usize {
         self.len
     }
+    #[inline]
     fn read_ptr(&self) -> *const Self::Target {
         unsafe {
             let orig_ptr: *const T::SysTy = (T::write_access_ptr_fn(get_api()))(self.access);
@@ -401,6 +418,7 @@ unsafe impl<'a, T: Element> crate::access::Guard for WriteGuard<'a, T> {
 unsafe impl<'a, T: Element> crate::access::WritePtr for WriteGuard<'a, T> {}
 
 impl<'a, T: Element> Drop for WriteGuard<'a, T> {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             (T::write_access_destroy_fn(get_api()))(self.access);

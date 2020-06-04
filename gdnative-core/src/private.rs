@@ -66,6 +66,7 @@ pub unsafe fn cleanup_internal_state() {
 }
 
 /// Reports an `InitError` to Godot.
+#[inline]
 unsafe fn report_init_error(
     options: *const sys::godot_gdnative_init_options,
     error: sys::InitError,

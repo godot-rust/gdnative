@@ -15,6 +15,7 @@ pub struct Transform {
 
 impl Transform {
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_transform {
         unsafe {
             std::mem::transmute::<*const Transform, *const sys::godot_transform>(self as *const _)
@@ -22,10 +23,12 @@ impl Transform {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(c: sys::godot_transform) -> Self {
         unsafe { std::mem::transmute::<sys::godot_transform, Self>(c) }
     }
 
+    #[inline]
     pub fn translate(origin: Vector3) -> Transform {
         Transform {
             basis: Basis::identity(),
@@ -34,11 +37,13 @@ impl Transform {
     }
 
     /// Creates a `Basis` from the rotation and scaling of the provided transform.
+    #[inline]
     pub fn from_transform(transform: &default::Transform3D<f32>) -> Transform {
         Self::from_typed_transform::<UnknownUnit, UnknownUnit>(transform)
     }
 
     /// Creates a `Basis` from the rotation and scaling of the provided transform, in `Dst` space.
+    #[inline]
     pub fn from_typed_transform<Src, Dst>(transform: &Transform3D<f32, Src, Dst>) -> Transform {
         Transform {
             basis: Basis::from_typed_transform(transform),

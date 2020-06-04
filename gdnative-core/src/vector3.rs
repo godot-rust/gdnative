@@ -1,4 +1,4 @@
-use crate::{Angle, Rotation2D, Vector3};
+use crate::Vector3;
 
 /// Helper methods for `Vector3`.
 ///

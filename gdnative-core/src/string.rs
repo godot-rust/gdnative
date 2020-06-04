@@ -18,6 +18,7 @@ macro_rules! impl_methods {
         $(pub fn $method:ident(&self) -> Self : $gd_method:ident;)*
     ) => {
         $(
+            #[inline]
             pub fn $method(&self) -> Self {
                 unsafe {
                     GodotString((get_api().$gd_method)(&self.0))
@@ -31,6 +32,7 @@ macro_rules! impl_methods {
         $(pub fn $method:ident(&self) -> $Type:ty : $gd_method:ident;)*
     ) => {
         $(
+            #[inline]
             pub fn $method(&self) -> $Type {
                 unsafe { (get_api().$gd_method)(&self.0) }
             }
@@ -39,10 +41,12 @@ macro_rules! impl_methods {
 }
 
 impl GodotString {
+    #[inline]
     pub fn new() -> Self {
         GodotString::default()
     }
 
+    #[inline]
     pub fn from_str<S>(s: S) -> Self
     where
         S: AsRef<str>,
@@ -57,6 +61,7 @@ impl GodotString {
         }
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         unsafe { (get_api().godot_string_length)(&self.0) as usize }
     }
@@ -105,22 +110,27 @@ impl GodotString {
         pub fn percent_encode(&self) -> Self : godot_string_percent_encode;
     );
 
+    #[inline]
     pub fn is_valid_hex_number(&self, with_prefix: bool) -> bool {
         unsafe { (get_api().godot_string_is_valid_hex_number)(&self.0, with_prefix) }
     }
 
+    #[inline]
     pub fn begins_with(&self, s: &GodotString) -> bool {
         unsafe { (get_api().godot_string_begins_with)(&self.0, &s.0) }
     }
 
+    #[inline]
     pub fn ends_with(&self, s: &GodotString) -> bool {
         unsafe { (get_api().godot_string_ends_with)(&self.0, &s.0) }
     }
 
+    #[inline]
     pub fn begins_with_c_str(&self, s: &CStr) -> bool {
         unsafe { (get_api().godot_string_begins_with_char_array)(&self.0, s.as_ptr()) }
     }
 
+    #[inline]
     pub fn sub_string(&self, range: Range<usize>) -> Self {
         unsafe {
             let count = range.end - range.start;
@@ -133,18 +143,22 @@ impl GodotString {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn to_utf8(&self) -> Utf8String {
         unsafe { Utf8String((get_api().godot_string_utf8)(&self.0)) }
     }
 
+    #[inline]
     pub fn find(&self, what: &GodotString) -> i32 {
         unsafe { (get_api().godot_string_find)(&self.0, what.0) }
     }
 
+    #[inline]
     pub fn find_from(&self, what: &GodotString, from: i32) -> i32 {
         unsafe { (get_api().godot_string_find_from)(&self.0, what.0, from) }
     }
 
+    #[inline]
     pub fn find_last(&self, what: &GodotString) -> i32 {
         unsafe { (get_api().godot_string_find_last)(&self.0, what.0) }
     }
@@ -155,6 +169,7 @@ impl GodotString {
     /// This should be only used when certain that the receiving side is
     /// responsible for running the destructor for the object, otherwise
     /// it is leaked.
+    #[inline]
     pub fn forget(self) -> sys::godot_string {
         let v = self.0;
         forget(self);
@@ -165,27 +180,32 @@ impl GodotString {
     ///
     /// The string remains owned by the rust wrapper and the receiver of
     /// the ffi representation should not run its destructor.
+    #[inline]
     pub fn to_sys(&self) -> sys::godot_string {
         self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_string {
         &self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_string) -> Self {
         GodotString(sys)
     }
     // TODO: many missing methods.
 
     impl_common_methods! {
+        #[inline]
         pub fn new_ref(&self) -> GodotString : godot_string_new_copy;
     }
 }
 
 impl Clone for GodotString {
+    #[inline]
     fn clone(&self) -> Self {
         self.new_ref()
     }
@@ -200,6 +220,7 @@ impl_basic_traits!(
 );
 
 impl fmt::Display for GodotString {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let utf8 = self.to_utf8();
         f.write_str(utf8.as_str())
@@ -207,12 +228,14 @@ impl fmt::Display for GodotString {
 }
 
 impl fmt::Debug for GodotString {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_string().fmt(f)
     }
 }
 
 impl std::hash::Hash for GodotString {
+    #[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         state.write_u64(self.u64_hash());
     }
@@ -224,15 +247,18 @@ impl std::hash::Hash for GodotString {
 pub struct Utf8String(pub(crate) sys::godot_char_string);
 
 impl Utf8String {
+    #[inline]
     pub fn len(&self) -> i32 {
         unsafe { (get_api().godot_char_string_length)(&self.0) }
     }
 
     /// Returns `true` if `self` has a length of zero.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         unsafe {
             let data = (get_api().godot_char_string_get_data)(&self.0) as _;
@@ -240,10 +266,12 @@ impl Utf8String {
         }
     }
 
+    #[inline]
     pub fn as_str(&self) -> &str {
         unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 
+    #[inline]
     pub fn to_string(&self) -> String {
         String::from(self.as_str())
     }
@@ -256,6 +284,7 @@ impl_basic_traits!(
 );
 
 impl fmt::Debug for Utf8String {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_string().fmt(f)
     }
@@ -264,6 +293,7 @@ impl fmt::Debug for Utf8String {
 pub struct StringName(pub(crate) sys::godot_string_name);
 
 impl StringName {
+    #[inline]
     pub fn from_str<S>(s: S)
     where
         S: AsRef<str>,
@@ -272,6 +302,7 @@ impl StringName {
         StringName::from_godot_string(&gd_string);
     }
 
+    #[inline]
     pub fn from_c_str(s: &CStr) -> Self {
         unsafe {
             let mut result = sys::godot_string_name::default();
@@ -280,6 +311,7 @@ impl StringName {
         }
     }
 
+    #[inline]
     pub fn from_godot_string(s: &GodotString) -> Self {
         unsafe {
             let mut result = sys::godot_string_name::default();
@@ -288,14 +320,17 @@ impl StringName {
         }
     }
 
+    #[inline]
     pub fn get_hash(&self) -> u32 {
         unsafe { (get_api().godot_string_name_get_hash)(&self.0) }
     }
 
+    #[inline]
     pub fn get_name(&self) -> GodotString {
         unsafe { GodotString((get_api().godot_string_name_get_name)(&self.0)) }
     }
 
+    #[inline]
     pub fn operator_less(&self, s: &StringName) -> bool {
         unsafe { (get_api().godot_string_name_operator_less)(&self.0, &s.0) }
     }
@@ -309,12 +344,14 @@ impl_basic_traits! {
 }
 
 impl fmt::Debug for StringName {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.get_name().to_string().fmt(f)
     }
 }
 
 impl PartialOrd for StringName {
+    #[inline]
     fn partial_cmp(&self, other: &StringName) -> Option<Ordering> {
         unsafe {
             let native = (get_api().godot_string_name_operator_less)(&self.0, &other.0);
@@ -332,6 +369,7 @@ impl<S> From<S> for GodotString
 where
     S: AsRef<str>,
 {
+    #[inline]
     fn from(s: S) -> GodotString {
         GodotString::from_str(s)
     }

@@ -22,12 +22,14 @@ pub struct InvalidGetter<'l> {
 }
 
 impl<'l> InvalidSetter<'l> {
+    #[inline]
     pub fn new(property_name: &'l str) -> Self {
         InvalidSetter { property_name }
     }
 }
 
 impl<'l> InvalidGetter<'l> {
+    #[inline]
     pub fn new(property_name: &'l str) -> Self {
         InvalidGetter { property_name }
     }
@@ -79,6 +81,7 @@ extern "C" fn invalid_free_func(data: *mut libc::c_void) {
 }
 
 unsafe impl<'l, C: NativeClass, T: FromVariant> RawSetter<C, T> for InvalidSetter<'l> {
+    #[inline]
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
 
@@ -95,6 +98,7 @@ unsafe impl<'l, C: NativeClass, T: FromVariant> RawSetter<C, T> for InvalidSette
 }
 
 unsafe impl<'l, C: NativeClass, T: ToVariant> RawGetter<C, T> for InvalidGetter<'l> {
+    #[inline]
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
 

@@ -56,11 +56,13 @@ pub struct InitHandle {
 
 impl InitHandle {
     #[doc(hidden)]
+    #[inline]
     pub unsafe fn new(handle: *mut libc::c_void) -> Self {
         InitHandle { handle }
     }
 
     /// Registers a new class to the engine.
+    #[inline]
     pub fn add_class<C>(&self)
     where
         C: NativeClassMethods,
@@ -69,6 +71,7 @@ impl InitHandle {
     }
 
     /// Registers a new tool class to the engine.
+    #[inline]
     pub fn add_tool_class<C>(&self)
     where
         C: NativeClassMethods,
@@ -76,6 +79,7 @@ impl InitHandle {
         self.add_maybe_tool_class::<C>(true)
     }
 
+    #[inline]
     fn add_maybe_tool_class<C>(&self, is_tool: bool)
     where
         C: NativeClassMethods,
@@ -252,6 +256,7 @@ pub struct ClassBuilder<C> {
 }
 
 impl<C: NativeClass> ClassBuilder<C> {
+    #[inline]
     pub fn add_method_advanced(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
         let attr = sys::godot_method_attributes {
@@ -275,6 +280,7 @@ impl<C: NativeClass> ClassBuilder<C> {
         }
     }
 
+    #[inline]
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
         self.add_method_advanced(ScriptMethod {
             name,
@@ -303,6 +309,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     ///     .with_setter(MyType::set_foo)
     ///     .done();
     /// ```
+    #[inline]
     pub fn add_property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>
     where
         T: Export,
@@ -310,6 +317,7 @@ impl<C: NativeClass> ClassBuilder<C> {
         PropertyBuilder::new(self, name)
     }
 
+    #[inline]
     pub fn add_signal(&self, signal: Signal) {
         // FIXME(#357): Temporary allow for ExportInfo fields.
         #[allow(deprecated)]

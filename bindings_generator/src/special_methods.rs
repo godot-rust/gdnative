@@ -9,6 +9,7 @@ pub fn generate_reference_ctor(output: &mut impl Write, class: &GodotClass) -> G
         output,
         r#"
     // Constructor
+    #[inline]
     pub fn new() -> Self {{
         unsafe {{
             let gd_api = get_api();
@@ -33,6 +34,7 @@ pub fn generate_reference_copy(output: &mut impl Write, _class: &GodotClass) -> 
         output,
         r#"
     /// Creates a new reference to the same reference-counted object.
+    #[inline]
     pub fn new_ref(&self) -> Self {{
         unsafe {{
             object::add_ref(self.this);
@@ -59,6 +61,7 @@ pub fn generate_non_reference_ctor(output: &mut impl Write, class: &GodotClass) 
     /// Immediately after creation, the object is owned by the caller, and can be
     /// passed to the engine (in which case the engine will be responsible for
     /// destroying the object) or destroyed manually using `{name}::free`.
+    #[inline]
     pub fn new() -> Self {{
         unsafe {{
             let gd_api = get_api();
@@ -89,28 +92,34 @@ pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -
 impl crate::private::godot_object::Sealed for {name} {{}}
 
 unsafe impl GodotObject for {name} {{
+    #[inline]
     fn class_name() -> &'static str {{
         "{name}"
     }}
 
+    #[inline]
     unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
         {addref_if_reference}
         Self {{ this: obj, }}
     }}
 
+    #[inline]
     unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self {{
         Self {{ this: obj, }}
     }}
 
+    #[inline]
     unsafe fn to_sys(&self) -> *mut sys::godot_object {{
         self.this
     }}
 }}
 
 impl ToVariant for {name} {{
+    #[inline]
     fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
 }}
 impl FromVariant for {name} {{
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {{ variant.try_to_object_with_error::<Self>() }}
 }}"#,
         name = class.name,
@@ -131,6 +140,7 @@ pub fn generate_instanciable_impl(output: &mut impl Write, class: &GodotClass) -
         output,
         r#"
 impl Instanciable for {name} {{
+    #[inline]
     fn construct() -> Self {{
         {name}::new()
     }}
@@ -151,6 +161,7 @@ pub fn generate_free_impl(
             output,
             r#"
 impl Free for {name} {{
+    #[inline]
     unsafe fn godot_free(self) {{ self.free() }}
 }}"#,
             name = class.name,
@@ -162,6 +173,7 @@ impl Free for {name} {{
             output,
             r#"
 impl QueueFree for {name} {{
+    #[inline]
     unsafe fn godot_queue_free(&mut self) {{ self.queue_free() }}
 }}"#,
             name = class.name,
@@ -203,6 +215,7 @@ pub fn generate_dynamic_cast(output: &mut impl Write, class: &GodotClass) -> Gen
         output,
         r#"
     /// Generic dynamic cast.
+    #[inline]
     pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
     unsafe {{
             object::godot_cast::<T>(self.this)
@@ -276,6 +289,7 @@ pub fn generate_deref_impl(output: &mut impl Write, class: &GodotClass) -> Gener
 impl std::ops::Deref for {name} {{
     type Target = {base};
 
+    #[inline]
     fn deref(&self) -> &{base} {{
         unsafe {{
             std::mem::transmute(self)
@@ -284,6 +298,7 @@ impl std::ops::Deref for {name} {{
 }}
 
 impl std::ops::DerefMut for {name} {{
+    #[inline]
     fn deref_mut(&mut self) -> &mut {base} {{
         unsafe {{
             std::mem::transmute(self)
@@ -302,6 +317,7 @@ pub fn generate_reference_clone(output: &mut impl Write, class: &GodotClass) -> 
         output,
         r#"
 impl Clone for {name} {{
+    #[inline]
     fn clone(&self) -> Self {{
         self.new_ref()
     }}
@@ -317,6 +333,7 @@ pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorRe
         output,
         r#"
 impl Drop for {name} {{
+    #[inline]
     fn drop(&mut self) {{
         unsafe {{
             if object::unref(self.this) {{

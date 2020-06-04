@@ -36,6 +36,7 @@ pub unsafe trait GodotObject: crate::private::godot_object::Sealed {
     /// Although manually-managed types are already `unsafe` to use, like raw pointers, this is
     /// `unsafe` because some methods expect `&mut self` receivers. In `0.9.0`, all methods will
     /// take shared references instead, making this safe to call.
+    #[inline]
     unsafe fn claim(&self) -> Self
     where
         Self: Sized,
@@ -60,6 +61,7 @@ pub trait QueueFree {
 }
 
 // This function assumes the godot_object is reference counted.
+#[inline]
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
     let api = crate::private::get_api();
@@ -81,6 +83,7 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
 }
 
 // This function assumes the godot_object is reference counted.
+#[inline]
 pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
     use crate::ReferenceMethodTable;
     let unref_method = ReferenceMethodTable::unchecked_get().unreference;
@@ -98,6 +101,7 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
 }
 
 // This function assumes the godot_object is reference counted.
+#[inline]
 pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
     let init_method = ReferenceMethodTable::unchecked_get().init_ref;
@@ -114,6 +118,7 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     debug_assert!(ok);
 }
 
+#[inline]
 pub unsafe fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     let api = crate::private::get_api();
     let method_bind = ObjectMethodTable::get(api).is_class;
@@ -140,6 +145,7 @@ pub unsafe fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     ret
 }
 
+#[inline]
 pub unsafe fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T>
 where
     T: GodotObject,

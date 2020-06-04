@@ -37,6 +37,7 @@ pub struct Setter<SelfArg, F> {
 }
 
 impl<SelfArg, F> Setter<SelfArg, F> {
+    #[inline]
     pub fn new(func: F) -> Self {
         Setter {
             func,
@@ -53,6 +54,7 @@ pub struct Getter<SelfArg, RetKind, F> {
 }
 
 impl<SelfArg, RetKind, F> Getter<SelfArg, RetKind, F> {
+    #[inline]
     pub fn new(func: F) -> Self {
         Getter {
             func,
@@ -80,6 +82,7 @@ where
     F: 'static + Fn(&C, C::Base, T),
 {
     type Err = <C::UserData as Map>::Err;
+    #[inline]
     fn map_set(user_data: &C::UserData, op: &F, owner: C::Base, value: T) -> Result<(), Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner, value))
     }
@@ -92,6 +95,7 @@ where
     F: 'static + Fn(&mut C, C::Base, T),
 {
     type Err = <C::UserData as MapMut>::Err;
+    #[inline]
     fn map_set(user_data: &C::UserData, op: &F, owner: C::Base, value: T) -> Result<(), Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner, value))
     }
@@ -116,6 +120,7 @@ where
     F: 'static + Fn(&C, C::Base) -> T,
 {
     type Err = <C::UserData as Map>::Err;
+    #[inline]
     fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner).to_variant())
     }
@@ -129,6 +134,7 @@ where
     F: 'static + Fn(&C, C::Base) -> &T,
 {
     type Err = <C::UserData as Map>::Err;
+    #[inline]
     fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner).to_variant())
     }
@@ -142,6 +148,7 @@ where
     F: 'static + Fn(&mut C, C::Base) -> T,
 {
     type Err = <C::UserData as MapMut>::Err;
+    #[inline]
     fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner).to_variant())
     }
@@ -155,6 +162,7 @@ where
     F: 'static + Fn(&mut C, C::Base) -> &T,
 {
     type Err = <C::UserData as MapMut>::Err;
+    #[inline]
     fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner).to_variant())
     }
@@ -166,6 +174,7 @@ where
     T: FromVariant,
     SelfArg: MapSet<C, F, T>,
 {
+    #[inline]
     unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
         let data = Box::new(self.func);
@@ -229,6 +238,7 @@ where
     T: ToVariant,
     (SelfArg, RetKind): MapGet<C, F, T>,
 {
+    #[inline]
     unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
         let data = Box::new(self.func);

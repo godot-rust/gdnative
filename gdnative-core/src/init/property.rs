@@ -54,6 +54,7 @@ pub struct ExportInfo {
 
 impl ExportInfo {
     /// Create an `ExportInfo` with the given Variant type, but without a hint.
+    #[inline]
     pub fn new(variant_type: VariantType) -> Self {
         ExportInfo {
             variant_type,
@@ -63,6 +64,7 @@ impl ExportInfo {
     }
 
     /// Create an `ExportInfo` with a hint for a specific Godot resource type.
+    #[inline]
     pub fn resource_type<T>() -> Self
     where
         T: GodotObject,
@@ -94,6 +96,7 @@ where
     T: Export,
 {
     /// Creates a new `PropertyBuilder` with the given property name.
+    #[inline]
     pub(super) fn new(class_builder: &'a ClassBuilder<C>, name: &'a str) -> Self {
         PropertyBuilder {
             name,
@@ -115,6 +118,7 @@ where
     G: RawGetter<C, T>,
 {
     /// Register the property built with this builder.
+    #[inline]
     pub fn done(self) {
         let ExportInfo {
             variant_type,
@@ -151,6 +155,7 @@ where
 
     /// Provides a setter function with the signature `fn(&mut C, owner: C::Base, value: T)`
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    #[inline]
     pub fn with_setter<NS>(
         self,
         setter: NS,
@@ -171,6 +176,7 @@ where
 
     /// Provides a setter function with the signature `fn(&C, owner: C::Base, value: T)`
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    #[inline]
     pub fn with_shr_setter<NS>(
         self,
         setter: NS,
@@ -191,6 +197,7 @@ where
 
     /// Provides a getter function with the signature `fn(&C, owner: C::Base) -> T`,
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    #[inline]
     pub fn with_getter<NG>(
         self,
         getter: NG,
@@ -211,6 +218,7 @@ where
 
     /// Provides a getter function with the signature `fn(&C, owner: C::Base) -> &T`,
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    #[inline]
     pub fn with_ref_getter<NG>(
         self,
         getter: NG,
@@ -231,6 +239,7 @@ where
 
     /// Provides a getter function with the signature `fn(&mut C, owner: C::Base) -> T`,
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    #[inline]
     pub fn with_mut_getter<NG>(
         self,
         getter: NG,
@@ -251,6 +260,7 @@ where
 
     /// Provides a getter function with the signature `fn(&mut C, owner: C::Base) -> &T`,
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    #[inline]
     pub fn with_mut_ref_getter<NG>(
         self,
         getter: NG,
@@ -271,18 +281,21 @@ where
 
     /// Sets a default value for the property as a hint to the editor. The setter may or may not
     /// be actually called with this value.
+    #[inline]
     pub fn with_default(mut self, default: T) -> Self {
         self.default = Some(default);
         self
     }
 
     /// Sets an editor hint.
+    #[inline]
     pub fn with_hint(mut self, hint: T::Hint) -> Self {
         self.hint = Some(hint);
         self
     }
 
     /// Sets a property usage.
+    #[inline]
     pub fn with_usage(mut self, usage: Usage) -> Self {
         self.usage = usage;
         self
@@ -316,6 +329,7 @@ bitflags! {
 }
 
 impl Usage {
+    #[inline]
     pub fn to_sys(&self) -> sys::godot_property_usage_flags {
         unsafe { mem::transmute(*self) }
     }
@@ -329,6 +343,7 @@ mod impl_export {
         ($ty:ident) => {
             impl Export for $ty {
                 type Hint = hint::IntHint<$ty>;
+                #[inline]
                 fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
                     hint.map_or_else(
                         || ExportInfo::new(VariantType::I64),
@@ -352,6 +367,7 @@ mod impl_export {
         ($ty:ident) => {
             impl Export for $ty {
                 type Hint = hint::FloatHint<$ty>;
+                #[inline]
                 fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
                     hint.map_or_else(
                         || ExportInfo::new(VariantType::F64),
@@ -369,6 +385,7 @@ mod impl_export {
         ($ty:ty) => {
             impl Export for $ty {
                 type Hint = hint::StringHint;
+                #[inline]
                 fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
                     hint.map_or_else(
                         || ExportInfo::new(VariantType::GodotString),
@@ -386,6 +403,7 @@ mod impl_export {
         ($ty:ty: $variant_ty:ident) => {
             impl Export for $ty {
                 type Hint = ();
+                #[inline]
                 fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
                     ExportInfo::new(VariantType::$variant_ty)
                 }
@@ -420,6 +438,7 @@ mod impl_export {
 
     impl Export for Color {
         type Hint = hint::ColorHint;
+        #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
             hint.map_or_else(
                 || ExportInfo::new(VariantType::Color),
@@ -433,6 +452,7 @@ mod impl_export {
         T: GodotObject + ToVariant,
     {
         type Hint = ();
+        #[inline]
         fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
             ExportInfo::resource_type::<T>()
         }
@@ -444,6 +464,7 @@ mod impl_export {
         T::Base: ToVariant,
     {
         type Hint = ();
+        #[inline]
         fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
             ExportInfo::resource_type::<T::Base>()
         }
@@ -454,6 +475,7 @@ mod impl_export {
         T: Export,
     {
         type Hint = T::Hint;
+        #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
             T::export_info(hint)
         }

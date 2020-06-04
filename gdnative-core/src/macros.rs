@@ -248,6 +248,7 @@ macro_rules! impl_basic_trait {
         Drop for $Type:ident as $GdType:ident : $gd_method:ident
     ) => {
         impl Drop for $Type {
+            #[inline]
             fn drop(&mut self) {
                 unsafe { (get_api().$gd_method)(&mut self.0) }
             }
@@ -258,6 +259,7 @@ macro_rules! impl_basic_trait {
         Clone for $Type:ident as $GdType:ident : $gd_method:ident
     ) => {
         impl Clone for $Type {
+            #[inline]
             fn clone(&self) -> Self {
                 unsafe {
                     let mut result = sys::$GdType::default();
@@ -272,6 +274,7 @@ macro_rules! impl_basic_trait {
         Default for $Type:ident as $GdType:ident : $gd_method:ident
     ) => {
         impl Default for $Type {
+            #[inline]
             fn default() -> Self {
                 unsafe {
                     let mut gd_val = sys::$GdType::default();
@@ -286,6 +289,7 @@ macro_rules! impl_basic_trait {
         PartialEq for $Type:ident as $GdType:ident : $gd_method:ident
     ) => {
         impl PartialEq for $Type {
+            #[inline]
             fn eq(&self, other: &Self) -> bool {
                 unsafe { (get_api().$gd_method)(&self.0, &other.0) }
             }
@@ -296,6 +300,7 @@ macro_rules! impl_basic_trait {
         Eq for $Type:ident as $GdType:ident : $gd_method:ident
     ) => {
         impl PartialEq for $Type {
+            #[inline]
             fn eq(&self, other: &Self) -> bool {
                 unsafe { (get_api().$gd_method)(&self.0, &other.0) }
             }
@@ -356,6 +361,7 @@ macro_rules! godot_test {
         $(
             #[cfg(feature = "gd_test")]
             #[doc(hidden)]
+            #[inline]
             pub fn $test_name() -> bool {
                 let str_name = stringify!($test_name);
                 println!("   -- {}", str_name);

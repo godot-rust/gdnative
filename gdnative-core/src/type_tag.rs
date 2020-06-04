@@ -7,6 +7,7 @@ struct Tag {
 }
 
 impl Tag {
+    #[inline]
     fn of<T>() -> Self
     where
         T: NativeClass,
@@ -35,6 +36,7 @@ mod boxed_type_tag {
     static mut TAGS: Option<Vec<*const Tag>> = None;
 
     /// Create a new type tag for type `T`. This should only be called from `InitHandle`.
+    #[inline]
     pub(crate) unsafe fn create<T>() -> *const libc::c_void
     where
         T: NativeClass,
@@ -47,6 +49,7 @@ mod boxed_type_tag {
     }
 
     /// Returns `true` if `tag` corresponds to type `T`. `tag` must be one returned by `create`.
+    #[inline]
     pub(crate) unsafe fn check<T>(tag: *const libc::c_void) -> bool
     where
         T: NativeClass,
@@ -56,6 +59,7 @@ mod boxed_type_tag {
 
     /// Perform any cleanup actions if required. Should only be called from
     /// `crate::cleanup_internal_state`. `create` and `check` shouldn't be called after this.
+    #[inline]
     pub(crate) unsafe fn cleanup() {
         // Safety: By the time cleanup is called, create shouldn't be called again
         if let Some(tags) = TAGS.take() {
@@ -81,6 +85,7 @@ mod transmuted_type_tag {
     use crate::NativeClass;
 
     /// Create a new type tag for type `T`. This should only be called from `InitHandle`.
+    #[inline]
     pub(crate) unsafe fn create<T>() -> *const libc::c_void
     where
         T: NativeClass,
@@ -89,6 +94,7 @@ mod transmuted_type_tag {
     }
 
     /// Returns `true` if `tag` corresponds to type `T`. `tag` must be one returned by `create`.
+    #[inline]
     pub(crate) unsafe fn check<T>(tag: *const libc::c_void) -> bool
     where
         T: NativeClass,
@@ -98,6 +104,7 @@ mod transmuted_type_tag {
 
     /// Perform any cleanup actions if required. Should only be called from
     /// `crate::cleanup_internal_state`. `create` and `check` shouldn't be called after this.
+    #[inline]
     pub(crate) unsafe fn cleanup() {
         // do nothing
     }
