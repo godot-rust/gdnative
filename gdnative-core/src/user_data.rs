@@ -213,6 +213,7 @@ where
 {
     type Target = T;
 
+    #[inline]
     fn new(val: Self::Target) -> Self {
         MutexData {
             lock: Arc::new(Mutex::new(val)),
@@ -220,10 +221,12 @@ where
         }
     }
 
+    #[inline]
     unsafe fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.lock) as *const libc::c_void
     }
 
+    #[inline]
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         MutexData {
             lock: Arc::from_raw(ptr as *const Mutex<T>),
@@ -231,6 +234,7 @@ where
         }
     }
 
+    #[inline]
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         let borrowed = Arc::from_raw(ptr as *const Mutex<T>);
         let lock = borrowed.clone();
@@ -249,6 +253,7 @@ where
 {
     type Err = LockFailed;
 
+    #[inline]
     fn map<F, U>(&self, op: F) -> Result<U, LockFailed>
     where
         F: FnOnce(&T) -> U,
@@ -264,6 +269,7 @@ where
 {
     type Err = LockFailed;
 
+    #[inline]
     fn map_mut<F, U>(&self, op: F) -> Result<U, LockFailed>
     where
         F: FnOnce(&mut T) -> U,
@@ -279,6 +285,7 @@ where
 }
 
 impl<T, OPT> Clone for MutexData<T, OPT> {
+    #[inline]
     fn clone(&self) -> Self {
         MutexData {
             lock: self.lock.clone(),
@@ -304,6 +311,7 @@ where
 {
     type Target = T;
 
+    #[inline]
     fn new(val: Self::Target) -> Self {
         RwLockData {
             lock: Arc::new(RwLock::new(val)),
@@ -311,10 +319,12 @@ where
         }
     }
 
+    #[inline]
     unsafe fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.lock) as *const libc::c_void
     }
 
+    #[inline]
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         RwLockData {
             lock: Arc::from_raw(ptr as *const RwLock<T>),
@@ -322,6 +332,7 @@ where
         }
     }
 
+    #[inline]
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         let borrowed = Arc::from_raw(ptr as *const RwLock<T>);
         let lock = borrowed.clone();
@@ -340,6 +351,7 @@ where
 {
     type Err = LockFailed;
 
+    #[inline]
     fn map<F, U>(&self, op: F) -> Result<U, LockFailed>
     where
         F: FnOnce(&T) -> U,
@@ -361,6 +373,7 @@ where
 {
     type Err = LockFailed;
 
+    #[inline]
     fn map_mut<F, U>(&self, op: F) -> Result<U, LockFailed>
     where
         F: FnOnce(&mut T) -> U,
@@ -376,6 +389,7 @@ where
 }
 
 impl<T, OPT> Clone for RwLockData<T, OPT> {
+    #[inline]
     fn clone(&self) -> Self {
         RwLockData {
             lock: self.lock.clone(),
@@ -394,18 +408,22 @@ where
 {
     type Target = T;
 
+    #[inline]
     fn new(val: Self::Target) -> Self {
         ArcData(Arc::new(val))
     }
 
+    #[inline]
     unsafe fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.0) as *const libc::c_void
     }
 
+    #[inline]
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         ArcData(Arc::from_raw(ptr as *const T))
     }
 
+    #[inline]
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         let borrowed = Arc::from_raw(ptr as *const T);
         let arc = borrowed.clone();
@@ -420,6 +438,7 @@ where
 {
     type Err = Infallible;
 
+    #[inline]
     fn map<F, U>(&self, op: F) -> Result<U, Infallible>
     where
         F: FnOnce(&T) -> U,
@@ -429,6 +448,7 @@ where
 }
 
 impl<T> Clone for ArcData<T> {
+    #[inline]
     fn clone(&self) -> Self {
         ArcData(self.0.clone())
     }
@@ -467,6 +487,7 @@ mod local_cell {
     }
 
     impl<T> LocalCell<T> {
+        #[inline]
         pub fn new(val: T) -> Self {
             LocalCell {
                 thread_id: thread::current().id(),
@@ -474,6 +495,7 @@ mod local_cell {
             }
         }
 
+        #[inline]
         fn inner(&self) -> Result<&RefCell<T>, LocalCellError> {
             let current = thread::current().id();
 
@@ -487,11 +509,13 @@ mod local_cell {
             }
         }
 
+        #[inline]
         pub fn try_borrow(&self) -> Result<Ref<T>, LocalCellError> {
             let inner = self.inner()?;
             inner.try_borrow().map_err(|_| LocalCellError::BorrowFailed)
         }
 
+        #[inline]
         pub fn try_borrow_mut(&self) -> Result<RefMut<T>, LocalCellError> {
             let inner = self.inner()?;
             inner
@@ -512,22 +536,26 @@ where
 {
     type Target = T;
 
+    #[inline]
     fn new(val: Self::Target) -> Self {
         LocalCellData {
             inner: Arc::new(local_cell::LocalCell::new(val)),
         }
     }
 
+    #[inline]
     unsafe fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.inner) as *const libc::c_void
     }
 
+    #[inline]
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         LocalCellData {
             inner: Arc::from_raw(ptr as *const local_cell::LocalCell<T>),
         }
     }
 
+    #[inline]
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self {
         let borrowed = Arc::from_raw(ptr as *const local_cell::LocalCell<T>);
         let arc = borrowed.clone();
@@ -542,6 +570,7 @@ where
 {
     type Err = LocalCellError;
 
+    #[inline]
     fn map<F, U>(&self, op: F) -> Result<U, Self::Err>
     where
         F: FnOnce(&Self::Target) -> U,
@@ -556,6 +585,7 @@ where
 {
     type Err = LocalCellError;
 
+    #[inline]
     fn map_mut<F, U>(&self, op: F) -> Result<U, Self::Err>
     where
         F: FnOnce(&mut Self::Target) -> U,
@@ -565,6 +595,7 @@ where
 }
 
 impl<T> Clone for LocalCellData<T> {
+    #[inline]
     fn clone(&self) -> Self {
         LocalCellData {
             inner: self.inner.clone(),
@@ -587,12 +618,14 @@ unsafe impl<T> Send for Aether<T> {}
 unsafe impl<T> Sync for Aether<T> {}
 
 impl<T> Clone for Aether<T> {
+    #[inline]
     fn clone(&self) -> Self {
         Aether::default()
     }
 }
 
 impl<T> Default for Aether<T> {
+    #[inline]
     fn default() -> Self {
         Aether {
             _marker: PhantomData,
@@ -606,18 +639,22 @@ where
 {
     type Target = T;
 
+    #[inline]
     fn new(_val: Self::Target) -> Self {
         Aether::default()
     }
 
+    #[inline]
     unsafe fn into_user_data(self) -> *const libc::c_void {
         1 as *const libc::c_void
     }
 
+    #[inline]
     unsafe fn consume_user_data_unchecked(_ptr: *const libc::c_void) -> Self {
         Aether::default()
     }
 
+    #[inline]
     unsafe fn clone_from_user_data_unchecked(_ptr: *const libc::c_void) -> Self {
         Aether::default()
     }
@@ -629,6 +666,7 @@ where
 {
     type Err = Infallible;
 
+    #[inline]
     fn map<F, U>(&self, op: F) -> Result<U, Infallible>
     where
         F: FnOnce(&T) -> U,

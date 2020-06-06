@@ -43,18 +43,21 @@ pub unsafe trait Guard: Drop {
 pub unsafe trait WritePtr: Guard {}
 
 impl<G: Guard> MaybeUnaligned<G> {
+    #[inline]
     pub(crate) fn new(guard: G) -> Self {
         MaybeUnaligned { guard }
     }
 
     /// Assumes that an access is aligned. It is undefined behavior to Deref the resulting
     /// access if the underlying pointer is not aligned to `G::Target`.
+    #[inline]
     pub unsafe fn assume_aligned(self) -> Aligned<G> {
         Aligned { guard: self.guard }
     }
 
     /// Tries to convert to an aligned access. Returns `None` if the underlying pointer is not
     /// aligned.
+    #[inline]
     pub fn try_into_aligned(self) -> Option<Aligned<G>> {
         if self.guard.read_ptr() as usize % mem::align_of::<G::Target>() == 0 {
             unsafe { Some(self.assume_aligned()) }
@@ -64,6 +67,7 @@ impl<G: Guard> MaybeUnaligned<G> {
     }
 
     /// Copies the data out of this access into a `Vec`.
+    #[inline]
     pub fn to_vec(&self) -> Vec<G::Target>
     where
         G::Target: Copy,
@@ -83,6 +87,7 @@ impl<G: Guard> MaybeUnaligned<G> {
 
     /// Converts to an access backed by an owned, aligned copy of the data. The data is written
     /// back when the access is dropped.
+    #[inline]
     pub fn into_owned(self) -> Owned<G>
     where
         G: WritePtr,
@@ -97,6 +102,7 @@ impl<G: Guard> MaybeUnaligned<G> {
 }
 
 impl<G: Guard> Aligned<G> {
+    #[inline]
     pub fn as_slice(&self) -> &[G::Target] {
         unsafe {
             let ptr = self.guard.read_ptr();
@@ -105,6 +111,7 @@ impl<G: Guard> Aligned<G> {
         }
     }
 
+    #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [G::Target]
     where
         G: WritePtr,
@@ -119,12 +126,14 @@ impl<G: Guard> Aligned<G> {
 
 impl<G: Guard> Deref for Aligned<G> {
     type Target = [G::Target];
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.as_slice()
     }
 }
 
 impl<G: Guard + WritePtr> DerefMut for Aligned<G> {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut_slice()
     }
@@ -135,6 +144,7 @@ where
     G: Guard + WritePtr,
     G::Target: Copy,
 {
+    #[inline]
     pub fn as_slice(&self) -> &[G::Target] {
         debug_assert_eq!(
             self.guard.len(),
@@ -144,6 +154,7 @@ where
         self.owned.as_slice()
     }
 
+    #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [G::Target] {
         debug_assert_eq!(
             self.guard.len(),
@@ -160,6 +171,7 @@ where
     G::Target: Copy,
 {
     type Target = [G::Target];
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.as_slice()
     }
@@ -170,6 +182,7 @@ where
     G: Guard + WritePtr,
     G::Target: Copy,
 {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut_slice()
     }
@@ -180,6 +193,7 @@ where
     G: Guard + WritePtr,
     G::Target: Copy,
 {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             let mut dst = self.guard.read_ptr() as *mut G::Target;

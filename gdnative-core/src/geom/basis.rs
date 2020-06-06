@@ -9,6 +9,7 @@ pub struct Basis {
 }
 
 impl Default for Basis {
+    #[inline]
     fn default() -> Self {
         Self::identity()
     }
@@ -18,6 +19,7 @@ impl Basis {
     /// The identity basis.
     ///
     /// Identical to calling [`Basis::default()`](#method.default).
+    #[inline]
     pub const fn identity() -> Basis {
         Self {
             elements: [
@@ -29,31 +31,37 @@ impl Basis {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_basis {
         unsafe { std::mem::transmute::<*const Basis, *const sys::godot_basis>(self as *const _) }
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(c: sys::godot_basis) -> Self {
         unsafe { std::mem::transmute::<sys::godot_basis, Self>(c) }
     }
 
     /// The basis that will flip something along the **X Axis** when used in a transformation.
+    #[inline]
     pub const fn flip_x() -> Basis {
         Basis::from_diagonal(Vector3::new(-1.0, 1.0, 1.0))
     }
 
     /// The basis that will flip something along the **Y axis** when used in a transformation.
+    #[inline]
     pub const fn flip_y() -> Basis {
         Basis::from_diagonal(Vector3::new(1.0, -1.0, 1.0))
     }
 
     /// The basis that will flip something along the **Z axis** when used in a transformation.
+    #[inline]
     pub const fn flip_z() -> Basis {
         Basis::from_diagonal(Vector3::new(1.0, 1.0, -1.0))
     }
 
     /// Creates a Basis from the given [`Vector3`](./type.Vector3.html)
+    #[inline]
     pub const fn from_diagonal(p_diag: Vector3) -> Basis {
         Basis {
             elements: [
@@ -65,11 +73,13 @@ impl Basis {
     }
 
     /// Creates a `Basis` from 3 [`Vector3`](./type.Vector3.html)s
+    #[inline]
     pub const fn from_elements(elements: [Vector3; 3]) -> Self {
         Self { elements }
     }
 
     /// Creates a rotation matrix.
+    #[inline]
     pub fn from_euler(euler: Vector3) -> Self {
         let mut b = Basis::default();
         b.set_euler_yxz(&euler);
@@ -83,6 +93,7 @@ impl Basis {
     /// # Panics
     ///
     /// If `axis` is not normalized.
+    #[inline]
     pub fn from_axis_angle(axis: &Vector3, phi: f32) -> Self {
         assert!(
             axis.length().approx_eq(&1.0),
@@ -125,6 +136,7 @@ impl Basis {
     /// # Panics
     ///
     /// If the determinant of `self` is zero.
+    #[inline]
     pub fn invert(&mut self) {
         let [x, y, z] = self.elements;
 
@@ -157,12 +169,14 @@ impl Basis {
     /// # Panics
     ///
     /// If the determinant of `self` is zero.
+    #[inline]
     pub fn inverted(mut self) -> Basis {
         self.invert();
         self
     }
 
     /// Transposes the matrix.
+    #[inline]
     pub fn transpose(&mut self) {
         std::mem::swap(&mut self.elements[0].y, &mut self.elements[1].x);
         std::mem::swap(&mut self.elements[0].z, &mut self.elements[2].x);
@@ -170,12 +184,14 @@ impl Basis {
     }
 
     /// Returns the transposed version of the matrix.
+    #[inline]
     pub fn transposed(mut self) -> Basis {
         self.transpose();
         self
     }
 
     /// Returns the determinant of the matrix.
+    #[inline]
     pub fn determinant(&self) -> f32 {
         let [x, y, z] = &self.elements;
         x.x * (y.y * z.z - z.y * y.z) // x
@@ -191,6 +207,7 @@ impl Basis {
     /// # Panics
     ///
     /// If the determinant of `self` is zero.
+    #[inline]
     pub fn orthonormalize(&mut self) {
         assert!(
             !self.determinant().approx_eq(&0.0),
@@ -216,24 +233,28 @@ impl Basis {
     /// Returns an orthonormalized version of the matrix.
     ///
     /// See [`Basis::orthonormalize()`](#method.orthonormalize)
+    #[inline]
     pub fn orthonormalized(mut self) -> Basis {
         self.orthonormalize();
         self
     }
 
     /// Returns `true` if `self` and `other` are approximately equal.
+    #[inline]
     pub fn approx_eq(&self, other: &Basis) -> bool {
         self.elements[0].approx_eq(&other.elements[0])
             && self.elements[1].approx_eq(&other.elements[1])
             && self.elements[2].approx_eq(&other.elements[2])
     }
 
+    #[inline]
     fn is_orthogonal(&self) -> bool {
         let identity = Self::identity();
         let m = (*self) * self.transposed();
         m.approx_eq(&identity)
     }
 
+    #[inline]
     fn is_rotation(&self) -> bool {
         let det = self.determinant();
         det.approx_eq(&1.0) && self.is_orthogonal()
@@ -243,6 +264,7 @@ impl Basis {
     ///
     /// The main use of `Basis` is as a `Transform.basis`, which is used as the transformation matrix
     /// of the 3D object. `rotated()` here refers to rotation of the object (which is `R * self`), not the matrix itself.
+    #[inline]
     pub fn rotated(self, axis: Vector3, phi: f32) -> Basis {
         let rot = Basis::from_axis_angle(&axis, phi);
         rot * self
@@ -251,6 +273,7 @@ impl Basis {
     /// Rotates the matrix.
     ///
     /// If object rotation is needed, see [`Basis::rotated()`](#method.rotated)
+    #[inline]
     pub fn rotate(&mut self, axis: Vector3, phi: f32) {
         *self = self.rotated(axis, phi);
     }
@@ -262,6 +285,7 @@ impl Basis {
     /// # Panics
     ///
     /// If `self` is not normalized.
+    #[inline]
     pub fn to_quat(&self) -> Quat {
         // Assumes that the matrix can be decomposed into a proper rotation and scaling matrix as M = R.S,
         // and returns the Euler angles corresponding to the rotation part, complementing get_scale().
@@ -323,6 +347,7 @@ impl Basis {
     }
 
     /// Returns the scale of the matrix.
+    #[inline]
     pub fn to_scale(&self) -> Vector3 {
         let det = self.determinant();
         let det_sign = if det < 0.0 { -1.0 } else { 1.0 };
@@ -336,6 +361,7 @@ impl Basis {
     /// Multiplies the matrix from left by the scaling matrix: M -> S.M
     ///
     /// See the comment for [Basis::rotated](#method.rotated) for further explanation.
+    #[inline]
     fn scale(&mut self, s: &Vector3) {
         self.elements[0] *= s.x;
         self.elements[1] *= s.y;
@@ -343,6 +369,7 @@ impl Basis {
     }
 
     /// Introduce an additional scaling specified by the given 3D scaling factor.
+    #[inline]
     pub fn scaled(mut self, scale: &Vector3) -> Basis {
         self.scale(scale);
         self
@@ -355,6 +382,7 @@ impl Basis {
     /// The returned `Vector3` contains the rotation angles in the format (**X** angle, **Y** angle, **Z** angle).
     ///
     /// See [`Basis::to_quat`](#method.to_quat) if you need a quaternion instead.
+    #[inline]
     pub fn to_euler(&self) -> Vector3 {
         let mut euler = Vector3::zero();
 
@@ -393,6 +421,7 @@ impl Basis {
         euler
     }
 
+    #[inline]
     fn set_euler_yxz(&mut self, euler: &Vector3) {
         let c = euler.x.cos();
         let s = euler.x.sin();
@@ -421,6 +450,7 @@ impl Basis {
     }
 
     /// Returns a vector transformed (multiplied) by the matrix.
+    #[inline]
     pub fn xform(&self, v: Vector3) -> Vector3 {
         Vector3::new(
             self.elements[0].dot(v),
@@ -432,6 +462,7 @@ impl Basis {
     /// Returns a vector transformed (multiplied) by the transposed matrix.
     ///
     /// Note: This results in a multiplication by the inverse of the matrix only if it represents a rotation-reflection.
+    #[inline]
     pub fn xform_inv(&self, v: Vector3) -> Vector3 {
         Vector3::new(
             (self.elements[0].x * v.x) + (self.elements[1].x * v.y) + (self.elements[2].x * v.z),
@@ -441,11 +472,13 @@ impl Basis {
     }
 
     /// Creates a `Basis` from the rotation and scaling of the provided transform.
+    #[inline]
     pub fn from_transform(transform: &default::Transform3D<f32>) -> Basis {
         Self::from_typed_transform::<UnknownUnit, UnknownUnit>(transform)
     }
 
     /// Creates a `Basis` from the rotation and scaling of the provided transform, in `Dst` space.
+    #[inline]
     pub fn from_typed_transform<Src, Dst>(transform: &Transform3D<f32, Src, Dst>) -> Basis {
         Basis {
             elements: [
@@ -463,26 +496,31 @@ impl Basis {
     }
 
     /// Transposed dot product with the **X Axis** of the matrix.
+    #[inline]
     pub fn tdotx(&self, v: Vector3) -> f32 {
         self.elements[0].x * v.x + self.elements[1].x * v.y + self.elements[2].x * v.z
     }
 
     /// Transposed dot product with the **Y axis** of the matrix.
+    #[inline]
     pub fn tdoty(&self, v: Vector3) -> f32 {
         self.elements[0].y * v.x + self.elements[1].y * v.y + self.elements[2].y * v.z
     }
 
     /// Transposed dot product with the **Z axis** of the matrix.
+    #[inline]
     pub fn tdotz(&self, v: Vector3) -> f32 {
         self.elements[0].z * v.x + self.elements[1].z * v.y + self.elements[2].z * v.z
     }
 
     /// Get the **X Axis** of the matrix
+    #[inline]
     pub fn x(&self) -> Vector3 {
         Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x)
     }
 
     /// Set the **X Axis** of the matrix
+    #[inline]
     pub fn set_x(&mut self, v: Vector3) {
         self.elements[0].x = v.x;
         self.elements[1].x = v.y;
@@ -490,11 +528,13 @@ impl Basis {
     }
 
     /// Get the **Y axis** of the matrix
+    #[inline]
     pub fn y(&self) -> Vector3 {
         Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y)
     }
 
     /// Set the **Y axis** of the matrix
+    #[inline]
     pub fn set_y(&mut self, v: Vector3) {
         self.elements[0].y = v.x;
         self.elements[1].y = v.y;
@@ -502,11 +542,13 @@ impl Basis {
     }
 
     /// Get the **Z axis** of the matrix
+    #[inline]
     pub fn z(&self) -> Vector3 {
         Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z)
     }
 
     /// Set the **Z axis** of the matrix
+    #[inline]
     pub fn set_z(&mut self, v: Vector3) {
         self.elements[0].z = v.x;
         self.elements[1].z = v.y;
@@ -516,6 +558,7 @@ impl Basis {
 
 impl core::ops::Mul<Basis> for Basis {
     type Output = Self;
+    #[inline]
     fn mul(self, rhs: Self) -> Self {
         Basis::from_elements([
             Vector3::new(

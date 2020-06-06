@@ -15,51 +15,61 @@ pub struct Dictionary(pub(crate) sys::godot_dictionary);
 
 impl Dictionary {
     /// Creates an empty `Dictionary`.
+    #[inline]
     pub fn new() -> Self {
         Dictionary::default()
     }
 
     /// Returns `true` if the `Dictionary` contains no elements.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         unsafe { (get_api().godot_dictionary_empty)(&self.0) }
     }
 
     /// Returns the number of elements in the `Dictionary`.
+    #[inline]
     pub fn len(&self) -> i32 {
         unsafe { (get_api().godot_dictionary_size)(&self.0) }
     }
 
     /// Clears the `Dictionary`, removing all key-value pairs.
+    #[inline]
     pub fn clear(&mut self) {
         unsafe { (get_api().godot_dictionary_clear)(&mut self.0) }
     }
 
     /// Returns true if the `Dictionary` contains the specified key.
+    #[inline]
     pub fn contains(&self, key: &Variant) -> bool {
         unsafe { (get_api().godot_dictionary_has)(&self.0, &key.0) }
     }
 
     /// Returns true if the `Dictionary` has all of the keys in the given array.
+    #[inline]
     pub fn contains_all(&self, keys: &VariantArray) -> bool {
         unsafe { (get_api().godot_dictionary_has_all)(&self.0, &keys.0) }
     }
 
     /// Erase a key-value pair in the `Dictionary` by the specified key.
+    #[inline]
     pub fn erase(&mut self, key: &Variant) {
         unsafe { (get_api().godot_dictionary_erase)(&mut self.0, &key.0) }
     }
 
     /// Returns a copy of the value corresponding to the key.
+    #[inline]
     pub fn get(&self, key: &Variant) -> Variant {
         unsafe { Variant((get_api().godot_dictionary_get)(&self.0, &key.0)) }
     }
 
     /// Sets a value to the element corresponding to the key.
+    #[inline]
     pub fn set(&mut self, key: &Variant, val: &Variant) {
         unsafe { (get_api().godot_dictionary_set)(&mut self.0, &key.0, &val.0) }
     }
 
     /// Returns a reference to the value corresponding to the key.
+    #[inline]
     pub fn get_ref(&self, key: &Variant) -> &Variant {
         unsafe {
             Variant::cast_ref((get_api().godot_dictionary_operator_index_const)(
@@ -69,6 +79,7 @@ impl Dictionary {
     }
 
     /// Returns a mutable reference to the value corresponding to the key.
+    #[inline]
     pub fn get_mut_ref(&mut self, key: &Variant) -> &mut Variant {
         unsafe {
             Variant::cast_mut_ref((get_api().godot_dictionary_operator_index)(
@@ -79,40 +90,48 @@ impl Dictionary {
     }
 
     /// Returns a GodotString of the `Dictionary`.
+    #[inline]
     pub fn to_json(&self) -> GodotString {
         unsafe { GodotString((get_api().godot_dictionary_to_json)(&self.0)) }
     }
 
     /// Returns an array of the keys in the `Dictionary`.
+    #[inline]
     pub fn keys(&self) -> VariantArray {
         unsafe { VariantArray((get_api().godot_dictionary_keys)(&self.0)) }
     }
 
     /// Returns an array of the values in the `Dictionary`.
+    #[inline]
     pub fn values(&self) -> VariantArray {
         unsafe { VariantArray((get_api().godot_dictionary_values)(&self.0)) }
     }
 
+    #[inline]
     pub fn get_next(&self, key: &Variant) -> &Variant {
         unsafe { Variant::cast_ref((get_api().godot_dictionary_next)(&self.0, &key.0)) }
     }
 
     /// Return a hashed i32 value representing the dictionary's contents.
+    #[inline]
     pub fn hash(&self) -> i32 {
         unsafe { (get_api().godot_dictionary_hash)(&self.0) }
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_dictionary {
         &self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_dictionary) -> Self {
         Dictionary(sys)
     }
 
     impl_common_methods! {
+        #[inline]
         pub fn new_ref(&self) -> Dictionary : godot_dictionary_new_copy;
     }
 }
@@ -126,6 +145,7 @@ impl_basic_traits!(
 );
 
 impl fmt::Debug for Dictionary {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_json().to_string().fmt(f)
     }
@@ -136,6 +156,7 @@ where
     K: ToVariantEq,
     V: ToVariant,
 {
+    #[inline]
     fn from_iter<I: IntoIterator<Item = (K, V)>>(iter: I) -> Self {
         let mut dic = Dictionary::new();
         dic.extend(iter);
@@ -144,6 +165,7 @@ where
 }
 
 impl FromIterator<(Variant, Variant)> for Dictionary {
+    #[inline]
     fn from_iter<I: IntoIterator<Item = (Variant, Variant)>>(iter: I) -> Self {
         let mut dic = Dictionary::new();
         dic.extend(iter);
@@ -156,6 +178,7 @@ where
     K: ToVariantEq,
     V: ToVariant,
 {
+    #[inline]
     fn extend<I: IntoIterator<Item = (K, V)>>(&mut self, iter: I) {
         for (key, value) in iter {
             self.set(&key.to_variant(), &value.to_variant());
@@ -164,6 +187,7 @@ where
 }
 
 impl Extend<(Variant, Variant)> for Dictionary {
+    #[inline]
     fn extend<I: IntoIterator<Item = (Variant, Variant)>>(&mut self, iter: I) {
         for (key, value) in iter {
             self.set(&key.to_variant(), &value.to_variant());

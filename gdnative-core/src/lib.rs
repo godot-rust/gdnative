@@ -24,6 +24,7 @@
 //! engine or the object must be carefully deallocated using the object's `free`  method.
 //!
 
+#![deny(clippy::missing_inline_in_public_items)]
 #![allow(clippy::transmute_ptr_to_ptr)]
 #![cfg_attr(feature = "gd_test", allow(clippy::blacklisted_name))]
 
@@ -123,6 +124,7 @@ pub type GodotResult = Result<(), GodotError>;
     since = "0.8.1",
     note = "This is intended for internal use, and will be removed from the public API in 0.9"
 )]
+#[inline]
 pub fn result_from_sys(err: sys::godot_error) -> GodotResult {
     unsafe { GodotError::result_from_sys(err) }
 }

@@ -26,6 +26,7 @@ impl NodePath {
     /// A path is absolute if it starts with a slash. Absolute paths are only valid in the
     /// global scene tree, not within individual scenes. In a relative path, `"."` and `".."`
     /// indicate the current node and its parent.
+    #[inline]
     pub fn from_str(path: &str) -> Self {
         unsafe {
             let mut dest = sys::godot_node_path::default();
@@ -41,6 +42,7 @@ impl NodePath {
     }
 
     /// Create a `NodePath` from a GodotString.
+    #[inline]
     pub fn new(path: &GodotString) -> Self {
         unsafe {
             let mut dest = sys::godot_node_path::default();
@@ -50,30 +52,36 @@ impl NodePath {
     }
 
     /// Returns `true` if the node path is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         unsafe { (get_api().godot_node_path_is_empty)(&self.0) }
     }
 
     /// Returns `true` if the node path is absolute.
+    #[inline]
     pub fn is_absolute(&self) -> bool {
         unsafe { (get_api().godot_node_path_is_absolute)(&self.0) }
     }
 
     /// Get the number of node names which make up the path.
+    #[inline]
     pub fn name_count(&mut self) -> i32 {
         unsafe { (get_api().godot_node_path_get_name_count)(&mut self.0) }
     }
 
     /// Returns the resource name of the specified `idx`, 0 to subname_count()
+    #[inline]
     pub fn get_subname(&self, idx: i32) -> GodotString {
         unsafe { GodotString((get_api().godot_node_path_get_subname)(&self.0, idx)) }
     }
 
     /// Returns the number of resource names in the path.
+    #[inline]
     pub fn get_subname_count(&self) -> i32 {
         unsafe { (get_api().godot_node_path_get_subname_count)(&self.0) }
     }
 
+    #[inline]
     pub fn get_concatenated_subnames(&self) -> GodotString {
         unsafe {
             GodotString((get_api().godot_node_path_get_concatenated_subnames)(
@@ -83,26 +91,31 @@ impl NodePath {
     }
 
     /// Returns the `NodePath` as a `GodotString`
+    #[inline]
     pub fn to_godot_string(&self) -> GodotString {
         unsafe { GodotString((get_api().godot_node_path_as_string)(&self.0)) }
     }
 
     /// Returns the `NodePath` as a `String`
+    #[inline]
     pub fn to_string(&self) -> String {
         self.to_godot_string().to_string()
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_node_path {
         &self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_node_path) -> Self {
         NodePath(sys)
     }
 
     impl_common_methods! {
+        #[inline]
         pub fn new_ref(&self) -> NodePath : godot_node_path_new_copy;
     }
 }
@@ -111,24 +124,28 @@ impl<S> From<S> for NodePath
 where
     S: AsRef<str>,
 {
+    #[inline]
     fn from(s: S) -> NodePath {
         NodePath::from_str(&s.as_ref())
     }
 }
 
 impl Into<String> for NodePath {
+    #[inline]
     fn into(self) -> String {
         self.to_string()
     }
 }
 
 impl From<GodotString> for NodePath {
+    #[inline]
     fn from(s: GodotString) -> NodePath {
         NodePath::new(&s)
     }
 }
 
 impl Into<GodotString> for NodePath {
+    #[inline]
     fn into(self) -> GodotString {
         self.to_godot_string()
     }
@@ -142,6 +159,7 @@ impl_basic_traits!(
 );
 
 impl fmt::Debug for NodePath {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "NodePath({})", self.to_string())
     }

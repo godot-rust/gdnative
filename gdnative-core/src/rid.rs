@@ -10,22 +10,27 @@ use std::mem::transmute;
 pub struct Rid(pub(crate) sys::godot_rid);
 
 impl Rid {
+    #[inline]
     pub fn new() -> Self {
         Rid::default()
     }
 
+    #[inline]
     pub fn get_id(&self) -> i32 {
         unsafe { (get_api().godot_rid_get_id)(&self.0) }
     }
 
+    #[inline]
     pub fn operator_less(&self, b: &Rid) -> bool {
         unsafe { (get_api().godot_rid_operator_less)(&self.0, &b.0) }
     }
 
+    #[inline]
     pub fn is_valid(&self) -> bool {
         self.to_u64() != 0
     }
 
+    #[inline]
     fn to_u64(&self) -> u64 {
         unsafe {
             // std::mem::transmute needs source and destination types to have the same size. On 32
@@ -37,16 +42,19 @@ impl Rid {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_rid {
         &self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn mut_sys(&mut self) -> *mut sys::godot_rid {
         &mut self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_rid) -> Self {
         Rid(sys)
     }
@@ -60,6 +68,7 @@ impl_basic_traits! {
 }
 
 impl PartialOrd for Rid {
+    #[inline]
     fn partial_cmp(&self, other: &Rid) -> Option<Ordering> {
         unsafe {
             let native = (get_api().godot_rid_operator_less)(&self.0, &other.0);

@@ -114,6 +114,7 @@ pub enum VariantType {
 
 impl VariantType {
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(v: sys::godot_variant_type) -> VariantType {
         unsafe { transmute(v as u32) }
     }
@@ -135,6 +136,7 @@ pub enum CallError {
 }
 
 impl CallError {
+    #[inline]
     fn from_sys(v: sys::godot_variant_call_error_error) -> Result<(), CallError> {
         if v == sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_OK {
             Ok(())
@@ -193,11 +195,13 @@ impl VariantOperator {
     const MAX: u32 = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX as u32;
 
     #[doc(hidden)]
+    #[inline]
     pub fn to_sys(self) -> sys::godot_variant_operator {
         self as u32 as sys::godot_variant_operator
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn try_from_sys(op: sys::godot_variant_operator) -> Option<Self> {
         let op = op as u32;
         if op >= Self::MAX {
@@ -226,52 +230,75 @@ type Bool = bool;
 impl Variant {
     variant_constructors!(
         /// Creates a `Variant` wrapping a `Vector2`.
+        #[inline]
         pub fn from_vector2(&Vector2) -> Self;
         /// Creates a `Variant` wrapping a `Vector3`.
+        #[inline]
         pub fn from_vector3(&Vector3) -> Self;
         /// Creates a `Variant` wrapping a `Quat`.
+        #[inline]
         pub fn from_quat(&Quat) -> Self;
         /// Creates a `Variant` wrapping a `Plane`.
+        #[inline]
         pub fn from_plane(&Plane) -> Self;
         /// Creates a `Variant` wrapping a `Rect2`.
+        #[inline]
         pub fn from_rect2(&Rect2) -> Self;
         /// Creates a `Variant` wrapping a `Transform`.
+        #[inline]
         pub fn from_transform(&Transform) -> Self;
         /// Creates a `Variant` wrapping a `Transform2D`.
+        #[inline]
         pub fn from_transform2d(&Transform2D) -> Self;
         /// Creates a `Variant` wrapping a `Basis`.
+        #[inline]
         pub fn from_basis(&Basis) -> Self;
         /// Creates a `Variant` wrapping a `Color`.
+        #[inline]
         pub fn from_color(&Color) -> Self;
         /// Creates a `Variant` wrapping an `Aabb`.
+        #[inline]
         pub fn from_aabb(&Aabb) -> Self;
         /// Creates a `Variant` wrapping an `Rid`.
+        #[inline]
         pub fn from_rid(&Rid) -> Self;
         /// Creates a `Variant` wrapping a `NodePath`.
+        #[inline]
         pub fn from_node_path(&NodePath) -> Self;
         /// Creates a `Variant` wrapping a `GodotString`.
+        #[inline]
         pub fn from_godot_string(&GodotString) -> Self;
         /// Creates an `Variant` wrapping an array of variants.
+        #[inline]
         pub fn from_array(&VariantArray) -> Self;
         /// Creates a `Variant` wrapping a byte array.
+        #[inline]
         pub fn from_byte_array(&ByteArray) -> Self;
         /// Creates a `Variant` wrapping an array of 32bit signed integers.
+        #[inline]
         pub fn from_int32_array(&Int32Array) -> Self;
         /// Creates a `Variant` wrapping an array of 32bit floats.
+        #[inline]
         pub fn from_float32_array(&Float32Array) -> Self;
         /// Creates a `Variant` wrapping an array of godot strings.
+        #[inline]
         pub fn from_string_array(&StringArray) -> Self;
         /// Creates a `Variant` wrapping an array of 2d vectors.
+        #[inline]
         pub fn from_vector2_array(&Vector2Array) -> Self;
         /// Creates a `Variant` wrapping an array of 3d vectors.
+        #[inline]
         pub fn from_vector3_array(&Vector3Array) -> Self;
         /// Creates a `Variant` wrapping an array of colors.
+        #[inline]
         pub fn from_color_array(&ColorArray) -> Self;
         /// Creates a `Variant` wrapping a dictionary.
+        #[inline]
         pub fn from_dictionary(&Dictionary) -> Self;
     );
 
     /// Creates an empty `Variant`.
+    #[inline]
     pub fn new() -> Self {
         unsafe {
             let api = get_api();
@@ -282,6 +309,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a string.
+    #[inline]
     pub fn from_str<S>(s: S) -> Variant
     where
         S: AsRef<str>,
@@ -299,6 +327,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a Godot object.
+    #[inline]
     pub fn from_object<T>(val: &T) -> Variant
     where
         T: GodotObject,
@@ -312,6 +341,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a signed integer value.
+    #[inline]
     pub fn from_i64(v: i64) -> Variant {
         unsafe {
             let api = get_api();
@@ -322,6 +352,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping an unsigned integer value.
+    #[inline]
     pub fn from_u64(v: u64) -> Variant {
         unsafe {
             let api = get_api();
@@ -332,6 +363,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping a double-precision float value.
+    #[inline]
     pub fn from_f64(v: f64) -> Variant {
         unsafe {
             let api = get_api();
@@ -342,6 +374,7 @@ impl Variant {
     }
 
     /// Creates a `Variant` wrapping an boolean.
+    #[inline]
     pub fn from_bool(v: bool) -> Variant {
         unsafe {
             let api = get_api();
@@ -351,6 +384,7 @@ impl Variant {
         }
     }
 
+    #[inline]
     fn try_as_sys_of_type(
         &self,
         expected: VariantType,
@@ -367,47 +401,64 @@ impl Variant {
 
     variant_to_type_transmute!(
         /// Do a best effort to create a `Vector2` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_vector2(&self) -> Vector2 : godot_variant_as_vector2;
         /// Returns `Some(Vector2)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_vector2(&self) -> Option<Vector2>;
 
         /// Do a best effort to create a `Vector3` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_vector3(&self) -> Vector3 : godot_variant_as_vector3;
         /// Returns `Some(Vector3)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_vector3(&self) -> Option<Vector3>;
 
         /// Do a best effort to create a `Quat` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_quat(&self) -> Quat : godot_variant_as_quat;
         /// Returns `Some(Quat)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_quat(&self) -> Option<Quat>;
 
         /// Do a best effort to create a `Rect2` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_rect2(&self) -> Rect2 : godot_variant_as_rect2;
         /// Returns `Some(Rect2)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_rect2(&self) -> Option<Rect2>;
 
         /// Do a best effort to create a `Transform2D` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_transform2d(&self) -> Transform2D : godot_variant_as_transform2d;
         /// Returns `Some(Transform2D)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_transform2d(&self) -> Option<Transform2D>;
 
         /// Do a best effort to create a `f64` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_f64(&self) -> F64 : godot_variant_as_real;
         /// Returns `Some(f64)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_f64(&self) -> Option<F64>;
 
         /// Do a best effort to create an `i64` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_i64(&self) -> I64 : godot_variant_as_int;
         /// Returns `Some(i64)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_i64(&self) -> Option<I64>;
 
         /// Do a best effort to create a `bool` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_bool(&self) -> Bool : godot_variant_as_bool;
         /// Returns `Some(bool)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_bool(&self) -> Option<Bool>;
     );
 
     /// Do a best effort to create a `u64` out of the variant, possibly returning a default value.
+    #[inline]
     pub fn to_u64(&self) -> u64 {
         unsafe {
             let api = get_api();
@@ -416,6 +467,7 @@ impl Variant {
     }
 
     /// Returns `Some(u64)` if this variant is one, `None` otherwise.
+    #[inline]
     pub fn try_to_u64(&self) -> Option<u64> {
         unsafe {
             let api = get_api();
@@ -431,91 +483,126 @@ impl Variant {
 
     variant_to_type_from_sys!(
         /// Do a best effort to create a `Plane` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_plane(&self) -> Plane : godot_variant_as_plane;
         /// Returns `Some(Plane)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_plane(&self) -> Option<Plane>;
 
         /// Do a best effort to create a `Transform` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_transform(&self) -> Transform : godot_variant_as_transform;
         /// Returns `Some(Transform)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_transform(&self) -> Option<Transform>;
 
         /// Do a best effort to create a `Color` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_color(&self) -> Color : godot_variant_as_color;
         /// Returns `Some(Color)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_color(&self) -> Option<Color>;
 
         /// Do a best effort to create a `Basis` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_basis(&self) -> Basis : godot_variant_as_basis;
         /// Returns `Some(Basis)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_basis(&self) -> Option<Basis>;
 
         /// Do a best effort to create an `Aabb` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_aabb(&self) -> Aabb : godot_variant_as_aabb;
         /// Returns `Some(Aabb)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_aabb(&self) -> Option<Aabb>;
 
         /// Do a best effort to create a `NodePath` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_node_path(&self) -> NodePath : godot_variant_as_node_path;
         /// Returns `Some(NodePath)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_node_path(&self) -> Option<NodePath>;
 
         /// Do a best effort to create a `GodotString` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_godot_string(&self) -> GodotString : godot_variant_as_string;
         /// Returns `Some(GodotString)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_godot_string(&self) -> Option<GodotString>;
 
         /// Do a best effort to create a `Rid` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_rid(&self) -> Rid : godot_variant_as_rid;
         /// Returns `Some(Rid)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_rid(&self) -> Option<Rid>;
 
         /// Do a best effort to create a `VariantArray` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_array(&self) -> VariantArray : godot_variant_as_array;
         /// Returns `Some(VariantArray)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_array(&self) -> Option<VariantArray>;
 
         /// Do a best effort to create a `ByteArray` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_byte_array(&self) -> ByteArray : godot_variant_as_pool_byte_array;
         /// Returns `Some(ByteArray)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_byte_array(&self) -> Option<ByteArray>;
 
         /// Do a best effort to create an `Int32Array` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_int32_array(&self) -> Int32Array : godot_variant_as_pool_int_array;
         /// Returns `Some(Int32Array)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_int32_array(&self) -> Option<Int32Array>;
 
         /// Do a best effort to create a `Float32Array` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_float32_array(&self) -> Float32Array : godot_variant_as_pool_real_array;
         /// Returns `Some(Float32Array)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_float32_array(&self) -> Option<Float32Array>;
 
         /// Do a best effort to create a `StringArray` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_string_array(&self) -> StringArray : godot_variant_as_pool_string_array;
         /// Returns `Some(StringArray)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_string_array(&self) -> Option<StringArray>;
 
         /// Do a best effort to create a `Vector2Array` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_vector2_array(&self) -> Vector2Array : godot_variant_as_pool_vector2_array;
         /// Returns `Some(Vector2Array)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_vector2_array(&self) -> Option<Vector2Array>;
 
         /// Do a best effort to create a `Vector3Array` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_vector3_array(&self) -> Vector3Array : godot_variant_as_pool_vector3_array;
         /// Returns `Some(Vector3Array)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_vector3_array(&self) -> Option<Vector3Array>;
 
         /// Do a best effort to create a `ColorArray` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_color_array(&self) -> ColorArray : godot_variant_as_pool_color_array;
         /// Returns `Some(ColorArray)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_color_array(&self) -> Option<ColorArray>;
 
         /// Do a best effort to create a `Dictionary` out of the variant, possibly returning a default value.
+        #[inline]
         pub fn to_dictionary(&self) -> Dictionary : godot_variant_as_dictionary;
         /// Returns `Some(Dictionary)` if this variant is one, `None` otherwise.
+        #[inline]
         pub fn try_to_dictionary(&self) -> Option<Dictionary>;
     );
 
+    #[inline]
     pub fn try_to_object<T>(&self) -> Option<T>
     where
         T: GodotObject,
@@ -523,6 +610,7 @@ impl Variant {
         self.try_to_object_with_error().ok()
     }
 
+    #[inline]
     pub fn try_to_object_with_error<T>(&self) -> Result<T, FromVariantError>
     where
         T: GodotObject,
@@ -538,28 +626,34 @@ impl Variant {
         }
     }
 
+    #[inline]
     pub fn to_string(&self) -> String {
         self.to_godot_string().to_string()
     }
 
+    #[inline]
     pub fn try_to_string(&self) -> Option<String> {
         self.try_to_godot_string().map(|s| s.to_string())
     }
 
     /// Returns this variant's type.
+    #[inline]
     pub fn get_type(&self) -> VariantType {
         unsafe { VariantType::from_sys((get_api().godot_variant_get_type)(&self.0)) }
     }
 
     /// Returns true if this is an empty variant.
+    #[inline]
     pub fn is_nil(&self) -> bool {
         self.get_type() == VariantType::Nil
     }
 
+    #[inline]
     pub fn has_method(&self, method: &GodotString) -> bool {
         unsafe { (get_api().godot_variant_has_method)(&self.0, &method.0) }
     }
 
+    #[inline]
     pub fn call(&mut self, method: &GodotString, args: &[Variant]) -> Result<Variant, CallError> {
         unsafe {
             let api = get_api();
@@ -582,6 +676,7 @@ impl Variant {
     /// # Errors
     ///
     /// Returns `Err(InvalidOp)` if the result is not valid.
+    #[inline]
     pub fn evaluate(&self, op: VariantOperator, rhs: &Self) -> Result<Variant, InvalidOp> {
         unsafe {
             let api = get_api();
@@ -604,10 +699,12 @@ impl Variant {
         }
     }
 
+    #[inline]
     pub(crate) fn cast_ref<'l>(ptr: *const sys::godot_variant) -> &'l Variant {
         unsafe { &*(ptr as *const variant::Variant) }
     }
 
+    #[inline]
     pub(crate) fn cast_mut_ref<'l>(ptr: *mut sys::godot_variant) -> &'l mut Variant {
         unsafe { &mut *(ptr as *mut variant::Variant) }
     }
@@ -618,6 +715,7 @@ impl Variant {
     /// This should be only used when certain that the receiving side is
     /// responsible for running the destructor for the object, otherwise
     /// it is leaked.
+    #[inline]
     pub fn forget(self) -> sys::godot_variant {
         let v = self.0;
         forget(self);
@@ -629,21 +727,25 @@ impl Variant {
     // The variant remains owned by the rust wrapper and the receiver of
     // the ffi representation should not run its destructor.
     #[doc(hidden)]
+    #[inline]
     pub fn to_sys(&self) -> sys::godot_variant {
         self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys(&self) -> *const sys::godot_variant {
         &self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn sys_mut(&mut self) -> *mut sys::godot_variant {
         &mut self.0
     }
 
     #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_variant) -> Self {
         Variant(sys)
     }
@@ -658,12 +760,14 @@ impl_basic_traits!(
 );
 
 impl Default for Variant {
+    #[inline]
     fn default() -> Self {
         Variant::new()
     }
 }
 
 impl fmt::Debug for Variant {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "{:?}({})", self.get_type(), self.to_string())
     }
@@ -674,6 +778,7 @@ macro_rules! variant_from_ref {
         $(
             impl<'l> From<&'l $Type> for Variant
             {
+                #[inline]
                 fn from(val: &'l $Type) -> Variant {
                     Variant::$ctor(val)
                 }
@@ -687,6 +792,7 @@ macro_rules! variant_from_val {
         $(
             impl From<$Type> for Variant
             {
+                #[inline]
                 fn from(val: $Type) -> Variant {
                     Variant::$ctor(val)
                 }
@@ -727,6 +833,7 @@ variant_from_ref!(
 );
 
 impl<'l> From<&'l str> for Variant {
+    #[inline]
     fn from(v: &str) -> Variant {
         Variant::from_str(v)
     }
@@ -736,6 +843,7 @@ impl<T> From<T> for Variant
 where
     T: GodotObject,
 {
+    #[inline]
     fn from(val: T) -> Variant {
         Variant::from_object(&val)
     }
@@ -987,12 +1095,14 @@ pub enum VariantStructRepr {
 
 impl FromVariantError {
     /// Returns a `FromVariantError` with a custom message.
+    #[inline]
     pub fn custom<T: fmt::Display>(message: T) -> Self {
         FromVariantError::Custom(format!("{}", message))
     }
 }
 
 impl fmt::Display for FromVariantError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromVariantError as E;
 
@@ -1076,6 +1186,7 @@ impl fmt::Display for FromVariantError {
 }
 
 impl ToVariant for () {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::new()
     }
@@ -1083,6 +1194,7 @@ impl ToVariant for () {
 impl ToVariantEq for () {}
 
 impl FromVariant for () {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         variant.try_as_sys_of_type(VariantType::Nil).map(|_| ())
     }
@@ -1092,6 +1204,7 @@ impl<'a, T> ToVariant for &'a T
 where
     T: ToVariant,
 {
+    #[inline]
     fn to_variant(&self) -> Variant {
         T::to_variant(*self)
     }
@@ -1102,6 +1215,7 @@ impl<'a, T> ToVariant for &'a mut T
 where
     T: ToVariant,
 {
+    #[inline]
     fn to_variant(&self) -> Variant {
         T::to_variant(*self)
     }
@@ -1116,6 +1230,7 @@ macro_rules! from_variant_direct {
     ) => (
         $(
             impl FromVariant for $TryType {
+                #[inline]
                 fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
                     variant.try_as_sys_of_type(VariantType::$VarType)
                         .map(|v| unsafe { (get_api().$try_gd_method)(v) })
@@ -1133,6 +1248,7 @@ from_variant_direct!(
 );
 
 impl ToVariant for i64 {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_i64(*self)
     }
@@ -1140,6 +1256,7 @@ impl ToVariant for i64 {
 impl ToVariantEq for i64 {}
 
 impl ToVariant for u64 {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_u64(*self)
     }
@@ -1147,6 +1264,7 @@ impl ToVariant for u64 {
 impl ToVariantEq for u64 {}
 
 impl ToVariant for f64 {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_f64(*self)
     }
@@ -1158,12 +1276,14 @@ macro_rules! impl_to_variant_for_num {
     ) => {
         $(
             impl ToVariant for $ty {
+                #[inline]
                 fn to_variant(&self) -> Variant {
                     ((*self) as $src_ty).to_variant()
                 }
             }
 
             impl FromVariant for $ty {
+                #[inline]
                 fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
                     <$src_ty>::from_variant(variant).map(|i| i as Self)
                 }
@@ -1199,6 +1319,7 @@ macro_rules! to_variant_transmute {
     ) => {
         $(
             impl ToVariant for $ty {
+                #[inline]
                 fn to_variant(&self) -> Variant {
                     unsafe {
                         let api = get_api();
@@ -1227,6 +1348,7 @@ macro_rules! to_variant_as_sys {
     ) => {
         $(
             impl ToVariant for $ty {
+                #[inline]
                 fn to_variant(&self) -> Variant {
                     unsafe {
                         let api = get_api();
@@ -1265,6 +1387,7 @@ macro_rules! from_variant_transmute {
     ) => (
         $(
             impl FromVariant for $TryType {
+                #[inline]
                 fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
                     unsafe {
                         variant.try_as_sys_of_type(VariantType::$TryType)
@@ -1293,6 +1416,7 @@ macro_rules! from_variant_from_sys {
     ) => (
         $(
             impl FromVariant for $TryType {
+                #[inline]
                 fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
                     unsafe {
                         variant.try_as_sys_of_type(VariantType::$TryType)
@@ -1319,6 +1443,7 @@ from_variant_from_sys!(
 );
 
 impl<T: crate::typed_array::Element> ToVariant for TypedArray<T> {
+    #[inline]
     fn to_variant(&self) -> Variant {
         unsafe {
             let api = get_api();
@@ -1331,6 +1456,7 @@ impl<T: crate::typed_array::Element> ToVariant for TypedArray<T> {
 impl<T: crate::typed_array::Element + Eq> ToVariantEq for TypedArray<T> {}
 
 impl<T: crate::typed_array::Element> FromVariant for TypedArray<T> {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         unsafe {
             variant
@@ -1342,6 +1468,7 @@ impl<T: crate::typed_array::Element> FromVariant for TypedArray<T> {
 }
 
 impl ToVariant for str {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_str(self)
     }
@@ -1349,6 +1476,7 @@ impl ToVariant for str {
 impl ToVariantEq for str {}
 
 impl ToVariant for String {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_str(&self)
     }
@@ -1356,12 +1484,14 @@ impl ToVariant for String {
 impl ToVariantEq for String {}
 
 impl FromVariant for String {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         GodotString::from_variant(variant).map(|s| s.to_string())
     }
 }
 
 impl ToVariant for bool {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_bool(*self)
     }
@@ -1369,18 +1499,21 @@ impl ToVariant for bool {
 impl ToVariantEq for bool {}
 
 impl ToVariant for Variant {
+    #[inline]
     fn to_variant(&self) -> Variant {
         self.clone()
     }
 }
 
 impl FromVariant for Variant {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         Ok(variant.clone())
     }
 }
 
 impl<T> ToVariant for std::marker::PhantomData<T> {
+    #[inline]
     fn to_variant(&self) -> Variant {
         Variant::new()
     }
@@ -1388,6 +1521,7 @@ impl<T> ToVariant for std::marker::PhantomData<T> {
 impl<T> ToVariantEq for std::marker::PhantomData<T> {}
 
 impl<T> FromVariant for std::marker::PhantomData<T> {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         variant
             .try_as_sys_of_type(VariantType::Nil)
@@ -1396,6 +1530,7 @@ impl<T> FromVariant for std::marker::PhantomData<T> {
 }
 
 impl<T: ToVariant> ToVariant for Option<T> {
+    #[inline]
     fn to_variant(&self) -> Variant {
         match &self {
             Some(thing) => thing.to_variant(),
@@ -1406,6 +1541,7 @@ impl<T: ToVariant> ToVariant for Option<T> {
 impl<T: ToVariantEq> ToVariantEq for Option<T> {}
 
 impl<T: FromVariant> FromVariant for Option<T> {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         T::from_variant(variant).map(Some).or_else(
             |e| {
@@ -1424,6 +1560,7 @@ impl<T: FromVariant> FromVariant for Option<T> {
 pub struct MaybeNot<T>(Result<T, Variant>);
 
 impl<T: FromVariant> FromVariant for MaybeNot<T> {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         Ok(MaybeNot(
             T::from_variant(variant).map_err(|_| variant.clone()),
@@ -1432,18 +1569,22 @@ impl<T: FromVariant> FromVariant for MaybeNot<T> {
 }
 
 impl<T> MaybeNot<T> {
+    #[inline]
     pub fn into_result(self) -> Result<T, Variant> {
         self.0
     }
 
+    #[inline]
     pub fn as_ref(&self) -> Result<&T, &Variant> {
         self.0.as_ref()
     }
 
+    #[inline]
     pub fn as_mut(&mut self) -> Result<&mut T, &mut Variant> {
         self.0.as_mut()
     }
 
+    #[inline]
     pub fn cloned(&self) -> Result<T, Variant>
     where
         T: Clone,
@@ -1451,12 +1592,14 @@ impl<T> MaybeNot<T> {
         self.0.clone()
     }
 
+    #[inline]
     pub fn ok(self) -> Option<T> {
         self.0.ok()
     }
 }
 
 impl<T: ToVariant, E: ToVariant> ToVariant for Result<T, E> {
+    #[inline]
     fn to_variant(&self) -> Variant {
         let mut dict = Dictionary::new();
         match &self {
@@ -1468,6 +1611,7 @@ impl<T: ToVariant, E: ToVariant> ToVariant for Result<T, E> {
 }
 
 impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         use FromVariantError as FVE;
 
@@ -1521,6 +1665,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
 }
 
 impl<T: ToVariant> ToVariant for &[T] {
+    #[inline]
     fn to_variant(&self) -> Variant {
         let mut array = VariantArray::new();
         for val in self.iter() {
@@ -1532,12 +1677,14 @@ impl<T: ToVariant> ToVariant for &[T] {
 }
 
 impl<T: ToVariant> ToVariant for Vec<T> {
+    #[inline]
     fn to_variant(&self) -> Variant {
         self.as_slice().to_variant()
     }
 }
 
 impl<T: FromVariant> FromVariant for Vec<T> {
+    #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         use std::convert::TryInto;
 
@@ -1577,6 +1724,7 @@ macro_rules! impl_variant_for_tuples {
     ( $($name:ident,)+ ) => {
         impl<$($name: ToVariant,)+> ToVariant for ($($name,)+) {
             #[allow(non_snake_case)]
+            #[inline]
             fn to_variant(&self) -> Variant {
                 let mut array = VariantArray::new();
                 let ($($name,)+) = self;
@@ -1589,6 +1737,7 @@ macro_rules! impl_variant_for_tuples {
 
         impl<$($name: FromVariant,)+> FromVariant for ($($name,)+) {
             #[allow(non_snake_case, unused_assignments)]
+            #[inline]
             fn from_variant(v: &Variant) -> Result<Self, FromVariantError> {
                 let array = VariantArray::from_variant(v)?;
                 let expected = tuple_length!($($name,)+);
