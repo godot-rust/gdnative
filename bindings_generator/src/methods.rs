@@ -288,6 +288,15 @@ pub unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_r
     Ok(())
 }
 
+/// Removes 'get_' from the beginning of `name` if `name` is a property getter on `class`.
+fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
+    if name.starts_with("get_") && class.is_getter(name) {
+        &name[4..]
+    } else {
+        &name[..]
+    }
+}
+
 pub fn generate_methods(
     output: &mut impl Write,
     api: &Api,
@@ -358,15 +367,20 @@ pub fn generate_methods(
             //let namespace = format!("gdnative_{:?}_private::", api.namespaces[&class.name]);
             let namespace = "";
 
+            // Adjust getters to match guideline conventions:
+            // https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter
+            let rusty_method_name = rename_property_getter(&method_name, &class);
+
             if is_safe {
                 writeln!(
                     output,
                     r#"    #[inline]
-    pub fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
+    pub fn {rusty_name}({self_param}{params_decl}) -> {rust_ret_type} {{
         unsafe {{ {namespace}{cname}_{name}(self.this{params_use}) }}
     }}
 "#,
                     cname = class.name,
+                    rusty_name = rusty_method_name,
                     name = method_name,
                     namespace = namespace,
                     rust_ret_type = rust_ret_type,
@@ -378,11 +392,12 @@ pub fn generate_methods(
                 writeln!(
                     output,
                     r#"    #[inline]
-    pub unsafe fn {name}({self_param}{params_decl}) -> {rust_ret_type} {{
+    pub unsafe fn {rusty_name}({self_param}{params_decl}) -> {rust_ret_type} {{
         {namespace}{cname}_{name}(self.this{params_use})
     }}
 "#,
                     cname = class.name,
+                    rusty_name = rusty_method_name,
                     name = method_name,
                     namespace = namespace,
                     rust_ret_type = rust_ret_type,

@@ -82,7 +82,7 @@ fn test_return_leak() -> bool {
         // this block.
         {
             // This happens via ptrcall, which is what's being tested.
-            let _probe_reference = unsafe { animation_tree.get_tree_root().unwrap() };
+            let _probe_reference = unsafe { animation_tree.tree_root().unwrap() };
 
             // Free `animation_tree` so the reference inside is dropped.
             unsafe {

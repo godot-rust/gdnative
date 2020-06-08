@@ -49,11 +49,11 @@ impl RustTest {
     #[export]
     unsafe fn _ready(&mut self, mut owner: gdnative::MeshInstance) {
         owner.set_physics_process(true);
-        self.start = owner.get_translation();
+        self.start = owner.translation();
         godot_warn!("Start: {:?}", self.start);
         godot_warn!(
             "Parent name: {:?}",
-            owner.get_parent().expect("Missing parent").get_name()
+            owner.get_parent().expect("Missing parent").name()
         );
     }
 

@@ -132,9 +132,7 @@ where
         if let Some(instance_root) = instance.cast::<Root>() {
             Ok(instance_root)
         } else {
-            Err(ManageErrs::RootClassNotSpatial(
-                instance.get_name().to_string(),
-            ))
+            Err(ManageErrs::RootClassNotSpatial(instance.name().to_string()))
         }
     } else {
         Err(ManageErrs::CouldNotMakeInstance)

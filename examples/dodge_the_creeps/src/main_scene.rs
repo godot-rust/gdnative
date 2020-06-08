@@ -72,7 +72,7 @@ impl Main {
         Instance::<player::Player>::try_from_unsafe_base(player)
             .and_then(|player| {
                 player
-                    .map(|x, o| x.start(o, start_position.get_position()))
+                    .map(|x, o| x.start(o, start_position.position()))
                     .ok()
             })
             .unwrap_or_else(|| godot_print!("Unable to get player"));
@@ -133,9 +133,9 @@ impl Main {
         mob_spawn_location.set_offset(offset.into());
         owner.add_child(Some(mob_scene.to_node()), false);
 
-        let mut direction = mob_spawn_location.get_rotation() + PI / 2.0;
+        let mut direction = mob_spawn_location.rotation() + PI / 2.0;
 
-        mob_scene.set_position(mob_spawn_location.get_position());
+        mob_scene.set_position(mob_spawn_location.position());
 
         direction += rng.gen_range(-PI / 4.0, PI / 4.0);
         mob_scene.set_rotation(direction);
@@ -147,11 +147,8 @@ impl Main {
             mob_scene
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
-            mob_scene.set_linear_velocity(
-                mob_scene
-                    .get_linear_velocity()
-                    .rotated(Angle { radians: d }),
-            );
+            mob_scene
+                .set_linear_velocity(mob_scene.linear_velocity().rotated(Angle { radians: d }));
 
             let hud_node: CanvasLayer = owner
                 .get_typed_node("hud")
@@ -188,7 +185,7 @@ where
             Ok(instance_root)
         } else {
             Err(ManageErrs::RootClassNotRigidBody2D(
-                instance.get_name().to_string(),
+                instance.name().to_string(),
             ))
         }
     } else {

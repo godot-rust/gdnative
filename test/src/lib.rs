@@ -78,7 +78,7 @@ fn test_constructor() -> bool {
 
     unsafe {
         let path = Path2D::new();
-        let _ = path.get_z_index();
+        let _ = path.z_index();
         path.free();
     }
 
