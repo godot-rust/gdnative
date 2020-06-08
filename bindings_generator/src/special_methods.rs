@@ -29,27 +29,6 @@ pub fn generate_reference_ctor(output: &mut impl Write, class: &GodotClass) -> G
     Ok(())
 }
 
-pub fn generate_reference_copy(output: &mut impl Write, _class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-    /// Creates a new reference to the same reference-counted object.
-    #[inline]
-    pub fn new_ref(&self) -> Self {{
-        unsafe {{
-            object::add_ref(self.this);
-
-            Self {{
-                this: self.this,
-            }}
-        }}
-    }}
-"#
-    )?;
-
-    Ok(())
-}
-
 pub fn generate_non_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
     writeln!(
         output,
@@ -320,6 +299,29 @@ impl Clone for {name} {{
     #[inline]
     fn clone(&self) -> Self {{
         self.new_ref()
+    }}
+}}"#,
+        name = class.name
+    )?;
+
+    Ok(())
+}
+
+pub fn generate_impl_ref_counted(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    writeln!(
+        output,
+        r#"
+impl RefCounted for {name} {{
+    /// Creates a new reference to the same reference-counted object.
+    #[inline]
+    fn new_ref(&self) -> Self {{
+        unsafe {{
+            object::add_ref(self.this);
+
+            Self {{
+                this: self.this,
+            }}
+        }}
     }}
 }}"#,
         name = class.name

@@ -1,5 +1,6 @@
 use crate::private::get_api;
 use crate::sys;
+use crate::RefCounted;
 
 use std::cmp::Ordering;
 use std::ffi::CStr;
@@ -197,17 +198,19 @@ impl GodotString {
         GodotString(sys)
     }
     // TODO: many missing methods.
-
-    impl_common_methods! {
-        #[inline]
-        pub fn new_ref(&self) -> GodotString : godot_string_new_copy;
-    }
 }
 
 impl Clone for GodotString {
     #[inline]
     fn clone(&self) -> Self {
         self.new_ref()
+    }
+}
+
+impl RefCounted for GodotString {
+    impl_common_methods! {
+        #[inline]
+        fn new_ref(&self) -> GodotString : godot_string_new_copy;
     }
 }
 

@@ -51,7 +51,7 @@ impl Main {
             .expect("Unable to cast to CanvasLayer");
 
         Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
-            .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
+            .and_then(|hud| hud.map_aliased(|x, o| x.show_game_over(o)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
@@ -72,7 +72,7 @@ impl Main {
         Instance::<player::Player>::try_from_unsafe_base(player)
             .and_then(|player| {
                 player
-                    .map(|x, o| x.start(o, start_position.position()))
+                    .map_aliased(|x, o| x.start(o, start_position.position()))
                     .ok()
             })
             .unwrap_or_else(|| godot_print!("Unable to get player"));
@@ -85,7 +85,7 @@ impl Main {
 
         Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
             .and_then(|hud| {
-                hud.map(|x, o| {
+                hud.map_aliased(|x, o| {
                     x.update_score(o, self.score);
                     x.show_message(o, "Get Ready".into());
                 })
@@ -115,7 +115,7 @@ impl Main {
             .expect("Unable to cast to CanvasLayer");
 
         Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
-            .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
+            .and_then(|hud| hud.map_aliased(|x, o| x.update_score(o, self.score)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
@@ -143,7 +143,7 @@ impl Main {
 
         let mob = Instance::<mob::Mob>::try_from_unsafe_base(mob_scene).unwrap();
 
-        mob.map(|x, mob_owner| {
+        mob.map_aliased(|x, mob_owner| {
             mob_scene
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
@@ -156,7 +156,7 @@ impl Main {
 
             let hud = Instance::<hud::HUD>::try_from_unsafe_base(hud_node).unwrap();
 
-            hud.map(|_, mut o| {
+            hud.map_aliased(|_, mut o| {
                 o.connect(
                     "start_game".into(),
                     Some(mob_owner.to_object()),

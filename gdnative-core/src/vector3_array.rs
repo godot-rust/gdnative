@@ -6,6 +6,8 @@ pub type Vector3Array = TypedArray<Vector3>;
 
 godot_test!(
     test_vector3_array_access {
+        use crate::RefCounted as _;
+
         let arr = Vector3Array::from_vec(vec![
             Vector3::new(1.0, 2.0, 3.0),
             Vector3::new(3.0, 4.0, 5.0),

@@ -8,6 +8,7 @@ use crate::GodotString;
 use crate::Instanciable;
 use crate::Map;
 use crate::MapMut;
+use crate::RefCounted;
 use crate::ToVariant;
 use crate::UserData;
 use crate::Variant;
@@ -189,7 +190,7 @@ impl<T: NativeClass> Instance<T> {
     #[inline]
     pub fn try_from_base(owner: T::Base) -> Option<Self>
     where
-        T::Base: Clone,
+        T::Base: RefCounted,
     {
         unsafe { Self::try_from_unsafe_base(owner) }
     }
@@ -220,11 +221,11 @@ impl<T: NativeClass> Instance<T> {
     #[inline]
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
-        T::Base: Clone,
+        T::Base: RefCounted,
         T::UserData: Map,
         F: FnOnce(&T, T::Base) -> U,
     {
-        self.script.map(|script| op(script, self.owner.clone()))
+        self.script.map(|script| op(script, self.owner.new_ref()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -232,11 +233,12 @@ impl<T: NativeClass> Instance<T> {
     #[inline]
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
-        T::Base: Clone,
+        T::Base: RefCounted,
         T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
     {
-        self.script.map_mut(|script| op(script, self.owner.clone()))
+        self.script
+            .map_mut(|script| op(script, self.owner.new_ref()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -304,12 +306,12 @@ impl<T: NativeClass> Instance<T> {
 impl<T> Clone for Instance<T>
 where
     T: NativeClass,
-    T::Base: Clone,
+    T::Base: RefCounted,
 {
     #[inline]
     fn clone(&self) -> Self {
         Instance {
-            owner: self.owner.clone(),
+            owner: self.owner.new_ref(),
             script: self.script.clone(),
         }
     }
@@ -329,7 +331,7 @@ where
 impl<T> FromVariant for Instance<T>
 where
     T: NativeClass,
-    T::Base: FromVariant + Clone,
+    T::Base: FromVariant + RefCounted,
 {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {

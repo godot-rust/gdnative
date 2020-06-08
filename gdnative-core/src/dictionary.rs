@@ -4,6 +4,7 @@ use crate::private::get_api;
 use crate::sys;
 use crate::GodotString;
 
+use crate::RefCounted;
 use crate::ToVariant;
 use crate::ToVariantEq;
 use crate::Variant;
@@ -148,10 +149,12 @@ impl Dictionary {
     pub fn from_sys(sys: sys::godot_dictionary) -> Self {
         Dictionary(sys)
     }
+}
 
+impl RefCounted for Dictionary {
     impl_common_methods! {
         #[inline]
-        pub fn new_ref(&self) -> Dictionary : godot_dictionary_new_copy;
+        fn new_ref(&self) -> Dictionary : godot_dictionary_new_copy;
     }
 }
 
