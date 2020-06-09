@@ -249,8 +249,7 @@ pub struct ClassDescriptor<'l> {
 
 #[derive(Debug)]
 pub struct ClassBuilder<C> {
-    #[doc(hidden)]
-    pub init_handle: *mut libc::c_void,
+    init_handle: *mut libc::c_void,
     class_name: CString,
     _marker: PhantomData<C>,
 }
