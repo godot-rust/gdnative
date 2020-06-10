@@ -459,7 +459,7 @@ fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorRe
         &Ty::Object(_) => {
             writeln!(
                 w,
-                r#"        if let Some(arg) = &{name} {{ arg.this as *const _ as *const _ }} else {{ ptr::null() }},"#,
+                r#"        if let Some(arg) = &{name} {{ arg.to_sys() as *const _ as *const _ }} else {{ ptr::null() }},"#,
                 name = name,
             )?;
         }

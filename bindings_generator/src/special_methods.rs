@@ -246,7 +246,7 @@ pub fn generate_upcast(
     #[inline]
     pub fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
-        {name} {{ this: self.this }}
+        unsafe {{ {name}::from_sys(self.this) }}
     }}"#,
                 name = parent.name,
                 snake_name = snake_name,
@@ -264,7 +264,7 @@ pub fn generate_upcast(
     #[inline]
     pub unsafe fn to_{snake_name}(&self) -> {name} {{
         {addref_if_reference}
-        {name} {{ this: self.this }}
+        unsafe {{ {name}::from_sys(self.this) }}
     }}"#,
                 name = parent.name,
                 snake_name = snake_name,

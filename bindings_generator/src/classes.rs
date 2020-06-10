@@ -13,8 +13,7 @@ pub fn generate_class_struct(output: &mut impl Write, class: &GodotClass) -> Gen
         r#"#[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub struct {name} {{
-    #[doc(hidden)]
-    pub this: *mut sys::godot_object,
+    this: *mut sys::godot_object,
 }}
 "#,
         name = class.name
