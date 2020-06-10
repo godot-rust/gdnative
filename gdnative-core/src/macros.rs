@@ -380,32 +380,6 @@ macro_rules! godot_test {
     }
 }
 
-/// Old low-level registration macro that is no longer in use. Use the NativeClass trait
-/// instead.
-#[deprecated(
-    since = "0.8.1",
-    note = "Low-level registration is no longer supported. Use the NativeClass trait instead."
-)]
-#[macro_export]
-macro_rules! godot_wrap_constructor {
-    ($_name:ty, $c:expr) => {{
-        panic!("godot_wrap_constructor macro used")
-    }};
-}
-
-/// Old low-level registration macro that is no longer in use. Use the NativeClass trait
-/// instead.
-#[deprecated(
-    since = "0.8.1",
-    note = "Low-level registration is no longer supported. Use the NativeClass trait instead."
-)]
-#[macro_export]
-macro_rules! godot_wrap_destructor {
-    ($name:ty) => {{
-        panic!("godot_wrap_destructor macro used")
-    }};
-}
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! godot_wrap_method_parameter_count {
