@@ -69,6 +69,7 @@ pub struct GodotClass {
     pub is_reference: bool,
     pub instanciable: bool,
 
+    pub properties: Vec<Property>,
     pub methods: Vec<GodotMethod>,
     pub enums: Vec<Enum>,
     pub constants: HashMap<ConstantName, ConstantValue>,
@@ -82,6 +83,10 @@ impl GodotClass {
     pub fn is_pointer_safe(&self) -> bool {
         self.is_refcounted() || self.singleton
     }
+
+    pub fn is_getter(&self, name: &str) -> bool {
+        self.properties.iter().find(|p| p.getter == name).is_some()
+    }
 }
 
 pub type ConstantName = String;
@@ -91,6 +96,16 @@ pub type ConstantValue = i64;
 pub struct Enum {
     pub name: String,
     pub values: HashMap<String, i64>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Property {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub getter: String,
+    pub setter: String,
+    pub index: i64,
 }
 
 #[derive(Deserialize, Debug)]
