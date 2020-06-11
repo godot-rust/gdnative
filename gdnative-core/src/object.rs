@@ -51,12 +51,12 @@ pub trait Instanciable: GodotObject {
 }
 
 /// Manually managed Godot classes implementing `free`.
-pub trait Free {
+pub trait Free: GodotObject {
     unsafe fn godot_free(self);
 }
 
 /// Manually managed Godot classes implementing `queue_free`.
-pub trait QueueFree {
+pub trait QueueFree: GodotObject {
     unsafe fn godot_queue_free(&mut self);
 }
 

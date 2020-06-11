@@ -52,7 +52,6 @@ mod color_array;
 mod dictionary;
 pub mod error;
 mod float32_array;
-mod free_on_drop;
 mod generated;
 pub mod init;
 mod int32_array;
@@ -83,13 +82,11 @@ pub use crate::color::*;
 pub use crate::color_array::*;
 pub use crate::dictionary::*;
 pub use crate::float32_array::*;
-pub use crate::free_on_drop::*;
 pub use crate::generated::*;
 pub use crate::geom::*;
 pub use crate::int32_array::*;
 pub use crate::node_path::*;
-pub use crate::object::GodotObject;
-pub use crate::object::Instanciable;
+pub use crate::object::{Free, GodotObject, Instanciable, QueueFree};
 pub use crate::point2::*;
 pub use crate::rid::*;
 pub use crate::string::*;
@@ -119,12 +116,3 @@ pub enum Vector3Axis {
 }
 
 pub type GodotResult = Result<(), GodotError>;
-
-#[deprecated(
-    since = "0.8.1",
-    note = "This is intended for internal use, and will be removed from the public API in 0.9"
-)]
-#[inline]
-pub fn result_from_sys(err: sys::godot_error) -> GodotResult {
-    unsafe { GodotError::result_from_sys(err) }
-}

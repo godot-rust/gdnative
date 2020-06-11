@@ -1,8 +1,5 @@
 //! Property registration.
 
-// FIXME(#357): Temporary allow for ExportInfo fields.
-#![allow(deprecated)]
-
 use std::mem;
 
 use crate::object::GodotObject;
@@ -33,23 +30,9 @@ pub trait Export: ToVariant {
 /// Metadata about the exported property.
 #[derive(Debug)]
 pub struct ExportInfo {
-    #[deprecated(
-        since = "0.8.1",
-        note = "Fields of ExportInfo will become private in 0.9. Use one of the constructors or Export::export_info instead."
-    )]
-    pub variant_type: VariantType,
-
-    #[deprecated(
-        since = "0.8.1",
-        note = "Fields of ExportInfo will become private in 0.9. Use one of the constructors or Export::export_info instead."
-    )]
-    pub hint_kind: sys::godot_property_hint,
-
-    #[deprecated(
-        since = "0.8.1",
-        note = "Fields of ExportInfo will become private in 0.9. Use one of the constructors or Export::export_info instead."
-    )]
-    pub hint_string: GodotString,
+    pub(super) variant_type: VariantType,
+    pub(super) hint_kind: sys::godot_property_hint,
+    pub(super) hint_string: GodotString,
 }
 
 impl ExportInfo {
