@@ -19,7 +19,7 @@ pub extern "C" fn run_tests(
     let mut status = true;
     status &= gdnative::test_string();
 
-    status &= gdnative::test_dictionary();
+    status &= gdnative::dictionary::test_dictionary();
     // status &= gdnative::test_dictionary_clone_clear();
 
     status &= gdnative::test_array();

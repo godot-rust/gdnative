@@ -11,6 +11,15 @@ use crate::VariantArray;
 use std::fmt;
 
 /// A reference-counted `Dictionary` of `Variant` key-value pairs.
+///
+/// # Safety
+///
+/// This is a reference-counted collection with "interior mutability" in Rust parlance. Its use
+/// must follow the official [thread-safety guidelines][thread-safety]. Specifically, it is
+/// undefined behavior to pass an instance to Rust code without locking a mutex if there are
+/// references to it on other threads.
+///
+/// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 pub struct Dictionary(pub(crate) sys::godot_dictionary);
 
 impl Dictionary {
@@ -118,6 +127,16 @@ impl Dictionary {
         unsafe { (get_api().godot_dictionary_hash)(&self.0) }
     }
 
+    /// Returns an iterator through all key-value pairs in the `Dictionary`.
+    ///
+    /// `Dictionary` is reference-counted and have interior mutability in Rust parlance.
+    /// Modifying the same underlying collection while observing the safety assumptions will
+    /// not violate memory safely, but may lead to surprising behavior in the iterator.
+    #[inline]
+    pub fn iter(&self) -> Iter {
+        Iter::new(self)
+    }
+
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_dictionary {
@@ -148,6 +167,46 @@ impl fmt::Debug for Dictionary {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_json().to_string().fmt(f)
+    }
+}
+
+/// Iterator through all key-value pairs in a `Dictionary`.
+///
+/// This struct is created by the `iter` method on `Dictionary`.
+#[derive(Debug)]
+pub struct Iter {
+    dic: Dictionary,
+    last_key: Option<Variant>,
+}
+
+impl Iter {
+    fn new(dic: &Dictionary) -> Self {
+        Iter {
+            dic: dic.new_ref(),
+            last_key: None,
+        }
+    }
+}
+
+impl Iterator for Iter {
+    type Item = (Variant, Variant);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let last_ptr = self
+            .last_key
+            .as_ref()
+            .map_or(std::ptr::null(), Variant::sys);
+        let next_ptr = unsafe { (get_api().godot_dictionary_next)(self.dic.sys(), last_ptr) };
+
+        if next_ptr.is_null() {
+            None
+        } else {
+            let key = Variant::cast_ref(next_ptr).clone();
+            let value = self.dic.get(&key);
+            self.last_key = Some(key.clone());
+            Some((key, value))
+        }
     }
 }
 
@@ -196,6 +255,8 @@ impl Extend<(Variant, Variant)> for Dictionary {
 }
 
 godot_test!(test_dictionary {
+    use std::collections::HashSet;
+
     use crate::VariantType;
     let foo = Variant::from_str("foo");
     let bar = Variant::from_str("bar");
@@ -237,6 +298,16 @@ godot_test!(test_dictionary {
     } else {
         panic!("variant should be a Dictionary");
     }
+
+    let mut iter_keys = HashSet::new();
+    let expected_keys = ["foo", "bar"].iter().map(|&s| s.to_string()).collect::<HashSet<_>>();
+    for (key, value) in dict.iter() {
+        assert_eq!(value, dict.get(&key));
+        if !iter_keys.insert(key.to_string()) {
+            panic!("key is already contained in set: {:?}", key);
+        }
+    }
+    assert_eq!(expected_keys, iter_keys);
 });
 
 // TODO: clear dictionaries without affecting clones
