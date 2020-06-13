@@ -1,6 +1,7 @@
 use crate::private::get_api;
 use crate::sys;
 use crate::GodotString;
+use crate::RefCounted;
 use std::fmt;
 
 /// A reference-counted relative or absolute path in a scene tree, for use with `Node.get_node()` and similar
@@ -113,10 +114,12 @@ impl NodePath {
     pub fn from_sys(sys: sys::godot_node_path) -> Self {
         NodePath(sys)
     }
+}
 
+impl RefCounted for NodePath {
     impl_common_methods! {
         #[inline]
-        pub fn new_ref(&self) -> NodePath : godot_node_path_new_copy;
+        fn new_ref(&self) -> NodePath : godot_node_path_new_copy;
     }
 }
 

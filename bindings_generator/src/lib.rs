@@ -120,10 +120,6 @@ fn generate_class_bindings(
             }
         }
 
-        if class.is_refcounted() {
-            generate_reference_copy(output_types_impls, class)?;
-        }
-
         let mut method_set = HashSet::default();
 
         generate_methods(
@@ -158,6 +154,7 @@ fn generate_class_bindings(
         }
 
         if class.is_refcounted() {
+            generate_impl_ref_counted(output_trait_impls, class)?;
             generate_reference_clone(output_trait_impls, class)?;
             generate_drop(output_trait_impls, class)?;
         }

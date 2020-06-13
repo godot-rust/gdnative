@@ -6,6 +6,7 @@ use gdnative_impl_proc_macros as macros;
 
 use crate::access::{Aligned, MaybeUnaligned};
 use crate::private::get_api;
+use crate::RefCounted;
 use crate::{Color, GodotString, VariantArray, Vector2, Vector2Godot, Vector3, Vector3Godot};
 
 /// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
@@ -58,6 +59,18 @@ impl<T: Element> Clone for TypedArray<T> {
     }
 }
 
+impl<T: Element> RefCounted for TypedArray<T> {
+    /// Creates a new reference to this reference-counted instance.
+    #[inline]
+    fn new_ref(&self) -> Self {
+        unsafe {
+            let mut inner = T::SysArray::default();
+            (T::new_copy_fn(get_api()))(&mut inner, self.sys());
+            TypedArray { inner }
+        }
+    }
+}
+
 impl<T: Element> TypedArray<T> {
     /// Creates an empty array.
     #[inline]
@@ -85,16 +98,6 @@ impl<T: Element> TypedArray<T> {
         let mut arr = Self::new();
         arr.append_vec(&mut src);
         arr
-    }
-
-    /// Creates a new reference to this reference-counted instance.
-    #[inline]
-    pub fn new_ref(&self) -> Self {
-        unsafe {
-            let mut inner = T::SysArray::default();
-            (T::new_copy_fn(get_api()))(&mut inner, self.sys());
-            TypedArray { inner }
-        }
     }
 
     /// Appends an element to the end of the array.

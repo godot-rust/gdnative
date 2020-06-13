@@ -299,7 +299,7 @@ impl<C: NativeClass> ClassBuilder<C> {
                 .iter()
                 .map(|arg| {
                     let arg_name = GodotString::from_str(arg.name);
-                    let hint_string = arg.export_info.hint_string.clone();
+                    let hint_string = arg.export_info.hint_string.new_ref();
                     (arg, arg_name, hint_string)
                 })
                 .collect::<Vec<_>>();

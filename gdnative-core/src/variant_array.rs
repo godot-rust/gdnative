@@ -3,6 +3,7 @@ use std::iter::{Extend, FromIterator};
 use crate::private::get_api;
 use crate::sys;
 
+use crate::RefCounted;
 use crate::ToVariant;
 use crate::Variant;
 
@@ -206,10 +207,12 @@ impl VariantArray {
     pub fn from_sys(sys: sys::godot_array) -> Self {
         VariantArray(sys)
     }
+}
 
+impl RefCounted for VariantArray {
     impl_common_methods! {
         #[inline]
-        pub fn new_ref(&self) -> VariantArray : godot_array_new_copy;
+        fn new_ref(&self) -> VariantArray : godot_array_new_copy;
     }
 }
 

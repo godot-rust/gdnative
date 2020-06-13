@@ -4,6 +4,7 @@ use heck::CamelCase;
 use std::io::Write;
 
 pub fn generate_class_struct(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    // FIXME(#390): non-RefCounted types should not be Clone
     if !class.is_refcounted() {
         writeln!(output, "#[derive(Copy, Clone)]")?;
     }

@@ -15,8 +15,8 @@
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
 //! content when using the `Clone` trait, most of these types do not implement `Clone`
-//! and instead provide a `new_ref(&self) -> Self` method to create references to the
-//! same collection or object.
+//! and instead implement [`RefCounted`](./trait.RefCounted.html) which provides a
+//! `new_ref(&self) -> Self` method to create references to the same collection or object.
 //!
 //! ### Manually managed objects
 //!

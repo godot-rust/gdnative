@@ -15,8 +15,8 @@
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
 //! content when using the `Clone` trait, most of these types do not implement `Clone`
-//! and instead provide a `new_ref(&self) -> Self` method to create references to the
-//! same collection or object.
+//! and instead implement [`RefCounted`](./trait.RefCounted.html) which provides a
+//! `new_ref(&self) -> Self` method to create references to the same collection or object.
 //!
 //! ### Manually managed objects
 //!
@@ -59,6 +59,7 @@ mod node_path;
 #[doc(hidden)]
 pub mod object;
 mod point2;
+mod ref_counted;
 mod rid;
 mod string;
 mod string_array;
@@ -88,6 +89,7 @@ pub use crate::int32_array::*;
 pub use crate::node_path::*;
 pub use crate::object::{Free, GodotObject, Instanciable, QueueFree};
 pub use crate::point2::*;
+pub use crate::ref_counted::*;
 pub use crate::rid::*;
 pub use crate::string::*;
 pub use crate::string_array::*;
