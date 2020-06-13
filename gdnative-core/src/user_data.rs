@@ -87,7 +87,7 @@ pub unsafe trait UserData: Sized + Clone {
     /// This gives "ownership" to the engine.
     ///
     /// This operation must never fail.
-    unsafe fn into_user_data(self) -> *const libc::c_void;
+    fn into_user_data(self) -> *const libc::c_void;
 
     /// Takes an opaque pointer produced by `into_user_data` and "consumes" it to produce the
     /// original instance, keeping the reference count.
@@ -98,6 +98,10 @@ pub unsafe trait UserData: Sized + Clone {
     /// `ptr` is guaranteed to be non-null.
     ///
     /// This operation must never fail.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must be pointing to valid data of the correct type.
     unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self;
 
     /// Takes an opaque pointer produced by `into_user_data` and "clones" it to produce the
@@ -108,6 +112,10 @@ pub unsafe trait UserData: Sized + Clone {
     /// `ptr` is guaranteed to be non-null.
     ///
     /// This operation must never fail.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must be pointing to valid data of the correct type.
     unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self;
 }
 
@@ -222,7 +230,7 @@ where
     }
 
     #[inline]
-    unsafe fn into_user_data(self) -> *const libc::c_void {
+    fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.lock) as *const libc::c_void
     }
 
@@ -320,7 +328,7 @@ where
     }
 
     #[inline]
-    unsafe fn into_user_data(self) -> *const libc::c_void {
+    fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.lock) as *const libc::c_void
     }
 
@@ -414,7 +422,7 @@ where
     }
 
     #[inline]
-    unsafe fn into_user_data(self) -> *const libc::c_void {
+    fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.0) as *const libc::c_void
     }
 
@@ -544,7 +552,7 @@ where
     }
 
     #[inline]
-    unsafe fn into_user_data(self) -> *const libc::c_void {
+    fn into_user_data(self) -> *const libc::c_void {
         Arc::into_raw(self.inner) as *const libc::c_void
     }
 
@@ -645,7 +653,7 @@ where
     }
 
     #[inline]
-    unsafe fn into_user_data(self) -> *const libc::c_void {
+    fn into_user_data(self) -> *const libc::c_void {
         1 as *const libc::c_void
     }
 

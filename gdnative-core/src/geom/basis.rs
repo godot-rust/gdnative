@@ -581,6 +581,7 @@ impl core::ops::Mul<Basis> for Basis {
 }
 
 #[cfg(test)]
+#[allow(clippy::unreadable_literal)]
 mod tests {
     use super::*;
 
@@ -681,7 +682,7 @@ mod tests {
     fn rotated() {
         let (b, _bn) = test_inputs();
 
-        let r = Vector3::new(-50.167156, 60.677813, -70.043058).normalize();
+        let r = Vector3::new(-50.167156, 60.67781, -70.04305).normalize();
         let expected = Basis::from_elements([
             Vector3::new(-0.676245, 0.113805, 0.727833),
             Vector3::new(-0.467094, 0.697765, -0.54309),
