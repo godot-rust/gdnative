@@ -3,126 +3,123 @@ use crate::documentation::class_doc_link;
 use crate::rust_safe_name;
 use crate::GeneratorResult;
 
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
+
 use std::collections::HashSet;
-use std::fmt;
 use std::io::Write;
 
 fn skip_method(name: &str) -> bool {
-    name == "free" || name == "reference" || name == "unreference"
+    const METHODS: &[&str] = &["free", "reference", "unreference"];
+    METHODS.contains(&name)
 }
 
 pub fn generate_method_table(
     output: &mut impl Write,
+    api: &Api,
     class: &GodotClass,
-    has_underscore: bool,
 ) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-#[doc(hidden)]
-#[allow(non_camel_case_types)]
-pub(crate) struct {name}MethodTable {{
-    pub class_constructor: sys::godot_class_constructor,"#,
-        name = class.name
-    )?;
+    let has_underscore = api.api_underscore.contains(&class.name);
 
-    for method in &class.methods {
-        let MethodName {
-            rust_name: method_name,
-            ..
-        } = method.get_name();
-        if method_name == "free" {
-            continue;
-        }
-        writeln!(
-            output,
-            "    pub {}: *mut sys::godot_method_bind,",
-            method_name
-        )?;
-    }
-    writeln!(
-        output,
-        r#"
-}}
-
-impl {name}MethodTable {{
-    unsafe fn get_mut() -> &'static mut Self {{
-        static mut TABLE: {name}MethodTable = {name}MethodTable {{
-            class_constructor: None,"#,
-        name = class.name
-    )?;
-    for method in &class.methods {
-        let MethodName {
-            rust_name: method_name,
-            ..
-        } = method.get_name();
-        if method_name == "free" {
-            continue;
-        }
-        writeln!(
-            output,
-            "            {}: 0 as *mut sys::godot_method_bind,",
-            method_name,
-        )?;
-    }
+    let method_table = format_ident!("{}MethodTable", class.name);
     let lookup_name: String = if has_underscore {
-        format!("_{class}", class = class.name)
+        format!("_{class}\0", class = class.name)
     } else {
-        class.name.clone()
+        format!("{}\0", class.name)
     };
-    writeln!(
-        output,
-        r#"
-        }};
 
-        &mut TABLE
-    }}
-
-    #[inline]
-    pub fn get(gd_api: &GodotApi) -> &'static Self {{
-        unsafe {{
-            let table = Self::get_mut();
-            static INIT: Once = Once::new();
-            INIT.call_once(|| {{
-                {name}MethodTable::init(table, gd_api);
-            }});
-
-            table
-        }}
-    }}
-
-    #[inline(never)]
-    fn init(table: &mut Self, gd_api: &GodotApi) {{
-        unsafe {{
-            let class_name = b"{lookup_name}\0".as_ptr() as *const c_char;
-            table.class_constructor = (gd_api.godot_get_class_constructor)(class_name);"#,
-        name = class.name,
-        lookup_name = lookup_name,
-    )?;
-    for method in &class.methods {
-        let MethodName {
-            rust_name: method_name,
-            original_name,
-        } = method.get_name();
-        if method_name == "free" {
-            continue;
+    let struct_methods = class.methods.iter().filter_map(|m| {
+        let rust_name = format_ident!("{}", m.get_name().rust_name);
+        if rust_name != "free" {
+            Some(quote! { pub #rust_name: *mut sys::godot_method_bind })
+        } else {
+            None
         }
+    });
 
-        writeln!(
-            output,
-            r#"            table.{method_name} = (gd_api.godot_method_bind_get_method)(class_name, "{original_name}\0".as_ptr() as *const c_char );"#,
-            method_name = method_name,
-            original_name = original_name,
-        )?;
-    }
+    let struct_definition = quote! {
+        #[doc(hidden)]
+        #[allow(non_camel_case_types)]
+        pub(crate) struct #method_table {
+            pub class_constructor: sys::godot_class_constructor,
+            #(#struct_methods),*
+        }
+    };
 
-    writeln!(
-        output,
-        r#"
-        }}
-    }}
-}}"#
-    )?;
+    let impl_methods = class.methods.iter().filter_map(|m| {
+        let rust_name = format_ident!("{}", m.get_name().rust_name);
+        if rust_name != "free" {
+            Some(quote! { #rust_name: 0 as *mut sys::godot_method_bind })
+        } else {
+            None
+        }
+    });
+
+    let init_methods = class.methods.iter().filter_map(|m| {
+        let MethodName {
+            rust_name,
+            original_name,
+        } = m.get_name();
+
+        let rust_name = format_ident!("{}", rust_name);
+        let original_name = format!("{}\0", original_name);
+
+        if rust_name != "free" {
+            assert!(original_name.ends_with('\0'), "original_name must be null terminated");
+            Some(quote! {
+                table.#rust_name = (gd_api.godot_method_bind_get_method)(class_name, #original_name.as_ptr() as *const c_char );
+            })
+        } else {
+            None
+        }
+    });
+
+    assert!(
+        lookup_name.ends_with('\0'),
+        "lookup_name must be null terminated"
+    );
+    let methods = quote! {
+        impl #method_table {
+            unsafe fn get_mut() -> &'static mut Self {
+                static mut TABLE: #method_table = #method_table {
+                    class_constructor: None,
+                    #(#impl_methods),*
+                };
+
+                &mut TABLE
+            }
+
+            #[inline]
+            pub fn get(gd_api: &GodotApi) -> &'static Self {
+                unsafe {
+                    let table = Self::get_mut();
+                    static INIT: ::std::sync::Once = Once::new();
+                    INIT.call_once(|| {
+                        #method_table::init(table, gd_api);
+                    });
+
+                    table
+                }
+            }
+
+            #[inline(never)]
+            fn init(table: &mut Self, gd_api: &GodotApi) {
+                unsafe {
+                    let class_name = #lookup_name.as_ptr() as *const c_char;
+                    table.class_constructor = (gd_api.godot_get_class_constructor)(class_name);
+                    #(#init_methods)*
+                }
+            }
+        }
+    };
+
+    let code = quote! {
+        #struct_definition
+        #methods
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
@@ -141,144 +138,138 @@ pub fn generate_method_impl(
         return Ok(());
     }
 
-    let mut rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
-        ty
+    let rust_ret_type = if method.has_varargs {
+        Ty::Variant.to_rust()
     } else {
-        writeln!(output, "// TODO: missing method {}", method_name)?;
-        return Ok(());
+        method.get_return_type().to_rust()
     };
 
-    let mut params = String::new();
-    for argument in &method.arguments {
-        if let Some(ty) = argument.get_type().to_rust() {
-            fmt::Write::write_fmt(
-                &mut params,
-                format_args!(", {}: {}", rust_safe_name(&argument.name), ty),
-            )
-            .unwrap();
-        } else {
-            writeln!(output, "// TODO: missing method {}", method_name)?;
-            return Ok(());
+    let args = method.arguments.iter().map(|argument| {
+        let name = format_ident!("{}", rust_safe_name(&argument.name));
+        let typ = argument.get_type().to_rust();
+        quote! {
+            #name: #typ
         }
-    }
+    });
 
-    if method.has_varargs {
-        params.push_str(", varargs: &[Variant]");
-        rust_ret_type = "Variant".to_string();
-    }
-
-    writeln!(
-        output,
-        r#"
-
-#[doc(hidden)]
-#[inline]
-unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
-    let gd_api = get_api();
-
-    let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
-        cname = class.name,
-        name = method_name,
-        rust_ret_type = rust_ret_type,
-        params = params,
-    )?;
-    if method.has_varargs {
-        writeln!(
-            output,
-            r#"    let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity({arg_count} + varargs.len());"#,
-            arg_count = method.arguments.len()
-        )?;
-
-        for argument in &method.arguments {
-            let ty = argument.get_type().to_rust().unwrap();
-            if ty.starts_with("Option") {
-                writeln!(
-                    output,
-                    r#"    let {name}: Variant = if let Some(o) = &{name} {{
-           o.to_variant()
-       }} else {{ Variant::new() }};"#,
-                    name = rust_safe_name(&argument.name)
-                )?;
-            } else if ty == "GodotString" {
-                writeln!(
-                    output,
-                    r#"    let {name}: Variant = Variant::from_godot_string(&{name});"#,
-                    name = rust_safe_name(&argument.name)
-                )?;
-            } else {
-                writeln!(
-                    output,
-                    r#"
-       let {name}: Variant = (&{name}).to_variant();"#,
-                    name = rust_safe_name(&argument.name)
-                )?;
-            }
-            writeln!(
-                output,
-                r#"    argument_buffer.push({name}.sys()); "#,
-                name = rust_safe_name(&argument.name)
-            )?;
-        }
-
-        writeln!(
-            output,
-            r#"
-    for arg in varargs {{
-        argument_buffer.push(arg.sys() as *const _);
-    }}
-    let ret = Variant::from_sys((gd_api.godot_method_bind_call)(method_bind, obj_ptr, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));"#
-        )?;
-
-        for argument in &method.arguments {
-            writeln!(
-                output,
-                r#"    drop({name});"#,
-                name = rust_safe_name(&argument.name),
-            )?;
-        }
-
-        if rust_ret_type.starts_with("Option") {
-            writeln!(output, r#"    ret.try_to_object()"#)?;
-        } else {
-            writeln!(output, r#"    ret.into()"#)?;
+    let varargs = if method.has_varargs {
+        quote! {
+            varargs: &[Variant]
         }
     } else {
-        writeln!(
-            output,
-            r#"
-    let mut argument_buffer : [*const libc::c_void; {arg_count}] = ["#,
-            arg_count = method.arguments.len()
-        )?;
+        Default::default()
+    };
 
-        for argument in &method.arguments {
-            generate_argument_pre(output, &argument.get_type(), rust_safe_name(&argument.name))?;
+    let arg_count = method.arguments.len();
+    let method_body = if method.has_varargs {
+        let args_buffer = quote! {
+            let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity(#arg_count + varargs.len());
+        };
+
+        let arguments = method.arguments.iter().map(|arg| {
+            let name = rust_safe_name(&arg.name);
+
+            let new_var = match arg.get_type() {
+                Ty::Object(_) => {
+                    quote! {
+                        let #name: Variant = if let Some(o) = &#name {
+                           o.to_variant()
+                       } else { Variant::new() };
+                    }
+                }
+                Ty::String => {
+                    quote! {
+                        let #name: Variant = Variant::from_godot_string(&#name);
+                    }
+                }
+                _ => {
+                    quote! {
+                       let #name: Variant = (&#name).to_variant();
+                    }
+                }
+            };
+
+            quote! {
+                #new_var
+                argument_buffer.push(#name.sys());
+            }
+        });
+
+        let varargs_body = quote! {
+            for arg in varargs {
+                argument_buffer.push(arg.sys() as *const _);
+            }
+            let ret = Variant::from_sys((gd_api.godot_method_bind_call)(method_bind, obj_ptr, argument_buffer.as_mut_ptr(), argument_buffer.len() as _, ptr::null_mut()));
+        };
+
+        let drop_args = method.arguments.iter().map(|arg| {
+            let arg_name = rust_safe_name(&arg.name);
+            quote! { drop(#arg_name); }
+        });
+
+        let ret = match method.get_return_type() {
+            Ty::Object(_) => quote! { ret.try_to_object() },
+            _ => quote! { ret.into() },
+        };
+
+        quote! {
+            #args_buffer
+            #(#arguments)*
+            #varargs_body
+            #(#drop_args)*
+            #ret
         }
-        writeln!(
-            output,
-            r#"
-    ];"#
-        )?;
+    } else {
+        let args = method
+            .arguments
+            .iter()
+            .map(|arg| generate_argument_pre(&arg.get_type(), rust_safe_name(&arg.name)));
+        let return_pre = generate_return_pre(&method.get_return_type());
 
-        generate_return_pre(output, &method.get_return_type())?;
+        let arg_drops = method.arguments.iter().map(|arg| {
+            let name = rust_safe_name(&arg.name);
+            quote! { drop(#name); }
+        });
 
-        writeln!(
-            output,
-            r#"
-    (gd_api.godot_method_bind_ptrcall)(method_bind, obj_ptr, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);"#
-        )?;
+        let ret = method.get_return_type().to_return_post();
 
-        for argument in &method.arguments {
-            writeln!(
-                output,
-                r#"    drop({name});"#,
-                name = rust_safe_name(&argument.name),
-            )?;
+        quote! {
+            let mut argument_buffer : [*const libc::c_void; #arg_count] = [
+                #(#args),*
+            ];
+
+            #return_pre
+
+            (gd_api.godot_method_bind_ptrcall)(method_bind, obj_ptr, argument_buffer.as_mut_ptr() as *mut _, ret_ptr as *mut _);
+
+            #(#arg_drops)*
+
+            #ret
         }
+    };
 
-        generate_return_post(output, &method.get_return_type())?;
-    }
+    let class_method_name = format_ident!("{}_{}", class.name, method_name);
+    let method_table = format_ident!("{}MethodTable", class.name);
+    let rust_method_name = format_ident!("{}", method_name);
+    let visibility = if class.name == "Reference" && method_name == "init_ref" {
+        quote! { pub }
+    } else {
+        quote! { pub(crate) }
+    };
 
-    writeln!(output, r#"}}"#)?;
+    let code = quote! {
+        #[doc(hidden)]
+        #[inline]
+        #visibility unsafe fn #class_method_name(obj_ptr: *mut sys::godot_object, #(#args,)* #varargs) -> #rust_ret_type {
+            let gd_api = get_api();
+
+            let method_bind: *mut sys::godot_method_bind = #method_table::get(gd_api).#rust_method_name;
+            #method_body
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
@@ -293,15 +284,15 @@ fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
 }
 
 pub fn generate_methods(
-    output: &mut impl Write,
     api: &Api,
     method_set: &mut HashSet<String>,
     class_name: &str,
     is_safe: bool,
-    is_base_method: bool,
-) -> GeneratorResult {
+    is_leaf: bool,
+) -> TokenStream {
+    let mut result = TokenStream::new();
     if let Some(class) = api.find_class(class_name) {
-        'method: for method in &class.methods {
+        for method in &class.methods {
             let MethodName {
                 rust_name: method_name,
                 ..
@@ -311,11 +302,7 @@ pub fn generate_methods(
                 continue;
             }
 
-            let mut rust_ret_type = if let Some(ty) = method.get_return_type().to_rust() {
-                ty
-            } else {
-                continue;
-            };
+            let mut rust_ret_type = method.get_return_type().to_rust();
 
             // Ensure that methods are not injected several times.
             let method_name_string = method_name.to_string();
@@ -324,33 +311,34 @@ pub fn generate_methods(
             }
             method_set.insert(method_name_string);
 
-            let mut params_decl = String::new();
-            let mut params_use = String::new();
+            let mut params_decl = TokenStream::new();
+            let mut params_use = TokenStream::new();
             for argument in &method.arguments {
-                if let Some(ty) = argument.get_type().to_rust() {
-                    fmt::Write::write_fmt(
-                        &mut params_decl,
-                        format_args!(", {}: {}", rust_safe_name(&argument.name), ty),
-                    )
-                    .unwrap();
-                    fmt::Write::write_fmt(
-                        &mut params_use,
-                        format_args!(", {}", rust_safe_name(&argument.name)),
-                    )
-                    .unwrap();
-                } else {
-                    continue 'method;
-                }
+                let ty = argument.get_type().to_rust();
+                let name = rust_safe_name(&argument.name);
+                params_decl.extend(quote! {
+                    , #name: #ty
+                });
+                params_use.extend(quote! {
+                    , #name
+                });
             }
 
             if method.has_varargs {
-                params_decl.push_str(", varargs: &[Variant]");
-                params_use.push_str(", varargs");
-                rust_ret_type = "Variant".to_string();
+                params_decl.extend(quote! {
+                    , varargs: &[Variant]
+                });
+                params_use.extend(quote! {
+                    , varargs
+                });
+                rust_ret_type = syn::parse_quote! { Variant };
             }
 
-            if is_base_method {
-                writeln!(output, "    /// Inherited from {}.", class_doc_link(class))?;
+            if !is_leaf {
+                let documentation = format!("    /// Inherited from {}.", class_doc_link(class));
+                result.extend(quote! {
+                    #[doc=#documentation]
+                });
             }
 
             //let namespace = format!("gdnative_{:?}_private::", api.namespaces[&class.name]);
@@ -360,86 +348,39 @@ pub fn generate_methods(
             // https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter
             let rusty_method_name = rename_property_getter(&method_name, &class);
 
-            if is_base_method {
-                if is_safe {
-                    writeln!(
-                        output,
-                        r#"    #[inline]
-        pub fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
-            unsafe {{ {namespace}{cname}::{name}(self{params_use}) }}
-        }}
-    "#,
-                        cname = class.name,
-                        rusty_name = rusty_method_name,
-                        name = method_name,
-                        namespace = namespace,
-                        rust_ret_type = rust_ret_type,
-                        params_decl = params_decl,
-                        params_use = params_use,
-                    )?;
-                } else {
-                    writeln!(
-                        output,
-                        r#"    #[inline]
-        pub unsafe fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
-            {namespace}{cname}::{name}(self{params_use})
-        }}
-    "#,
-                        cname = class.name,
-                        rusty_name = rusty_method_name,
-                        name = method_name,
-                        namespace = namespace,
-                        rust_ret_type = rust_ret_type,
-                        params_decl = params_decl,
-                        params_use = params_use,
-                    )?;
-                }
+            let rusty_name = format_ident!("{}", rusty_method_name);
+            let function_name = format_ident!("{}{}_{}", namespace, class.name, method_name);
+
+            let maybe_unsafe = if is_safe {
+                Default::default()
             } else {
-                if is_safe {
-                    writeln!(
-                        output,
-                        r#"    #[inline]
-        pub fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
-            unsafe {{ {namespace}{cname}_{name}(self.this{params_use}) }}
-        }}
-    "#,
-                        cname = class.name,
-                        rusty_name = rusty_method_name,
-                        name = method_name,
-                        namespace = namespace,
-                        rust_ret_type = rust_ret_type,
-                        params_decl = params_decl,
-                        params_use = params_use,
-                    )?;
-                } else {
-                    writeln!(
-                        output,
-                        r#"    #[inline]
-        pub unsafe fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
-            {namespace}{cname}_{name}(self.this{params_use})
-        }}
-    "#,
-                        cname = class.name,
-                        rusty_name = rusty_method_name,
-                        name = method_name,
-                        namespace = namespace,
-                        rust_ret_type = rust_ret_type,
-                        params_decl = params_decl,
-                        params_use = params_use,
-                    )?;
+                quote! { unsafe }
+            };
+
+            let output = quote! {
+                #[inline]
+                pub #maybe_unsafe fn #rusty_name(&self #params_decl) -> #rust_ret_type {
+                    unsafe { #function_name(self.this #params_use) }
                 }
-            }
+            };
+            result.extend(output);
         }
 
         // Reference includes all of Object's methods so they are safe.
         if class.base_class == "Reference" {
-            generate_methods(output, api, method_set, &class.base_class, is_safe, true)?;
+            result.extend(generate_methods(
+                api,
+                method_set,
+                &class.base_class,
+                is_safe,
+                false,
+            ));
         }
     }
-    Ok(())
+    result
 }
 
-fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorResult {
+fn generate_argument_pre(ty: &Ty, name: proc_macro2::Ident) -> TokenStream {
     match ty {
         &Ty::Bool
         | &Ty::F64
@@ -454,11 +395,9 @@ fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorRe
         | &Ty::Basis
         | &Ty::Rect2
         | &Ty::Color => {
-            writeln!(
-                w,
-                r#"        (&{name}) as *const _ as *const _,"#,
-                name = name
-            )?;
+            quote! {
+                (&#name) as *const _ as *const _
+            }
         }
         &Ty::Variant
         | &Ty::String
@@ -473,48 +412,47 @@ fn generate_argument_pre(w: &mut impl Write, ty: &Ty, name: &str) -> GeneratorRe
         | &Ty::ColorArray
         | &Ty::Int32Array
         | &Ty::Float32Array => {
-            writeln!(
-                w,
-                r#"        {name}.sys() as *const _ as *const _,"#,
-                name = name
-            )?;
+            quote! {
+                #name.sys() as *const _ as *const _
+            }
         }
         &Ty::Object(_) => {
-            writeln!(
-                w,
-                r#"        if let Some(arg) = &{name} {{ arg.to_sys() as *const _ as *const _ }} else {{ ptr::null() }},"#,
-                name = name,
-            )?;
+            quote! {
+                if let Some(arg) = &#name {
+                    arg.to_sys() as *const _ as *const _
+                } else {
+                    ptr::null()
+                }
+            }
         }
-        _ => {}
+        _ => Default::default(),
     }
-
-    Ok(())
 }
 
-fn generate_return_pre(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
+fn generate_return_pre(ty: &Ty) -> TokenStream {
     match ty {
         &Ty::Void => {
-            writeln!(w, r#"
-    let ret_ptr = ptr::null_mut();"#)?;
+            quote! {
+                let ret_ptr = ptr::null_mut();
+            }
         },
         &Ty::F64 => {
-            writeln!(w, r#"
-    let mut ret = 0.0f64;
-    let ret_ptr = &mut ret as *mut _;"#
-            )?;
+            quote !{
+                let mut ret = 0.0f64;
+                let ret_ptr = &mut ret as *mut _;
+            }
         },
         &Ty::I64 => {
-            writeln!(w, r#"
-    let mut ret = 0i64;
-    let ret_ptr = &mut ret as *mut _;"#
-            )?;
+            quote !{
+                let mut ret = 0i64;
+                let ret_ptr = &mut ret as *mut _;
+            }
         },
         &Ty::Bool => {
-            writeln!(w, r#"
-    let mut ret = false;
-    let ret_ptr = &mut ret as *mut _;"#
-            )?;
+            quote !{
+                let mut ret = false;
+                let ret_ptr = &mut ret as *mut _;
+            }
         },
         &Ty::String
         | &Ty::Vector2
@@ -540,136 +478,46 @@ fn generate_return_pre(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
         | &Ty::Float32Array
         | &Ty::Rid
         => {
-            writeln!(w, r#"
-    let mut ret = {sys_ty}::default();
-    let ret_ptr = &mut ret as *mut _;"#,
-                sys_ty = ty.to_sys().unwrap()
-            )?;
+            // Enum || Void is not handled here, can .unwrap()
+            let sys_ty = ty.to_sys().unwrap();
+            quote !{
+                let mut ret = #sys_ty::default();
+                let ret_ptr = &mut ret as *mut _;
+            }
         }
         &Ty::Object(_) // TODO: double check
         => {
-            writeln!(w, r#"
-    let mut ret: *mut sys::godot_object = ptr::null_mut();
-    let ret_ptr = (&mut ret) as *mut _;"#
-            )?;
+            quote!{
+                let mut ret: *mut sys::godot_object = ptr::null_mut();
+                let ret_ptr = (&mut ret) as *mut _;
+            }
         }
         &Ty::Result => {
-            writeln!(w, r#"
-    let mut ret: sys::godot_error = sys::godot_error_GODOT_OK;
-    let ret_ptr = (&mut ret) as *mut _;"#
-            )?;
+            quote! {
+                let mut ret: sys::godot_error = sys::godot_error_GODOT_OK;
+                let ret_ptr = (&mut ret) as *mut _;
+            }
         }
         &Ty::VariantType => {
-            writeln!(w, r#"
-    let mut ret: sys::godot_variant_type = sys::godot_variant_type_GODOT_VARIANT_TYPE_NIL;
-    let ret_ptr = (&mut ret) as *mut _;"#
-            )?;
+            quote! {
+                let mut ret: sys::godot_variant_type = sys::godot_variant_type_GODOT_VARIANT_TYPE_NIL;
+                let ret_ptr = (&mut ret) as *mut _;
+            }
         }
         &Ty::VariantOperator => {
             // An invalid value is used here, so that `try_from_sys` can detect the error in case
             // the pointer is not written to.
-            writeln!(w, r#"
-    let mut ret: sys::godot_variant_operator = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX;
-    let ret_ptr = (&mut ret) as *mut _;"#
-            )?;
+            quote! {
+                let mut ret: sys::godot_variant_operator = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX;
+                let ret_ptr = (&mut ret) as *mut _;
+            }
         }
         &Ty::Enum(ref name) => {
-            writeln!(w, r#"
-    let mut ret: {} = mem::transmute(0);
-    let ret_ptr = (&mut ret) as *mut _;"#,
-                name
-            )?;
+            let name = format_ident!("{}", name);
+            quote! {
+                let mut ret: #name = mem::transmute(0);
+                let ret_ptr = (&mut ret) as *mut _;
+            }
         }
     }
-
-    Ok(())
-}
-
-fn generate_return_post(w: &mut impl Write, ty: &Ty) -> GeneratorResult {
-    match ty {
-        &Ty::Void => {}
-        &Ty::F64 | &Ty::I64 | &Ty::Bool => {
-            writeln!(
-                w,
-                r#"
-    ret"#
-            )?;
-        }
-        &Ty::Vector2
-        | &Ty::Vector3
-        | &Ty::Transform
-        | &Ty::Transform2D
-        | &Ty::Quat
-        | &Ty::Aabb
-        | &Ty::Rect2
-        | &Ty::Basis
-        | &Ty::Plane
-        | &Ty::Color => {
-            writeln!(w, r#"    mem::transmute(ret)"#)?;
-        }
-        &Ty::Rid => {
-            writeln!(w, r#"    Rid::from_sys(ret)"#)?;
-        }
-        &Ty::String
-        | &Ty::NodePath
-        | &Ty::VariantArray
-        | &Ty::Dictionary
-        | &Ty::ByteArray
-        | &Ty::StringArray
-        | &Ty::Vector2Array
-        | &Ty::Vector3Array
-        | &Ty::ColorArray
-        | &Ty::Int32Array
-        | &Ty::Float32Array
-        | &Ty::Variant => {
-            writeln!(
-                w,
-                r#"
-    {rust_ty}::from_sys(ret)"#,
-                rust_ty = ty.to_rust().unwrap()
-            )?;
-        }
-        &Ty::Object(ref name) => {
-            writeln!(
-                w,
-                r#"
-    if ret.is_null() {{
-        None
-    }} else {{
-        Some({}::from_return_position_sys(ret))
-    }}"#,
-                name
-            )?;
-        }
-        &Ty::Result => {
-            writeln!(
-                w,
-                r#"
-    GodotError::result_from_sys(ret)"#
-            )?;
-        }
-        &Ty::Enum(_) => {
-            writeln!(
-                w,
-                r#"
-    ret"#,
-            )?;
-        }
-        &Ty::VariantType => {
-            writeln!(
-                w,
-                r#"
-    VariantType::from_sys(ret)"#
-            )?;
-        }
-        &Ty::VariantOperator => {
-            writeln!(
-                w,
-                r#"
-    VariantOperator::try_from_sys(ret).expect("enum variant should be valid")"#
-            )?;
-        }
-    }
-
-    Ok(())
 }

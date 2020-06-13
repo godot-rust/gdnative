@@ -1,3 +1,5 @@
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
 
 pub struct Api {
@@ -73,7 +75,8 @@ pub struct GodotClass {
     pub api_type: String,
     pub singleton: bool,
     pub is_reference: bool,
-    pub instanciable: bool,
+    #[serde(rename = "instanciable")]
+    pub instantiable: bool,
 
     pub properties: Vec<Property>,
     pub methods: Vec<GodotMethod>,
@@ -98,10 +101,22 @@ impl GodotClass {
 pub type ConstantName = String;
 pub type ConstantValue = i64;
 
-#[derive(Deserialize, Debug)]
+#[derive(PartialEq, Eq, Deserialize, Debug)]
 pub struct Enum {
     pub name: String,
     pub values: HashMap<String, i64>,
+}
+
+impl core::cmp::Ord for Enum {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        core::cmp::Ord::cmp(&self.name, &other.name)
+    }
+}
+
+impl core::cmp::PartialOrd for Enum {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        core::cmp::PartialOrd::partial_cmp(&self.name, &other.name)
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -254,77 +269,145 @@ impl Ty {
         }
     }
 
-    pub fn to_rust(&self) -> Option<String> {
+    pub fn to_rust(&self) -> syn::Type {
         match self {
-            Ty::Void => Some(String::from("()")),
-            Ty::String => Some(String::from("GodotString")),
-            Ty::F64 => Some(String::from("f64")),
-            Ty::I64 => Some(String::from("i64")),
-            Ty::Bool => Some(String::from("bool")),
-            Ty::Vector2 => Some(String::from("Vector2")),
-            Ty::Vector3 => Some(String::from("Vector3")),
-            Ty::Quat => Some(String::from("Quat")),
-            Ty::Transform => Some(String::from("Transform")),
-            Ty::Transform2D => Some(String::from("Transform2D")),
-            Ty::Rect2 => Some(String::from("Rect2")),
-            Ty::Plane => Some(String::from("Plane")),
-            Ty::Basis => Some(String::from("Basis")),
-            Ty::Color => Some(String::from("Color")),
-            Ty::NodePath => Some(String::from("NodePath")),
-            Ty::Variant => Some(String::from("Variant")),
-            Ty::Aabb => Some(String::from("Aabb")),
-            Ty::Rid => Some(String::from("Rid")),
-            Ty::VariantArray => Some(String::from("VariantArray")),
-            Ty::Dictionary => Some(String::from("Dictionary")),
-            Ty::ByteArray => Some(String::from("ByteArray")),
-            Ty::StringArray => Some(String::from("StringArray")),
-            Ty::Vector2Array => Some(String::from("Vector2Array")),
-            Ty::Vector3Array => Some(String::from("Vector3Array")),
-            Ty::ColorArray => Some(String::from("ColorArray")),
-            Ty::Int32Array => Some(String::from("Int32Array")),
-            Ty::Float32Array => Some(String::from("Float32Array")),
-            Ty::Result => Some(String::from("GodotResult")),
-            Ty::VariantType => Some(String::from("VariantType")),
-            Ty::VariantOperator => Some(String::from("VariantOperator")),
-            Ty::Enum(ref name) => Some(name.clone()),
-            Ty::Object(ref name) => Some(format!("Option<{}>", name)),
+            Ty::Void => syn::parse_quote! {()},
+            Ty::String => syn::parse_quote! { GodotString },
+            Ty::F64 => syn::parse_quote! { f64 },
+            Ty::I64 => syn::parse_quote! { i64 },
+            Ty::Bool => syn::parse_quote! { bool },
+            Ty::Vector2 => syn::parse_quote! { Vector2 },
+            Ty::Vector3 => syn::parse_quote! { Vector3 },
+            Ty::Quat => syn::parse_quote! { Quat },
+            Ty::Transform => syn::parse_quote! { Transform },
+            Ty::Transform2D => syn::parse_quote! { Transform2D },
+            Ty::Rect2 => syn::parse_quote! { Rect2 },
+            Ty::Plane => syn::parse_quote! { Plane },
+            Ty::Basis => syn::parse_quote! { Basis },
+            Ty::Color => syn::parse_quote! { Color },
+            Ty::NodePath => syn::parse_quote! { NodePath },
+            Ty::Variant => syn::parse_quote! { Variant },
+            Ty::Aabb => syn::parse_quote! { Aabb },
+            Ty::Rid => syn::parse_quote! { Rid },
+            Ty::VariantArray => syn::parse_quote! { VariantArray },
+            Ty::Dictionary => syn::parse_quote! { Dictionary },
+            Ty::ByteArray => syn::parse_quote! { ByteArray },
+            Ty::StringArray => syn::parse_quote! { StringArray },
+            Ty::Vector2Array => syn::parse_quote! { Vector2Array },
+            Ty::Vector3Array => syn::parse_quote! { Vector3Array },
+            Ty::ColorArray => syn::parse_quote! { ColorArray },
+            Ty::Int32Array => syn::parse_quote! { Int32Array },
+            Ty::Float32Array => syn::parse_quote! { Float32Array },
+            Ty::Result => syn::parse_quote! { GodotResult },
+            Ty::VariantType => syn::parse_quote! { VariantType },
+            Ty::VariantOperator => syn::parse_quote! { VariantOperator },
+            Ty::Enum(ref name) => {
+                let name = format_ident!("{}", name);
+                syn::parse_quote! { #name }
+            }
+            Ty::Object(ref name) => {
+                let name = format_ident!("{}", name);
+                syn::parse_quote! { Option<#name> }
+            }
         }
     }
 
-    pub fn to_sys(&self) -> Option<String> {
+    pub fn to_sys(&self) -> Option<syn::Type> {
         match self {
             Ty::Void => None,
-            Ty::String => Some(String::from("sys::godot_string")),
-            Ty::F64 => Some(String::from("sys::godot_real")),
-            Ty::I64 => Some(String::from("sys::godot_int")),
-            Ty::Bool => Some(String::from("sys::godot_bool")),
-            Ty::Vector2 => Some(String::from("sys::godot_vector2")),
-            Ty::Vector3 => Some(String::from("sys::godot_vector3")),
-            Ty::Quat => Some(String::from("sys::godot_quat")),
-            Ty::Transform => Some(String::from("sys::godot_transform")),
-            Ty::Transform2D => Some(String::from("sys::godot_transform2d")),
-            Ty::Rect2 => Some(String::from("sys::godot_rect2")),
-            Ty::Plane => Some(String::from("sys::godot_plane")),
-            Ty::Basis => Some(String::from("sys::godot_basis")),
-            Ty::Color => Some(String::from("sys::godot_color")),
-            Ty::NodePath => Some(String::from("sys::godot_node_path")),
-            Ty::Variant => Some(String::from("sys::godot_variant")),
-            Ty::Aabb => Some(String::from("sys::godot_aabb")),
-            Ty::Rid => Some(String::from("sys::godot_rid")),
-            Ty::VariantArray => Some(String::from("sys::godot_array")),
-            Ty::Dictionary => Some(String::from("sys::godot_dictionary")),
-            Ty::ByteArray => Some(String::from("sys::godot_pool_byte_array")),
-            Ty::StringArray => Some(String::from("sys::godot_pool_string_array")),
-            Ty::Vector2Array => Some(String::from("sys::godot_pool_vector2_array")),
-            Ty::Vector3Array => Some(String::from("sys::godot_pool_vector3_array")),
-            Ty::ColorArray => Some(String::from("sys::godot_pool_color_array")),
-            Ty::Int32Array => Some(String::from("sys::godot_pool_int_array")),
-            Ty::Float32Array => Some(String::from("sys::godot_pool_real_array")),
-            Ty::Result => Some(String::from("sys::godot_error")),
-            Ty::VariantType => Some(String::from("sys::variant_type")),
-            Ty::VariantOperator => Some(String::from("sys::godot_variant_operator")),
-            Ty::Enum(_) => None, // TODO
-            Ty::Object(_) => Some(String::from("sys::godot_object")),
+            Ty::String => Some(syn::parse_quote! { sys::godot_string }),
+            Ty::F64 => Some(syn::parse_quote! { sys::godot_real }),
+            Ty::I64 => Some(syn::parse_quote! { sys::godot_int }),
+            Ty::Bool => Some(syn::parse_quote! { sys::godot_bool }),
+            Ty::Vector2 => Some(syn::parse_quote! { sys::godot_vector2 }),
+            Ty::Vector3 => Some(syn::parse_quote! { sys::godot_vector3 }),
+            Ty::Quat => Some(syn::parse_quote! { sys::godot_quat }),
+            Ty::Transform => Some(syn::parse_quote! { sys::godot_transform }),
+            Ty::Transform2D => Some(syn::parse_quote! { sys::godot_transform2d }),
+            Ty::Rect2 => Some(syn::parse_quote! { sys::godot_rect2 }),
+            Ty::Plane => Some(syn::parse_quote! { sys::godot_plane }),
+            Ty::Basis => Some(syn::parse_quote! { sys::godot_basis }),
+            Ty::Color => Some(syn::parse_quote! { sys::godot_color }),
+            Ty::NodePath => Some(syn::parse_quote! { sys::godot_node_path }),
+            Ty::Variant => Some(syn::parse_quote! { sys::godot_variant }),
+            Ty::Aabb => Some(syn::parse_quote! { sys::godot_aabb }),
+            Ty::Rid => Some(syn::parse_quote! { sys::godot_rid }),
+            Ty::VariantArray => Some(syn::parse_quote! { sys::godot_array }),
+            Ty::Dictionary => Some(syn::parse_quote! { sys::godot_dictionary }),
+            Ty::ByteArray => Some(syn::parse_quote! { sys::godot_pool_byte_array }),
+            Ty::StringArray => Some(syn::parse_quote! { sys::godot_pool_string_array }),
+            Ty::Vector2Array => Some(syn::parse_quote! { sys::godot_pool_vector2_array }),
+            Ty::Vector3Array => Some(syn::parse_quote! { sys::godot_pool_vector3_array }),
+            Ty::ColorArray => Some(syn::parse_quote! { sys::godot_pool_color_array }),
+            Ty::Int32Array => Some(syn::parse_quote! { sys::godot_pool_int_array }),
+            Ty::Float32Array => Some(syn::parse_quote! { sys::godot_pool_real_array }),
+            Ty::Result => Some(syn::parse_quote! { sys::godot_error }),
+            Ty::VariantType => Some(syn::parse_quote! { sys::variant_type }),
+            Ty::VariantOperator => Some(syn::parse_quote! { sys::godot_variant_operator }),
+            Ty::Enum(_) => None,
+            Ty::Object(_) => Some(syn::parse_quote! { sys::godot_object }),
+        }
+    }
+
+    pub fn to_return_post(&self) -> TokenStream {
+        match self {
+            Ty::Void => Default::default(),
+            Ty::F64 | &Ty::I64 | &Ty::Bool | &Ty::Enum(_) => {
+                quote! { ret }
+            }
+            Ty::Vector2
+            | Ty::Vector3
+            | Ty::Transform
+            | Ty::Transform2D
+            | Ty::Quat
+            | Ty::Aabb
+            | Ty::Rect2
+            | Ty::Basis
+            | Ty::Plane
+            | Ty::Color => {
+                quote! { mem::transmute(ret) }
+            }
+            Ty::Rid => {
+                quote! { Rid::from_sys(ret) }
+            }
+            Ty::String
+            | Ty::NodePath
+            | Ty::VariantArray
+            | Ty::Dictionary
+            | Ty::ByteArray
+            | Ty::StringArray
+            | Ty::Vector2Array
+            | Ty::Vector3Array
+            | Ty::ColorArray
+            | Ty::Int32Array
+            | Ty::Float32Array
+            | Ty::Variant => {
+                let rust_ty = self.to_rust();
+                quote! {
+                    #rust_ty::from_sys(ret)
+                }
+            }
+            Ty::Object(ref name) => {
+                let name = format_ident!("{}", name);
+                quote! {
+                    if ret.is_null() {
+                        None
+                    } else {
+                        Some(<#name>::from_return_position_sys(ret))
+                    }
+                }
+            }
+            Ty::Result => {
+                quote! { GodotError::result_from_sys(ret) }
+            }
+            Ty::VariantType => {
+                quote! { VariantType::from_sys(ret) }
+            }
+            Ty::VariantOperator => {
+                quote! {
+                    VariantOperator::try_from_sys(ret).expect("enum variant should be valid")
+                }
+            }
         }
     }
 }
