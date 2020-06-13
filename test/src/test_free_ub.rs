@@ -1,3 +1,4 @@
+use gdnative::api::*;
 use gdnative::*;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::Arc;

@@ -1,5 +1,6 @@
 #![allow(clippy::blacklisted_name)]
 
+use gdnative::api::*;
 use gdnative::*;
 
 use gdnative::private::get_api;
@@ -89,7 +90,7 @@ fn test_underscore_method_binding() -> bool {
     println!(" -- test_underscore_method_binding");
 
     let ok = std::panic::catch_unwind(|| {
-        let table = gdnative::NativeScriptMethodTable::get(get_api());
+        let table = gdnative::api::NativeScriptMethodTable::get(get_api());
         assert_ne!(0, table._new as usize);
     })
     .is_ok();

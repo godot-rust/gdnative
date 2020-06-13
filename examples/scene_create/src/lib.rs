@@ -3,7 +3,8 @@ extern crate gdnative;
 extern crate euclid;
 
 use euclid::vec3;
-use gdnative::{GodotString, PackedScene, ResourceLoader, Spatial, Variant};
+use gdnative::api::{PackedScene, ResourceLoader, Spatial};
+use gdnative::{GodotString, Variant};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ManageErrs {
@@ -12,7 +13,7 @@ pub enum ManageErrs {
 }
 
 #[derive(gdnative::NativeClass)]
-#[inherit(gdnative::Spatial)]
+#[inherit(Spatial)]
 struct SceneCreate {
     // Store the loaded scene for a very slight performance boost but mostly to show you how.
     template: Option<PackedScene>,
@@ -34,7 +35,7 @@ unsafe impl Send for SceneCreate {}
 
 #[gdnative::methods]
 impl SceneCreate {
-    fn _init(_owner: gdnative::Spatial) -> Self {
+    fn _init(_owner: Spatial) -> Self {
         SceneCreate {
             template: None, // Have not loaded this template yet.
             children_spawned: 0,
@@ -42,7 +43,7 @@ impl SceneCreate {
     }
 
     #[export]
-    fn _ready(&mut self, _owner: gdnative::Spatial) {
+    fn _ready(&mut self, _owner: Spatial) {
         self.template = load_scene("res://Child_scene.tscn");
         match &self.template {
             Some(_scene) => godot_print!("Loaded child scene successfully!"),
@@ -51,7 +52,7 @@ impl SceneCreate {
     }
 
     #[export]
-    unsafe fn spawn_one(&mut self, mut owner: gdnative::Spatial, message: GodotString) {
+    unsafe fn spawn_one(&mut self, mut owner: Spatial, message: GodotString) {
         godot_print!("Called spawn_one({})", message.to_string());
 
         let template = if let Some(template) = &self.template {
@@ -86,7 +87,7 @@ impl SceneCreate {
     }
 
     #[export]
-    unsafe fn remove_one(&mut self, mut owner: gdnative::Spatial, str: GodotString) {
+    unsafe fn remove_one(&mut self, mut owner: Spatial, str: GodotString) {
         godot_print!("Called remove_one({})", str.to_string());
         let num_children = owner.get_child_count();
         if num_children <= 0 {
@@ -139,7 +140,7 @@ where
     }
 }
 
-unsafe fn update_panel(owner: &mut gdnative::Spatial, num_children: i64) {
+unsafe fn update_panel(owner: &mut Spatial, num_children: i64) {
     // Here is how we call into the panel. First we get its node (we might have saved it
     //   from earlier)
     let panel_node_opt = owner
