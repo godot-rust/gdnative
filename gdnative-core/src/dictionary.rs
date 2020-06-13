@@ -1,4 +1,5 @@
 use std::iter::{Extend, FromIterator};
+use std::marker::PhantomData;
 
 use crate::private::get_api;
 use crate::sys;
@@ -21,7 +22,12 @@ use std::fmt;
 /// references to it on other threads.
 ///
 /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
-pub struct Dictionary(pub(crate) sys::godot_dictionary);
+pub struct Dictionary {
+    sys: sys::godot_dictionary,
+
+    /// Marker preventing the compiler from incorrectly deriving `Send` and `Sync`.
+    _marker: PhantomData<*const ()>,
+}
 
 impl Dictionary {
     /// Creates an empty `Dictionary`.
@@ -33,99 +39,110 @@ impl Dictionary {
     /// Returns `true` if the `Dictionary` contains no elements.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        unsafe { (get_api().godot_dictionary_empty)(&self.0) }
+        unsafe { (get_api().godot_dictionary_empty)(self.sys()) }
     }
 
     /// Returns the number of elements in the `Dictionary`.
     #[inline]
     pub fn len(&self) -> i32 {
-        unsafe { (get_api().godot_dictionary_size)(&self.0) }
+        unsafe { (get_api().godot_dictionary_size)(self.sys()) }
     }
 
     /// Clears the `Dictionary`, removing all key-value pairs.
     #[inline]
-    pub fn clear(&mut self) {
-        unsafe { (get_api().godot_dictionary_clear)(&mut self.0) }
+    pub fn clear(&self) {
+        unsafe { (get_api().godot_dictionary_clear)(self.sys_mut()) }
     }
 
     /// Returns true if the `Dictionary` contains the specified key.
     #[inline]
     pub fn contains(&self, key: &Variant) -> bool {
-        unsafe { (get_api().godot_dictionary_has)(&self.0, &key.0) }
+        unsafe { (get_api().godot_dictionary_has)(self.sys(), key.sys()) }
     }
 
     /// Returns true if the `Dictionary` has all of the keys in the given array.
     #[inline]
     pub fn contains_all(&self, keys: &VariantArray) -> bool {
-        unsafe { (get_api().godot_dictionary_has_all)(&self.0, &keys.0) }
+        unsafe { (get_api().godot_dictionary_has_all)(self.sys(), keys.sys()) }
     }
 
     /// Erase a key-value pair in the `Dictionary` by the specified key.
     #[inline]
-    pub fn erase(&mut self, key: &Variant) {
-        unsafe { (get_api().godot_dictionary_erase)(&mut self.0, &key.0) }
+    pub fn erase(&self, key: &Variant) {
+        unsafe { (get_api().godot_dictionary_erase)(self.sys_mut(), key.sys()) }
     }
 
     /// Returns a copy of the value corresponding to the key.
     #[inline]
     pub fn get(&self, key: &Variant) -> Variant {
-        unsafe { Variant((get_api().godot_dictionary_get)(&self.0, &key.0)) }
+        unsafe { Variant((get_api().godot_dictionary_get)(self.sys(), key.sys())) }
     }
 
     /// Sets a value to the element corresponding to the key.
     #[inline]
-    pub fn set(&mut self, key: &Variant, val: &Variant) {
-        unsafe { (get_api().godot_dictionary_set)(&mut self.0, &key.0, &val.0) }
+    pub fn set(&self, key: &Variant, val: &Variant) {
+        unsafe { (get_api().godot_dictionary_set)(self.sys_mut(), key.sys(), val.sys()) }
     }
 
     /// Returns a reference to the value corresponding to the key.
+    ///
+    /// # Safety
+    ///
+    /// The returned reference is invalidated if the same container is mutated through another
+    /// reference.
+    ///
+    /// `Variant` is reference-counted and thus cheaply cloned. Consider using `get` instead.
     #[inline]
-    pub fn get_ref(&self, key: &Variant) -> &Variant {
-        unsafe {
-            Variant::cast_ref((get_api().godot_dictionary_operator_index_const)(
-                &self.0, &key.0,
-            ))
-        }
+    pub unsafe fn get_ref(&self, key: &Variant) -> &Variant {
+        Variant::cast_ref((get_api().godot_dictionary_operator_index_const)(
+            self.sys(),
+            key.sys(),
+        ))
     }
 
     /// Returns a mutable reference to the value corresponding to the key.
+    ///
+    /// # Safety
+    ///
+    /// The returned reference is invalidated if the same container is mutated through another
+    /// reference. It is possible to create two mutable references to the same memory location
+    /// if the same `key` is provided, causing undefined behavior.
     #[inline]
-    pub fn get_mut_ref(&mut self, key: &Variant) -> &mut Variant {
-        unsafe {
-            Variant::cast_mut_ref((get_api().godot_dictionary_operator_index)(
-                &mut self.0,
-                &key.0,
-            ))
-        }
+    #[allow(clippy::mut_from_ref)]
+    pub unsafe fn get_mut_ref(&self, key: &Variant) -> &mut Variant {
+        Variant::cast_mut_ref((get_api().godot_dictionary_operator_index)(
+            self.sys_mut(),
+            key.sys(),
+        ))
     }
 
     /// Returns a GodotString of the `Dictionary`.
     #[inline]
     pub fn to_json(&self) -> GodotString {
-        unsafe { GodotString((get_api().godot_dictionary_to_json)(&self.0)) }
+        unsafe { GodotString((get_api().godot_dictionary_to_json)(self.sys())) }
     }
 
     /// Returns an array of the keys in the `Dictionary`.
     #[inline]
     pub fn keys(&self) -> VariantArray {
-        unsafe { VariantArray((get_api().godot_dictionary_keys)(&self.0)) }
+        unsafe { VariantArray::from_sys((get_api().godot_dictionary_keys)(self.sys())) }
     }
 
     /// Returns an array of the values in the `Dictionary`.
     #[inline]
     pub fn values(&self) -> VariantArray {
-        unsafe { VariantArray((get_api().godot_dictionary_values)(&self.0)) }
+        unsafe { VariantArray::from_sys((get_api().godot_dictionary_values)(self.sys())) }
     }
 
     #[inline]
     pub fn get_next(&self, key: &Variant) -> &Variant {
-        unsafe { Variant::cast_ref((get_api().godot_dictionary_next)(&self.0, &key.0)) }
+        unsafe { Variant::cast_ref((get_api().godot_dictionary_next)(self.sys(), key.sys())) }
     }
 
     /// Return a hashed i32 value representing the dictionary's contents.
     #[inline]
     pub fn hash(&self) -> i32 {
-        unsafe { (get_api().godot_dictionary_hash)(&self.0) }
+        unsafe { (get_api().godot_dictionary_hash)(self.sys()) }
     }
 
     /// Returns an iterator through all key-value pairs in the `Dictionary`.
@@ -141,28 +158,31 @@ impl Dictionary {
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_dictionary {
-        &self.0
+        &self.sys
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys_mut(&self) -> *mut sys::godot_dictionary {
+        &self.sys as *const _ as *mut _
     }
 
     #[doc(hidden)]
     #[inline]
     pub fn from_sys(sys: sys::godot_dictionary) -> Self {
-        Dictionary(sys)
+        Dictionary {
+            sys,
+            _marker: PhantomData,
+        }
     }
 }
 
-impl RefCounted for Dictionary {
-    impl_common_methods! {
-        #[inline]
-        fn new_ref(&self) -> Dictionary : godot_dictionary_new_copy;
-    }
-}
-
-impl_basic_traits!(
+impl_basic_traits_as_sys!(
     for Dictionary as godot_dictionary {
         Drop => godot_dictionary_destroy;
         Default => godot_dictionary_new;
         Eq => godot_dictionary_operator_equal;
+        RefCounted => godot_dictionary_new_copy;
     }
 );
 
@@ -268,7 +288,7 @@ godot_test!(test_dictionary {
     let x = Variant::from_i64(42);
     let y = Variant::from_i64(1337);
 
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
 
     dict.set(&foo, &x);
     dict.set(&bar, &y);
@@ -277,7 +297,7 @@ godot_test!(test_dictionary {
     assert!(dict.contains(&bar));
     assert!(!dict.contains(&nope));
 
-    let mut keys_array = dict.keys();
+    let keys_array = dict.keys();
     let baz = Variant::from_str("baz");
     keys_array.push(&baz);
     dict.set(&baz, &x);

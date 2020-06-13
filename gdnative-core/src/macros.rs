@@ -323,6 +323,101 @@ macro_rules! impl_basic_traits {
     )
 }
 
+macro_rules! impl_basic_trait_as_sys {
+    (
+        Drop for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl Drop for $Type {
+            #[inline]
+            fn drop(&mut self) {
+                unsafe { (get_api().$gd_method)(self.sys_mut()) }
+            }
+        }
+    };
+
+    (
+        Clone for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl Clone for $Type {
+            #[inline]
+            fn clone(&self) -> Self {
+                unsafe {
+                    let mut result = sys::$GdType::default();
+                    (get_api().$gd_method)(&mut result, self.sys());
+                    $Type::from_sys(result)
+                }
+            }
+        }
+    };
+
+    (
+        Default for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl Default for $Type {
+            #[inline]
+            fn default() -> Self {
+                unsafe {
+                    let mut gd_val = sys::$GdType::default();
+                    (get_api().$gd_method)(&mut gd_val);
+                    $Type::from_sys(gd_val)
+                }
+            }
+        }
+    };
+
+    (
+        PartialEq for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl PartialEq for $Type {
+            #[inline]
+            fn eq(&self, other: &Self) -> bool {
+                unsafe { (get_api().$gd_method)(self.sys(), other.sys()) }
+            }
+        }
+    };
+
+    (
+        Eq for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl PartialEq for $Type {
+            #[inline]
+            fn eq(&self, other: &Self) -> bool {
+                unsafe { (get_api().$gd_method)(self.sys(), other.sys()) }
+            }
+        }
+        impl Eq for $Type {}
+    };
+
+    (
+        RefCounted for $Type:ident as $GdType:ident : $gd_method:ident
+    ) => {
+        impl RefCounted for $Type {
+            #[inline]
+            fn new_ref(&self) -> $Type {
+                unsafe {
+                    let mut result = Default::default();
+                    (get_api().$gd_method)(&mut result, self.sys());
+                    $Type::from_sys(result)
+                }
+            }
+        }
+    };
+}
+
+macro_rules! impl_basic_traits_as_sys {
+    (
+        for $Type:ident as $GdType:ident {
+            $( $Trait:ident => $gd_method:ident; )*
+        }
+    ) => (
+        $(
+            impl_basic_trait_as_sys!(
+                $Trait for $Type as $GdType : $gd_method
+            );
+        )*
+    )
+}
+
 macro_rules! impl_common_method {
     (
         $(#[$attr:meta])*

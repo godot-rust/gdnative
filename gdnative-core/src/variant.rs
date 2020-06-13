@@ -1601,7 +1601,7 @@ impl<T> MaybeNot<T> {
 impl<T: ToVariant, E: ToVariant> ToVariant for Result<T, E> {
     #[inline]
     fn to_variant(&self) -> Variant {
-        let mut dict = Dictionary::new();
+        let dict = Dictionary::new();
         match &self {
             Ok(val) => dict.set(&"Ok".into(), &val.to_variant()),
             Err(err) => dict.set(&"Err".into(), &err.to_variant()),
@@ -1631,7 +1631,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
         }
 
         let keys = dict.keys();
-        let key_variant = keys.get_ref(0);
+        let key_variant = &keys.get(0);
         let key = String::from_variant(key_variant).map_err(|err| FVE::InvalidEnumRepr {
             expected: VariantEnumRepr::ExternallyTagged,
             error: Box::new(err),
@@ -1639,7 +1639,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
 
         match key.as_str() {
             "Ok" => {
-                let val = T::from_variant(dict.get_ref(key_variant)).map_err(|err| {
+                let val = T::from_variant(&dict.get(key_variant)).map_err(|err| {
                     FVE::InvalidEnumVariant {
                         variant: "Ok",
                         error: Box::new(err),
@@ -1648,7 +1648,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
                 Ok(Ok(val))
             }
             "Err" => {
-                let err = E::from_variant(dict.get_ref(key_variant)).map_err(|err| {
+                let err = E::from_variant(&dict.get(key_variant)).map_err(|err| {
                     FVE::InvalidEnumVariant {
                         variant: "Err",
                         error: Box::new(err),
@@ -1667,7 +1667,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
 impl<T: ToVariant> ToVariant for &[T] {
     #[inline]
     fn to_variant(&self) -> Variant {
-        let mut array = VariantArray::new();
+        let array = VariantArray::new();
         for val in self.iter() {
             // there is no real way to avoid CoW allocations right now, as ptrw isn't exposed
             array.push(&val.to_variant());
@@ -1696,7 +1696,7 @@ impl<T: FromVariant> FromVariant for Vec<T> {
         let mut vec = Vec::with_capacity(len);
         for idx in 0..len as i32 {
             let item =
-                T::from_variant(arr.get_ref(idx)).map_err(|e| FromVariantError::InvalidItem {
+                T::from_variant(&arr.get(idx)).map_err(|e| FromVariantError::InvalidItem {
                     index: idx as usize,
                     error: Box::new(e),
                 })?;
@@ -1726,7 +1726,7 @@ macro_rules! impl_variant_for_tuples {
             #[allow(non_snake_case)]
             #[inline]
             fn to_variant(&self) -> Variant {
-                let mut array = VariantArray::new();
+                let array = VariantArray::new();
                 let ($($name,)+) = self;
                 $(
                     array.push(&$name.to_variant());
@@ -1749,7 +1749,7 @@ macro_rules! impl_variant_for_tuples {
                 let mut iter = array.iter();
                 let mut index = 0;
                 $(
-                    let $name = $name::from_variant(iter.next().unwrap())
+                    let $name = $name::from_variant(&iter.next().unwrap())
                         .map_err(|err| FromVariantError::InvalidItem {
                             index,
                             error: Box::new(err),
@@ -1798,11 +1798,11 @@ godot_test!(
     test_variant_result {
         let variant = Result::<i64, ()>::Ok(42 as i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(42), dict.get_ref(&"Ok".into()).try_to_i64());
+        assert_eq!(Some(42), dict.get(&"Ok".into()).try_to_i64());
 
         let variant = Result::<(), i64>::Err(54 as i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(54), dict.get_ref(&"Err".into()).try_to_i64());
+        assert_eq!(Some(54), dict.get(&"Err".into()).try_to_i64());
 
         let variant = Variant::from_bool(true);
         assert_eq!(
@@ -1816,11 +1816,11 @@ godot_test!(
             Result::<(), i64>::from_variant(&variant),
         );
 
-        let mut dict = Dictionary::new();
+        let dict = Dictionary::new();
         dict.set(&"Ok".into(), &Variant::from_i64(42));
         assert_eq!(Ok(Ok(42)), Result::<i64, i64>::from_variant(&dict.to_variant()));
 
-        let mut dict = Dictionary::new();
+        let dict = Dictionary::new();
         dict.set(&"Err".into(), &Variant::from_i64(54));
         assert_eq!(Ok(Err(54)), Result::<i64, i64>::from_variant(&dict.to_variant()));
     }
@@ -1831,13 +1831,13 @@ godot_test!(
         let array = variant.try_to_array().expect("should be array");
         assert_eq!(5, array.len());
         for i in 0..5 {
-            assert_eq!(Some(i), array.get_ref(i as i32).try_to_i64());
+            assert_eq!(Some(i), array.get(i as i32).try_to_i64());
         }
 
         let vec = Vec::<i64>::from_variant(&variant).expect("should succeed");
         assert_eq!(slice, vec.as_slice());
 
-        let mut het_array = VariantArray::new();
+        let het_array = VariantArray::new();
         het_array.push(&Variant::from_i64(42));
         het_array.push(&Variant::new());
 
@@ -1877,8 +1877,8 @@ godot_test!(
     test_variant_tuple {
         let variant = (42i64, 54i64).to_variant();
         let arr = variant.try_to_array().expect("should be array");
-        assert_eq!(Some(42), arr.get_ref(0).try_to_i64());
-        assert_eq!(Some(54), arr.get_ref(1).try_to_i64());
+        assert_eq!(Some(42), arr.get(0).try_to_i64());
+        assert_eq!(Some(54), arr.get(1).try_to_i64());
 
         let tuple = <(i64, i64)>::from_variant(&variant);
         assert_eq!(Ok((42, 54)), tuple);

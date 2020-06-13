@@ -72,7 +72,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
                         })
                     }
                     else {
-                        let __key = String::from_variant(__keys.get_ref(0))
+                        let __key = String::from_variant(&__keys.get(0))
                             .map_err(|__err| FVE::InvalidEnumRepr {
                                 expected: VariantEnumRepr::ExternallyTagged,
                                 error: Box::new(__err),
@@ -80,7 +80,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
                         match __key.as_str() {
                             #(
                                 #ref_var_ident_string_literals => {
-                                    let #var_input_ident_iter = __dict.get_ref(__keys.get_ref(0));
+                                    let #var_input_ident_iter = &__dict.get(&__keys.get(0));
                                     (#var_from_variants).map_err(|err| FVE::InvalidEnumVariant {
                                         variant: "Ok",
                                         error: Box::new(err),
