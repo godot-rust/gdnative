@@ -48,8 +48,11 @@ impl<G: Guard> MaybeUnaligned<G> {
         MaybeUnaligned { guard }
     }
 
-    /// Assumes that an access is aligned. It is undefined behavior to Deref the resulting
-    /// access if the underlying pointer is not aligned to `G::Target`.
+    /// Assumes that an access is aligned.
+    ///
+    /// # Safety
+    /// It is undefined behavior to Deref the resulting access if the underlying pointer is not
+    /// aligned to `G::Target`.
     #[inline]
     pub unsafe fn assume_aligned(self) -> Aligned<G> {
         Aligned { guard: self.guard }
