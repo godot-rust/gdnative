@@ -98,6 +98,7 @@ In the `src/lib.rs` file should have the following contents:
 
 ```rust
 use gdnative::*;
+use gdnative::api::Node;
 
 /// The HelloWorld "class"
 #[derive(NativeClass)]

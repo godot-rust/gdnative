@@ -2,6 +2,7 @@ use crate::extensions::NodeExt as _;
 use crate::hud;
 use crate::mob;
 use crate::player;
+use gdnative::api::*;
 use gdnative::*;
 use rand::*;
 use std::f64::consts::PI;

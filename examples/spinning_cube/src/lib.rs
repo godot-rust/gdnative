@@ -1,10 +1,11 @@
 #[macro_use]
 extern crate gdnative;
 
+use gdnative::api::MeshInstance;
 use gdnative::init::property::{EnumHint, IntHint, StringHint};
 
 #[derive(gdnative::NativeClass)]
-#[inherit(gdnative::MeshInstance)]
+#[inherit(MeshInstance)]
 #[register_with(my_register_function)]
 struct RustTest {
     start: gdnative::Vector3,
@@ -38,7 +39,7 @@ fn my_register_function(builder: &gdnative::init::ClassBuilder<RustTest>) {
 
 #[gdnative::methods]
 impl RustTest {
-    fn _init(_owner: gdnative::MeshInstance) -> Self {
+    fn _init(_owner: MeshInstance) -> Self {
         RustTest {
             start: gdnative::Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
@@ -47,7 +48,7 @@ impl RustTest {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, mut owner: gdnative::MeshInstance) {
+    unsafe fn _ready(&mut self, mut owner: MeshInstance) {
         owner.set_physics_process(true);
         self.start = owner.translation();
         godot_warn!("Start: {:?}", self.start);
@@ -58,8 +59,8 @@ impl RustTest {
     }
 
     #[export]
-    unsafe fn _physics_process(&mut self, mut owner: gdnative::MeshInstance, delta: f64) {
-        use gdnative::{Color, SpatialMaterial, Vector3};
+    unsafe fn _physics_process(&mut self, mut owner: MeshInstance, delta: f64) {
+        use gdnative::{api::SpatialMaterial, Color, Vector3};
 
         self.time += delta as f32;
         owner.rotate_y(self.rotate_speed * delta);

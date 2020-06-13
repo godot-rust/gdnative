@@ -1,3 +1,4 @@
+use gdnative::api::Node;
 use gdnative::*;
 
 pub trait NodeExt {

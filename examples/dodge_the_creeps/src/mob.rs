@@ -1,4 +1,5 @@
 use crate::extensions::NodeExt;
+use gdnative::api::*;
 use gdnative::*;
 use rand::seq::SliceRandom;
 

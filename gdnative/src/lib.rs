@@ -39,4 +39,5 @@ pub use gdnative_derive::*;
 
 #[doc(inline)]
 #[cfg(feature = "bindings")]
-pub use gdnative_bindings::*;
+/// Bindings for the Godot Class API.
+pub use gdnative_bindings as api;

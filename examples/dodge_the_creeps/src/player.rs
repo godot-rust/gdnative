@@ -1,4 +1,5 @@
 use crate::extensions::NodeExt as _;
+use gdnative::api::*;
 use gdnative::*;
 
 /// The player "class"
