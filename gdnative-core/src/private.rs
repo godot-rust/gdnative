@@ -7,6 +7,8 @@ static mut GDNATIVE_LIBRARY_SYS: Option<*mut sys::godot_object> = None;
 
 /// Binds the API struct from `gdnative_init_options`. Returns `true` on success.
 ///
+/// # Safety
+///
 /// This is intended to be an internal interface.
 #[inline]
 pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
@@ -57,6 +59,8 @@ pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
 }
 
 /// Performs library-wide cleanup during `terminate`.
+///
+/// # Safety
 ///
 /// This is intended to be an internal interface.
 #[inline]

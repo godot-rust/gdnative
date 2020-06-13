@@ -311,6 +311,7 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a string.
     #[inline]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str<S>(s: S) -> Variant
     where
         S: AsRef<str>,
@@ -628,11 +629,6 @@ impl Variant {
     }
 
     #[inline]
-    pub fn to_string(&self) -> String {
-        self.to_godot_string().to_string()
-    }
-
-    #[inline]
     pub fn try_to_string(&self) -> Option<String> {
         self.try_to_godot_string().map(|s| s.to_string())
     }
@@ -759,6 +755,13 @@ impl_basic_traits_as_sys!(
         PartialEq => godot_variant_operator_equal;
     }
 );
+
+impl ToString for Variant {
+    #[inline]
+    fn to_string(&self) -> String {
+        self.to_godot_string().to_string()
+    }
+}
 
 impl Default for Variant {
     #[inline]

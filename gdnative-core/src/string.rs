@@ -48,6 +48,7 @@ impl GodotString {
     }
 
     #[inline]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str<S>(s: S) -> Self
     where
         S: AsRef<str>,
@@ -274,11 +275,6 @@ impl Utf8String {
         unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 
-    #[inline]
-    pub fn to_string(&self) -> String {
-        String::from(self.as_str())
-    }
-
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_char_string {
@@ -295,6 +291,13 @@ impl Utf8String {
     #[inline]
     pub fn from_sys(sys: sys::godot_char_string) -> Self {
         Self(sys)
+    }
+}
+
+impl ToString for Utf8String {
+    #[inline]
+    fn to_string(&self) -> String {
+        String::from(self.as_str())
     }
 }
 

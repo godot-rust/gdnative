@@ -161,9 +161,13 @@ impl<Access: ThreadAccess> Dictionary<Access> {
 
 /// Operations allowed on Dictionaries that might be shared.
 impl Dictionary<Shared> {
-    /// Assume the dictionary is only used/referenced by a single thread.
+    /// Assume the dictionary is only referenced a single time to get a `Unique`
+    /// version of the dictionary.
     ///
+    /// # Safety
     ///
+    /// By calling this function it is assumed that only a single
+    /// reference to the dictionary exists, on the current or any other thread.
     #[inline]
     pub unsafe fn assume_unique(self) -> Dictionary<Unique> {
         Dictionary::<Unique> {
@@ -215,16 +219,6 @@ impl Dictionary<Unique> {
             sys: self.sys,
             _marker: PhantomData,
         }
-    }
-
-    /// Returns an iterator through all key-value pairs in the `Dictionary`.
-    ///
-    /// `Dictionary` is reference-counted and have interior mutability in Rust parlance.
-    /// Modifying the same underlying collection while observing the safety assumptions will
-    /// not violate memory safely, but may lead to surprising behavior in the iterator.
-    #[inline]
-    pub fn into_iter(self) -> IntoIterUnique {
-        IntoIterator::into_iter(self)
     }
 
     /// Returns an iterator through all key-value pairs in the `Dictionary`.
@@ -302,6 +296,7 @@ impl RefCounted for Dictionary<Shared> {
 }
 
 impl<A: ThreadAccess, B: ThreadAccess> PartialEq<Dictionary<A>> for Dictionary<B> {
+    #[inline]
     fn eq(&self, other: &Dictionary<A>) -> bool {
         unsafe { (get_api().godot_dictionary_operator_equal)(self.sys(), other.sys()) }
     }
@@ -365,6 +360,7 @@ impl Iterator for IterShared {
 impl<'a> IntoIterator for &'a Dictionary<Shared> {
     type Item = (Variant, Variant);
     type IntoIter = IterShared;
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -415,6 +411,7 @@ impl Iterator for IntoIterUnique {
 impl IntoIterator for Dictionary<Unique> {
     type Item = (Variant, Variant);
     type IntoIter = IntoIterUnique;
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIterUnique::new(self)
     }
@@ -464,6 +461,7 @@ impl<'a> Iterator for IterUnique<'a> {
 impl<'a> IntoIterator for &'a Dictionary<Unique> {
     type Item = (Variant, Variant);
     type IntoIter = IterUnique<'a>;
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }

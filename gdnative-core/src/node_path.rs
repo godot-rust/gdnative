@@ -28,6 +28,7 @@ impl NodePath {
     /// global scene tree, not within individual scenes. In a relative path, `"."` and `".."`
     /// indicate the current node and its parent.
     #[inline]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(path: &str) -> Self {
         unsafe {
             let mut dest = sys::godot_node_path::default();
@@ -97,12 +98,6 @@ impl NodePath {
         unsafe { GodotString((get_api().godot_node_path_as_string)(&self.0)) }
     }
 
-    /// Returns the `NodePath` as a `String`
-    #[inline]
-    pub fn to_string(&self) -> String {
-        self.to_godot_string().to_string()
-    }
-
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_node_path {
@@ -119,6 +114,13 @@ impl NodePath {
     #[inline]
     pub fn from_sys(sys: sys::godot_node_path) -> Self {
         NodePath(sys)
+    }
+}
+
+impl ToString for NodePath {
+    #[inline]
+    fn to_string(&self) -> String {
+        self.to_godot_string().to_string()
     }
 }
 

@@ -20,7 +20,7 @@ impl Api {
 
     pub fn find_class<'a, 'b>(&'a self, name: &'b str) -> Option<&'a GodotClass> {
         for class in &self.classes {
-            if &class.name == name {
+            if class.name == name {
                 return Some(class);
             }
         }
@@ -37,7 +37,7 @@ impl Api {
             return self.class_inherits(parent, base_class_name);
         }
 
-        return false;
+        false
     }
 
     fn strip_leading_underscores(&mut self) {
@@ -57,6 +57,12 @@ impl Api {
                 }
             }
         }
+    }
+}
+
+impl Default for Api {
+    fn default() -> Self {
+        Api::new()
     }
 }
 
@@ -85,7 +91,7 @@ impl GodotClass {
     }
 
     pub fn is_getter(&self, name: &str) -> bool {
-        self.properties.iter().find(|p| p.getter == name).is_some()
+        self.properties.iter().any(|p| p.getter == name)
     }
 }
 
@@ -250,75 +256,75 @@ impl Ty {
 
     pub fn to_rust(&self) -> Option<String> {
         match self {
-            &Ty::Void => Some(String::from("()")),
-            &Ty::String => Some(String::from("GodotString")),
-            &Ty::F64 => Some(String::from("f64")),
-            &Ty::I64 => Some(String::from("i64")),
-            &Ty::Bool => Some(String::from("bool")),
-            &Ty::Vector2 => Some(String::from("Vector2")),
-            &Ty::Vector3 => Some(String::from("Vector3")),
-            &Ty::Quat => Some(String::from("Quat")),
-            &Ty::Transform => Some(String::from("Transform")),
-            &Ty::Transform2D => Some(String::from("Transform2D")),
-            &Ty::Rect2 => Some(String::from("Rect2")),
-            &Ty::Plane => Some(String::from("Plane")),
-            &Ty::Basis => Some(String::from("Basis")),
-            &Ty::Color => Some(String::from("Color")),
-            &Ty::NodePath => Some(String::from("NodePath")),
-            &Ty::Variant => Some(String::from("Variant")),
-            &Ty::Aabb => Some(String::from("Aabb")),
-            &Ty::Rid => Some(String::from("Rid")),
-            &Ty::VariantArray => Some(String::from("VariantArray")),
-            &Ty::Dictionary => Some(String::from("Dictionary")),
-            &Ty::ByteArray => Some(String::from("ByteArray")),
-            &Ty::StringArray => Some(String::from("StringArray")),
-            &Ty::Vector2Array => Some(String::from("Vector2Array")),
-            &Ty::Vector3Array => Some(String::from("Vector3Array")),
-            &Ty::ColorArray => Some(String::from("ColorArray")),
-            &Ty::Int32Array => Some(String::from("Int32Array")),
-            &Ty::Float32Array => Some(String::from("Float32Array")),
-            &Ty::Result => Some(String::from("GodotResult")),
-            &Ty::VariantType => Some(String::from("VariantType")),
-            &Ty::VariantOperator => Some(String::from("VariantOperator")),
-            &Ty::Enum(ref name) => Some(String::from(name.clone())),
-            &Ty::Object(ref name) => Some(format!("Option<{}>", name)),
+            Ty::Void => Some(String::from("()")),
+            Ty::String => Some(String::from("GodotString")),
+            Ty::F64 => Some(String::from("f64")),
+            Ty::I64 => Some(String::from("i64")),
+            Ty::Bool => Some(String::from("bool")),
+            Ty::Vector2 => Some(String::from("Vector2")),
+            Ty::Vector3 => Some(String::from("Vector3")),
+            Ty::Quat => Some(String::from("Quat")),
+            Ty::Transform => Some(String::from("Transform")),
+            Ty::Transform2D => Some(String::from("Transform2D")),
+            Ty::Rect2 => Some(String::from("Rect2")),
+            Ty::Plane => Some(String::from("Plane")),
+            Ty::Basis => Some(String::from("Basis")),
+            Ty::Color => Some(String::from("Color")),
+            Ty::NodePath => Some(String::from("NodePath")),
+            Ty::Variant => Some(String::from("Variant")),
+            Ty::Aabb => Some(String::from("Aabb")),
+            Ty::Rid => Some(String::from("Rid")),
+            Ty::VariantArray => Some(String::from("VariantArray")),
+            Ty::Dictionary => Some(String::from("Dictionary")),
+            Ty::ByteArray => Some(String::from("ByteArray")),
+            Ty::StringArray => Some(String::from("StringArray")),
+            Ty::Vector2Array => Some(String::from("Vector2Array")),
+            Ty::Vector3Array => Some(String::from("Vector3Array")),
+            Ty::ColorArray => Some(String::from("ColorArray")),
+            Ty::Int32Array => Some(String::from("Int32Array")),
+            Ty::Float32Array => Some(String::from("Float32Array")),
+            Ty::Result => Some(String::from("GodotResult")),
+            Ty::VariantType => Some(String::from("VariantType")),
+            Ty::VariantOperator => Some(String::from("VariantOperator")),
+            Ty::Enum(ref name) => Some(name.clone()),
+            Ty::Object(ref name) => Some(format!("Option<{}>", name)),
         }
     }
 
     pub fn to_sys(&self) -> Option<String> {
         match self {
-            &Ty::Void => None,
-            &Ty::String => Some(String::from("sys::godot_string")),
-            &Ty::F64 => Some(String::from("sys::godot_real")),
-            &Ty::I64 => Some(String::from("sys::godot_int")),
-            &Ty::Bool => Some(String::from("sys::godot_bool")),
-            &Ty::Vector2 => Some(String::from("sys::godot_vector2")),
-            &Ty::Vector3 => Some(String::from("sys::godot_vector3")),
-            &Ty::Quat => Some(String::from("sys::godot_quat")),
-            &Ty::Transform => Some(String::from("sys::godot_transform")),
-            &Ty::Transform2D => Some(String::from("sys::godot_transform2d")),
-            &Ty::Rect2 => Some(String::from("sys::godot_rect2")),
-            &Ty::Plane => Some(String::from("sys::godot_plane")),
-            &Ty::Basis => Some(String::from("sys::godot_basis")),
-            &Ty::Color => Some(String::from("sys::godot_color")),
-            &Ty::NodePath => Some(String::from("sys::godot_node_path")),
-            &Ty::Variant => Some(String::from("sys::godot_variant")),
-            &Ty::Aabb => Some(String::from("sys::godot_aabb")),
-            &Ty::Rid => Some(String::from("sys::godot_rid")),
-            &Ty::VariantArray => Some(String::from("sys::godot_array")),
-            &Ty::Dictionary => Some(String::from("sys::godot_dictionary")),
-            &Ty::ByteArray => Some(String::from("sys::godot_pool_byte_array")),
-            &Ty::StringArray => Some(String::from("sys::godot_pool_string_array")),
-            &Ty::Vector2Array => Some(String::from("sys::godot_pool_vector2_array")),
-            &Ty::Vector3Array => Some(String::from("sys::godot_pool_vector3_array")),
-            &Ty::ColorArray => Some(String::from("sys::godot_pool_color_array")),
-            &Ty::Int32Array => Some(String::from("sys::godot_pool_int_array")),
-            &Ty::Float32Array => Some(String::from("sys::godot_pool_real_array")),
-            &Ty::Result => Some(String::from("sys::godot_error")),
-            &Ty::VariantType => Some(String::from("sys::variant_type")),
-            &Ty::VariantOperator => Some(String::from("sys::godot_variant_operator")),
-            &Ty::Enum(_) => None, // TODO
-            &Ty::Object(_) => Some(String::from("sys::godot_object")),
+            Ty::Void => None,
+            Ty::String => Some(String::from("sys::godot_string")),
+            Ty::F64 => Some(String::from("sys::godot_real")),
+            Ty::I64 => Some(String::from("sys::godot_int")),
+            Ty::Bool => Some(String::from("sys::godot_bool")),
+            Ty::Vector2 => Some(String::from("sys::godot_vector2")),
+            Ty::Vector3 => Some(String::from("sys::godot_vector3")),
+            Ty::Quat => Some(String::from("sys::godot_quat")),
+            Ty::Transform => Some(String::from("sys::godot_transform")),
+            Ty::Transform2D => Some(String::from("sys::godot_transform2d")),
+            Ty::Rect2 => Some(String::from("sys::godot_rect2")),
+            Ty::Plane => Some(String::from("sys::godot_plane")),
+            Ty::Basis => Some(String::from("sys::godot_basis")),
+            Ty::Color => Some(String::from("sys::godot_color")),
+            Ty::NodePath => Some(String::from("sys::godot_node_path")),
+            Ty::Variant => Some(String::from("sys::godot_variant")),
+            Ty::Aabb => Some(String::from("sys::godot_aabb")),
+            Ty::Rid => Some(String::from("sys::godot_rid")),
+            Ty::VariantArray => Some(String::from("sys::godot_array")),
+            Ty::Dictionary => Some(String::from("sys::godot_dictionary")),
+            Ty::ByteArray => Some(String::from("sys::godot_pool_byte_array")),
+            Ty::StringArray => Some(String::from("sys::godot_pool_string_array")),
+            Ty::Vector2Array => Some(String::from("sys::godot_pool_vector2_array")),
+            Ty::Vector3Array => Some(String::from("sys::godot_pool_vector3_array")),
+            Ty::ColorArray => Some(String::from("sys::godot_pool_color_array")),
+            Ty::Int32Array => Some(String::from("sys::godot_pool_int_array")),
+            Ty::Float32Array => Some(String::from("sys::godot_pool_real_array")),
+            Ty::Result => Some(String::from("sys::godot_error")),
+            Ty::VariantType => Some(String::from("sys::variant_type")),
+            Ty::VariantOperator => Some(String::from("sys::godot_variant_operator")),
+            Ty::Enum(_) => None, // TODO
+            Ty::Object(_) => Some(String::from("sys::godot_object")),
         }
     }
 }

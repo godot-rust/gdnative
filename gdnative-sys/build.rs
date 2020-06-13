@@ -159,6 +159,7 @@ mod header_binding {
         false
     }
 
+    #[allow(clippy::single_match)]
     pub(crate) fn generate(manifest_dir: &str, out_dir: &str) {
         // on mac/iOS this will be modified, so it is marked as mutable.
         // on all other targets, this `mut` will be unused and the complainer compiles.t s
@@ -403,7 +404,8 @@ mod api_wrapper {
     ) {
         let from_json = from_json.as_ref();
         let to = to.as_ref();
-        let api_json_file = File::open(from_json).expect(&format!("No such file: {:?}", from_json));
+        let api_json_file =
+            File::open(from_json).unwrap_or_else(|_| panic!("No such file: {:?}", from_json));
         let api_root: ApiRoot = serde_json::from_reader(api_json_file)
             .expect(&"File ({:?}) does not contain expected JSON");
         let struct_fields = godot_api_functions(&api_root);
@@ -416,10 +418,8 @@ mod api_wrapper {
                 #impl_constructor
             }
         };
-        let mut wrapper_file = File::create(to.join(file_name)).expect(&format!(
-            "Couldn't create output file: {:?}",
-            to.join(file_name)
-        ));
+        let mut wrapper_file = File::create(to.join(file_name))
+            .unwrap_or_else(|_| panic!("Couldn't create output file: {:?}", to.join(file_name)));
         write!(wrapper_file, "{}", wrapper).unwrap();
     }
 
@@ -485,7 +485,7 @@ mod api_wrapper {
         }
         c_type = c_type.trim();
         let mut ptr_count = 0;
-        while c_type.ends_with("*") {
+        while c_type.ends_with('*') {
             ptr_count += 1;
             c_type = c_type[..c_type.len() - 1].trim();
         }

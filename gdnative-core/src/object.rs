@@ -46,15 +46,31 @@ pub trait Instanciable: GodotObject {
 
 /// Manually managed Godot classes implementing `free`.
 pub trait Free: GodotObject {
+    /// Deallocate the object.
+    ///
+    /// # Safety
+    ///
+    /// When this function is called no references to this
+    /// object must be held and dereferenced.
     unsafe fn godot_free(self);
 }
 
 /// Manually managed Godot classes implementing `queue_free`.
 pub trait QueueFree: GodotObject {
+    /// Deallocate the object in the near future.
+    ///
+    /// # Safety
+    ///
+    /// When this function is dequeued no references to this
+    /// object must be held and dereferenced.
     unsafe fn godot_queue_free(&mut self);
 }
 
-// This function assumes the godot_object is reference counted.
+/// Increase the reference count of the object.
+///
+/// # Safety
+///
+/// This function assumes the godot_object is reference counted.
 #[inline]
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
@@ -76,7 +92,11 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     debug_assert!(ok);
 }
 
-// This function assumes the godot_object is reference counted.
+/// Decrease the reference count of the object.
+///
+/// # Safety
+///
+/// This function assumes the godot_object is reference counted.
 #[inline]
 pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
     use crate::ReferenceMethodTable;
@@ -94,7 +114,12 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
     last_reference
 }
 
-// This function assumes the godot_object is reference counted.
+/// Initialise the reference count of the object.
+///
+/// # Safety
+///
+/// This function assumes the godot_object is reference counted
+/// and that no other references are held at the time.
 #[inline]
 pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
@@ -112,6 +137,11 @@ pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     debug_assert!(ok);
 }
 
+/// Checks whether the object is of a certain Godot class.
+///
+/// # Safety
+///
+/// The `obj` pointer must be pointing to a valid Godot object.
 #[inline]
 pub unsafe fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     let api = crate::private::get_api();
@@ -139,6 +169,11 @@ pub unsafe fn is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     ret
 }
 
+/// Attempt to cast a Godot object to a different class type.
+///
+/// # Safety
+///
+/// The `obj` pointer must be pointing to a valid Godot object.
 #[inline]
 pub unsafe fn godot_cast<T>(from: *mut sys::godot_object) -> Option<T>
 where

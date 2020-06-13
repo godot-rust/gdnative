@@ -267,33 +267,24 @@ impl VariantArray<Unique> {
     /// not violate memory safely, but may lead to surprising behavior in the iterator.
     #[inline]
     pub fn iter(&self) -> IterUnique {
-        IterUnique {
-            arr: self,
-            range: 0..self.len(),
-        }
-    }
-
-    /// Returns an iterator through all values in the `VariantArray`.
-    ///
-    /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
-    /// Modifying the same underlying collection while observing the safety assumptions will
-    /// not violate memory safely, but may lead to surprising behavior in the iterator.
-    #[inline]
-    pub fn into_iter(self) -> IntoIterUnique {
-        let len = self.len();
-        IntoIterUnique {
-            arr: self,
-            range: 0..len,
-        }
+        self.into_iter()
     }
 }
 
 impl VariantArray<Shared> {
+    /// Create a new shared array.
     #[inline]
     pub fn new_shared() -> Self {
         VariantArray::<Unique>::new().into_shared()
     }
 
+    /// Assume the array is only referenced a single time to get a `Unique`
+    /// version of the array.
+    ///
+    /// # Safety
+    ///
+    /// By calling this function it is assumed that only a single
+    /// reference to the array exists, on the current or any other thread.
     #[inline]
     pub unsafe fn assume_unique(self) -> VariantArray<Unique> {
         VariantArray::<Unique> {
@@ -309,10 +300,7 @@ impl VariantArray<Shared> {
     /// not violate memory safely, but may lead to surprising behavior in the iterator.
     #[inline]
     pub fn iter(&self) -> IterShared {
-        IterShared {
-            arr: self.new_ref(),
-            range: 0..self.len(),
-        }
+        self.into_iter()
     }
 }
 
@@ -382,6 +370,18 @@ impl Iterator for IterShared {
     }
 }
 
+impl<'a> IntoIterator for &'a VariantArray<Shared> {
+    type Item = Variant;
+    type IntoIter = IterShared;
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IterShared {
+            arr: self.new_ref(),
+            range: 0..self.len(),
+        }
+    }
+}
+
 // #[derive(Debug)]
 pub struct IterUnique<'a> {
     arr: &'a VariantArray<Unique>,
@@ -402,6 +402,18 @@ impl<'a> Iterator for IterUnique<'a> {
     }
 }
 
+impl<'a> IntoIterator for &'a VariantArray<Unique> {
+    type Item = Variant;
+    type IntoIter = IterUnique<'a>;
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IterUnique {
+            range: 0..self.len(),
+            arr: self,
+        }
+    }
+}
+
 // #[derive(Debug)]
 pub struct IntoIterUnique {
     arr: VariantArray<Unique>,
@@ -419,6 +431,18 @@ impl Iterator for IntoIterUnique {
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
+    }
+}
+
+impl IntoIterator for VariantArray<Unique> {
+    type Item = Variant;
+    type IntoIter = IntoIterUnique;
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIterUnique {
+            range: 0..self.len(),
+            arr: self,
+        }
     }
 }
 
