@@ -38,7 +38,7 @@ impl SignalEmitter {
     }
 
     #[export]
-    fn _process(&mut self, mut owner: Node, delta: f64) {
+    fn _process(&mut self, owner: Node, delta: f64) {
         if self.timer < 1.0 {
             self.timer += delta;
             return;
@@ -97,7 +97,7 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn notify(&mut self, mut owner: Label) {
+    fn notify(&mut self, owner: Label) {
         self.times_received += 1;
         let msg = format!("Received signal \"tick\" {} times", self.times_received);
 
@@ -107,7 +107,7 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn notify_with_data(&mut self, mut owner: Label, data: Variant) {
+    fn notify_with_data(&mut self, owner: Label, data: Variant) {
         let msg = format!(
             "Received signal \"tick_with_data\" with data {}",
             data.try_to_u64().unwrap()

@@ -36,11 +36,11 @@ impl Main {
 
     #[export]
     unsafe fn game_over(&self, owner: Node) {
-        let mut score_timer: Timer = owner
+        let score_timer: Timer = owner
             .get_typed_node("score_timer")
             .expect("Unable to cast to Timer");
 
-        let mut mob_timer: Timer = owner
+        let mob_timer: Timer = owner
             .get_typed_node("mob_timer")
             .expect("Unable to cast to Timer");
 
@@ -52,7 +52,7 @@ impl Main {
             .expect("Unable to cast to CanvasLayer");
 
         Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
-            .and_then(|hud| hud.map_aliased(|x, o| x.show_game_over(o)).ok())
+            .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
@@ -64,7 +64,7 @@ impl Main {
         let player: Area2D = owner
             .get_typed_node("player")
             .expect("Unable to cast to Area2D");
-        let mut start_timer: Timer = owner
+        let start_timer: Timer = owner
             .get_typed_node("start_timer")
             .expect("Unable to cast to Timer");
 
@@ -73,7 +73,7 @@ impl Main {
         Instance::<player::Player>::try_from_unsafe_base(player)
             .and_then(|player| {
                 player
-                    .map_aliased(|x, o| x.start(o, start_position.position()))
+                    .map(|x, o| x.start(o, start_position.position()))
                     .ok()
             })
             .unwrap_or_else(|| godot_print!("Unable to get player"));
@@ -86,7 +86,7 @@ impl Main {
 
         Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
             .and_then(|hud| {
-                hud.map_aliased(|x, o| {
+                hud.map(|x, o| {
                     x.update_score(o, self.score);
                     x.show_message(o, "Get Ready".into());
                 })
@@ -116,17 +116,17 @@ impl Main {
             .expect("Unable to cast to CanvasLayer");
 
         Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
-            .and_then(|hud| hud.map_aliased(|x, o| x.update_score(o, self.score)).ok())
+            .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
-    unsafe fn on_mob_timer_timeout(&self, mut owner: Node) {
-        let mut mob_spawn_location: PathFollow2D = owner
+    unsafe fn on_mob_timer_timeout(&self, owner: Node) {
+        let mob_spawn_location: PathFollow2D = owner
             .get_typed_node("mob_path/mob_spawn_locations")
             .expect("Unable to cast to PathFollow2D");
 
-        let mut mob_scene: RigidBody2D = instance_scene(&self.mob).unwrap();
+        let mob_scene: RigidBody2D = instance_scene(&self.mob).unwrap();
 
         let mut rng = rand::thread_rng();
         let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
@@ -144,7 +144,7 @@ impl Main {
 
         let mob = Instance::<mob::Mob>::try_from_unsafe_base(mob_scene).unwrap();
 
-        mob.map_aliased(|x, mob_owner| {
+        mob.map(|x, mob_owner| {
             mob_scene
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
@@ -157,7 +157,7 @@ impl Main {
 
             let hud = Instance::<hud::HUD>::try_from_unsafe_base(hud_node).unwrap();
 
-            hud.map_aliased(|_, mut o| {
+            hud.map(|_, o| {
                 o.connect(
                     "start_game".into(),
                     Some(mob_owner.to_object()),

@@ -47,7 +47,7 @@ impl Bar {
     }
 
     #[export]
-    fn set_script_is_not_ub(&mut self, mut owner: Node) -> bool {
+    fn set_script_is_not_ub(&mut self, owner: Node) -> bool {
         unsafe {
             owner.set_script(None);
         }
@@ -72,9 +72,9 @@ fn test_owner_free_ub() -> bool {
 
         let bar = Instance::<Bar>::new();
         unsafe {
-            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone()))
+            bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
-            let mut base = bar.into_base();
+            let base = bar.into_base();
             assert_eq!(
                 Some(true),
                 base.call("set_script_is_not_ub".into(), &[]).try_to_bool()
@@ -84,7 +84,7 @@ fn test_owner_free_ub() -> bool {
 
         let bar = Instance::<Bar>::new();
         unsafe {
-            bar.map_mut_aliased(|bar, _| bar.set_drop_counter(drop_counter.clone()))
+            bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
             assert_eq!(
                 Some(true),

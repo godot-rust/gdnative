@@ -23,7 +23,7 @@ impl HUD {
 
     #[export]
     pub unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
-        let mut message_label: Label = owner
+        let message_label: Label = owner
             .get_typed_node("message_label")
             .expect("Cannot cast to Label");
 
@@ -39,7 +39,7 @@ impl HUD {
     pub unsafe fn show_game_over(&self, owner: CanvasLayer) {
         self.show_message(owner, "Game Over".into());
 
-        let mut message_label: Label = owner
+        let message_label: Label = owner
             .get_typed_node("message_label")
             .expect("Cannot cast to Label");
 
@@ -61,7 +61,7 @@ impl HUD {
     }
 
     #[export]
-    unsafe fn on_start_button_pressed(&self, mut owner: CanvasLayer) {
+    unsafe fn on_start_button_pressed(&self, owner: CanvasLayer) {
         owner
             .get_typed_node::<Button, _>("start_button")
             .expect("Cannot cast to Button")

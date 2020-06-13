@@ -83,7 +83,7 @@ fn test_register_property() -> bool {
     let ok = std::panic::catch_unwind(|| {
         let obj = Instance::<RegisterProperty>::new();
 
-        let mut base = obj.into_base();
+        let base = obj.into_base();
 
         unsafe {
             assert_eq!(Some(42), base.call("get_value".into(), &[]).try_to_i64());

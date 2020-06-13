@@ -171,7 +171,7 @@ fn test_rust_class_construction() -> bool {
 
         assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
 
-        let mut base = foo.into_base();
+        let base = foo.into_base();
         assert_eq!(
             Some(42),
             unsafe { base.call("answer".into(), &[]) }.try_to_i64()

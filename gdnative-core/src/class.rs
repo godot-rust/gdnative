@@ -221,42 +221,6 @@ impl<T: NativeClass> Instance<T> {
     #[inline]
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
-        T::Base: RefCounted,
-        T::UserData: Map,
-        F: FnOnce(&T, T::Base) -> U,
-    {
-        self.script.map(|script| op(script, self.owner.new_ref()))
-    }
-
-    /// Calls a function with a NativeClass instance and its owner, and returns its return
-    /// value. Can be used on reference counted types for multiple times.
-    #[inline]
-    pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
-    where
-        T::Base: RefCounted,
-        T::UserData: MapMut,
-        F: FnOnce(&mut T, T::Base) -> U,
-    {
-        self.script
-            .map_mut(|script| op(script, self.owner.new_ref()))
-    }
-
-    /// Calls a function with a NativeClass instance and its owner, and returns its return
-    /// value. Can be used for multiple times via aliasing:
-    ///
-    /// ```ignore
-    /// unsafe {
-    ///     instance.map_aliased(/* ... */);
-    ///     // instance.owner may be invalid now, but you can still:
-    ///     instance.map_aliased(/* ... */);
-    ///     instance.map_aliased(/* ... */); // ...for multiple times
-    /// }
-    /// ```
-    ///
-    /// For reference-counted types behaves like the safe `map`, which should be preferred.
-    #[inline]
-    pub unsafe fn map_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
-    where
         T::UserData: Map,
         F: FnOnce(&T, T::Base) -> U,
     {
@@ -264,20 +228,9 @@ impl<T: NativeClass> Instance<T> {
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
-    /// value. Can be used for multiple times via aliasing:
-    ///
-    /// ```ignore
-    /// unsafe {
-    ///     instance.map_mut_aliased(/* ... */);
-    ///     // instance.owner may be invalid now, but you can still:
-    ///     instance.map_mut_aliased(/* ... */);
-    ///     instance.map_mut_aliased(/* ... */); // ...for multiple times
-    /// }
-    /// ```
-    ///
-    /// For reference-counted types behaves like the safe `map_mut`, which should be preferred.
+    /// value. Can be used on reference counted types for multiple times.
     #[inline]
-    pub unsafe fn map_mut_aliased<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
+    pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
         F: FnOnce(&mut T, T::Base) -> U,
