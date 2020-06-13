@@ -194,6 +194,12 @@ impl GodotString {
 
     #[doc(hidden)]
     #[inline]
+    pub fn sys_mut(&mut self) -> *mut sys::godot_string {
+        &mut self.0
+    }
+
+    #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_string) -> Self {
         GodotString(sys)
     }
@@ -207,18 +213,12 @@ impl Clone for GodotString {
     }
 }
 
-impl RefCounted for GodotString {
-    impl_common_methods! {
-        #[inline]
-        fn new_ref(&self) -> GodotString : godot_string_new_copy;
-    }
-}
-
-impl_basic_traits!(
+impl_basic_traits_as_sys!(
     for GodotString as godot_string {
         Drop => godot_string_destroy;
         Eq => godot_string_operator_equal;
         Default => godot_string_new;
+        RefCounted => godot_string_new_copy;
     }
 );
 
@@ -278,9 +278,27 @@ impl Utf8String {
     pub fn to_string(&self) -> String {
         String::from(self.as_str())
     }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys(&self) -> *const sys::godot_char_string {
+        &self.0
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys_mut(&mut self) -> *mut sys::godot_char_string {
+        &mut self.0
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn from_sys(sys: sys::godot_char_string) -> Self {
+        Self(sys)
+    }
 }
 
-impl_basic_traits!(
+impl_basic_traits_as_sys!(
     for Utf8String as godot_char_string {
         Drop => godot_char_string_destroy;
     }
@@ -337,9 +355,27 @@ impl StringName {
     pub fn operator_less(&self, s: &StringName) -> bool {
         unsafe { (get_api().godot_string_name_operator_less)(&self.0, &s.0) }
     }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys(&self) -> *const sys::godot_string_name {
+        &self.0
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys_mut(&mut self) -> *mut sys::godot_string_name {
+        &mut self.0
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn from_sys(sys: sys::godot_string_name) -> Self {
+        Self(sys)
+    }
 }
 
-impl_basic_traits! {
+impl_basic_traits_as_sys! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
         Eq => godot_string_name_operator_equal;

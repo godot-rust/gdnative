@@ -14,10 +14,10 @@ fn test_variant_ops() -> bool {
     println!(" -- test_variant_ops");
 
     let ok = std::panic::catch_unwind(|| {
-        let mut arr = VariantArray::new();
+        let arr = VariantArray::new();
         arr.push(&"bar".to_variant());
         arr.push(&"baz".to_variant());
-        let arr = arr.to_variant();
+        let arr = arr.into_shared().to_variant();
 
         assert_eq!(
             Ok(42.to_variant()),

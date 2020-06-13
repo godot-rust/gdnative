@@ -41,11 +41,11 @@ pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
                         let var_ident_string_literal = Literal::string(&var_ident_string);
                         quote! {
                             #ident::#var_ident #destructure_pattern => {
-                                let mut __dict = ::gdnative::Dictionary::new();
+                                let __dict = ::gdnative::Dictionary::new();
                                 let __key = ::gdnative::GodotString::from(#var_ident_string_literal).to_variant();
                                 let __value = #to_variant;
-                                __dict.set(&__key, &__value);
-                                __dict.to_variant()
+                                __dict.insert(&__key, &__value);
+                                __dict.into_shared().to_variant()
                             }
                         }
                     });

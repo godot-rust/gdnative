@@ -49,7 +49,7 @@ impl Rid {
 
     #[doc(hidden)]
     #[inline]
-    pub fn mut_sys(&mut self) -> *mut sys::godot_rid {
+    pub fn sys_mut(&mut self) -> *mut sys::godot_rid {
         &mut self.0
     }
 
@@ -60,7 +60,7 @@ impl Rid {
     }
 }
 
-impl_basic_traits! {
+impl_basic_traits_as_sys! {
     for Rid as godot_rid {
         Eq => godot_rid_operator_equal;
         Default => godot_rid_new;

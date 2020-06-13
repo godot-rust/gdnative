@@ -111,15 +111,14 @@ impl NodePath {
 
     #[doc(hidden)]
     #[inline]
+    pub fn sys_mut(&mut self) -> *mut sys::godot_node_path {
+        &mut self.0
+    }
+
+    #[doc(hidden)]
+    #[inline]
     pub fn from_sys(sys: sys::godot_node_path) -> Self {
         NodePath(sys)
-    }
-}
-
-impl RefCounted for NodePath {
-    impl_common_methods! {
-        #[inline]
-        fn new_ref(&self) -> NodePath : godot_node_path_new_copy;
     }
 }
 
@@ -154,10 +153,11 @@ impl Into<GodotString> for NodePath {
     }
 }
 
-impl_basic_traits!(
+impl_basic_traits_as_sys!(
     for NodePath as godot_node_path {
         Drop => godot_node_path_destroy;
         Eq => godot_node_path_operator_equal;
+        RefCounted => godot_node_path_new_copy;
     }
 );
 
