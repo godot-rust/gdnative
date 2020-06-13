@@ -537,7 +537,7 @@ macro_rules! godot_wrap_method {
     ) => {
         godot_wrap_method_inner!(
             $type_name,
-            map_mut_aliased,
+            map_mut,
             fn $method_name(
                 $self,
                 $owner: $owner_ty
@@ -559,7 +559,7 @@ macro_rules! godot_wrap_method {
     ) => {
         godot_wrap_method_inner!(
             $type_name,
-            map_aliased,
+            map,
             fn $method_name(
                 $self,
                 $owner: $owner_ty

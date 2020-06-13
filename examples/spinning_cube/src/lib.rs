@@ -48,7 +48,7 @@ impl RustTest {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, mut owner: MeshInstance) {
+    unsafe fn _ready(&mut self, owner: MeshInstance) {
         owner.set_physics_process(true);
         self.start = owner.translation();
         godot_warn!("Start: {:?}", self.start);
@@ -59,7 +59,7 @@ impl RustTest {
     }
 
     #[export]
-    unsafe fn _physics_process(&mut self, mut owner: MeshInstance, delta: f64) {
+    unsafe fn _physics_process(&mut self, owner: MeshInstance, delta: f64) {
         use gdnative::{api::SpatialMaterial, Color, Vector3};
 
         self.time += delta as f32;
@@ -69,7 +69,7 @@ impl RustTest {
         owner.set_translation(self.start + offset);
 
         if let Some(mat) = owner.get_surface_material(0) {
-            let mut mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
+            let mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
             mat.set_albedo(Color::rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
         }
     }

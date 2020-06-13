@@ -114,6 +114,20 @@ pub fn generate_class_documentation(
         )?;
     }
 
+    writeln!(
+        output,
+        r#"///
+///
+/// ## Safety
+///
+/// All types in the Godot API have "interior mutability" in Rust parlance. Their use
+/// must follow the official [thread-safety guidelines][thread-safety]. Specifically, it is
+/// undefined behavior to pass an instance to Rust code without locking a mutex if there are
+/// references to it on other threads.
+///
+/// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#,
+    )?;
+
     Ok(())
 }
 

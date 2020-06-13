@@ -31,14 +31,14 @@ impl Player {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, mut owner: Area2D) {
+    unsafe fn _ready(&mut self, owner: Area2D) {
         self.screen_size = owner.get_viewport().unwrap().size();
         owner.hide();
     }
 
     #[export]
-    unsafe fn _process(&mut self, mut owner: Area2D, delta: f32) {
-        let mut animated_sprite: AnimatedSprite = owner
+    unsafe fn _process(&mut self, owner: Area2D, delta: f32) {
+        let animated_sprite: AnimatedSprite = owner
             .get_typed_node("animated_sprite")
             .expect("Unable to cast to AnimatedSprite");
 
@@ -86,11 +86,11 @@ impl Player {
     }
 
     #[export]
-    unsafe fn on_player_body_entered(&self, mut owner: Area2D, _body: PhysicsBody2D) {
+    unsafe fn on_player_body_entered(&self, owner: Area2D, _body: PhysicsBody2D) {
         owner.hide();
         owner.emit_signal("hit".into(), &[]);
 
-        let mut collision_shape: CollisionShape2D = owner
+        let collision_shape: CollisionShape2D = owner
             .get_typed_node("collision_shape_2d")
             .expect("Unable to cast to CollisionShape2D");
 
@@ -98,11 +98,11 @@ impl Player {
     }
 
     #[export]
-    pub unsafe fn start(&self, mut owner: Area2D, pos: Vector2) {
+    pub unsafe fn start(&self, owner: Area2D, pos: Vector2) {
         owner.set_global_position(pos);
         owner.show();
 
-        let mut collision_shape: CollisionShape2D = owner
+        let collision_shape: CollisionShape2D = owner
             .get_typed_node("collision_shape_2d")
             .expect("Unable to cast to CollisionShape2D");
 

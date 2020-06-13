@@ -30,18 +30,12 @@ pub unsafe trait GodotObject: crate::private::godot_object::Sealed {
     /// to produce a `'static` wrapper given a reference. For reference-counted types, or classes
     /// that extend `Reference`, this increments the reference count. For manually-managed types,
     /// including all classes that inherit `Node`, this creates an alias.
-    ///
-    /// # Remarks
-    ///
-    /// Although manually-managed types are already `unsafe` to use, like raw pointers, this is
-    /// `unsafe` because some methods expect `&mut self` receivers. In `0.9.0`, all methods will
-    /// take shared references instead, making this safe to call.
     #[inline]
-    unsafe fn claim(&self) -> Self
+    fn claim(&self) -> Self
     where
         Self: Sized,
     {
-        Self::from_sys(self.to_sys())
+        unsafe { Self::from_sys(self.to_sys()) }
     }
 }
 

@@ -52,7 +52,7 @@ impl SceneCreate {
     }
 
     #[export]
-    unsafe fn spawn_one(&mut self, mut owner: Spatial, message: GodotString) {
+    unsafe fn spawn_one(&mut self, owner: Spatial, message: GodotString) {
         godot_print!("Called spawn_one({})", message.to_string());
 
         let template = if let Some(template) = &self.template {
@@ -65,7 +65,7 @@ impl SceneCreate {
         // Create the scene here. Note that we are hardcoding that the parent must at least be a
         //   child of Spatial in the template argument here...
         match instance_scene::<Spatial>(template) {
-            Ok(mut spatial) => {
+            Ok(spatial) => {
                 // Here is how you rename the child...
                 let key_str = format!("child_{}", self.children_spawned);
                 spatial.set_name(GodotString::from_str(&key_str));
@@ -83,11 +83,11 @@ impl SceneCreate {
         }
 
         let num_children = owner.get_child_count();
-        update_panel(&mut owner, num_children);
+        update_panel(owner, num_children);
     }
 
     #[export]
-    unsafe fn remove_one(&mut self, mut owner: Spatial, str: GodotString) {
+    unsafe fn remove_one(&mut self, owner: Spatial, str: GodotString) {
         godot_print!("Called remove_one({})", str.to_string());
         let num_children = owner.get_child_count();
         if num_children <= 0 {
@@ -98,12 +98,12 @@ impl SceneCreate {
         assert_eq!(self.children_spawned as i64, num_children);
 
         let last_child = owner.get_child(num_children - 1);
-        if let Some(mut node) = last_child {
+        if let Some(node) = last_child {
             node.queue_free();
             self.children_spawned -= 1;
         }
 
-        update_panel(&mut owner, num_children - 1);
+        update_panel(owner, num_children - 1);
     }
 }
 
@@ -140,7 +140,7 @@ where
     }
 }
 
-unsafe fn update_panel(owner: &mut Spatial, num_children: i64) {
+unsafe fn update_panel(owner: Spatial, num_children: i64) {
     // Here is how we call into the panel. First we get its node (we might have saved it
     //   from earlier)
     let panel_node_opt = owner

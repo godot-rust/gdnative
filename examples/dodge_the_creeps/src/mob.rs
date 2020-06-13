@@ -44,7 +44,7 @@ impl Mob {
     #[export]
     unsafe fn _ready(&mut self, owner: RigidBody2D) {
         let mut rng = rand::thread_rng();
-        let mut animated_sprite: AnimatedSprite = owner
+        let animated_sprite: AnimatedSprite = owner
             .get_typed_node("animated_sprite")
             .expect("Unable to cast to AnimatedSprite");
 
@@ -52,12 +52,12 @@ impl Mob {
     }
 
     #[export]
-    unsafe fn on_visibility_screen_exited(&self, mut owner: RigidBody2D) {
+    unsafe fn on_visibility_screen_exited(&self, owner: RigidBody2D) {
         owner.queue_free()
     }
 
     #[export]
-    unsafe fn on_start_game(&self, mut owner: RigidBody2D) {
+    unsafe fn on_start_game(&self, owner: RigidBody2D) {
         owner.queue_free();
     }
 }

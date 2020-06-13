@@ -61,7 +61,7 @@ fn test_return_leak() -> bool {
         let drop_counter = Arc::new(AtomicUsize::new(0));
 
         // The object used for its ptrcall getter
-        let mut animation_tree = AnimationTree::new();
+        let animation_tree = AnimationTree::new();
 
         // Create an instance of the probe, and drop the reference after setting the property
         // to it. After this block, the only reference should be the one in `animation_tree`.
