@@ -21,7 +21,7 @@ pub fn generate_method_table(
         r#"
 #[doc(hidden)]
 #[allow(non_camel_case_types)]
-pub struct {name}MethodTable {{
+pub(crate) struct {name}MethodTable {{
     pub class_constructor: sys::godot_class_constructor,"#,
         name = class.name
     )?;
@@ -76,11 +76,6 @@ impl {name}MethodTable {{
         }};
 
         &mut TABLE
-    }}
-
-    #[inline]
-    pub unsafe fn unchecked_get() -> &'static Self {{
-        Self::get_mut()
     }}
 
     #[inline]
@@ -178,7 +173,7 @@ pub fn generate_method_impl(
 
 #[doc(hidden)]
 #[inline]
-pub unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
+unsafe fn {cname}_{name}(obj_ptr: *mut sys::godot_object{params}) -> {rust_ret_type} {{
     let gd_api = get_api();
 
     let method_bind: *mut sys::godot_method_bind = {cname}MethodTable::get(gd_api).{name};"#,
@@ -303,7 +298,7 @@ pub fn generate_methods(
     method_set: &mut HashSet<String>,
     class_name: &str,
     is_safe: bool,
-    is_leaf: bool,
+    is_base_method: bool,
 ) -> GeneratorResult {
     if let Some(class) = api.find_class(class_name) {
         'method: for method in &class.methods {
@@ -354,7 +349,7 @@ pub fn generate_methods(
                 rust_ret_type = "Variant".to_string();
             }
 
-            if !is_leaf {
+            if is_base_method {
                 writeln!(output, "    /// Inherited from {}.", class_doc_link(class))?;
             }
 
@@ -365,44 +360,80 @@ pub fn generate_methods(
             // https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter
             let rusty_method_name = rename_property_getter(&method_name, &class);
 
-            if is_safe {
-                writeln!(
-                    output,
-                    r#"    #[inline]
-    pub fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
-        unsafe {{ {namespace}{cname}_{name}(self.this{params_use}) }}
-    }}
-"#,
-                    cname = class.name,
-                    rusty_name = rusty_method_name,
-                    name = method_name,
-                    namespace = namespace,
-                    rust_ret_type = rust_ret_type,
-                    params_decl = params_decl,
-                    params_use = params_use,
-                )?;
+            if is_base_method {
+                if is_safe {
+                    writeln!(
+                        output,
+                        r#"    #[inline]
+        pub fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
+            unsafe {{ {namespace}{cname}::{name}(self{params_use}) }}
+        }}
+    "#,
+                        cname = class.name,
+                        rusty_name = rusty_method_name,
+                        name = method_name,
+                        namespace = namespace,
+                        rust_ret_type = rust_ret_type,
+                        params_decl = params_decl,
+                        params_use = params_use,
+                    )?;
+                } else {
+                    writeln!(
+                        output,
+                        r#"    #[inline]
+        pub unsafe fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
+            {namespace}{cname}::{name}(self{params_use})
+        }}
+    "#,
+                        cname = class.name,
+                        rusty_name = rusty_method_name,
+                        name = method_name,
+                        namespace = namespace,
+                        rust_ret_type = rust_ret_type,
+                        params_decl = params_decl,
+                        params_use = params_use,
+                    )?;
+                }
             } else {
-                writeln!(
-                    output,
-                    r#"    #[inline]
-    pub unsafe fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
-        {namespace}{cname}_{name}(self.this{params_use})
-    }}
-"#,
-                    cname = class.name,
-                    rusty_name = rusty_method_name,
-                    name = method_name,
-                    namespace = namespace,
-                    rust_ret_type = rust_ret_type,
-                    params_decl = params_decl,
-                    params_use = params_use,
-                )?;
+                if is_safe {
+                    writeln!(
+                        output,
+                        r#"    #[inline]
+        pub fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
+            unsafe {{ {namespace}{cname}_{name}(self.this{params_use}) }}
+        }}
+    "#,
+                        cname = class.name,
+                        rusty_name = rusty_method_name,
+                        name = method_name,
+                        namespace = namespace,
+                        rust_ret_type = rust_ret_type,
+                        params_decl = params_decl,
+                        params_use = params_use,
+                    )?;
+                } else {
+                    writeln!(
+                        output,
+                        r#"    #[inline]
+        pub unsafe fn {rusty_name}(&self{params_decl}) -> {rust_ret_type} {{
+            {namespace}{cname}_{name}(self.this{params_use})
+        }}
+    "#,
+                        cname = class.name,
+                        rusty_name = rusty_method_name,
+                        name = method_name,
+                        namespace = namespace,
+                        rust_ret_type = rust_ret_type,
+                        params_decl = params_decl,
+                        params_use = params_use,
+                    )?;
+                }
             }
         }
 
         // Reference includes all of Object's methods so they are safe.
         if class.base_class == "Reference" {
-            generate_methods(output, api, method_set, &class.base_class, is_safe, false)?;
+            generate_methods(output, api, method_set, &class.base_class, is_safe, true)?;
         }
     }
     Ok(())

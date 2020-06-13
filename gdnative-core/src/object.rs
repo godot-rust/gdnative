@@ -59,7 +59,7 @@ pub trait QueueFree: GodotObject {
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
     let api = crate::private::get_api();
-    let addref_method = ReferenceMethodTable::unchecked_get().reference;
+    let addref_method = ReferenceMethodTable::get(api).reference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
     let ok_ptr = &mut ok as *mut bool;
@@ -80,11 +80,12 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
 #[inline]
 pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
     use crate::ReferenceMethodTable;
-    let unref_method = ReferenceMethodTable::unchecked_get().unreference;
+    let api = crate::private::get_api();
+    let unref_method = ReferenceMethodTable::get(api).unreference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut last_reference = false;
     let ret_ptr = &mut last_reference as *mut bool;
-    (crate::private::get_api().godot_method_bind_ptrcall)(
+    (api.godot_method_bind_ptrcall)(
         unref_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,
@@ -98,11 +99,12 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
 #[inline]
 pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
     use crate::ReferenceMethodTable;
-    let init_method = ReferenceMethodTable::unchecked_get().init_ref;
+    let api = crate::private::get_api();
+    let init_method = ReferenceMethodTable::get(api).init_ref;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
     let mut ok = false;
     let ret_ptr = &mut ok as *mut bool;
-    (crate::private::get_api().godot_method_bind_ptrcall)(
+    (api.godot_method_bind_ptrcall)(
         init_method,
         obj,
         argument_buffer.as_mut_ptr() as *mut _,

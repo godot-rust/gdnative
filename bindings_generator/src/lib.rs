@@ -128,7 +128,7 @@ fn generate_class_bindings(
             &mut method_set,
             &class.name,
             class.is_pointer_safe(),
-            true,
+            false,
         )?;
 
         generate_upcast(
@@ -164,8 +164,8 @@ fn generate_class_bindings(
         }
     }
 
-    // methods and method table
-    {
+    // methods and method table for classes with functions
+    if class.instanciable || !class.methods.is_empty() {
         let has_underscore = api.api_underscore.contains(&class.name);
         generate_method_table(output_method_table, class, has_underscore)?;
 
