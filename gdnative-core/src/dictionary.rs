@@ -116,14 +116,14 @@ impl<Access: ThreadAccess> Dictionary<Access> {
 
     /// Returns an array of the keys in the `Dictionary`.
     #[inline]
-    pub fn keys(&self) -> VariantArray<Shared> {
-        unsafe { VariantArray::from_sys((get_api().godot_dictionary_keys)(self.sys())) }
+    pub fn keys(&self) -> VariantArray<Unique> {
+        unsafe { VariantArray::<Unique>::from_sys((get_api().godot_dictionary_keys)(self.sys())) }
     }
 
     /// Returns an array of the values in the `Dictionary`.
     #[inline]
-    pub fn values(&self) -> VariantArray {
-        unsafe { VariantArray::from_sys((get_api().godot_dictionary_values)(self.sys())) }
+    pub fn values(&self) -> VariantArray<Unique> {
+        unsafe { VariantArray::<Unique>::from_sys((get_api().godot_dictionary_values)(self.sys())) }
     }
 
     #[inline]
@@ -161,17 +161,29 @@ impl<Access: ThreadAccess> Dictionary<Access> {
 
 /// Operations allowed on Dictionaries that might be shared.
 impl Dictionary<Shared> {
-    /// Assume the dictionary is only referenced a single time to get a `Unique`
-    /// version of the dictionary.
+    /// Create a new shared dictionary.
+    #[inline]
+    pub fn new_shared() -> Self {
+        Dictionary::<Unique>::new().into_shared()
+    }
+
+    /// Assume that this is the only reference to this dictionary, on which
+    /// operations that change the container size can be safely performed.
     ///
     /// # Safety
     ///
-    /// By calling this function it is assumed that only a single
-    /// reference to the dictionary exists, on the current or any other thread.
+    /// It isn't thread-safe to perform operations that change the container
+    /// size from multiple threads at the same time.
+    /// Creating multiple `Unique` references to the same collections, or
+    /// violating the thread-safety guidelines in non-Rust code will cause
+    /// undefined behavior.
     #[inline]
     pub unsafe fn assume_unique(self) -> Dictionary<Unique> {
+        let sys = self.sys;
+        std::mem::forget(self);
+
         Dictionary::<Unique> {
-            sys: self.sys,
+            sys,
             _marker: PhantomData,
         }
     }
@@ -215,8 +227,11 @@ impl Dictionary<Unique> {
     /// Put this dictionary under the "shared" access type.
     #[inline]
     pub fn into_shared(self) -> Dictionary<Shared> {
+        let sys = self.sys;
+        std::mem::forget(self);
+
         Dictionary::<Shared> {
-            sys: self.sys,
+            sys,
             _marker: PhantomData,
         }
     }
@@ -295,13 +310,6 @@ impl RefCounted for Dictionary<Shared> {
     }
 }
 
-impl<A: ThreadAccess, B: ThreadAccess> PartialEq<Dictionary<A>> for Dictionary<B> {
-    #[inline]
-    fn eq(&self, other: &Dictionary<A>) -> bool {
-        unsafe { (get_api().godot_dictionary_operator_equal)(self.sys(), other.sys()) }
-    }
-}
-
 impl From<Dictionary<Unique>> for Dictionary<Shared> {
     #[inline]
     fn from(dict: Dictionary<Unique>) -> Self {
@@ -313,6 +321,23 @@ impl<Access: ThreadAccess> fmt::Debug for Dictionary<Access> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_json().to_string().fmt(f)
+    }
+}
+
+unsafe fn iter_next<Access: ThreadAccess>(
+    dic: &Dictionary<Access>,
+    last_key: &mut Option<Variant>,
+) -> Option<(Variant, Variant)> {
+    let last_ptr = last_key.as_ref().map_or(std::ptr::null(), Variant::sys);
+    let next_ptr = (get_api().godot_dictionary_next)(dic.sys(), last_ptr);
+
+    if next_ptr.is_null() {
+        None
+    } else {
+        let key = Variant::cast_ref(next_ptr).clone();
+        let value = dic.get(&key);
+        *last_key = Some(key.clone());
+        Some((key, value))
     }
 }
 
@@ -340,20 +365,13 @@ impl Iterator for IterShared {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let last_ptr = self
-            .last_key
-            .as_ref()
-            .map_or(std::ptr::null(), Variant::sys);
-        let next_ptr = unsafe { (get_api().godot_dictionary_next)(self.dic.sys(), last_ptr) };
+        unsafe { iter_next(&self.dic, &mut self.last_key) }
+    }
 
-        if next_ptr.is_null() {
-            None
-        } else {
-            let key = Variant::cast_ref(next_ptr).clone();
-            let value = self.dic.get(&key);
-            self.last_key = Some(key.clone());
-            Some((key, value))
-        }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        use std::convert::TryFrom;
+        (0, usize::try_from(self.dic.len()).ok())
     }
 }
 
@@ -391,20 +409,13 @@ impl Iterator for IntoIterUnique {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let last_ptr = self
-            .last_key
-            .as_ref()
-            .map_or(std::ptr::null(), Variant::sys);
-        let next_ptr = unsafe { (get_api().godot_dictionary_next)(self.dic.sys(), last_ptr) };
+        unsafe { iter_next(&self.dic, &mut self.last_key) }
+    }
 
-        if next_ptr.is_null() {
-            None
-        } else {
-            let key = Variant::cast_ref(next_ptr).clone();
-            let value = self.dic.get(&key);
-            self.last_key = Some(key.clone());
-            Some((key, value))
-        }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        use std::convert::TryFrom;
+        (0, usize::try_from(self.dic.len()).ok())
     }
 }
 
@@ -441,20 +452,13 @@ impl<'a> Iterator for IterUnique<'a> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let last_ptr = self
-            .last_key
-            .as_ref()
-            .map_or(std::ptr::null(), Variant::sys);
-        let next_ptr = unsafe { (get_api().godot_dictionary_next)(self.dic.sys(), last_ptr) };
+        unsafe { iter_next(self.dic, &mut self.last_key) }
+    }
 
-        if next_ptr.is_null() {
-            None
-        } else {
-            let key = Variant::cast_ref(next_ptr).clone();
-            let value = self.dic.get(&key);
-            self.last_key = Some(key.clone());
-            Some((key, value))
-        }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        use std::convert::TryFrom;
+        (0, usize::try_from(self.dic.len()).ok())
     }
 }
 
@@ -522,7 +526,7 @@ godot_test!(test_dictionary {
     let x = Variant::from_i64(42);
     let y = Variant::from_i64(1337);
 
-    let dict = Dictionary::<Unique>::new();
+    let dict = Dictionary::new();
 
     dict.insert(&foo, &x);
     dict.insert(&bar, &y);
@@ -531,7 +535,7 @@ godot_test!(test_dictionary {
     assert!(dict.contains(&bar));
     assert!(!dict.contains(&nope));
 
-    let keys_array = unsafe { dict.keys().assume_unique() };
+    let keys_array = dict.keys();
     let baz = Variant::from_str("baz");
     keys_array.push(&baz);
     dict.insert(&baz, &x);
@@ -546,19 +550,18 @@ godot_test!(test_dictionary {
     assert!(variant.get_type() == VariantType::Dictionary);
 
     let dict2 = dict.duplicate();
-    assert!(dict == dict2);
     assert!(dict2.contains(&foo));
     assert!(dict2.contains(&bar));
 
     if let Some(dic_variant) = variant.try_to_dictionary() {
-        assert!(dic_variant == dict);
+        assert!(dic_variant.len() == dict.len());
     } else {
         panic!("variant should be a Dictionary");
     }
 
     let mut iter_keys = HashSet::new();
     let expected_keys = ["foo", "bar"].iter().map(|&s| s.to_string()).collect::<HashSet<_>>();
-    for (key, value) in dict.iter() {
+    for (key, value) in &dict {
         assert_eq!(value, dict.get(&key));
         if !iter_keys.insert(key.to_string()) {
             panic!("key is already contained in set: {:?}", key);

@@ -190,13 +190,21 @@ impl VariantArray<Unique> {
     /// Creates an empty `VariantArray`.
     #[inline]
     pub fn new() -> Self {
-        Self::default()
+        unsafe {
+            let mut sys = sys::godot_array::default();
+            (get_api().godot_array_new)(&mut sys);
+            Self::from_sys(sys)
+        }
     }
 
+    /// Put this array under the "shared" access type.
     #[inline]
     pub fn into_shared(self) -> VariantArray<Shared> {
+        let sys = self.sys;
+        std::mem::forget(self);
+
         VariantArray::<Shared> {
-            sys: self.sys,
+            sys,
             _marker: PhantomData,
         }
     }
@@ -278,17 +286,23 @@ impl VariantArray<Shared> {
         VariantArray::<Unique>::new().into_shared()
     }
 
-    /// Assume the array is only referenced a single time to get a `Unique`
-    /// version of the array.
+    /// Assume that this is the only reference to this array, on which
+    /// operations that change the container size can be safely performed.
     ///
     /// # Safety
     ///
-    /// By calling this function it is assumed that only a single
-    /// reference to the array exists, on the current or any other thread.
+    /// It isn't thread-safe to perform operations that change the container
+    /// size from multiple threads at the same time.
+    /// Creating multiple `Unique` references to the same collections, or
+    /// violating the thread-safety guidelines in non-Rust code will cause
+    /// undefined behavior.
     #[inline]
     pub unsafe fn assume_unique(self) -> VariantArray<Unique> {
+        let sys = self.sys;
+        std::mem::forget(self);
+
         VariantArray::<Unique> {
-            sys: self.sys,
+            sys,
             _marker: PhantomData,
         }
     }
@@ -368,6 +382,27 @@ impl Iterator for IterShared {
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
     }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if !self.arr.is_empty() {
+            Some(self.arr.get(self.arr.len() - 1))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        use std::convert::TryFrom;
+        let n = i32::try_from(n).ok()?;
+
+        if self.arr.len() > n {
+            Some(self.arr.get(n))
+        } else {
+            None
+        }
+    }
 }
 
 impl<'a> IntoIterator for &'a VariantArray<Shared> {
@@ -400,6 +435,27 @@ impl<'a> Iterator for IterUnique<'a> {
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
     }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if !self.arr.is_empty() {
+            Some(self.arr.get(self.arr.len() - 1))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        use std::convert::TryFrom;
+        let n = i32::try_from(n).ok()?;
+
+        if self.arr.len() > n {
+            Some(self.arr.get(n))
+        } else {
+            None
+        }
+    }
 }
 
 impl<'a> IntoIterator for &'a VariantArray<Unique> {
@@ -431,6 +487,27 @@ impl Iterator for IntoIterUnique {
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
+    }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if !self.arr.is_empty() {
+            Some(self.arr.get(self.arr.len() - 1))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        use std::convert::TryFrom;
+        let n = i32::try_from(n).ok()?;
+
+        if self.arr.len() > n {
+            Some(self.arr.get(n))
+        } else {
+            None
+        }
     }
 }
 
