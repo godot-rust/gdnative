@@ -243,86 +243,6 @@ macro_rules! godot_error {
     })
 }
 
-macro_rules! impl_basic_trait {
-    (
-        Drop for $Type:ident as $GdType:ident : $gd_method:ident
-    ) => {
-        impl Drop for $Type {
-            #[inline]
-            fn drop(&mut self) {
-                unsafe { (get_api().$gd_method)(&mut self.0) }
-            }
-        }
-    };
-
-    (
-        Clone for $Type:ident as $GdType:ident : $gd_method:ident
-    ) => {
-        impl Clone for $Type {
-            #[inline]
-            fn clone(&self) -> Self {
-                unsafe {
-                    let mut result = sys::$GdType::default();
-                    (get_api().$gd_method)(&mut result, &self.0);
-                    $Type(result)
-                }
-            }
-        }
-    };
-
-    (
-        Default for $Type:ident as $GdType:ident : $gd_method:ident
-    ) => {
-        impl Default for $Type {
-            #[inline]
-            fn default() -> Self {
-                unsafe {
-                    let mut gd_val = sys::$GdType::default();
-                    (get_api().$gd_method)(&mut gd_val);
-                    $Type(gd_val)
-                }
-            }
-        }
-    };
-
-    (
-        PartialEq for $Type:ident as $GdType:ident : $gd_method:ident
-    ) => {
-        impl PartialEq for $Type {
-            #[inline]
-            fn eq(&self, other: &Self) -> bool {
-                unsafe { (get_api().$gd_method)(&self.0, &other.0) }
-            }
-        }
-    };
-
-    (
-        Eq for $Type:ident as $GdType:ident : $gd_method:ident
-    ) => {
-        impl PartialEq for $Type {
-            #[inline]
-            fn eq(&self, other: &Self) -> bool {
-                unsafe { (get_api().$gd_method)(&self.0, &other.0) }
-            }
-        }
-        impl Eq for $Type {}
-    };
-}
-
-macro_rules! impl_basic_traits {
-    (
-        for $Type:ident as $GdType:ident {
-            $( $Trait:ident => $gd_method:ident; )*
-        }
-    ) => (
-        $(
-            impl_basic_trait!(
-                $Trait for $Type as $GdType : $gd_method
-            );
-        )*
-    )
-}
-
 macro_rules! impl_basic_trait_as_sys {
     (
         Drop for $Type:ident as $GdType:ident : $gd_method:ident
@@ -416,39 +336,6 @@ macro_rules! impl_basic_traits_as_sys {
             );
         )*
     )
-}
-
-macro_rules! impl_common_method {
-    (
-        $(#[$attr:meta])*
-        $visibility:vis fn new_ref(&self) -> $Type:ident : $gd_method:ident
-    ) => {
-        $(#[$attr])*
-        /// Creates a new reference to this reference-counted instance.
-        $visibility fn new_ref(&self) -> $Type {
-            unsafe {
-                let mut result = Default::default();
-                (get_api().$gd_method)(&mut result, &self.0);
-                $Type(result)
-            }
-        }
-    };
-}
-
-macro_rules! impl_common_methods {
-    (
-        $(
-            $(#[$attr:meta])*
-            $visibility:vis fn $name:ident(&self $(,$pname:ident : $pty:ty)*) -> $Ty:ident : $gd_method:ident;
-        )*
-    ) => (
-        $(
-            impl_common_method!(
-                $(#[$attr])*
-                $visibility fn $name(&self $(,$pname : $pty)*) -> $Ty : $gd_method
-            );
-        )*
-    );
 }
 
 macro_rules! godot_test {

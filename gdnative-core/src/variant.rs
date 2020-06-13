@@ -751,7 +751,7 @@ impl Variant {
     }
 }
 
-impl_basic_traits!(
+impl_basic_traits_as_sys!(
     for Variant as godot_variant {
         Drop => godot_variant_destroy;
         Clone => godot_variant_new_copy;
