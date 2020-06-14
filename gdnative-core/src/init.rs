@@ -38,6 +38,7 @@ use std::ptr;
 
 use crate::private::get_api;
 use crate::NativeClass;
+use crate::RefCounted;
 
 use crate::Variant;
 

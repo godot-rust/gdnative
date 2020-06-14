@@ -1,4 +1,5 @@
 use std::iter::{Extend, FromIterator};
+use std::marker::PhantomData;
 
 use crate::private::get_api;
 use crate::sys;
@@ -7,110 +8,87 @@ use crate::RefCounted;
 use crate::ToVariant;
 use crate::Variant;
 
+use crate::thread_access::*;
+
 use std::fmt;
 
 /// A reference-counted `Variant` vector. Godot's generic array data type.
 /// Negative indices can be used to count from the right.
-pub struct VariantArray(pub(crate) sys::godot_array);
+///
+/// # Safety
+///
+/// This is a reference-counted collection with "interior mutability" in Rust parlance.
+/// To enforce that the official [thread-safety guidelines][thread-safety] are
+/// followed this type uses the *typestate* pattern. The typestate `Access` tracks
+/// whether there is "unique" access (where pretty much all operations are safe)
+/// or whether the value might be "shared", in which case not all operations are
+/// safe.
+///
+/// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
+pub struct VariantArray<Access: ThreadAccess = Shared> {
+    sys: sys::godot_array,
 
-impl VariantArray {
-    /// Creates an empty `VariantArray`.
-    #[inline]
-    pub fn new() -> Self {
-        VariantArray::default()
-    }
+    /// Marker preventing the compiler from incorrectly deriving `Send` and `Sync`.
+    _marker: PhantomData<Access>,
+}
 
+impl<Access: ThreadAccess> VariantArray<Access> {
     /// Sets the value of the element at the given offset.
     #[inline]
-    pub fn set(&mut self, idx: i32, val: &Variant) {
-        unsafe { (get_api().godot_array_set)(&mut self.0, idx, &val.0) }
+    pub fn set(&self, idx: i32, val: &Variant) {
+        unsafe { (get_api().godot_array_set)(self.sys_mut(), idx, val.sys()) }
     }
 
     /// Returns a copy of the element at the given offset.
     #[inline]
-    pub fn get_val(&mut self, idx: i32) -> Variant {
-        unsafe { Variant((get_api().godot_array_get)(&self.0, idx)) }
+    pub fn get(&self, idx: i32) -> Variant {
+        unsafe { Variant((get_api().godot_array_get)(self.sys(), idx)) }
     }
 
     /// Returns a reference to the element at the given offset.
+    ///
+    /// # Safety
+    ///
+    /// The returned reference is invalidated if the same container is mutated through another
+    /// reference.
+    ///
+    /// `Variant` is reference-counted and thus cheaply cloned. Consider using `get` instead.
     #[inline]
-    pub fn get_ref(&self, idx: i32) -> &Variant {
-        unsafe { Variant::cast_ref((get_api().godot_array_operator_index_const)(&self.0, idx)) }
+    pub unsafe fn get_ref(&self, idx: i32) -> &Variant {
+        Variant::cast_ref((get_api().godot_array_operator_index_const)(
+            self.sys(),
+            idx,
+        ))
     }
 
     /// Returns a mutable reference to the element at the given offset.
+    ///
+    /// # Safety
+    ///
+    /// The returned reference is invalidated if the same container is mutated through another
+    /// reference. It is possible to create two mutable references to the same memory location
+    /// if the same `idx` is provided, causing undefined behavior.
     #[inline]
-    pub fn get_mut_ref(&mut self, idx: i32) -> &mut Variant {
-        unsafe { Variant::cast_mut_ref((get_api().godot_array_operator_index)(&mut self.0, idx)) }
+    #[allow(clippy::mut_from_ref)]
+    pub unsafe fn get_mut_ref(&self, idx: i32) -> &mut Variant {
+        Variant::cast_mut_ref((get_api().godot_array_operator_index)(self.sys_mut(), idx))
     }
 
     #[inline]
-    pub fn count(&mut self, val: &Variant) -> i32 {
-        unsafe { (get_api().godot_array_count)(&mut self.0, &val.0) }
-    }
-
-    /// Clears the array, resizing to 0.
-    #[inline]
-    pub fn clear(&mut self) {
-        unsafe {
-            (get_api().godot_array_clear)(&mut self.0);
-        }
-    }
-
-    #[inline]
-    pub fn remove(&mut self, idx: i32) {
-        unsafe { (get_api().godot_array_remove)(&mut self.0, idx) }
-    }
-
-    #[inline]
-    pub fn erase(&mut self, val: &Variant) {
-        unsafe { (get_api().godot_array_erase)(&mut self.0, &val.0) }
+    pub fn count(&self, val: &Variant) -> i32 {
+        unsafe { (get_api().godot_array_count)(self.sys(), val.sys()) }
     }
 
     /// Returns `true` if the `VariantArray` contains no elements.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        unsafe { (get_api().godot_array_empty)(&self.0) }
+        unsafe { (get_api().godot_array_empty)(self.sys()) }
     }
 
     /// Returns the number of elements in the array.
     #[inline]
     pub fn len(&self) -> i32 {
-        unsafe { (get_api().godot_array_size)(&self.0) }
-    }
-
-    /// Appends an element at the end of the array.
-    #[inline]
-    pub fn push(&mut self, val: &Variant) {
-        unsafe {
-            (get_api().godot_array_push_back)(&mut self.0, &val.0);
-        }
-    }
-
-    /// Removes an element at the end of the array.
-    #[inline]
-    pub fn pop(&mut self) -> Variant {
-        unsafe { Variant((get_api().godot_array_pop_back)(&mut self.0)) }
-    }
-
-    /// Appends an element to the front of the array.
-    #[inline]
-    pub fn push_front(&mut self, val: &Variant) {
-        unsafe {
-            (get_api().godot_array_push_front)(&mut self.0, &val.0);
-        }
-    }
-
-    /// Removes an element at the front of the array.
-    #[inline]
-    pub fn pop_front(&mut self) -> Variant {
-        unsafe { Variant((get_api().godot_array_pop_front)(&mut self.0)) }
-    }
-
-    /// Insert a new int at a given position in the array.
-    #[inline]
-    pub fn insert(&mut self, at: i32, val: &Variant) {
-        unsafe { (get_api().godot_array_insert)(&mut self.0, at, &val.0) }
+        unsafe { (get_api().godot_array_size)(self.sys()) }
     }
 
     /// Searches the array for a value and returns its index.
@@ -118,18 +96,13 @@ impl VariantArray {
     /// Returns `-1` if value is not found.
     #[inline]
     pub fn find(&self, what: &Variant, from: i32) -> i32 {
-        unsafe { (get_api().godot_array_find)(&self.0, &what.0, from) }
+        unsafe { (get_api().godot_array_find)(self.sys(), what.sys(), from) }
     }
 
     /// Returns true if the `VariantArray` contains the specified value.
     #[inline]
     pub fn contains(&self, what: &Variant) -> bool {
-        unsafe { (get_api().godot_array_has)(&self.0, &what.0) }
-    }
-
-    #[inline]
-    pub fn resize(&mut self, size: i32) {
-        unsafe { (get_api().godot_array_resize)(&mut self.0, size) }
+        unsafe { (get_api().godot_array_has)(self.sys(), what.sys()) }
     }
 
     /// Searches the array in reverse order.
@@ -137,31 +110,43 @@ impl VariantArray {
     /// If negative, the start index is considered relative to the end of the array.
     #[inline]
     pub fn rfind(&self, what: &Variant, from: i32) -> i32 {
-        unsafe { (get_api().godot_array_rfind)(&self.0, &what.0, from) }
+        unsafe { (get_api().godot_array_rfind)(self.sys(), what.sys(), from) }
     }
 
     /// Searches the array in reverse order for a value.
     /// Returns its index or `-1` if not found.
     #[inline]
     pub fn find_last(&self, what: &Variant) -> i32 {
-        unsafe { (get_api().godot_array_find_last)(&self.0, &what.0) }
+        unsafe { (get_api().godot_array_find_last)(self.sys(), what.sys()) }
     }
 
     /// Inverts the order of the elements in the array.
     #[inline]
-    pub fn invert(&mut self) {
-        unsafe { (get_api().godot_array_invert)(&mut self.0) }
+    pub fn invert(&self) {
+        unsafe { (get_api().godot_array_invert)(self.sys_mut()) }
     }
 
     /// Return a hashed i32 value representing the array contents.
     #[inline]
     pub fn hash(&self) -> i32 {
-        unsafe { (get_api().godot_array_hash)(&self.0) }
+        unsafe { (get_api().godot_array_hash)(self.sys()) }
     }
 
     #[inline]
-    pub fn sort(&mut self) {
-        unsafe { (get_api().godot_array_sort)(&mut self.0) }
+    pub fn sort(&self) {
+        unsafe { (get_api().godot_array_sort)(self.sys_mut()) }
+    }
+
+    /// Create a copy of the array.
+    ///
+    /// This creates a new array and is **not** a cheap reference count
+    /// increment.
+    #[inline]
+    pub fn duplicate(&self) -> VariantArray<Unique> {
+        unsafe {
+            let sys = (get_api().godot_array_duplicate)(self.sys(), false);
+            VariantArray::<Unique>::from_sys(sys)
+        }
     }
 
     // TODO
@@ -171,7 +156,7 @@ impl VariantArray {
 
     // pub fn bsearch(&mut self, val: (), before: bool) -> i32 {
     //     unsafe {
-    //         (get_api().godot_array_bsearch)(&mut self.0, val, before)
+    //         (get_api().godot_array_bsearch)(self.sys_mut(), val, before)
     //     }
     // }
 
@@ -179,99 +164,366 @@ impl VariantArray {
     //     unimplemented!();
     // }
 
+    #[doc(hidden)]
     #[inline]
-    pub fn iter(&self) -> Iter {
-        Iter {
-            arr: self,
-            range: 0..self.len(),
-        }
-    }
-
-    #[inline]
-    pub fn iter_mut(&mut self) -> IterMut {
-        let len = self.len();
-        IterMut {
-            arr: self,
-            range: 0..len,
-        }
+    pub fn sys(&self) -> *const sys::godot_array {
+        &self.sys
     }
 
     #[doc(hidden)]
     #[inline]
-    pub fn sys(&self) -> *const sys::godot_array {
-        &self.0
+    pub fn sys_mut(&self) -> *mut sys::godot_array {
+        &self.sys as *const _ as *mut _
     }
 
     #[doc(hidden)]
     #[inline]
     pub fn from_sys(sys: sys::godot_array) -> Self {
-        VariantArray(sys)
+        VariantArray {
+            sys,
+            _marker: PhantomData,
+        }
     }
 }
 
-impl RefCounted for VariantArray {
-    impl_common_methods! {
-        #[inline]
-        fn new_ref(&self) -> VariantArray : godot_array_new_copy;
+impl VariantArray<Unique> {
+    /// Creates an empty `VariantArray`.
+    #[inline]
+    pub fn new() -> Self {
+        unsafe {
+            let mut sys = sys::godot_array::default();
+            (get_api().godot_array_new)(&mut sys);
+            Self::from_sys(sys)
+        }
+    }
+
+    /// Put this array under the "shared" access type.
+    #[inline]
+    pub fn into_shared(self) -> VariantArray<Shared> {
+        let sys = self.sys;
+        std::mem::forget(self);
+
+        VariantArray::<Shared> {
+            sys,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Clears the array, resizing to 0.
+    #[inline]
+    pub fn clear(&self) {
+        unsafe {
+            (get_api().godot_array_clear)(self.sys_mut());
+        }
+    }
+
+    /// Removes the element at `idx`.
+    #[inline]
+    pub fn remove(&self, idx: i32) {
+        unsafe { (get_api().godot_array_remove)(self.sys_mut(), idx) }
+    }
+
+    /// Removed the first occurrence of `val`.
+    #[inline]
+    pub fn erase(&self, val: &Variant) {
+        unsafe { (get_api().godot_array_erase)(self.sys_mut(), val.sys()) }
+    }
+
+    #[inline]
+    pub fn resize(&self, size: i32) {
+        unsafe { (get_api().godot_array_resize)(self.sys_mut(), size) }
+    }
+
+    /// Appends an element at the end of the array.
+    #[inline]
+    pub fn push(&self, val: &Variant) {
+        unsafe {
+            (get_api().godot_array_push_back)(self.sys_mut(), val.sys());
+        }
+    }
+
+    /// Removes an element at the end of the array.
+    #[inline]
+    pub fn pop(&self) -> Variant {
+        unsafe { Variant((get_api().godot_array_pop_back)(self.sys_mut())) }
+    }
+
+    /// Appends an element to the front of the array.
+    #[inline]
+    pub fn push_front(&self, val: &Variant) {
+        unsafe {
+            (get_api().godot_array_push_front)(self.sys_mut(), val.sys());
+        }
+    }
+
+    /// Removes an element at the front of the array.
+    #[inline]
+    pub fn pop_front(&self) -> Variant {
+        unsafe { Variant((get_api().godot_array_pop_front)(self.sys_mut())) }
+    }
+
+    /// Insert a new int at a given position in the array.
+    #[inline]
+    pub fn insert(&self, at: i32, val: &Variant) {
+        unsafe { (get_api().godot_array_insert)(self.sys_mut(), at, val.sys()) }
+    }
+
+    /// Returns an iterator through all values in the `VariantArray`.
+    ///
+    /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
+    /// Modifying the same underlying collection while observing the safety assumptions will
+    /// not violate memory safely, but may lead to surprising behavior in the iterator.
+    #[inline]
+    pub fn iter(&self) -> IterUnique {
+        self.into_iter()
     }
 }
 
-impl_basic_traits!(
-    for VariantArray as godot_array {
-        Drop => godot_array_destroy;
-        Default => godot_array_new;
+impl VariantArray<Shared> {
+    /// Create a new shared array.
+    #[inline]
+    pub fn new_shared() -> Self {
+        VariantArray::<Unique>::new().into_shared()
     }
-);
 
-impl fmt::Debug for VariantArray {
+    /// Assume that this is the only reference to this array, on which
+    /// operations that change the container size can be safely performed.
+    ///
+    /// # Safety
+    ///
+    /// It isn't thread-safe to perform operations that change the container
+    /// size from multiple threads at the same time.
+    /// Creating multiple `Unique` references to the same collections, or
+    /// violating the thread-safety guidelines in non-Rust code will cause
+    /// undefined behavior.
+    #[inline]
+    pub unsafe fn assume_unique(self) -> VariantArray<Unique> {
+        let sys = self.sys;
+        std::mem::forget(self);
+
+        VariantArray::<Unique> {
+            sys,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Returns an iterator through all values in the `VariantArray`.
+    ///
+    /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
+    /// Modifying the same underlying collection while observing the safety assumptions will
+    /// not violate memory safely, but may lead to surprising behavior in the iterator.
+    #[inline]
+    pub fn iter(&self) -> IterShared {
+        self.into_iter()
+    }
+}
+
+impl Default for VariantArray<Unique> {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Default for VariantArray<Shared> {
+    #[inline]
+    fn default() -> Self {
+        VariantArray::new_shared()
+    }
+}
+
+impl RefCounted for VariantArray<Shared> {
+    #[inline]
+    fn new_ref(&self) -> Self {
+        unsafe {
+            let mut result = Default::default();
+            (get_api().godot_array_new_copy)(&mut result, self.sys());
+            Self::from_sys(result)
+        }
+    }
+}
+
+impl<Access: ThreadAccess> Drop for VariantArray<Access> {
+    #[inline]
+    fn drop(&mut self) {
+        unsafe { (get_api().godot_array_destroy)(self.sys_mut()) }
+    }
+}
+
+impl fmt::Debug for VariantArray<Unique> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
     }
 }
 
-pub struct Iter<'a> {
-    arr: &'a VariantArray,
+impl fmt::Debug for VariantArray<Shared> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+
+// #[derive(Debug)]
+pub struct IterShared {
+    arr: VariantArray<Shared>,
     range: std::ops::Range<i32>,
 }
 
-impl<'a> Iterator for Iter<'a> {
-    type Item = &'a Variant;
+impl Iterator for IterShared {
+    type Item = Variant;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.range.next().map(|idx| self.arr.get_ref(idx))
+        self.range.next().map(|idx| self.arr.get(idx))
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
     }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if !self.arr.is_empty() {
+            Some(self.arr.get(self.arr.len() - 1))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        use std::convert::TryFrom;
+        let n = i32::try_from(n).ok()?;
+
+        if self.arr.len() > n {
+            Some(self.arr.get(n))
+        } else {
+            None
+        }
+    }
 }
 
-pub struct IterMut<'a> {
-    arr: &'a mut VariantArray,
+impl<'a> IntoIterator for &'a VariantArray<Shared> {
+    type Item = Variant;
+    type IntoIter = IterShared;
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IterShared {
+            arr: self.new_ref(),
+            range: 0..self.len(),
+        }
+    }
+}
+
+// #[derive(Debug)]
+pub struct IterUnique<'a> {
+    arr: &'a VariantArray<Unique>,
     range: std::ops::Range<i32>,
 }
 
-impl<'a> Iterator for IterMut<'a> {
-    type Item = &'a mut Variant;
+impl<'a> Iterator for IterUnique<'a> {
+    type Item = Variant;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.range.next().map(|idx| {
-            let short_ref: &'_ mut Variant = self.arr.get_mut_ref(idx);
-            unsafe { std::mem::transmute::<_, &'a mut Variant>(short_ref) }
-        })
+        self.range.next().map(|idx| self.arr.get(idx))
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
     }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if !self.arr.is_empty() {
+            Some(self.arr.get(self.arr.len() - 1))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        use std::convert::TryFrom;
+        let n = i32::try_from(n).ok()?;
+
+        if self.arr.len() > n {
+            Some(self.arr.get(n))
+        } else {
+            None
+        }
+    }
 }
 
-impl<T: ToVariant> FromIterator<T> for VariantArray {
+impl<'a> IntoIterator for &'a VariantArray<Unique> {
+    type Item = Variant;
+    type IntoIter = IterUnique<'a>;
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IterUnique {
+            range: 0..self.len(),
+            arr: self,
+        }
+    }
+}
+
+// #[derive(Debug)]
+pub struct IntoIterUnique {
+    arr: VariantArray<Unique>,
+    range: std::ops::Range<i32>,
+}
+
+impl Iterator for IntoIterUnique {
+    type Item = Variant;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.range.next().map(|idx| self.arr.get(idx))
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
+    }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if !self.arr.is_empty() {
+            Some(self.arr.get(self.arr.len() - 1))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        use std::convert::TryFrom;
+        let n = i32::try_from(n).ok()?;
+
+        if self.arr.len() > n {
+            Some(self.arr.get(n))
+        } else {
+            None
+        }
+    }
+}
+
+impl IntoIterator for VariantArray<Unique> {
+    type Item = Variant;
+    type IntoIter = IntoIterUnique;
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIterUnique {
+            range: 0..self.len(),
+            arr: self,
+        }
+    }
+}
+
+impl<T: ToVariant> FromIterator<T> for VariantArray<Unique> {
     #[inline]
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut arr = Self::new();
@@ -280,7 +532,7 @@ impl<T: ToVariant> FromIterator<T> for VariantArray {
     }
 }
 
-impl<T: ToVariant> Extend<T> for VariantArray {
+impl<T: ToVariant> Extend<T> for VariantArray<Unique> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for elem in iter {
@@ -294,7 +546,7 @@ godot_test!(test_array {
     let bar = Variant::from_str("bar");
     let nope = Variant::from_str("nope");
 
-    let mut array = VariantArray::new(); // []
+    let array = VariantArray::new(); // []
 
     assert!(array.is_empty());
     assert_eq!(array.len(), 0);
@@ -311,8 +563,8 @@ godot_test!(test_array {
     array.set(0, &bar); // [&bar, &bar]
     array.set(1, &foo); // [&bar, &foo]
 
-    assert_eq!(array.get_ref(0), &bar);
-    assert_eq!(array.get_ref(1), &foo);
+    assert_eq!(&array.get(0), &bar);
+    assert_eq!(&array.get(1), &foo);
 
     array.pop(); // [&bar]
     array.pop(); // []
@@ -332,12 +584,12 @@ godot_test!(test_array {
 
     array.invert(); // [&x, &y, &z, &z]
 
-    assert_eq!(array.get_ref(0), &x);
+    assert_eq!(&array.get(0), &x);
 
     array.pop_front(); // [&y, &z, &z]
     array.pop_front(); // [&z, &z]
 
-    assert_eq!(array.get_ref(0), &z);
+    assert_eq!(&array.get(0), &z);
 
     array.resize(0); // []
     assert!(array.is_empty());
@@ -345,12 +597,12 @@ godot_test!(test_array {
     array.push(&foo); // [&foo]
     array.push(&bar); // [&foo, &bar]
 
-    let array2 = array.new_ref();
+    let array2 = array.duplicate();
     assert!(array2.contains(&foo));
     assert!(array2.contains(&bar));
     assert!(!array2.contains(&nope));
 
-    let mut array3 = VariantArray::new(); // []
+    let array3 = VariantArray::new(); // []
 
     array3.push(&Variant::from_i64(42));
     array3.push(&Variant::from_i64(1337));
@@ -360,20 +612,11 @@ godot_test!(test_array {
         &[42, 1337, 512],
         array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
     );
-
-    for v in array3.iter_mut() {
-        *v = Variant::from_i64(54);
-    }
-
-    assert_eq!(
-        &[54, 54, 54],
-        array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
-    );
 });
 
 godot_test!(
     test_array_debug {
-        let mut arr = VariantArray::new(); // []
+        let arr = VariantArray::new(); // []
         arr.push(&Variant::from_str("hello world"));
         arr.push(&Variant::from_bool(true));
         arr.push(&Variant::from_i64(42));

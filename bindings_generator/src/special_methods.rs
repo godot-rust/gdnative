@@ -163,7 +163,7 @@ impl QueueFree for {name} {{
 }
 
 pub fn generate_singleton_getter(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    let s_name = if class.name.starts_with("_") {
+    let s_name = if class.name.starts_with('_') {
         &class.name[1..]
     } else {
         class.name.as_ref()

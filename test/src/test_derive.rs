@@ -104,8 +104,8 @@ fn test_derive_to_variant() -> bool {
         let tuple_array = variant.try_to_array().expect("should be array");
 
         assert_eq!(2, tuple_array.len());
-        assert_eq!(Some(1), tuple_array.get_ref(0).try_to_i64());
-        assert_eq!(Some(false), tuple_array.get_ref(1).try_to_bool());
+        assert_eq!(Some(1), tuple_array.get(0).try_to_i64());
+        assert_eq!(Some(false), tuple_array.get(1).try_to_bool());
         assert_eq!(
             Ok(ToVarTuple::<f64, i128>(1, 0, false)),
             ToVarTuple::from_variant(&variant)

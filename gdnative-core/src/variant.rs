@@ -4,6 +4,7 @@ use std::fmt;
 use std::mem::{forget, transmute};
 
 use crate::private::get_api;
+use crate::thread_access::*;
 
 // TODO: implement Debug, PartialEq, etc.
 
@@ -59,22 +60,22 @@ macro_rules! variant_to_type_from_sys {
     (
         $(
             $(#[$to_attr:meta])*
-            pub fn $to_method:ident(&self) -> $ToType:ident : $to_gd_method:ident;
+            pub fn $to_method:ident(&self) -> $ToType:ty : $to_gd_method:ident;
             $(#[$try_attr:meta])*
-            pub fn $try_method:ident(&self) -> Option<$TryType:ident>;
+            pub fn $try_method:ident(&self) -> Option<$TryType:ty>;
         )*
     ) => (
         $(
             $(#[$to_attr])*
             pub fn $to_method(&self) -> $ToType {
                 unsafe {
-                    $ToType::from_sys((get_api().$to_gd_method)(&self.0))
+                    <$ToType>::from_sys((get_api().$to_gd_method)(&self.0))
                 }
             }
 
             $(#[$try_attr])*
             pub fn $try_method(&self) -> Option<$TryType> {
-                $TryType::from_variant(self).ok()
+                <$TryType>::from_variant(self).ok()
             }
         )*
     )
@@ -270,7 +271,7 @@ impl Variant {
         pub fn from_godot_string(&GodotString) -> Self;
         /// Creates an `Variant` wrapping an array of variants.
         #[inline]
-        pub fn from_array(&VariantArray) -> Self;
+        pub fn from_array(&VariantArray<Shared>) -> Self;
         /// Creates a `Variant` wrapping a byte array.
         #[inline]
         pub fn from_byte_array(&ByteArray) -> Self;
@@ -294,7 +295,7 @@ impl Variant {
         pub fn from_color_array(&ColorArray) -> Self;
         /// Creates a `Variant` wrapping a dictionary.
         #[inline]
-        pub fn from_dictionary(&Dictionary) -> Self;
+        pub fn from_dictionary(&Dictionary<Shared>) -> Self;
     );
 
     /// Creates an empty `Variant`.
@@ -310,6 +311,7 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a string.
     #[inline]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str<S>(s: S) -> Variant
     where
         S: AsRef<str>,
@@ -540,10 +542,10 @@ impl Variant {
 
         /// Do a best effort to create a `VariantArray` out of the variant, possibly returning a default value.
         #[inline]
-        pub fn to_array(&self) -> VariantArray : godot_variant_as_array;
+        pub fn to_array(&self) -> VariantArray<Shared> : godot_variant_as_array;
         /// Returns `Some(VariantArray)` if this variant is one, `None` otherwise.
         #[inline]
-        pub fn try_to_array(&self) -> Option<VariantArray>;
+        pub fn try_to_array(&self) -> Option<VariantArray<Shared>>;
 
         /// Do a best effort to create a `ByteArray` out of the variant, possibly returning a default value.
         #[inline]
@@ -596,10 +598,10 @@ impl Variant {
 
         /// Do a best effort to create a `Dictionary` out of the variant, possibly returning a default value.
         #[inline]
-        pub fn to_dictionary(&self) -> Dictionary : godot_variant_as_dictionary;
+        pub fn to_dictionary(&self) -> Dictionary<Shared> : godot_variant_as_dictionary;
         /// Returns `Some(Dictionary)` if this variant is one, `None` otherwise.
         #[inline]
-        pub fn try_to_dictionary(&self) -> Option<Dictionary>;
+        pub fn try_to_dictionary(&self) -> Option<Dictionary<Shared>>;
     );
 
     #[inline]
@@ -624,11 +626,6 @@ impl Variant {
                 to: T::class_name(),
             })
         }
-    }
-
-    #[inline]
-    pub fn to_string(&self) -> String {
-        self.to_godot_string().to_string()
     }
 
     #[inline]
@@ -751,13 +748,20 @@ impl Variant {
     }
 }
 
-impl_basic_traits!(
+impl_basic_traits_as_sys!(
     for Variant as godot_variant {
         Drop => godot_variant_destroy;
         Clone => godot_variant_new_copy;
         PartialEq => godot_variant_operator_equal;
     }
 );
+
+impl ToString for Variant {
+    #[inline]
+    fn to_string(&self) -> String {
+        self.to_godot_string().to_string()
+    }
+}
 
 impl Default for Variant {
     #[inline]
@@ -822,8 +826,8 @@ variant_from_ref!(
     impl From<&Rid> : from_rid;
     impl From<&NodePath> : from_node_path;
     impl From<&GodotString> : from_godot_string;
-    impl From<&Dictionary> : from_dictionary;
-    impl From<&VariantArray> : from_array;
+    impl From<&Dictionary<Shared>> : from_dictionary;
+    impl From<&VariantArray<Shared>> : from_array;
     impl From<&ByteArray> : from_byte_array;
     impl From<&Int32Array> : from_int32_array;
     impl From<&Float32Array> : from_float32_array;
@@ -1344,7 +1348,7 @@ to_variant_transmute! {
 
 macro_rules! to_variant_as_sys {
     (
-        $(impl ToVariant for $ty:ident: $ctor:ident;)*
+        $(impl ToVariant for $ty:ty: $ctor:ident;)*
     ) => {
         $(
             impl ToVariant for $ty {
@@ -1371,8 +1375,8 @@ to_variant_as_sys! {
     impl ToVariant for Rid : godot_variant_new_rid;
     impl ToVariant for NodePath : godot_variant_new_node_path;
     impl ToVariant for GodotString : godot_variant_new_string;
-    impl ToVariant for VariantArray : godot_variant_new_array;
-    impl ToVariant for Dictionary : godot_variant_new_dictionary;
+    impl ToVariant for VariantArray<Shared> : godot_variant_new_array;
+    impl ToVariant for Dictionary<Shared> : godot_variant_new_dictionary;
 }
 
 impl ToVariantEq for Rid {}
@@ -1411,7 +1415,7 @@ from_variant_transmute!(
 macro_rules! from_variant_from_sys {
     (
         $(
-            impl FromVariant for $TryType:ident : $try_gd_method:ident;
+            impl FromVariant for $TryType:ty as $EnumVar:ident : $try_gd_method:ident;
         )*
     ) => (
         $(
@@ -1419,9 +1423,9 @@ macro_rules! from_variant_from_sys {
                 #[inline]
                 fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
                     unsafe {
-                        variant.try_as_sys_of_type(VariantType::$TryType)
+                        variant.try_as_sys_of_type(VariantType::$EnumVar)
                             .map(|v| (get_api().$try_gd_method)(v))
-                            .map($TryType::from_sys)
+                            .map(<$TryType>::from_sys)
                     }
                 }
             }
@@ -1430,16 +1434,16 @@ macro_rules! from_variant_from_sys {
 }
 
 from_variant_from_sys!(
-    impl FromVariant for Plane : godot_variant_as_plane;
-    impl FromVariant for Transform : godot_variant_as_transform;
-    impl FromVariant for Basis : godot_variant_as_basis;
-    impl FromVariant for Color : godot_variant_as_color;
-    impl FromVariant for Aabb : godot_variant_as_aabb;
-    impl FromVariant for NodePath : godot_variant_as_node_path;
-    impl FromVariant for GodotString : godot_variant_as_string;
-    impl FromVariant for Rid : godot_variant_as_rid;
-    impl FromVariant for VariantArray : godot_variant_as_array;
-    impl FromVariant for Dictionary : godot_variant_as_dictionary;
+    impl FromVariant for Plane as Plane : godot_variant_as_plane;
+    impl FromVariant for Transform as Transform : godot_variant_as_transform;
+    impl FromVariant for Basis as Basis : godot_variant_as_basis;
+    impl FromVariant for Color as Color : godot_variant_as_color;
+    impl FromVariant for Aabb as Aabb : godot_variant_as_aabb;
+    impl FromVariant for NodePath as NodePath : godot_variant_as_node_path;
+    impl FromVariant for GodotString as GodotString: godot_variant_as_string;
+    impl FromVariant for Rid as Rid : godot_variant_as_rid;
+    impl FromVariant for VariantArray<Shared> as VariantArray : godot_variant_as_array;
+    impl FromVariant for Dictionary<Shared> as Dictionary : godot_variant_as_dictionary;
 );
 
 impl<T: crate::typed_array::Element> ToVariant for TypedArray<T> {
@@ -1601,12 +1605,12 @@ impl<T> MaybeNot<T> {
 impl<T: ToVariant, E: ToVariant> ToVariant for Result<T, E> {
     #[inline]
     fn to_variant(&self) -> Variant {
-        let mut dict = Dictionary::new();
+        let dict = Dictionary::new();
         match &self {
-            Ok(val) => dict.set(&"Ok".into(), &val.to_variant()),
-            Err(err) => dict.set(&"Err".into(), &err.to_variant()),
+            Ok(val) => dict.insert(&"Ok".into(), &val.to_variant()),
+            Err(err) => dict.insert(&"Err".into(), &err.to_variant()),
         }
-        dict.to_variant()
+        dict.into_shared().to_variant()
     }
 }
 
@@ -1631,7 +1635,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
         }
 
         let keys = dict.keys();
-        let key_variant = keys.get_ref(0);
+        let key_variant = &keys.get(0);
         let key = String::from_variant(key_variant).map_err(|err| FVE::InvalidEnumRepr {
             expected: VariantEnumRepr::ExternallyTagged,
             error: Box::new(err),
@@ -1639,7 +1643,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
 
         match key.as_str() {
             "Ok" => {
-                let val = T::from_variant(dict.get_ref(key_variant)).map_err(|err| {
+                let val = T::from_variant(&dict.get(key_variant)).map_err(|err| {
                     FVE::InvalidEnumVariant {
                         variant: "Ok",
                         error: Box::new(err),
@@ -1648,7 +1652,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
                 Ok(Ok(val))
             }
             "Err" => {
-                let err = E::from_variant(dict.get_ref(key_variant)).map_err(|err| {
+                let err = E::from_variant(&dict.get(key_variant)).map_err(|err| {
                     FVE::InvalidEnumVariant {
                         variant: "Err",
                         error: Box::new(err),
@@ -1667,12 +1671,12 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
 impl<T: ToVariant> ToVariant for &[T] {
     #[inline]
     fn to_variant(&self) -> Variant {
-        let mut array = VariantArray::new();
+        let array = VariantArray::new();
         for val in self.iter() {
             // there is no real way to avoid CoW allocations right now, as ptrw isn't exposed
             array.push(&val.to_variant());
         }
-        array.to_variant()
+        array.into_shared().to_variant()
     }
 }
 
@@ -1696,7 +1700,7 @@ impl<T: FromVariant> FromVariant for Vec<T> {
         let mut vec = Vec::with_capacity(len);
         for idx in 0..len as i32 {
             let item =
-                T::from_variant(arr.get_ref(idx)).map_err(|e| FromVariantError::InvalidItem {
+                T::from_variant(&arr.get(idx)).map_err(|e| FromVariantError::InvalidItem {
                     index: idx as usize,
                     error: Box::new(e),
                 })?;
@@ -1726,12 +1730,12 @@ macro_rules! impl_variant_for_tuples {
             #[allow(non_snake_case)]
             #[inline]
             fn to_variant(&self) -> Variant {
-                let mut array = VariantArray::new();
+                let array = VariantArray::new();
                 let ($($name,)+) = self;
                 $(
                     array.push(&$name.to_variant());
                 )+
-                array.to_variant()
+                array.into_shared().to_variant()
             }
         }
 
@@ -1749,7 +1753,7 @@ macro_rules! impl_variant_for_tuples {
                 let mut iter = array.iter();
                 let mut index = 0;
                 $(
-                    let $name = $name::from_variant(iter.next().unwrap())
+                    let $name = $name::from_variant(&iter.next().unwrap())
                         .map_err(|err| FromVariantError::InvalidItem {
                             index,
                             error: Box::new(err),
@@ -1798,11 +1802,11 @@ godot_test!(
     test_variant_result {
         let variant = Result::<i64, ()>::Ok(42 as i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(42), dict.get_ref(&"Ok".into()).try_to_i64());
+        assert_eq!(Some(42), dict.get(&"Ok".into()).try_to_i64());
 
         let variant = Result::<(), i64>::Err(54 as i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(54), dict.get_ref(&"Err".into()).try_to_i64());
+        assert_eq!(Some(54), dict.get(&"Err".into()).try_to_i64());
 
         let variant = Variant::from_bool(true);
         assert_eq!(
@@ -1816,13 +1820,13 @@ godot_test!(
             Result::<(), i64>::from_variant(&variant),
         );
 
-        let mut dict = Dictionary::new();
-        dict.set(&"Ok".into(), &Variant::from_i64(42));
-        assert_eq!(Ok(Ok(42)), Result::<i64, i64>::from_variant(&dict.to_variant()));
+        let dict = Dictionary::new();
+        dict.insert(&"Ok".into(), &Variant::from_i64(42));
+        assert_eq!(Ok(Ok(42)), Result::<i64, i64>::from_variant(&dict.into_shared().to_variant()));
 
-        let mut dict = Dictionary::new();
-        dict.set(&"Err".into(), &Variant::from_i64(54));
-        assert_eq!(Ok(Err(54)), Result::<i64, i64>::from_variant(&dict.to_variant()));
+        let dict = Dictionary::new();
+        dict.insert(&"Err".into(), &Variant::from_i64(54));
+        assert_eq!(Ok(Err(54)), Result::<i64, i64>::from_variant(&dict.into_shared().to_variant()));
     }
 
     test_to_variant_iter {
@@ -1831,13 +1835,13 @@ godot_test!(
         let array = variant.try_to_array().expect("should be array");
         assert_eq!(5, array.len());
         for i in 0..5 {
-            assert_eq!(Some(i), array.get_ref(i as i32).try_to_i64());
+            assert_eq!(Some(i), array.get(i as i32).try_to_i64());
         }
 
         let vec = Vec::<i64>::from_variant(&variant).expect("should succeed");
         assert_eq!(slice, vec.as_slice());
 
-        let mut het_array = VariantArray::new();
+        let het_array = VariantArray::new();
         het_array.push(&Variant::from_i64(42));
         het_array.push(&Variant::new());
 
@@ -1849,10 +1853,10 @@ godot_test!(
                     variant_type: VariantType::Nil,
                 }),
             }),
-            Vec::<i64>::from_variant(&het_array.to_variant()),
+            Vec::<i64>::from_variant(&het_array.duplicate().into_shared().to_variant()),
         );
 
-        assert_eq!(Ok(vec![Some(42), None]), Vec::<Option<i64>>::from_variant(&het_array.to_variant()));
+        assert_eq!(Ok(vec![Some(42), None]), Vec::<Option<i64>>::from_variant(&het_array.duplicate().into_shared().to_variant()));
 
         het_array.push(&f64::to_variant(&54.0));
 
@@ -1864,10 +1868,10 @@ godot_test!(
                     variant_type: VariantType::F64,
                 }),
             }),
-            Vec::<Option<i64>>::from_variant(&het_array.to_variant()),
+            Vec::<Option<i64>>::from_variant(&het_array.duplicate().into_shared().to_variant()),
         );
 
-        let vec_maybe = Vec::<MaybeNot<i64>>::from_variant(&het_array.to_variant()).expect("should succeed");
+        let vec_maybe = Vec::<MaybeNot<i64>>::from_variant(&het_array.into_shared().to_variant()).expect("should succeed");
         assert_eq!(3, vec_maybe.len());
         assert_eq!(Some(&42), vec_maybe[0].as_ref().ok());
         assert_eq!(Some(&Variant::new()), vec_maybe[1].as_ref().err());
@@ -1877,8 +1881,8 @@ godot_test!(
     test_variant_tuple {
         let variant = (42i64, 54i64).to_variant();
         let arr = variant.try_to_array().expect("should be array");
-        assert_eq!(Some(42), arr.get_ref(0).try_to_i64());
-        assert_eq!(Some(54), arr.get_ref(1).try_to_i64());
+        assert_eq!(Some(42), arr.get(0).try_to_i64());
+        assert_eq!(Some(54), arr.get(1).try_to_i64());
 
         let tuple = <(i64, i64)>::from_variant(&variant);
         assert_eq!(Ok((42, 54)), tuple);

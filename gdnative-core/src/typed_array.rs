@@ -87,7 +87,7 @@ impl<T: Element> TypedArray<T> {
     pub fn from_variant_array(array: &VariantArray) -> Self {
         unsafe {
             let mut inner = T::SysArray::default();
-            (T::new_with_array_fn(get_api()))(&mut inner, &array.0);
+            (T::new_with_array_fn(get_api()))(&mut inner, array.sys());
             TypedArray { inner }
         }
     }

@@ -114,6 +114,7 @@ fn parse_method_export(_meta: TokenStream, input: TokenStream) -> (ItemImpl, Cla
 }
 
 /// Extract the data to export from the impl block.
+#[allow(clippy::single_match)]
 fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     // the ast input is used for inspecting.
     // this clone is used to remove all attributes so that the resulting
@@ -153,7 +154,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             .last()
                             .map(|i| i.ident.to_string());
 
-                        if let Some("export") = last_seg.as_ref().map(String::as_str) {
+                        if let Some("export") = last_seg.as_deref() {
                             let _export_args = export_args.get_or_insert_with(ExportArgs::default);
                             if !attr.tokens.is_empty() {
                                 use quote::ToTokens;
@@ -184,11 +185,8 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                 for MetaNameValue { path, .. } in pairs.into_iter() {
                                     let last =
                                         path.segments.last().expect("the path should not be empty");
-                                    match last.ident.to_string().as_str() {
-                                        unexpected => {
-                                            panic!("unknown option for export: `{}`", unexpected)
-                                        }
-                                    }
+                                    let unexpected = last.ident.to_string();
+                                    panic!("unknown option for export: `{}`", unexpected);
                                 }
                             }
 
@@ -225,10 +223,8 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             }
 
                             *optional_args.get_or_insert(0) += 1;
-                        } else {
-                            if optional_args.is_some() {
-                                panic!("cannot add required parameters after optional ones");
-                            }
+                        } else if optional_args.is_some() {
+                            panic!("cannot add required parameters after optional ones");
                         }
                     }
 

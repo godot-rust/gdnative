@@ -47,7 +47,7 @@ pub(crate) fn extend_bounds(
         .collect();
 
     let mut visitor = Visitor {
-        all_type_params: all_type_params,
+        all_type_params,
         used: HashSet::new(),
     };
 
@@ -107,7 +107,7 @@ pub(crate) fn extend_bounds(
         .cloned()
         .map(|bounded_ty| where_predicate(syn::Type::Path(bounded_ty), bound.clone()));
 
-    let mut generics = generics.clone();
+    let mut generics = generics;
     generics
         .make_where_clause()
         .predicates

@@ -162,7 +162,7 @@ impl Main {
                     "start_game".into(),
                     Some(mob_owner.to_object()),
                     "on_start_game".into(),
-                    VariantArray::new(),
+                    VariantArray::new_shared(),
                     0,
                 )
                 .unwrap();

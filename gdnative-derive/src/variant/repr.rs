@@ -91,7 +91,7 @@ impl VariantRepr {
     pub(crate) fn to_variant(&self) -> TokenStream2 {
         match self {
             VariantRepr::Unit => {
-                quote! { ::gdnative::Dictionary::new().to_variant() }
+                quote! { ::gdnative::Dictionary::new().into_shared().to_variant() }
             }
             VariantRepr::Tuple(fields) => {
                 if fields.len() == 1 {
@@ -112,11 +112,11 @@ impl VariantRepr {
 
                     quote! {
                         {
-                            let mut __array = ::gdnative::VariantArray::new();
+                            let __array = ::gdnative::VariantArray::new();
                             #(
                                 __array.push(&#exprs);
                             )*
-                            __array.to_variant()
+                            __array.into_shared().to_variant()
                         }
                     }
                 }
@@ -135,14 +135,14 @@ impl VariantRepr {
 
                 quote! {
                     {
-                        let mut __dict = ::gdnative::Dictionary::new();
+                        let __dict = ::gdnative::Dictionary::new();
                         #(
                             {
                                 let __key = ::gdnative::GodotString::from(#name_string_literals).to_variant();
-                                __dict.set(&__key, &#exprs);
+                                __dict.insert(&__key, &#exprs);
                             }
                         )*
-                        __dict.to_variant()
+                        __dict.into_shared().to_variant()
                     }
                 }
             }
@@ -191,10 +191,9 @@ impl VariantRepr {
                     let ctor_idents = fields.iter().map(|f| &f.ident);
 
                     let expected_len = Literal::usize_suffixed(non_skipped_fields.len());
-                    let indices =
-                        (0..non_skipped_fields.len() as i32).map(|n| Literal::i32_suffixed(n));
+                    let indices = (0..non_skipped_fields.len() as i32).map(Literal::i32_suffixed);
 
-                    let expr_variant = &quote!(__array.get_ref(__index));
+                    let expr_variant = &quote!(&__array.get(__index));
                     let non_skipped_exprs = non_skipped_fields
                         .iter()
                         .map(|f| f.from_variant(expr_variant));
@@ -253,7 +252,7 @@ impl VariantRepr {
                 let name_string_literals =
                     name_strings.iter().map(|string| Literal::string(&string));
 
-                let expr_variant = &quote!(__dict.get_ref(&__key));
+                let expr_variant = &quote!(&__dict.get(&__key));
                 let exprs = non_skipped_fields
                     .iter()
                     .map(|f| f.from_variant(expr_variant));

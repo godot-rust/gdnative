@@ -85,6 +85,7 @@ impl AttrBuilder {
             }
         }
 
+        #[allow(clippy::single_match)]
         match name.as_str() {
             "skip" => {
                 self.skip_to_variant = true;
@@ -102,6 +103,7 @@ impl AttrBuilder {
         self.errors.extend(err);
     }
 
+    #[allow(clippy::single_match)]
     fn try_set_pair(&mut self, pair: &syn::MetaNameValue) -> Result<(), syn::Error> {
         let syn::MetaNameValue { path, lit, .. } = pair;
 

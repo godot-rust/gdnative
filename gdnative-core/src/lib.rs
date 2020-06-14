@@ -63,6 +63,7 @@ mod ref_counted;
 mod rid;
 mod string;
 mod string_array;
+pub mod thread_access;
 mod type_tag;
 pub mod typed_array;
 pub mod user_data;
