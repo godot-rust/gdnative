@@ -93,7 +93,11 @@ matrix:
       env: CI_STAGE_IOS_SIMULATOR_TEST=yes
       before_script:
        - rustup target add x86_64-apple-ios
-       - cargo install cargo-dinghy
+       # download cargo-dinghy and set it up for running on an emulator.
+       - curl -L https://github.com/snipsco/dinghy/releases/download/cargo-dinghy%2F0.4.37/cargo-dinghy-macos.tgz -o cargo-dinghy-macos.tar.gz
+       - tar -zxvf cargo-dinghy-macos.tar.gz
+       - mkdir -p $HOME/.cargo/bin
+       - cp cargo-dinghy-macos/cargo-dinghy $HOME/.cargo/bin
 
 script:
   - if [[ "$CI_STAGE_CARGO_FMT" == "yes" ]]; then
