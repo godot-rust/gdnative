@@ -17,14 +17,14 @@
 macro_rules! godot_gdnative_init {
     () => {
         fn godot_gdnative_init_empty(_options: *mut $crate::sys::godot_gdnative_init_options) {}
-        godot_gdnative_init!(godot_gdnative_init_empty);
+        $crate::godot_gdnative_init!(godot_gdnative_init_empty);
     };
     (_ as $fn_name:ident) => {
         fn godot_gdnative_init_empty(_options: *mut $crate::sys::godot_gdnative_init_options) {}
-        godot_gdnative_init!(godot_gdnative_init_empty as $fn_name);
+        $crate::godot_gdnative_init!(godot_gdnative_init_empty as $fn_name);
     };
     ($callback:ident) => {
-        godot_gdnative_init!($callback as godot_gdnative_init);
+        $crate::godot_gdnative_init!($callback as godot_gdnative_init);
     };
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
@@ -39,7 +39,7 @@ macro_rules! godot_gdnative_init {
 
             let __result = ::std::panic::catch_unwind(|| $callback(options));
             if __result.is_err() {
-                godot_error!("gdnative-core: gdnative_init callback panicked");
+                $crate::godot_error!("gdnative-core: gdnative_init callback panicked");
             }
         }
     };
@@ -65,17 +65,17 @@ macro_rules! godot_gdnative_terminate {
             _options: *mut $crate::sys::godot_gdnative_terminate_options,
         ) {
         }
-        godot_gdnative_terminate!(godot_gdnative_terminate_empty);
+        $crate::godot_gdnative_terminate!(godot_gdnative_terminate_empty);
     };
     ($callback:ident) => {
-        godot_gdnative_terminate!($callback as godot_gdnative_terminate);
+        $crate::godot_gdnative_terminate!($callback as godot_gdnative_terminate);
     };
     (_ as $fn_name:ident) => {
         fn godot_gdnative_terminate_empty(
             _options: *mut $crate::sys::godot_gdnative_terminate_options,
         ) {
         }
-        godot_gdnative_terminate!(godot_gdnative_terminate_empty as $fn_name);
+        $crate::godot_gdnative_terminate!(godot_gdnative_terminate_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
@@ -90,7 +90,7 @@ macro_rules! godot_gdnative_terminate {
 
             let __result = ::std::panic::catch_unwind(|| $callback(options));
             if __result.is_err() {
-                godot_error!("gdnative-core: nativescript_init callback panicked");
+                $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
             }
 
             $crate::private::cleanup_internal_state();
@@ -115,14 +115,14 @@ macro_rules! godot_gdnative_terminate {
 macro_rules! godot_nativescript_init {
     () => {
         fn godot_nativescript_init_empty(_init: $crate::init::InitHandle) {}
-        godot_nativescript_init!(godot_nativescript_init_empty);
+        $crate::godot_nativescript_init!(godot_nativescript_init_empty);
     };
     ($callback:ident) => {
-        godot_nativescript_init!($callback as godot_nativescript_init);
+        $crate::godot_nativescript_init!($callback as godot_nativescript_init);
     };
     (_ as $fn_name:ident) => {
         fn godot_nativescript_init_empty(_init: $crate::init::InitHandle) {}
-        godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
+        $crate::godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
         #[no_mangle]
@@ -138,7 +138,7 @@ macro_rules! godot_nativescript_init {
             });
 
             if __result.is_err() {
-                godot_error!("gdnative-core: nativescript_init callback panicked");
+                $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
             }
         }
     };
@@ -353,7 +353,7 @@ macro_rules! godot_test {
                 ).is_ok();
 
                 if !ok {
-                    godot_error!("   !! Test {} failed", str_name);
+                    $crate::godot_error!("   !! Test {} failed", str_name);
                 }
 
                 ok
@@ -369,7 +369,7 @@ macro_rules! godot_wrap_method_parameter_count {
         0
     };
     ($name:ident, $($other:ident,)*) => {
-        1 + godot_wrap_method_parameter_count!($($other,)*)
+        1 + $crate::godot_wrap_method_parameter_count!($($other,)*)
     }
 }
 
@@ -401,7 +401,7 @@ macro_rules! godot_wrap_method_inner {
                 use $crate::Instance;
 
                 if user_data.is_null() {
-                    godot_error!(
+                    $crate::godot_error!(
                         "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
                         stringify!($type_name),
                     );
@@ -413,16 +413,16 @@ macro_rules! godot_wrap_method_inner {
 
                     let num_args = num_args as isize;
 
-                    let num_required_params = godot_wrap_method_parameter_count!($($pname,)*);
+                    let num_required_params = $crate::godot_wrap_method_parameter_count!($($pname,)*);
                     if num_args < num_required_params {
-                        godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
+                        $crate::godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
                         return $crate::Variant::new();
                     }
 
-                    let num_optional_params = godot_wrap_method_parameter_count!($($opt_pname,)*);
+                    let num_optional_params = $crate::godot_wrap_method_parameter_count!($($opt_pname,)*);
                     let num_max_params = num_required_params + num_optional_params;
                     if num_args > num_max_params {
-                        godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
+                        $crate::godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
                         return $crate::Variant::new();
                     }
 
@@ -432,7 +432,7 @@ macro_rules! godot_wrap_method_inner {
                         let $pname = match <$pty as $crate::FromVariant>::from_variant(_variant) {
                             Ok(val) => val,
                             Err(err) => {
-                                godot_error!(
+                                $crate::godot_error!(
                                     "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
                                     idx = offset + 1,
                                     name = stringify!($pname),
@@ -453,7 +453,7 @@ macro_rules! godot_wrap_method_inner {
                             let $opt_pname = match <$opt_pty as $crate::FromVariant>::from_variant(_variant) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    godot_error!(
+                                    $crate::godot_error!(
                                         "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
                                         idx = offset + 1,
                                         name = stringify!($opt_pname),
@@ -479,8 +479,8 @@ macro_rules! godot_wrap_method_inner {
                             <$retty as $crate::ToVariant>::to_variant(&ret)
                         })
                         .unwrap_or_else(|err| {
-                            godot_error!("gdnative-core: method call failed with error: {:?}", err);
-                            godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                            $crate::godot_error!("gdnative-core: method call failed with error: {:?}", err);
+                            $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
                             $crate::Variant::new()
                         });
 
@@ -491,7 +491,7 @@ macro_rules! godot_wrap_method_inner {
 
                 __catch_result
                     .unwrap_or_else(|_err| {
-                        godot_error!("gdnative-core: method panicked (check stderr for output)");
+                        $crate::godot_error!("gdnative-core: method panicked (check stderr for output)");
                         $crate::Variant::new()
                     })
                     .forget()
@@ -517,7 +517,7 @@ macro_rules! godot_wrap_method {
             $(,)?
         ) -> $retty:ty
     ) => {
-        godot_wrap_method_inner!(
+        $crate::godot_wrap_method_inner!(
             $type_name,
             map_mut,
             fn $method_name(
@@ -539,7 +539,7 @@ macro_rules! godot_wrap_method {
             $(,)?
         ) -> $retty:ty
     ) => {
-        godot_wrap_method_inner!(
+        $crate::godot_wrap_method_inner!(
             $type_name,
             map,
             fn $method_name(
@@ -561,7 +561,7 @@ macro_rules! godot_wrap_method {
             $(,)?
         )
     ) => {
-        godot_wrap_method!(
+        $crate::godot_wrap_method!(
             $type_name,
             fn $method_name(
                 &mut $self,
@@ -582,7 +582,7 @@ macro_rules! godot_wrap_method {
             $(,)?
         )
     ) => {
-        godot_wrap_method!(
+        $crate::godot_wrap_method!(
             $type_name,
             fn $method_name(
                 & $self,
