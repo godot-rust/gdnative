@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 use std::default::Default;
 use std::fmt;
 use std::mem::{forget, transmute};
@@ -696,9 +696,14 @@ impl Variant {
         }
     }
 
+    /// Get a reference to a `godot-rust` Variant from a raw sys::pointer.
+    ///
+    /// # Safety
+    ///
+    /// The pointer must be a valid pointer to a `sys::godot_variant`.
     #[inline]
-    pub(crate) fn cast_ref<'l>(ptr: *const sys::godot_variant) -> &'l Variant {
-        unsafe { &*(ptr as *const variant::Variant) }
+    pub(crate) unsafe fn cast_ref<'l>(ptr: *const sys::godot_variant) -> &'l Variant {
+        &*(ptr as *const variant::Variant)
     }
 
     #[inline]

@@ -30,16 +30,17 @@
 //! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
 //! in the godot-rust repository.
 
-use super::*;
+use crate::*;
 
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
 
+use crate::nativescript::NativeClass;
+use crate::nativescript::NativeClassMethods;
+use crate::nativescript::UserData;
 use crate::private::get_api;
-use crate::NativeClass;
 use crate::RefCounted;
-
 use crate::Variant;
 
 pub mod property;
@@ -96,7 +97,7 @@ impl InitHandle {
                 ) -> *mut libc::c_void {
                     use std::panic::{self, AssertUnwindSafe};
 
-                    let owner = match crate::object::godot_cast::<C::Base>(this) {
+                    let owner = match object::godot_cast::<C::Base>(this) {
                         Some(owner) => owner,
                         None => {
                             godot_error!(
@@ -176,7 +177,7 @@ impl InitHandle {
             (get_api().godot_nativescript_set_type_tag)(
                 self.handle as *mut _,
                 class_name.as_ptr() as *const _,
-                crate::type_tag::create::<C>(),
+                crate::nativescript::type_tag::create::<C>(),
             );
 
             let builder = ClassBuilder {

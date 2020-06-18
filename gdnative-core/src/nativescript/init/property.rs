@@ -2,12 +2,10 @@
 
 use std::mem;
 
+use crate::nativescript::{Instance, NativeClass};
 use crate::object::GodotObject;
 use crate::private::get_api;
-use crate::GodotString;
-use crate::NativeClass;
-use crate::ToVariant;
-use crate::VariantType;
+use crate::*;
 
 use super::ClassBuilder;
 
@@ -285,7 +283,7 @@ where
     }
 }
 
-bitflags! {
+bitflags::bitflags! {
     pub struct Usage: u32 {
         const STORAGE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORAGE as u32;
         const EDITOR = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR as u32;
@@ -320,7 +318,6 @@ impl Usage {
 
 mod impl_export {
     use super::*;
-    use crate::*;
 
     macro_rules! impl_export_for_int {
         ($ty:ident) => {

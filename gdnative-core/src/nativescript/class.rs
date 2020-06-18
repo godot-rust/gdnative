@@ -1,3 +1,7 @@
+use crate::nativescript::init::ClassBuilder;
+use crate::nativescript::Map;
+use crate::nativescript::MapMut;
+use crate::nativescript::UserData;
 use crate::object;
 use crate::private::get_api;
 use crate::sys;
@@ -6,11 +10,8 @@ use crate::FromVariantError;
 use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
-use crate::Map;
-use crate::MapMut;
 use crate::RefCounted;
 use crate::ToVariant;
-use crate::UserData;
 use crate::Variant;
 
 /// Trait used for describing and initializing a Godot script class.
@@ -64,13 +65,13 @@ pub trait NativeClass: Sized + 'static {
 
     /// Register any exported properties to Godot.
     #[inline]
-    fn register_properties(_builder: &crate::init::ClassBuilder<Self>) {}
+    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 /// Trait used to provide information of Godot-exposed methods of a script class.
 pub trait NativeClassMethods: NativeClass {
     /// Function that registers all exposed methods to Godot.
-    fn register(builder: &crate::init::ClassBuilder<Self>);
+    fn register(builder: &ClassBuilder<Self>);
 }
 
 /// A reference to a GodotObject with a rust NativeClass attached.
@@ -209,7 +210,7 @@ impl<T: NativeClass> Instance<T> {
             return None;
         }
 
-        if !crate::type_tag::check::<T>(type_tag) {
+        if !crate::nativescript::type_tag::check::<T>(type_tag) {
             return None;
         }
 
