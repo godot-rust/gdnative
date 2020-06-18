@@ -9,8 +9,14 @@ version = "0.8.1"
 workspace = ".."
 edition = "2018"
 
+[features]
+debug = []
+
 [dependencies]
-serde = "1.0.15"
-serde_json = "1.0.3"
-serde_derive = "1.0.15"
 heck = "0.3.0"
+proc-macro2 = "1.0.6"
+quote = "1.0.2"
+serde = "1.0.15"
+serde_derive = "1.0.15"
+serde_json = "1.0.3"
+syn = { version = "1.0", features = ["full", "extra-traits", "visit"] }

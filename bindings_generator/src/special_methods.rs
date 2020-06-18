@@ -1,131 +1,142 @@
 use crate::api::*;
 use crate::GeneratorResult;
-use std::io::Write;
 
 use heck::SnakeCase;
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
 
-pub fn generate_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-    // Constructor
-    #[inline]
-    pub fn new() -> Self {{
-        unsafe {{
-            let gd_api = get_api();
-            let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
-            let obj = ctor();
-            object::init_ref_count(obj);
+use std::io::Write;
 
-            {name} {{
-                this: obj
-            }}
-        }}
-    }}
-"#,
-        name = class.name
-    )?;
+pub fn generate_reference_ctor(class: &GodotClass) -> TokenStream {
+    let class_name = format_ident!("{}", class.name);
+    let method_table = format_ident!("{}MethodTable", class.name);
+    quote! {
+        // Constructor
+        #[inline]
+        pub fn new() -> Self {
+            unsafe {
+                let gd_api = get_api();
+                let ctor = #method_table::get(gd_api).class_constructor.unwrap();
+                let obj = ctor();
+                object::init_ref_count(obj);
 
-    Ok(())
+                #class_name {
+                    this: obj
+                }
+            }
+        }
+    }
 }
 
-pub fn generate_non_reference_ctor(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-    /// Constructor.
-    ///
-    /// Because this type is not reference counted, the lifetime of the returned object
-    /// is *not* automatically managed.
-    /// Immediately after creation, the object is owned by the caller, and can be
-    /// passed to the engine (in which case the engine will be responsible for
-    /// destroying the object) or destroyed manually using `{name}::free`.
-    #[inline]
-    pub fn new() -> Self {{
-        unsafe {{
-            let gd_api = get_api();
-            let ctor = {name}MethodTable::get(gd_api).class_constructor.unwrap();
-            let this = ctor();
+pub fn generate_non_reference_ctor(class: &GodotClass) -> TokenStream {
+    let class_name = format_ident!("{}", class.name);
+    let method_table = format_ident!("{}MethodTable", class.name);
 
-            {name} {{
-                this
-            }}
-        }}
-    }}
+    let documentation = format!(
+        r#"/// Constructor.
+///
+/// Because this type is not reference counted, the lifetime of the returned object
+/// is *not* automatically managed.
+/// Immediately after creation, the object is owned by the caller, and can be
+/// passed to the engine (in which case the engine will be responsible for
+/// destroying the object) or destroyed manually using `{}::free`."#,
+        class_name
+    );
 
-    /// Manually deallocate the object.
-    #[inline]
-    pub unsafe fn free(self) {{
-        (get_api().godot_object_destroy)(self.this);
-    }}"#,
-        name = class.name
-    )?;
+    quote! {
+        #[doc=#documentation]
+        #[inline]
+        pub fn new() -> Self {
+            unsafe {
+                let gd_api = get_api();
+                let ctor = #method_table::get(gd_api).class_constructor.unwrap();
+                let this = ctor();
 
-    Ok(())
+                #class_name {
+                    this
+                }
+            }
+        }
+
+        /// Manually deallocate the object.
+        #[inline]
+        pub unsafe fn free(self) {
+            (get_api().godot_object_destroy)(self.this);
+        }
+    }
 }
 
 pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-impl crate::private::godot_object::Sealed for {name} {{}}
+    let name = &class.name;
+    let class_name = format_ident!("{}", class.name);
+    let addref_if_reference = if class.is_refcounted() {
+        quote! { object::add_ref(obj); }
+    } else {
+        quote! {
+           // Not reference-counted.
+        }
+    };
 
-unsafe impl GodotObject for {name} {{
-    #[inline]
-    fn class_name() -> &'static str {{
-        "{name}"
-    }}
+    let code = quote! {
+        impl crate::private::godot_object::Sealed for #class_name {}
 
-    #[inline]
-    unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {{
-        {addref_if_reference}
-        Self {{ this: obj, }}
-    }}
+        unsafe impl GodotObject for #class_name {
+            #[inline]
+            fn class_name() -> &'static str {
+                #name
+            }
 
-    #[inline]
-    unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self {{
-        Self {{ this: obj, }}
-    }}
+            #[inline]
+            unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {
+                #addref_if_reference
+                Self { this: obj, }
+            }
 
-    #[inline]
-    unsafe fn to_sys(&self) -> *mut sys::godot_object {{
-        self.this
-    }}
-}}
+            #[inline]
+            unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self {
+                Self { this: obj, }
+            }
 
-impl ToVariant for {name} {{
-    #[inline]
-    fn to_variant(&self) -> Variant {{ Variant::from_object(self) }}
-}}
-impl FromVariant for {name} {{
-    #[inline]
-    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {{ variant.try_to_object_with_error::<Self>() }}
-}}"#,
-        name = class.name,
-        addref_if_reference = if class.is_refcounted() {
-            "object::add_ref(obj);"
-        } else {
-            "// Not reference-counted."
-        },
-    )?;
+            #[inline]
+            unsafe fn to_sys(&self) -> *mut sys::godot_object {
+                self.this
+            }
+        }
+
+        impl ToVariant for #class_name {
+            #[inline]
+            fn to_variant(&self) -> Variant { Variant::from_object(self) }
+        }
+
+        impl FromVariant for #class_name {
+            #[inline]
+            fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+                variant.try_to_object_with_error::<Self>()
+            }
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
 
-pub fn generate_instanciable_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    assert!(class.instanciable);
+pub fn generate_instantiable_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+    assert!(class.instantiable, "class should be instantiable");
 
-    writeln!(
-        output,
-        r#"
-impl Instanciable for {name} {{
-    #[inline]
-    fn construct() -> Self {{
-        {name}::new()
-    }}
-}}"#,
-        name = class.name,
-    )?;
+    let class_name = format_ident!("{}", class.name);
+    let code = quote! {
+        impl Instanciable for #class_name {
+            #[inline]
+            fn construct() -> Self {
+                #class_name::new()
+            }
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
@@ -135,243 +146,249 @@ pub fn generate_free_impl(
     api: &Api,
     class: &GodotClass,
 ) -> GeneratorResult {
-    if class.instanciable && !class.is_pointer_safe() {
-        writeln!(
-            output,
-            r#"
-impl Free for {name} {{
-    #[inline]
-    unsafe fn godot_free(self) {{ self.free() }}
-}}"#,
-            name = class.name,
-        )?;
-    }
+    let class_name = format_ident!("{}", class.name);
+    let free_output = if class.instantiable && !class.is_pointer_safe() {
+        quote! {
+            impl Free for #class_name {
+                #[inline]
+                unsafe fn godot_free(self) { self.free() }
+            }
+        }
+    } else {
+        Default::default()
+    };
 
-    if class.name == "Node" || api.class_inherits(&class, "Node") {
-        writeln!(
-            output,
-            r#"
-impl QueueFree for {name} {{
-    #[inline]
-    unsafe fn godot_queue_free(&mut self) {{ self.queue_free() }}
-}}"#,
-            name = class.name,
-        )?;
-    }
+    let queue_free_output = if class.name == "Node" || api.class_inherits(&class, "Node") {
+        quote! {
+            impl QueueFree for #class_name {
+                #[inline]
+                unsafe fn godot_queue_free(&mut self) { self.queue_free() }
+            }
+        }
+    } else {
+        Default::default()
+    };
+
+    let code = quote! {
+        #free_output
+        #queue_free_output
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
 
-pub fn generate_singleton_getter(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
+    assert!(class.singleton, "class should be a singleton");
+
     let s_name = if class.name.starts_with('_') {
         &class.name[1..]
     } else {
         class.name.as_ref()
     };
 
-    writeln!(
-        output,
-        r#"
-    #[inline]
-    pub fn godot_singleton() -> Self {{
-        unsafe {{
-            let this = (get_api().godot_global_get_singleton)(b"{s_name}\0".as_ptr() as *mut _);
+    let class_name = format_ident!("{}", class.name);
+    let singleton_name = format!("{}\0", s_name);
 
-            {name} {{
-                this
-            }}
-        }}
-    }}"#,
-        name = class.name,
-        s_name = s_name
-    )?;
+    assert!(
+        singleton_name.ends_with('\0'),
+        "singleton_name should be null terminated"
+    );
+    quote! {
+        #[inline]
+        pub fn godot_singleton() -> Self {
+            unsafe {
+                let this = (get_api().godot_global_get_singleton)(#singleton_name.as_ptr() as *mut _);
 
-    Ok(())
+                #class_name {
+                    this
+                }
+            }
+        }
+    }
 }
 
-pub fn generate_dynamic_cast(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-    /// Generic dynamic cast.
-    #[inline]
-    pub {maybe_unsafe}fn cast<T: GodotObject>(&self) -> Option<T> {{
-    unsafe {{
-            object::godot_cast::<T>(self.this)
-        }}
-    }}"#,
-        maybe_unsafe = if class.is_pointer_safe() {
-            ""
-        } else {
-            "unsafe "
-        },
-    )?;
+pub fn generate_dynamic_cast(class: &GodotClass) -> TokenStream {
+    let maybe_unsafe = if class.is_pointer_safe() {
+        Default::default()
+    } else {
+        quote! {unsafe}
+    };
 
-    Ok(())
+    quote! {
+        /// Generic dynamic cast.
+        #[inline]
+        pub #maybe_unsafe fn cast<T: GodotObject>(&self) -> Option<T> {
+        unsafe {
+                object::godot_cast::<T>(self.this)
+            }
+        }
+    }
 }
 
-pub fn generate_upcast(
-    output: &mut impl Write,
-    api: &Api,
-    base_class_name: &str,
-    is_pointer_safe: bool,
-) -> GeneratorResult {
+pub fn generate_upcast(api: &Api, base_class_name: &str, is_pointer_safe: bool) -> TokenStream {
     if let Some(parent) = api.find_class(&base_class_name) {
         let snake_name = class_name_to_snake_case(&base_class_name);
-        if is_pointer_safe {
-            writeln!(
-                output,
-                r#"    /// Up-cast.
-    #[inline]
-    pub fn to_{snake_name}(&self) -> {name} {{
-        {addref_if_reference}
-        unsafe {{ {name}::from_sys(self.this) }}
-    }}"#,
-                name = parent.name,
-                snake_name = snake_name,
-                addref_if_reference = if parent.is_refcounted() {
-                    "unsafe {{ object::add_ref(self.this); }}"
-                } else {
-                    "// Not reference-counted."
-                },
-            )?;
+        let parent_class = format_ident!("{}", parent.name);
+        let to_snake_name = format_ident!("to_{}", snake_name);
+        let addref_if_reference = if parent.is_refcounted() {
+            quote! {
+                unsafe { object::add_ref(self.this); }
+            }
         } else {
-            writeln!(
-                output,
-                r#"
-    /// Up-cast.
-    #[inline]
-    pub unsafe fn to_{snake_name}(&self) -> {name} {{
-        {addref_if_reference}
-        unsafe {{ {name}::from_sys(self.this) }}
-    }}"#,
-                name = parent.name,
-                snake_name = snake_name,
-                addref_if_reference = if parent.is_refcounted() {
-                    "object::add_ref(self.this);"
-                } else {
-                    "// Not reference-counted."
-                },
-            )?;
+            quote! {
+                // Not reference-counted.
+            }
+        };
+        let maybe_unsafe = if is_pointer_safe {
+            Default::default()
+        } else {
+            quote! { unsafe }
+        };
+
+        let upcast = generate_upcast(api, &parent.base_class, is_pointer_safe);
+        quote! {
+            /// Up-cast.
+            #[inline]
+            pub #maybe_unsafe fn #to_snake_name(&self) -> #parent_class {
+                #addref_if_reference
+                unsafe { #parent_class::from_sys(self.this) }
+            }
+
+            #upcast
         }
-
-        generate_upcast(output, api, &parent.base_class, is_pointer_safe)?;
+    } else {
+        Default::default()
     }
-
-    Ok(())
 }
 
 pub fn generate_deref_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-impl std::ops::Deref for {name} {{
-    type Target = {base};
+    assert!(
+        !class.base_class.is_empty(),
+        "should not be called on a class with no base_class"
+    );
 
-    #[inline]
-    fn deref(&self) -> &{base} {{
-        unsafe {{
-            std::mem::transmute(self)
-        }}
-    }}
-}}
+    let class_name = format_ident!("{}", class.name);
+    let base_class = format_ident!("{}", class.base_class);
 
-impl std::ops::DerefMut for {name} {{
-    #[inline]
-    fn deref_mut(&mut self) -> &mut {base} {{
-        unsafe {{
-            std::mem::transmute(self)
-        }}
-    }}
-}}"#,
-        name = class.name,
-        base = class.base_class,
-    )?;
+    let code = quote! {
+        impl std::ops::Deref for #class_name {
+            type Target = #base_class;
+
+            #[inline]
+            fn deref(&self) -> &#base_class {
+                unsafe {
+                    std::mem::transmute(self)
+                }
+            }
+        }
+
+        impl std::ops::DerefMut for #class_name {
+            #[inline]
+            fn deref_mut(&mut self) -> &mut #base_class {
+                unsafe {
+                    std::mem::transmute(self)
+                }
+            }
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
 
 pub fn generate_reference_clone(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-impl Clone for {name} {{
-    #[inline]
-    fn clone(&self) -> Self {{
-        self.new_ref()
-    }}
-}}"#,
-        name = class.name
-    )?;
+    assert!(class.is_refcounted(), "Only call with refcounted classes");
+
+    let class_name = format_ident!("{}", class.name);
+
+    let code = quote! {
+        impl Clone for #class_name {
+            #[inline]
+            fn clone(&self) -> Self {
+                self.new_ref()
+            }
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
 
 pub fn generate_impl_ref_counted(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-impl RefCounted for {name} {{
-    /// Creates a new reference to the same reference-counted object.
-    #[inline]
-    fn new_ref(&self) -> Self {{
-        unsafe {{
-            object::add_ref(self.this);
+    assert!(class.is_refcounted(), "Only call with refcounted classes");
 
-            Self {{
-                this: self.this,
-            }}
-        }}
-    }}
-}}"#,
-        name = class.name
-    )?;
+    let class_name = format_ident!("{}", class.name);
+    let code = quote! {
+        impl RefCounted for #class_name {
+            /// Creates a new reference to the same reference-counted object.
+            #[inline]
+            fn new_ref(&self) -> Self {
+                unsafe {
+                    object::add_ref(self.this);
+
+                    Self {
+                        this: self.this,
+                    }
+                }
+            }
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
 
 pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
-    writeln!(
-        output,
-        r#"
-impl Drop for {name} {{
-    #[inline]
-    fn drop(&mut self) {{
-        unsafe {{
-            if object::unref(self.this) {{
-                (get_api().godot_object_destroy)(self.this);
-            }}
-        }}
-    }}
-}}"#,
-        name = class.name
-    )?;
+    assert!(class.is_refcounted(), "Only call with refcounted classes");
+
+    let class_name = format_ident!("{}", class.name);
+    let code = quote! {
+        impl Drop for #class_name {
+            #[inline]
+            fn drop(&mut self) {
+                unsafe {
+                    if object::unref(self.this) {
+                        (get_api().godot_object_destroy)(self.this);
+                    }
+                }
+            }
+        }
+    };
+
+    generated_at!(output);
+    write!(output, "{}", code)?;
 
     Ok(())
 }
 
-pub fn generate_gdnative_library_singleton_getter(
-    output: &mut impl Write,
-    class: &GodotClass,
-) -> GeneratorResult {
-    assert_eq!("GDNativeLibrary", class.name);
-    writeln!(
-        output,
-        r#"
-/// Returns the GDNativeLibrary object of this library. Can be used to construct NativeScript objects.
-/// 
-/// See also `Instance::new` for a typed API.
-#[inline]
-pub fn current_library() -> Self {{
-    let this = gdnative_core::private::get_gdnative_library_sys();
+pub fn generate_gdnative_library_singleton_getter(class: &GodotClass) -> TokenStream {
+    assert_eq!(
+        class.name, "GDNativeLibrary",
+        "Can only generate library singletons for GDNativeLibrary"
+    );
 
-    Self {{
-        this
-    }}
-}}"#
-    )?;
+    quote! {
+        /// Returns the GDNativeLibrary object of this library. Can be used to construct NativeScript objects.
+        ///
+        /// See also `Instance::new` for a typed API.
+        #[inline]
+        pub fn current_library() -> Self {
+            let this = gdnative_core::private::get_gdnative_library_sys();
 
-    Ok(())
+            Self {
+                this
+            }
+        }
+    }
 }
 
 pub fn class_name_to_snake_case(name: &str) -> String {
