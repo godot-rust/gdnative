@@ -80,7 +80,6 @@ pub struct GodotClass {
 
     pub properties: Vec<Property>,
     pub methods: Vec<GodotMethod>,
-    pub enums: Vec<Enum>,
     pub constants: HashMap<ConstantName, ConstantValue>,
 }
 
@@ -100,24 +99,6 @@ impl GodotClass {
 
 pub type ConstantName = String;
 pub type ConstantValue = i64;
-
-#[derive(PartialEq, Eq, Deserialize, Debug)]
-pub struct Enum {
-    pub name: String,
-    pub values: HashMap<String, i64>,
-}
-
-impl core::cmp::Ord for Enum {
-    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        core::cmp::Ord::cmp(&self.name, &other.name)
-    }
-}
-
-impl core::cmp::PartialOrd for Enum {
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        core::cmp::PartialOrd::partial_cmp(&self.name, &other.name)
-    }
-}
 
 #[derive(Deserialize, Debug)]
 pub struct Property {
@@ -219,7 +200,6 @@ pub enum Ty {
     Result,
     VariantType,
     VariantOperator,
-    Enum(String),
     Object(String),
 }
 
@@ -256,15 +236,7 @@ impl Ty {
             "enum.Error" => Ty::Result,
             "enum.Variant::Type" => Ty::VariantType,
             "enum.Variant::Operator" => Ty::VariantOperator,
-            ty if ty.starts_with("enum.") => {
-                let mut split = ty[5..].split("::");
-                let mut class = split.next().unwrap();
-                if class.starts_with('_') {
-                    class = &class[1..];
-                }
-                let name = split.next().unwrap();
-                Ty::Enum(format!("{}{}", class, name))
-            }
+            ty if ty.starts_with("enum.") => Ty::I64,
             ty => Ty::Object(ty.into()),
         }
     }
@@ -301,10 +273,6 @@ impl Ty {
             Ty::Result => syn::parse_quote! { GodotResult },
             Ty::VariantType => syn::parse_quote! { VariantType },
             Ty::VariantOperator => syn::parse_quote! { VariantOperator },
-            Ty::Enum(ref name) => {
-                let name = format_ident!("{}", name);
-                syn::parse_quote! { #name }
-            }
             Ty::Object(ref name) => {
                 let name = format_ident!("{}", name);
                 syn::parse_quote! { Option<#name> }
@@ -344,7 +312,6 @@ impl Ty {
             Ty::Result => Some(syn::parse_quote! { sys::godot_error }),
             Ty::VariantType => Some(syn::parse_quote! { sys::variant_type }),
             Ty::VariantOperator => Some(syn::parse_quote! { sys::godot_variant_operator }),
-            Ty::Enum(_) => None,
             Ty::Object(_) => Some(syn::parse_quote! { sys::godot_object }),
         }
     }
@@ -352,7 +319,7 @@ impl Ty {
     pub fn to_return_post(&self) -> TokenStream {
         match self {
             Ty::Void => Default::default(),
-            Ty::F64 | &Ty::I64 | &Ty::Bool | &Ty::Enum(_) => {
+            Ty::F64 | &Ty::I64 | &Ty::Bool => {
                 quote! { ret }
             }
             Ty::Vector2

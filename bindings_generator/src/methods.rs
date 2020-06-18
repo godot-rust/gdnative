@@ -478,7 +478,7 @@ fn generate_return_pre(ty: &Ty) -> TokenStream {
         | &Ty::Float32Array
         | &Ty::Rid
         => {
-            // Enum || Void is not handled here, can .unwrap()
+            // Void is not handled here, can .unwrap()
             let sys_ty = ty.to_sys().unwrap();
             quote !{
                 let mut ret = #sys_ty::default();
@@ -509,13 +509,6 @@ fn generate_return_pre(ty: &Ty) -> TokenStream {
             // the pointer is not written to.
             quote! {
                 let mut ret: sys::godot_variant_operator = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX;
-                let ret_ptr = (&mut ret) as *mut _;
-            }
-        }
-        &Ty::Enum(ref name) => {
-            let name = format_ident!("{}", name);
-            quote! {
-                let mut ret: #name = mem::transmute(0);
                 let ret_ptr = (&mut ret) as *mut _;
             }
         }

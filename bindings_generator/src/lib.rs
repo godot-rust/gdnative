@@ -116,8 +116,6 @@ fn generate_class_bindings(
 
         generate_class_struct(output_types_impls, class)?;
 
-        generate_enums(output_types_impls, class)?;
-
         if !class.constants.is_empty() {
             generate_class_constants(output_types_impls, class)?;
         }
@@ -205,9 +203,6 @@ pub(crate) mod test_prelude {
             validate_and_clear_buffer!(buffer);
 
             generate_class_struct(&mut buffer, &class).unwrap();
-            validate_and_clear_buffer!(buffer);
-
-            generate_enums(&mut buffer, &class).unwrap();
             validate_and_clear_buffer!(buffer);
 
             if !class.constants.is_empty() {
