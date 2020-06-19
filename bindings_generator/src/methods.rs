@@ -459,7 +459,7 @@ fn generate_return_pre(ty: &Ty) -> TokenStream {
             let sys_ty = ty.to_sys().unwrap();
             quote !{
                 let mut ret = #sys_ty::default();
-                let ret_ptr = &mut ret as *mut _;
+                let ret_ptr = (&mut ret) as *mut _;
             }
         }
         &Ty::Object(_) // TODO: double check
@@ -489,10 +489,15 @@ fn generate_return_pre(ty: &Ty) -> TokenStream {
                 let ret_ptr = (&mut ret) as *mut _;
             }
         }
-        &Ty::Enum(ref name) => {
-            let name = format_ident!("{}", name);
+        &Ty::Vector3Axis => {
             quote! {
-                let mut ret: #name = mem::transmute(0);
+                let mut ret = crate::generated::vector3::Axis::X;
+                let ret_ptr = (&mut ret) as *mut _;
+            }
+        }
+        &Ty::Enum(ref path) => {
+            quote! {
+                let mut ret = <#path>::from(0i64);
                 let ret_ptr = (&mut ret) as *mut _;
             }
         }

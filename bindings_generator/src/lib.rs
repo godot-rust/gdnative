@@ -16,6 +16,8 @@ use crate::documentation::*;
 use crate::methods::*;
 use crate::special_methods::*;
 
+use heck::SnakeCase;
+
 use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
@@ -122,10 +124,16 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
         Default::default()
     };
 
+    let module = format_ident!("{}", class.name.to_snake_case());
+    let class = format_ident!("{}", class.name);
     quote! {
-        #types_and_methods
-        #traits
-        #methods_and_table
+        pub mod #module {
+            use super::*;
+            #types_and_methods
+            #traits
+            #methods_and_table
+        }
+        pub use crate::generated::#module::#class;
     }
 }
 

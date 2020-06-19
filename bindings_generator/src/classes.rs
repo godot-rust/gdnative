@@ -2,7 +2,7 @@ use crate::api::*;
 use crate::methods;
 use crate::special_methods;
 
-use heck::CamelCase;
+use heck::CamelCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
@@ -15,7 +15,7 @@ pub fn generate_class_struct(class: &GodotClass) -> TokenStream {
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         pub struct #class_name {
-            this: object::RawObject<Self>,
+            this: RawObject<Self>,
         }
     }
 }
@@ -95,40 +95,20 @@ pub fn generate_class_constants(class: &GodotClass) -> TokenStream {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
-struct EnumReference<'a> {
-    class: &'a str,
-    enum_name: &'a str,
-    enum_variant: &'a str,
+fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
+    // In order to not pollute the API with more Result types,
+    // rename the Result enum used by Search to SearchResult
+    // to_camel_case() is used to make the enums more Rust like.
+    // DOFBlurQuality => DofBlurQuality
+    match enum_name {
+        "Result" => {
+            let mut res = String::from(class_name);
+            res.push_str(enum_name);
+            res.to_camel_case()
+        }
+        _ => enum_name.to_camel_case(),
+    }
 }
-
-const ENUM_VARIANTS_TO_SKIP: &[EnumReference<'static>] = &[
-    EnumReference {
-        class: "MultiplayerAPI",
-        enum_name: "RPCMode",
-        enum_variant: "RPC_MODE_SLAVE",
-    },
-    EnumReference {
-        class: "MultiplayerAPI",
-        enum_name: "RPCMode",
-        enum_variant: "RPC_MODE_SYNC",
-    },
-    EnumReference {
-        class: "TextureLayered",
-        enum_name: "Flags",
-        enum_variant: "FLAGS_DEFAULT",
-    },
-    EnumReference {
-        class: "CameraServer",
-        enum_name: "FeedImage",
-        enum_variant: "FEED_YCBCR_IMAGE",
-    },
-    EnumReference {
-        class: "CameraServer",
-        enum_name: "FeedImage",
-        enum_variant: "FEED_Y_IMAGE",
-    },
-];
 
 pub fn generate_enums(class: &GodotClass) -> TokenStream {
     // TODO: check whether the start of the variant name is
@@ -136,87 +116,44 @@ pub fn generate_enums(class: &GodotClass) -> TokenStream {
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
     let mut enums: Vec<&Enum> = class.enums.iter().collect();
     enums.sort();
-    let enums: Vec<TokenStream> = enums.iter().map(|e| {
-        let mut enum_values = TokenStream::new();
+    let enums = enums.iter().map(|e| {
+        let enum_name = generate_enum_name(&class.name, &e.name);
+        let typ_name = format_ident!("{}", enum_name);
 
-        let mut values: Vec<(&String, &i64)> = e.values.iter().collect();
-        values.sort_by(|a, b| {
-            a.1.cmp(&b.1)
+        let mut values: Vec<_> = e.values.iter().collect();
+        values.sort_by(|a, b| a.1.cmp(&b.1));
+
+        let consts = values.iter().map(|(key, val)| {
+            let key = key.to_uppercase();
+            let variant = format_ident!("{}", key);
+            quote! {
+                pub const #variant: #typ_name = #typ_name(#val);
+            }
         });
 
-        let mut previous_value = None;
-
-        for &(key, val) in &values {
-            let val = *val as u64 as u32;
-
-            // Use lowercase to test because of different CamelCase conventions (Msaa/MSAA, etc.).
-            let enum_ref = EnumReference {
-                class: class.name.as_str(),
-                enum_name: e.name.as_str(),
-                enum_variant: key.as_str(),
-            };
-
-            if ENUM_VARIANTS_TO_SKIP.contains(&enum_ref) {
-                continue;
-            }
-
-            // Check if the value is a duplicate. This is fine because `values` is already sorted by value.
-            if Some(val) == previous_value.replace(val) {
-                println!(
-                    "cargo:warning=Enum variant {class}.{name}.{variant} skipped: duplicate value {value}",
-                    class = enum_ref.class,
-                    name = enum_ref.enum_name,
-                    variant = enum_ref.enum_variant,
-                    value = val,
-                );
-                continue;
-            }
-
-            let enum_name_without_mode = if e.name.ends_with("Mode") {
-                e.name[0..(e.name.len() - 4)].to_lowercase()
-            } else {
-                e.name[..].to_lowercase()
-            };
-            let mut key = key.as_str().to_camel_case();
-            if let Some(new_key) = try_remove_prefix(&key, &e.name) {
-                key = new_key;
-            } else if let Some(new_key) = try_remove_prefix(&key, &enum_name_without_mode) {
-                key = new_key;
-            }
-
-            let key = format_ident!("{}", key);
-            let output = quote! {
-                #key = #val,
-            };
-            enum_values.extend(output);
-        }
-
-        let enum_name = format_ident!("{}{}", class.name, e.name);
         quote! {
-            #[repr(u32)]
-            #[allow(non_camel_case_types)]
-            #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-            pub enum #enum_name {
-                #enum_values
+            #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            pub struct #typ_name(pub i64);
+
+            impl #typ_name {
+                #(#consts)*
+            }
+            impl From<i64> for #typ_name {
+                #[inline]
+                fn from(v: i64) -> Self {
+                    Self(v)
+                }
+            }
+            impl From<#typ_name> for i64 {
+                #[inline]
+                fn from(v: #typ_name) -> Self {
+                    v.0
+                }
             }
         }
-    }).collect();
+    });
 
     quote! {
         #(#enums)*
     }
-}
-
-fn try_remove_prefix(key: &str, prefix: &str) -> Option<String> {
-    let key_lower = key.to_lowercase();
-    if key_lower.starts_with(prefix)
-        && !key
-            .chars()
-            .nth(prefix.len())
-            .map_or(true, |c| c.is_numeric())
-    {
-        return Some(key[prefix.len()..].to_string());
-    }
-
-    None
 }

@@ -1,5 +1,13 @@
 use crate::Vector3;
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(u32)]
+pub enum Axis {
+    X = sys::godot_vector3_axis_GODOT_VECTOR3_AXIS_X as u32,
+    Y = sys::godot_vector3_axis_GODOT_VECTOR3_AXIS_Y as u32,
+    Z = sys::godot_vector3_axis_GODOT_VECTOR3_AXIS_Z as u32,
+}
+
 /// Helper methods for `Vector3`.
 ///
 /// Trait used to provide additional methods that are equivalent to Godot's methods.
@@ -47,15 +55,15 @@ godot_test!(
             unsafe {
                 assert_relative_eq!(vector.x, (api.godot_vector3_get_axis)(
                     &copied as *const _ as *const sys::godot_vector3,
-                    crate::Vector3Axis::X as u32 as sys::godot_vector3_axis
+                    Axis::X as u32 as sys::godot_vector3_axis
                 ));
                 assert_relative_eq!(vector.y, (api.godot_vector3_get_axis)(
                     &copied as *const _ as *const sys::godot_vector3,
-                    crate::Vector3Axis::Y as u32 as sys::godot_vector3_axis
+                    Axis::Y as u32 as sys::godot_vector3_axis
                 ));
                 assert_relative_eq!(vector.z, (api.godot_vector3_get_axis)(
                     &copied as *const _ as *const sys::godot_vector3,
-                    crate::Vector3Axis::Z as u32 as sys::godot_vector3_axis
+                    Axis::Z as u32 as sys::godot_vector3_axis
                 ));
             }
             assert_eq!(vector, copied);
@@ -64,17 +72,17 @@ godot_test!(
             unsafe {
                 (api.godot_vector3_set_axis)(
                     &mut copied as *mut _ as *mut sys::godot_vector3,
-                    crate::Vector3Axis::X as u32 as sys::godot_vector3_axis,
+                    Axis::X as u32 as sys::godot_vector3_axis,
                     set_to.x
                 );
                 (api.godot_vector3_set_axis)(
                     &mut copied as *mut _ as *mut sys::godot_vector3,
-                    crate::Vector3Axis::Y as u32 as sys::godot_vector3_axis,
+                    Axis::Y as u32 as sys::godot_vector3_axis,
                     set_to.y
                 );
                 (api.godot_vector3_set_axis)(
                     &mut copied as *mut _ as *mut sys::godot_vector3,
-                    crate::Vector3Axis::Z as u32 as sys::godot_vector3_axis,
+                    Axis::Z as u32 as sys::godot_vector3_axis,
                     set_to.z
                 );
             }
