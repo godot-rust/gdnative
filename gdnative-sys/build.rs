@@ -172,6 +172,7 @@ mod header_binding {
             .whitelist_type("GDNATIVE.*")
             .derive_default(true)
             .ignore_functions()
+            .size_t_is_usize(true)
             .ctypes_prefix("libc")
             .clang_arg(format!("-I{}/godot_headers", manifest_dir));
 
