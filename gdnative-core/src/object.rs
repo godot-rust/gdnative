@@ -1,5 +1,6 @@
+use crate::generated::object::ObjectMethodTable;
+use crate::generated::reference::ReferenceMethodTable;
 use crate::sys;
-use crate::ObjectMethodTable;
 use std::ptr;
 
 /// Trait for Godot API objects. This trait is sealed, and implemented for generated wrapper
@@ -73,7 +74,6 @@ pub trait QueueFree: GodotObject {
 /// This function assumes the godot_object is reference counted.
 #[inline]
 pub unsafe fn add_ref(obj: *mut sys::godot_object) {
-    use crate::ReferenceMethodTable;
     let api = crate::private::get_api();
     let addref_method = ReferenceMethodTable::get(api).reference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
@@ -99,7 +99,6 @@ pub unsafe fn add_ref(obj: *mut sys::godot_object) {
 /// This function assumes the godot_object is reference counted.
 #[inline]
 pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
-    use crate::ReferenceMethodTable;
     let api = crate::private::get_api();
     let unref_method = ReferenceMethodTable::get(api).unreference;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
@@ -123,7 +122,6 @@ pub unsafe fn unref(obj: *mut sys::godot_object) -> bool {
 /// and that no other references are held at the time.
 #[inline]
 pub unsafe fn init_ref_count(obj: *mut sys::godot_object) {
-    use crate::ReferenceMethodTable;
     let api = crate::private::get_api();
     let init_method = ReferenceMethodTable::get(api).init_ref;
     let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];

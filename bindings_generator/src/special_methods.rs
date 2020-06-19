@@ -15,7 +15,7 @@ pub fn generate_reference_ctor(class: &GodotClass) -> TokenStream {
                 let gd_api = get_api();
                 let ctor = #method_table::get(gd_api).class_constructor.unwrap();
                 let obj = ctor();
-                object::init_ref_count(obj);
+                gdnative_core::object::init_ref_count(obj);
 
                 #class_name {
                     this: obj
@@ -67,7 +67,7 @@ pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
     let name = &class.name;
     let class_name = format_ident!("{}", class.name);
     let addref_if_reference = if class.is_refcounted() {
-        quote! { object::add_ref(obj); }
+        quote! { gdnative_core::object::add_ref(obj); }
     } else {
         quote! {
            // Not reference-counted.
@@ -75,7 +75,7 @@ pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
     };
 
     quote! {
-        impl crate::private::godot_object::Sealed for #class_name {}
+        impl gdnative_core::private::godot_object::Sealed for #class_name {}
 
         unsafe impl GodotObject for #class_name {
             #[inline]
@@ -107,8 +107,8 @@ pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
 
         impl FromVariant for #class_name {
             #[inline]
-            fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-                variant.try_to_object_with_error::<Self>()
+            fn from_variant(variant: &Variant) -> Result<#class_name, FromVariantError> {
+                variant.try_to_object_with_error::<#class_name>()
             }
         }
     }
@@ -200,7 +200,7 @@ pub fn generate_dynamic_cast(class: &GodotClass) -> TokenStream {
         #[inline]
         pub #maybe_unsafe fn cast<T: GodotObject>(&self) -> Option<T> {
         unsafe {
-                object::godot_cast::<T>(self.this)
+                gdnative_core::object::godot_cast::<T>(self.this)
             }
         }
     }
@@ -210,10 +210,11 @@ pub fn generate_upcast(api: &Api, base_class_name: &str, is_pointer_safe: bool) 
     if let Some(parent) = api.find_class(&base_class_name) {
         let snake_name = class_name_to_snake_case(&base_class_name);
         let parent_class = format_ident!("{}", parent.name);
+        let parent_class_module = format_ident!("{}", parent.name.to_snake_case());
         let to_snake_name = format_ident!("to_{}", snake_name);
         let addref_if_reference = if parent.is_refcounted() {
             quote! {
-                unsafe { object::add_ref(self.this); }
+                unsafe { gdnative_core::object::add_ref(self.this); }
             }
         } else {
             quote! {
@@ -227,12 +228,15 @@ pub fn generate_upcast(api: &Api, base_class_name: &str, is_pointer_safe: bool) 
         };
 
         let upcast = generate_upcast(api, &parent.base_class, is_pointer_safe);
+        let qualified_parent_class = quote! {
+            crate::generated::#parent_class_module::#parent_class
+        };
         quote! {
             /// Up-cast.
             #[inline]
-            pub #maybe_unsafe fn #to_snake_name(&self) -> #parent_class {
+            pub #maybe_unsafe fn #to_snake_name(&self) -> #qualified_parent_class {
                 #addref_if_reference
-                unsafe { #parent_class::from_sys(self.this) }
+                unsafe { #qualified_parent_class::from_sys(self.this) }
             }
 
             #upcast
@@ -249,14 +253,19 @@ pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
     );
 
     let class_name = format_ident!("{}", class.name);
+    let base_class_module = format_ident!("{}", class.base_class.to_snake_case(),);
     let base_class = format_ident!("{}", class.base_class);
+
+    let qualified_base_class = quote! {
+        crate::generated::#base_class_module::#base_class
+    };
 
     quote! {
         impl std::ops::Deref for #class_name {
-            type Target = #base_class;
+            type Target = #qualified_base_class;
 
             #[inline]
-            fn deref(&self) -> &#base_class {
+            fn deref(&self) -> &#qualified_base_class {
                 unsafe {
                     std::mem::transmute(self)
                 }
@@ -265,7 +274,7 @@ pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
 
         impl std::ops::DerefMut for #class_name {
             #[inline]
-            fn deref_mut(&mut self) -> &mut #base_class {
+            fn deref_mut(&mut self) -> &mut #qualified_base_class {
                 unsafe {
                     std::mem::transmute(self)
                 }
@@ -294,12 +303,12 @@ pub fn generate_impl_ref_counted(class: &GodotClass) -> TokenStream {
 
     let class_name = format_ident!("{}", class.name);
     quote! {
-        impl RefCounted for #class_name {
+        impl crate::generated::RefCounted for #class_name {
             /// Creates a new reference to the same reference-counted object.
             #[inline]
             fn new_ref(&self) -> Self {
                 unsafe {
-                    object::add_ref(self.this);
+                    gdnative_core::object::add_ref(self.this);
 
                     Self {
                         this: self.this,
@@ -319,7 +328,7 @@ pub fn generate_drop(class: &GodotClass) -> TokenStream {
             #[inline]
             fn drop(&mut self) {
                 unsafe {
-                    if object::unref(self.this) {
+                    if gdnative_core::object::unref(self.this) {
                         (get_api().godot_object_destroy)(self.this);
                     }
                 }

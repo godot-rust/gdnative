@@ -6,13 +6,5 @@
 // Disable non-critical lints for generated code.
 #![allow(clippy::style, clippy::complexity, clippy::perf)]
 
-pub use gdnative_core::*;
-
-use crate::private::get_api;
-use crate::sys;
-
-use libc;
-use std::ops::*;
-use std::sync::Once;
-
-include!(concat!(env!("OUT_DIR"), "/generated.rs"));
+mod generated;
+pub use generated::*;

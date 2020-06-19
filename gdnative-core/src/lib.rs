@@ -48,7 +48,8 @@ pub mod nativescript;
 #[cfg(feature = "nativescript")]
 pub use nativescript::*;
 
-mod generated;
+#[doc(hidden)]
+pub mod generated;
 #[doc(hidden)]
 pub mod object;
 mod ref_counted;
@@ -66,13 +67,5 @@ pub use sys::GodotApi;
 
 #[doc(inline)]
 pub use error::GodotError;
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-#[repr(u32)]
-pub enum Vector3Axis {
-    X = sys::godot_vector3_axis_GODOT_VECTOR3_AXIS_X as u32,
-    Y = sys::godot_vector3_axis_GODOT_VECTOR3_AXIS_Y as u32,
-    Z = sys::godot_vector3_axis_GODOT_VECTOR3_AXIS_Z as u32,
-}
 
 pub type GodotResult = Result<(), GodotError>;

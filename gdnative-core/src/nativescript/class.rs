@@ -106,7 +106,8 @@ impl<T: NativeClass> Instance<T> {
                 class_name,
                 b"set_library\0".as_ptr() as *const libc::c_char,
             );
-            let object_set_script = crate::ObjectMethodTable::get(gd_api).set_script;
+            let object_set_script =
+                crate::generated::object::ObjectMethodTable::get(gd_api).set_script;
 
             let native_script = ctor();
             object::init_ref_count(native_script);

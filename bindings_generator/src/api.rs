@@ -1,3 +1,4 @@
+use heck::{CamelCase as _, SnakeCase as _};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
@@ -219,8 +220,8 @@ pub enum Ty {
     Result,
     VariantType,
     VariantOperator,
-    Enum(String),
-    Object(String),
+    Enum(syn::TypePath),
+    Object(syn::TypePath),
 }
 
 impl Ty {
@@ -257,15 +258,24 @@ impl Ty {
             "enum.Variant::Type" => Ty::VariantType,
             "enum.Variant::Operator" => Ty::VariantOperator,
             ty if ty.starts_with("enum.") => {
+                // Enums may reference known types (above list), check if it's a known type first
                 let mut split = ty[5..].split("::");
-                let mut class = split.next().unwrap();
-                if class.starts_with('_') {
-                    class = &class[1..];
+                let class_name = split.next().unwrap();
+                let name = format_ident!("{}", split.next().unwrap().to_camel_case());
+                let module = format_ident!("{}", class_name.to_snake_case());
+                // Is it a known type?
+                match Ty::from_src(&class_name) {
+                    Ty::Enum(_) | Ty::Object(_) => {
+                        Ty::Enum(syn::parse_quote! { crate::generated::#module::#name })
+                    }
+                    _ => Ty::Enum(syn::parse_quote! { #module::#name }),
                 }
-                let name = split.next().unwrap();
-                Ty::Enum(format!("{}{}", class, name))
             }
-            ty => Ty::Object(ty.into()),
+            ty => {
+                let module = format_ident!("{}", ty.to_snake_case());
+                let ty = format_ident!("{}", ty);
+                Ty::Object(syn::parse_quote! { crate::generated::#module::#ty })
+            }
         }
     }
 
@@ -301,13 +311,9 @@ impl Ty {
             Ty::Result => syn::parse_quote! { GodotResult },
             Ty::VariantType => syn::parse_quote! { VariantType },
             Ty::VariantOperator => syn::parse_quote! { VariantOperator },
-            Ty::Enum(ref name) => {
-                let name = format_ident!("{}", name);
-                syn::parse_quote! { #name }
-            }
-            Ty::Object(ref name) => {
-                let name = format_ident!("{}", name);
-                syn::parse_quote! { Option<#name> }
+            Ty::Enum(path) => syn::parse_quote! { #path },
+            Ty::Object(path) => {
+                syn::parse_quote! { Option<#path> }
             }
         }
     }
@@ -387,13 +393,12 @@ impl Ty {
                     #rust_ty::from_sys(ret)
                 }
             }
-            Ty::Object(ref name) => {
-                let name = format_ident!("{}", name);
+            Ty::Object(ref path) => {
                 quote! {
                     if ret.is_null() {
                         None
                     } else {
-                        Some(<#name>::from_return_position_sys(ret))
+                        Some(< #path >::from_return_position_sys(ret))
                     }
                 }
             }

@@ -492,11 +492,10 @@ fn generate_return_pre(ty: &Ty) -> TokenStream {
                 let ret_ptr = (&mut ret) as *mut _;
             }
         }
-        &Ty::Enum(ref name) => {
-            let name = format_ident!("{}", name);
+        &Ty::Enum(ref path) => {
             quote! {
-                let mut ret: #name = mem::transmute(0);
-                let ret_ptr = (&mut ret) as *mut _;
+                let mut ret = <#path>::from(0i64);
+                let ret_ptr = &mut ret as *mut _;
             }
         }
     }

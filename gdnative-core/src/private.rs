@@ -26,7 +26,7 @@ pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
     // Force the initialization of the method table of common types. This way we can
     // assume that if the api object is alive we can fetch the method of these types
     // without checking for initialization.
-    crate::ReferenceMethodTable::get(get_api());
+    crate::generated::reference::ReferenceMethodTable::get(get_api());
 
     true
 }

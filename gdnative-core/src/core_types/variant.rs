@@ -1,3 +1,4 @@
+use crate::generated::object::*;
 use crate::*;
 use std::default::Default;
 use std::fmt;

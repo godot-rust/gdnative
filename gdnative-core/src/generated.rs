@@ -18,4 +18,6 @@ use std::sync::Once;
 use std::os::raw::c_char;
 use std::ptr;
 
+use crate as gdnative_core;
+
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
