@@ -65,7 +65,9 @@ pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
 /// This is intended to be an internal interface.
 #[inline]
 pub unsafe fn cleanup_internal_state() {
-    crate::type_tag::cleanup();
+    #[cfg(feature = "nativescript")]
+    crate::nativescript::type_tag::cleanup();
+
     GODOT_API = None;
 }
 

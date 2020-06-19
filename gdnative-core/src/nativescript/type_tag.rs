@@ -1,4 +1,4 @@
-use crate::NativeClass;
+use crate::nativescript::NativeClass;
 use std::any::TypeId;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -29,7 +29,7 @@ pub(crate) use self::transmuted_type_tag::*;
 #[cfg(target_pointer_width = "32")]
 mod boxed_type_tag {
     use super::Tag;
-    use crate::NativeClass;
+    use crate::nativescript::NativeClass;
     use std::boxed::Box;
 
     /// Keep track of allocated type tags so they can be freed on cleanup
@@ -82,7 +82,7 @@ mod boxed_type_tag {
 #[cfg(target_pointer_width = "64")]
 mod transmuted_type_tag {
     use super::Tag;
-    use crate::NativeClass;
+    use crate::nativescript::NativeClass;
 
     /// Create a new type tag for type `T`. This should only be called from `InitHandle`.
     #[inline]

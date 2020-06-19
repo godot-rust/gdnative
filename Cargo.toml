@@ -1,10 +1,10 @@
 [workspace]
 members = [
     "gdnative",
-    "gdnative-sys",
-    "gdnative-derive",
-    "gdnative-core",
     "gdnative-bindings",
+    "gdnative-core",
+    "gdnative-derive",
+    "gdnative-sys",
     "test",
     "bindings_generator",
     "examples/hello_world",

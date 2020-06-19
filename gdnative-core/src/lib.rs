@@ -32,78 +32,35 @@
 pub extern crate gdnative_sys as sys;
 #[doc(hidden)]
 pub extern crate libc;
-#[macro_use]
-extern crate bitflags;
-extern crate parking_lot;
 
 #[cfg(feature = "gd_test")]
 #[macro_use]
 extern crate approx;
 
-pub mod geom;
-
+// Macros have to be processed before they are used.
 mod macros;
-#[macro_use]
-mod class;
-pub mod access;
-mod byte_array;
-mod color;
-mod color_array;
-pub mod dictionary;
-pub mod error;
-mod float32_array;
+
+pub mod core_types;
+pub use core_types::*;
+
+#[cfg(feature = "nativescript")]
+pub mod nativescript;
+#[cfg(feature = "nativescript")]
+pub use nativescript::*;
+
 mod generated;
-pub mod init;
-mod int32_array;
-mod node_path;
 #[doc(hidden)]
 pub mod object;
-mod point2;
 mod ref_counted;
-mod rid;
-mod string;
-mod string_array;
 pub mod thread_access;
-mod type_tag;
-pub mod typed_array;
-pub mod user_data;
-mod variant;
-mod variant_array;
-mod vector2;
-mod vector2_array;
-mod vector3;
-mod vector3_array;
 
 /// Internal low-level API for use by macros and generated bindings. Not a part of the public API.
 #[doc(hidden)]
 pub mod private;
 
-pub use crate::byte_array::*;
-pub use crate::class::*;
-pub use crate::color::*;
-pub use crate::color_array::*;
-pub use crate::dictionary::Dictionary;
-pub use crate::float32_array::*;
 pub use crate::generated::*;
-pub use crate::geom::*;
-pub use crate::int32_array::*;
-pub use crate::node_path::*;
 pub use crate::object::{Free, GodotObject, Instanciable, QueueFree};
-pub use crate::point2::*;
 pub use crate::ref_counted::*;
-pub use crate::rid::*;
-pub use crate::string::*;
-pub use crate::string_array::*;
-pub use crate::typed_array::TypedArray;
-pub use crate::user_data::Map;
-pub use crate::user_data::MapMut;
-pub use crate::user_data::UserData;
-pub use crate::variant::*;
-pub use crate::variant_array::*;
-pub use crate::vector2::*;
-pub use crate::vector2_array::*;
-pub use crate::vector3::*;
-pub use crate::vector3_array::*;
 
 pub use sys::GodotApi;
 

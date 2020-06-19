@@ -3,6 +3,7 @@
 use std::fmt::{self, Write};
 use std::ops::RangeInclusive;
 
+use crate::sys;
 use crate::GodotString;
 use crate::VariantType;
 

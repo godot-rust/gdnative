@@ -2,10 +2,8 @@
 
 use std::mem;
 
-use crate::FromVariant;
-use crate::NativeClass;
-use crate::ToVariant;
-use crate::Variant;
+use crate::nativescript::NativeClass;
+use crate::*;
 
 use super::{RawGetter, RawSetter};
 
