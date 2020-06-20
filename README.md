@@ -1,5 +1,7 @@
 # GDNative bindings for Rust
 
+<img align="right" width="200" height="200" src="assets/godot-ferris.svg">
+
 [![Docs Status](https://docs.rs/gdnative/badge.svg)](https://docs.rs/gdnative)
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
