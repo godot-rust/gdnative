@@ -14,7 +14,7 @@ edition = "2018"
 libc = "0.2"
 
 [build-dependencies]
-bindgen = { version = "0.51.1", default-features = false }
+bindgen = { version = "0.54.0", default-features = false, features = ["runtime"] }
 proc-macro2 = "1.0.6"
 quote = "1.0.2"
 serde = { version = "1.0", features = ["derive"] }
