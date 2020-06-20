@@ -56,10 +56,12 @@ Some types can only be used if the engine is running, in order to test them, use
 
 ## Communication
 
-Communcation around the bindings should happen on IRC on one of the following channels:
+Primary communication between developers of the project happens on the `godot-rust` Discord server. [Invite link here](https://discord.gg/FNudpBD).
 
- - #godotengine-gdnative in freenode
- - #rust-gamedev in irc.mozilla.org.
+For questions about using `godot-rust` the `#gdnative` channel on the [Godot Engine community Discord server](https://godotengine.org/community) can be used.
+On IRC the `#godotengine-gdnative` channel on freenode can be used for questions as well.
+
+If those platforms are not accessible enough for you let us know and we can look into opening new channels and possibly bridging them if needed.
 
 ## License
 
