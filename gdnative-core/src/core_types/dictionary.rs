@@ -5,7 +5,7 @@ use crate::private::get_api;
 use crate::sys;
 use crate::GodotString;
 
-use crate::RefCounted;
+use crate::NewRef;
 use crate::ToVariant;
 use crate::ToVariantEq;
 use crate::Variant;
@@ -299,7 +299,7 @@ impl Default for Dictionary<Shared> {
     }
 }
 
-impl RefCounted for Dictionary<Shared> {
+impl NewRef for Dictionary<Shared> {
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {

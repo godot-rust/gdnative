@@ -20,7 +20,7 @@ impl NativeClass for VariantCallArgs {
     fn class_name() -> &'static str {
         "VariantCallArgs"
     }
-    fn init(_owner: Reference) -> VariantCallArgs {
+    fn init(_owner: &Reference) -> VariantCallArgs {
         VariantCallArgs
     }
     fn register_properties(_builder: &init::ClassBuilder<Self>) {}
@@ -29,22 +29,22 @@ impl NativeClass for VariantCallArgs {
 #[methods]
 impl VariantCallArgs {
     #[export]
-    fn zero(&mut self, _owner: Reference) -> i32 {
+    fn zero(&mut self, _owner: &Reference) -> i32 {
         42
     }
 
     #[export]
-    fn one(&mut self, _owner: Reference, a: i32) -> i32 {
+    fn one(&mut self, _owner: &Reference, a: i32) -> i32 {
         a * 42
     }
 
     #[export]
-    fn two(&mut self, _owner: Reference, a: i32, b: i32) -> i32 {
+    fn two(&mut self, _owner: &Reference, a: i32, b: i32) -> i32 {
         a * 42 + b
     }
 
     #[export]
-    fn three(&mut self, _owner: Reference, a: i32, b: i32, c: i32) -> i32 {
+    fn three(&mut self, _owner: &Reference, a: i32, b: i32, c: i32) -> i32 {
         a * 42 + b * c
     }
 }

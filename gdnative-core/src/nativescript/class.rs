@@ -1,16 +1,17 @@
+use std::ptr::NonNull;
+
 use crate::nativescript::init::ClassBuilder;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
 use crate::nativescript::UserData;
-use crate::object;
+use crate::object::{ManuallyManaged, PersistentRef, Ptr, RawObject, Ref, RefCounted};
 use crate::private::get_api;
-use crate::sys;
 use crate::FromVariant;
 use crate::FromVariantError;
 use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
-use crate::RefCounted;
+use crate::Reference;
 use crate::ToVariant;
 use crate::Variant;
 
@@ -61,7 +62,7 @@ pub trait NativeClass: Sized + 'static {
     ///
     /// This function has a reference to the owner object as a parameter, which can be used to
     /// set state on the owner upon creation or to query values
-    fn init(owner: Self::Base) -> Self;
+    fn init(owner: &Self::Base) -> Self;
 
     /// Register any exported properties to Godot.
     #[inline]
@@ -74,10 +75,21 @@ pub trait NativeClassMethods: NativeClass {
     fn register(builder: &ClassBuilder<Self>);
 }
 
-/// A reference to a GodotObject with a rust NativeClass attached.
-#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
+/// A persistent reference to a GodotObject with a rust NativeClass attached.
+///
+/// `Instance`s can be worked on directly using `map` and `map_mut` if the base object is
+/// reference-counted. Otherwise, use `assume_safe` to obtain a temporary `RefInstance`.
+#[derive(Debug)]
 pub struct Instance<T: NativeClass> {
-    owner: T::Base,
+    owner: <T::Base as GodotObject>::PersistentRef,
+    script: T::UserData,
+}
+
+/// A reference to a GodotObject with a rust NativeClass attached that is assumed safe during
+/// a certain lifetime.
+#[derive(Debug)]
+pub struct RefInstance<'a, T: NativeClass> {
+    owner: &'a T::Base,
     script: T::UserData,
 }
 
@@ -108,14 +120,16 @@ impl<T: NativeClass> Instance<T> {
             );
             let object_set_script = crate::ObjectMethodTable::get(gd_api).set_script;
 
-            let native_script = ctor();
-            object::init_ref_count(native_script);
+            let native_script =
+                NonNull::new(ctor()).expect("NativeScript constructor should not return null");
+            let native_script = RawObject::<Reference>::from_sys_ref_unchecked(native_script);
+            native_script.init_ref_count();
 
             let script_class_name = GodotString::from(T::class_name());
             let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
             (gd_api.godot_method_bind_ptrcall)(
                 set_class_name,
-                native_script,
+                native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
             );
@@ -123,7 +137,7 @@ impl<T: NativeClass> Instance<T> {
             let mut args: [*const libc::c_void; 1] = [crate::private::get_gdnative_library_sys()];
             (gd_api.godot_method_bind_ptrcall)(
                 set_library,
-                native_script,
+                native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
             );
@@ -132,20 +146,20 @@ impl<T: NativeClass> Instance<T> {
 
             assert_ne!(
                 std::ptr::null_mut(),
-                owner.to_sys(),
+                owner.sys(),
                 "base object should not be null"
             );
 
-            let mut args: [*const libc::c_void; 1] = [native_script as *const _];
+            let mut args: [*const libc::c_void; 1] = [native_script.sys().as_ptr()];
             (gd_api.godot_method_bind_ptrcall)(
                 object_set_script,
-                owner.to_sys(),
+                owner.sys(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
             );
 
             let script_ptr =
-                (gd_api.godot_nativescript_get_userdata)(owner.to_sys()) as *const libc::c_void;
+                (gd_api.godot_nativescript_get_userdata)(owner.sys()) as *const libc::c_void;
 
             assert_ne!(
                 std::ptr::null(),
@@ -155,66 +169,61 @@ impl<T: NativeClass> Instance<T> {
 
             let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
 
-            object::unref(native_script);
+            native_script.unref();
 
             Instance { owner, script }
         }
     }
 
+    /// Returns the base object, dropping the script wrapper.
     #[inline]
-    pub fn into_base(self) -> T::Base {
+    pub fn into_base(self) -> <T::Base as GodotObject>::PersistentRef {
         self.owner
     }
 
+    /// Returns the script wrapper.
     #[inline]
     pub fn into_script(self) -> T::UserData {
         self.script
     }
 
+    /// Returns the base object and the script wrapper.
     #[inline]
-    pub fn decouple(self) -> (T::Base, T::UserData) {
+    pub fn decouple(self) -> (<T::Base as GodotObject>::PersistentRef, T::UserData) {
         (self.owner, self.script)
     }
 
+    /// Returns a reference to the base object.
     #[inline]
-    pub fn base(&self) -> &T::Base {
+    pub fn base(&self) -> &<T::Base as GodotObject>::PersistentRef {
         &self.owner
     }
 
+    /// Returns a reference to the script wrapper.
     #[inline]
     pub fn script(&self) -> &T::UserData {
         &self.script
     }
 
-    /// Try to downcast `T::Base` to `Instance<T>`. This safe version can only be used with
-    /// reference counted base classes.
+    /// Try to downcast `&T::Base` to `Instance<T>`.
     #[inline]
-    pub fn try_from_base(owner: T::Base) -> Option<Self>
-    where
-        T::Base: RefCounted,
-    {
-        unsafe { Self::try_from_unsafe_base(owner) }
+    pub fn try_from_base(owner: &T::Base) -> Option<Self> {
+        RefInstance::try_from_base(owner).map(RefInstance::claim)
     }
+}
 
-    /// Try to downcast `T::Base` to `Instance<T>`.
-    ///
-    /// # Safety
-    ///
-    /// It's up to the caller to ensure that `owner` points to a valid Godot object, and
-    /// that it will not be freed until this function returns. Otherwise, it is undefined
-    /// behavior to call this function and/or use its return value.
+/// Methods for instances with reference-counted base classes.
+impl<T: NativeClass> Instance<T>
+where
+    T::Base: GodotObject<PersistentRef = Ref<T::Base>> + RefCounted,
+{
+    /// Try to downcast `Ref<T::Base>` to `Instance<T>` without changing the reference count.
     #[inline]
-    pub unsafe fn try_from_unsafe_base(owner: T::Base) -> Option<Self> {
-        let type_tag = (get_api().godot_nativescript_get_type_tag)(owner.to_sys());
-        if type_tag.is_null() {
-            return None;
-        }
+    pub fn try_from_ref_base(owner: Ref<T::Base>) -> Option<Self> {
+        let user_data = try_get_user_data_ptr::<T>(&*owner)?;
+        let script = unsafe { T::UserData::clone_from_user_data_unchecked(user_data) };
 
-        if !crate::nativescript::type_tag::check::<T>(type_tag) {
-            return None;
-        }
-
-        Some(Self::from_sys_unchecked(owner.to_sys()))
+        Some(Instance { owner, script })
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -223,9 +232,9 @@ impl<T: NativeClass> Instance<T> {
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
-        F: FnOnce(&T, T::Base) -> U,
+        F: FnOnce(&T, &T::Base) -> U,
     {
-        self.script.map(|script| op(script, self.owner.claim()))
+        self.script.map(|script| op(script, &*self.owner))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -234,38 +243,148 @@ impl<T: NativeClass> Instance<T> {
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
-        F: FnOnce(&mut T, T::Base) -> U,
+        F: FnOnce(&mut T, &T::Base) -> U,
     {
-        self.script.map_mut(|script| op(script, self.owner.claim()))
+        self.script.map_mut(|script| op(script, &*self.owner))
+    }
+}
+
+/// Methods for instances with manually-managed base classes.
+impl<T: NativeClass> Instance<T>
+where
+    T::Base: GodotObject<PersistentRef = Ptr<T::Base>> + ManuallyManaged,
+{
+    /// Assume that `self` is safe to use during the `'a` lifetime. This lifetime is unbounded
+    /// and inferred by the compiler unless given explicitly.
+    ///
+    /// This is *not* guaranteed to be a no-op at runtime.
+    ///
+    /// # Safety
+    ///
+    /// It's safe to call `assume_safe` only if the constraints of `Ptr::assume_safe`
+    /// are satisfied for the base object.
+    #[inline]
+    pub unsafe fn assume_safe<'a>(self) -> RefInstance<'a, T> {
+        RefInstance {
+            owner: self.owner.assume_safe::<'a>(),
+            script: self.script,
+        }
     }
 
-    #[doc(hidden)]
+    /// Assume that `self` to use during the lifetime of the input reference. The input
+    /// reference is unused and may be anything. This is a convenience wrapper around
+    /// `assume_safe`.
+    ///
+    /// This is *not* guaranteed to be a no-op at runtime.
+    ///
+    /// # Safety
+    ///
+    /// It's safe to call `assume_safe_during` only if the constraints of
+    /// `Ptr::assume_safe` are satisfied for the base object.
     #[inline]
-    pub unsafe fn from_sys_unchecked(ptr: *mut sys::godot_object) -> Self {
-        let api = get_api();
-        let user_data = (api.godot_nativescript_get_userdata)(ptr);
-        Self::from_raw(ptr, user_data)
+    pub unsafe fn assume_safe_during<'a, L: 'a>(self, _lifetime: &'a L) -> RefInstance<'a, T> {
+        self.assume_safe::<'a>()
     }
 
+    /// Manually frees the base object of this instance.
+    ///
+    /// # Safety
+    ///
+    /// During the call, the underlying object must be valid, and this thread must have
+    /// exclusive access to the object.
+    #[inline]
+    pub unsafe fn free(self) {
+        self.owner.free();
+    }
+}
+
+impl<'a, T: NativeClass> RefInstance<'a, T> {
+    /// Returns a reference to the base object with the same lifetime.
+    #[inline]
+    pub fn base(&self) -> &'a T::Base {
+        self.owner
+    }
+
+    /// Returns a reference to the script wrapper.
+    #[inline]
+    pub fn script(&self) -> &T::UserData {
+        &self.script
+    }
+
+    /// Try to downcast `&T::Base` to `RefInstance<T>`.
+    #[inline]
+    pub fn try_from_base(owner: &'a T::Base) -> Option<Self> {
+        let user_data = try_get_user_data_ptr::<T>(owner)?;
+        unsafe { Some(Self::from_raw_unchecked(owner, user_data)) }
+    }
+
+    /// Pairs an `owner` and `user_data` without checking validity. Internal interface.
     #[doc(hidden)]
     #[inline]
-    pub unsafe fn from_raw(ptr: *mut sys::godot_object, user_data: *mut libc::c_void) -> Self {
-        let owner = T::Base::from_sys(ptr);
-        let script_ptr = user_data as *const libc::c_void;
-        let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
-        Instance { owner, script }
+    pub unsafe fn from_raw_unchecked(owner: &'a T::Base, user_data: *mut libc::c_void) -> Self {
+        let script = T::UserData::clone_from_user_data_unchecked(user_data);
+        RefInstance { owner, script }
+    }
+
+    /// Returns a persistent version of this instance.
+    #[inline]
+    pub fn claim(self) -> Instance<T> {
+        Instance {
+            owner: self.owner.claim(),
+            script: self.script,
+        }
+    }
+}
+
+/// Methods for instances with reference-counted base classes.
+impl<'a, T: NativeClass> RefInstance<'a, T>
+where
+    T::Base: GodotObject,
+{
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value.
+    #[inline]
+    pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
+    where
+        T::UserData: Map,
+        F: FnOnce(&T, &T::Base) -> U,
+    {
+        self.script.map(|script| op(script, self.owner))
+    }
+
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value.
+    #[inline]
+    pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
+    where
+        T::UserData: MapMut,
+        F: FnOnce(&mut T, &T::Base) -> U,
+    {
+        self.script.map_mut(|script| op(script, self.owner))
     }
 }
 
 impl<T> Clone for Instance<T>
 where
     T: NativeClass,
-    T::Base: RefCounted,
 {
     #[inline]
     fn clone(&self) -> Self {
         Instance {
-            owner: self.owner.new_ref(),
+            owner: self.owner.clone(),
+            script: self.script.clone(),
+        }
+    }
+}
+
+impl<'a, T> Clone for RefInstance<'a, T>
+where
+    T: NativeClass,
+{
+    #[inline]
+    fn clone(&self) -> Self {
+        RefInstance {
+            owner: self.owner,
             script: self.script.clone(),
         }
     }
@@ -274,7 +393,16 @@ where
 impl<T> ToVariant for Instance<T>
 where
     T: NativeClass,
-    T::Base: ToVariant,
+{
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        self.owner.to_variant()
+    }
+}
+
+impl<'a, T> ToVariant for RefInstance<'a, T>
+where
+    T: NativeClass,
 {
     #[inline]
     fn to_variant(&self) -> Variant {
@@ -285,13 +413,32 @@ where
 impl<T> FromVariant for Instance<T>
 where
     T: NativeClass,
-    T::Base: FromVariant + RefCounted,
+    T::Base: GodotObject<PersistentRef = Ref<T::Base>> + RefCounted,
 {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        let owner = T::Base::from_variant(variant)?;
-        Self::try_from_base(owner).ok_or(FromVariantError::InvalidInstance {
+        let owner = Ref::<T::Base>::from_variant(variant)?;
+        Self::try_from_base(&*owner).ok_or(FromVariantError::InvalidInstance {
             expected: T::class_name(),
         })
+    }
+}
+
+fn try_get_user_data_ptr<T: NativeClass>(owner: &T::Base) -> Option<*mut libc::c_void> {
+    unsafe {
+        let api = get_api();
+
+        let owner_ptr = owner.as_ptr();
+
+        let type_tag = (api.godot_nativescript_get_type_tag)(owner_ptr);
+        if type_tag.is_null() {
+            return None;
+        }
+
+        if !crate::nativescript::type_tag::check::<T>(type_tag) {
+            return None;
+        }
+
+        Some((api.godot_nativescript_get_userdata)(owner_ptr))
     }
 }

@@ -30,7 +30,7 @@ impl SignalEmitter {
         });
     }
 
-    fn _init(_owner: Node) -> Self {
+    fn _init(_owner: &Node) -> Self {
         SignalEmitter {
             timer: 0.0,
             data: 100,
@@ -38,22 +38,21 @@ impl SignalEmitter {
     }
 
     #[export]
-    fn _process(&mut self, owner: Node, delta: f64) {
+    fn _process(&mut self, owner: &Node, delta: f64) {
         if self.timer < 1.0 {
             self.timer += delta;
             return;
         }
         self.timer = 0.0;
         self.data += 1;
-        unsafe {
-            if self.data % 2 == 0 {
-                owner.emit_signal(GodotString::from_str("tick"), &[]);
-            } else {
-                owner.emit_signal(
-                    GodotString::from_str("tick_with_data"),
-                    &[Variant::from_i64(self.data)],
-                );
-            }
+
+        if self.data % 2 == 0 {
+            owner.emit_signal(GodotString::from_str("tick"), &[]);
+        } else {
+            owner.emit_signal(
+                GodotString::from_str("tick_with_data"),
+                &[Variant::from_i64(self.data)],
+            );
         }
     }
 }
@@ -66,15 +65,17 @@ struct SignalSubscriber {
 
 #[methods]
 impl SignalSubscriber {
-    fn _init(_owner: Label) -> Self {
+    fn _init(_owner: &Label) -> Self {
         SignalSubscriber { times_received: 0 }
     }
 
     #[export]
-    unsafe fn _ready(&mut self, owner: Label) {
+    fn _ready(&mut self, owner: &Label) {
         let emitter = &mut owner
             .get_node(NodePath::from_str("../SignalEmitter"))
             .unwrap();
+        let emitter = unsafe { emitter.assume_safe() };
+
         let object = &owner.to_object();
         emitter
             .connect(
@@ -97,25 +98,21 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn notify(&mut self, owner: Label) {
+    fn notify(&mut self, owner: &Label) {
         self.times_received += 1;
         let msg = format!("Received signal \"tick\" {} times", self.times_received);
 
-        unsafe {
-            owner.set_text(GodotString::from_str(msg.as_str()));
-        }
+        owner.set_text(GodotString::from_str(msg.as_str()));
     }
 
     #[export]
-    fn notify_with_data(&mut self, owner: Label, data: Variant) {
+    fn notify_with_data(&mut self, owner: &Label, data: Variant) {
         let msg = format!(
             "Received signal \"tick_with_data\" with data {}",
             data.try_to_u64().unwrap()
         );
 
-        unsafe {
-            owner.set_text(GodotString::from_str(msg.as_str()));
-        }
+        owner.set_text(GodotString::from_str(msg.as_str()));
     }
 }
 

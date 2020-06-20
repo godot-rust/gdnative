@@ -40,7 +40,6 @@ use crate::nativescript::NativeClass;
 use crate::nativescript::NativeClassMethods;
 use crate::nativescript::UserData;
 use crate::private::get_api;
-use crate::RefCounted;
 use crate::Variant;
 
 pub mod property;
@@ -97,7 +96,19 @@ impl InitHandle {
                 ) -> *mut libc::c_void {
                     use std::panic::{self, AssertUnwindSafe};
 
-                    let owner = match object::godot_cast::<C::Base>(this) {
+                    let this = match ptr::NonNull::new(this) {
+                        Some(this) => this,
+                        None => {
+                            godot_error!(
+                                "gdnative-core: error constructing {}: owner pointer is null",
+                                C::class_name(),
+                            );
+
+                            return ptr::null_mut();
+                        }
+                    };
+
+                    let owner = match object::RawObject::<C::Base>::try_from_sys_ref(this) {
                         Some(owner) => owner,
                         None => {
                             godot_error!(
@@ -109,7 +120,9 @@ impl InitHandle {
                         }
                     };
 
-                    let val = match panic::catch_unwind(AssertUnwindSafe(|| C::init(owner))) {
+                    let val = match panic::catch_unwind(AssertUnwindSafe(|| {
+                        C::init(C::Base::cast_ref(owner))
+                    })) {
                         Ok(val) => val,
                         Err(_) => {
                             godot_error!(

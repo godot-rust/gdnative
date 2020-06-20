@@ -263,9 +263,9 @@ macro_rules! impl_basic_trait_as_sys {
     };
 
     (
-        RefCounted for $Type:ty as $GdType:ident : $gd_method:ident
+        NewRef for $Type:ty as $GdType:ident : $gd_method:ident
     ) => {
-        impl RefCounted for $Type {
+        impl NewRef for $Type {
             #[inline]
             fn new_ref(&self) -> $Type {
                 unsafe {

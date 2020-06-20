@@ -17,64 +17,47 @@ impl HUD {
         });
     }
 
-    fn _init(_owner: CanvasLayer) -> Self {
+    fn _init(_owner: &CanvasLayer) -> Self {
         HUD
     }
 
     #[export]
-    pub unsafe fn show_message(&self, owner: CanvasLayer, text: String) {
-        let message_label: Label = owner
-            .get_typed_node("message_label")
-            .expect("Cannot cast to Label");
-
+    pub fn show_message(&self, owner: &CanvasLayer, text: String) {
+        let message_label: &Label = unsafe { owner.get_typed_node("message_label") };
         message_label.set_text(text.into());
         message_label.show();
 
-        owner
-            .get_typed_node::<Timer, _>("message_timer")
-            .expect("Cannot cast to Timer")
-            .start(0.0);
+        let timer: &Timer = unsafe { owner.get_typed_node("message_timer") };
+        timer.start(0.0);
     }
 
-    pub unsafe fn show_game_over(&self, owner: CanvasLayer) {
+    pub fn show_game_over(&self, owner: &CanvasLayer) {
         self.show_message(owner, "Game Over".into());
 
-        let message_label: Label = owner
-            .get_typed_node("message_label")
-            .expect("Cannot cast to Label");
-
+        let message_label: &Label = unsafe { owner.get_typed_node("message_label") };
         message_label.set_text("Dodge the\nCreeps!".into());
         message_label.show();
 
-        owner
-            .get_typed_node::<Button, _>("start_button")
-            .expect("Cannot cast to Button")
-            .show();
+        let button: &Button = unsafe { owner.get_typed_node("start_button") };
+        button.show();
     }
 
     #[export]
-    pub unsafe fn update_score(&self, owner: CanvasLayer, score: i64) {
-        owner
-            .get_typed_node::<Label, _>("score_label")
-            .expect("Cannot cast to Label")
-            .set_text(score.to_string().into());
+    pub fn update_score(&self, owner: &CanvasLayer, score: i64) {
+        let label: &Label = unsafe { owner.get_typed_node("score_label") };
+        label.set_text(score.to_string().into());
     }
 
     #[export]
-    unsafe fn on_start_button_pressed(&self, owner: CanvasLayer) {
-        owner
-            .get_typed_node::<Button, _>("start_button")
-            .expect("Cannot cast to Button")
-            .hide();
-
+    fn on_start_button_pressed(&self, owner: &CanvasLayer) {
+        let button: &Button = unsafe { owner.get_typed_node("start_button") };
+        button.hide();
         owner.emit_signal("start_game".into(), &[]);
     }
 
     #[export]
-    unsafe fn on_message_timer_timeout(&self, owner: CanvasLayer) {
-        owner
-            .get_typed_node::<Label, _>("message_label")
-            .expect("Cannot cast to Label")
-            .hide()
+    fn on_message_timer_timeout(&self, owner: &CanvasLayer) {
+        let message_label: &Label = unsafe { owner.get_typed_node("message_label") };
+        message_label.hide()
     }
 }

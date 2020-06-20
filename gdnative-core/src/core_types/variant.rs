@@ -2,7 +2,9 @@ use crate::*;
 use std::default::Default;
 use std::fmt;
 use std::mem::{forget, transmute};
+use std::ptr;
 
+use crate::object::PersistentRef;
 use crate::private::get_api;
 use crate::thread_access::*;
 
@@ -334,10 +336,14 @@ impl Variant {
     where
         T: GodotObject,
     {
+        Self::from_object_ptr(val.as_ptr())
+    }
+
+    fn from_object_ptr(val: *mut sys::godot_object) -> Variant {
         unsafe {
             let api = get_api();
             let mut dest = sys::godot_variant::default();
-            (api.godot_variant_new_object)(&mut dest, val.to_sys());
+            (api.godot_variant_new_object)(&mut dest, val);
             Variant(dest)
         }
     }
@@ -605,26 +611,32 @@ impl Variant {
     );
 
     #[inline]
-    pub fn try_to_object<T>(&self) -> Option<T>
+    pub fn try_to_object<T>(&self) -> Option<T::PersistentRef>
     where
         T: GodotObject,
     {
-        self.try_to_object_with_error().ok()
+        self.try_to_object_with_error::<T>().ok()
     }
 
     #[inline]
-    pub fn try_to_object_with_error<T>(&self) -> Result<T, FromVariantError>
+    pub fn try_to_object_with_error<T>(&self) -> Result<T::PersistentRef, FromVariantError>
     where
         T: GodotObject,
     {
         unsafe {
             let api = get_api();
             let obj = self.try_as_sys_of_type(VariantType::Object)?;
-            let obj = Object::from_sys((api.godot_variant_as_object)(obj));
-            obj.cast::<T>().ok_or_else(|| FromVariantError::CannotCast {
-                class: obj.get_class().to_string(),
-                to: T::class_name(),
-            })
+            let obj = ptr::NonNull::new((api.godot_variant_as_object)(obj))
+                .ok_or(FromVariantError::InvalidNil)?;
+            let obj = object::RawObject::<Object>::from_sys_ref_unchecked(obj);
+            let obj = obj
+                .cast::<T>()
+                .ok_or_else(|| FromVariantError::CannotCast {
+                    class: obj.class_name(),
+                    to: T::class_name(),
+                })?;
+
+            Ok(T::PersistentRef::from_sys(obj.sys()))
         }
     }
 
@@ -1230,6 +1242,34 @@ where
     }
 }
 impl<'a, T> ToVariantEq for &'a mut T where T: ToVariantEq {}
+
+impl<T: GodotObject + ManuallyManaged> ToVariant for Ptr<T> {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        Variant::from_object_ptr(self.as_ptr())
+    }
+}
+
+impl<T: GodotObject<PersistentRef = Self> + ManuallyManaged> FromVariant for Ptr<T> {
+    #[inline]
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        variant.try_to_object_with_error::<T>()
+    }
+}
+
+impl<T: GodotObject + RefCounted> ToVariant for Ref<T> {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        Variant::from_object_ptr(self.as_ptr())
+    }
+}
+
+impl<T: GodotObject<PersistentRef = Self> + RefCounted> FromVariant for Ref<T> {
+    #[inline]
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        variant.try_to_object_with_error::<T>()
+    }
+}
 
 macro_rules! from_variant_direct {
     (

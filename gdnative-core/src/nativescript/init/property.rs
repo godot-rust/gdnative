@@ -3,7 +3,7 @@
 use std::mem;
 
 use crate::nativescript::{Instance, NativeClass};
-use crate::object::GodotObject;
+use crate::object::{GodotObject, RefCounted};
 use crate::private::get_api;
 use crate::*;
 
@@ -427,9 +427,20 @@ mod impl_export {
         }
     }
 
-    impl<T> Export for T
+    impl<T> Export for Ref<T>
     where
-        T: GodotObject + ToVariant,
+        T: GodotObject + RefCounted,
+    {
+        type Hint = ();
+        #[inline]
+        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
+            ExportInfo::resource_type::<T>()
+        }
+    }
+
+    impl<T> Export for Ptr<T>
+    where
+        T: GodotObject + ManuallyManaged,
     {
         type Hint = ();
         #[inline]
@@ -441,7 +452,7 @@ mod impl_export {
     impl<T> Export for Instance<T>
     where
         T: NativeClass,
-        T::Base: ToVariant,
+        Instance<T>: ToVariant,
     {
         type Hint = ();
         #[inline]

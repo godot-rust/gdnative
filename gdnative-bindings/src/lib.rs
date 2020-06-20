@@ -6,10 +6,11 @@
 // Disable non-critical lints for generated code.
 #![allow(clippy::style, clippy::complexity, clippy::perf)]
 
-pub use gdnative_core::*;
-
-use crate::private::get_api;
-use crate::sys;
+use gdnative_core::object::{self, PersistentRef};
+use gdnative_core::private::get_api;
+use gdnative_core::sys;
+use gdnative_core::sys::GodotApi;
+use gdnative_core::*;
 
 use libc;
 use std::ops::*;

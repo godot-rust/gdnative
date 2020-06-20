@@ -6,7 +6,7 @@ use gdnative::init::property::{EnumHint, IntHint, StringHint};
 
 #[derive(gdnative::NativeClass)]
 #[inherit(MeshInstance)]
-#[register_with(my_register_function)]
+#[register_with(register_properties)]
 struct RustTest {
     start: gdnative::Vector3,
     time: f32,
@@ -14,7 +14,7 @@ struct RustTest {
     rotate_speed: f64,
 }
 
-fn my_register_function(builder: &gdnative::init::ClassBuilder<RustTest>) {
+fn register_properties(builder: &gdnative::init::ClassBuilder<RustTest>) {
     builder
         .add_property::<String>("test/test_enum")
         .with_hint(StringHint::Enum(EnumHint::new(vec![
@@ -39,7 +39,7 @@ fn my_register_function(builder: &gdnative::init::ClassBuilder<RustTest>) {
 
 #[gdnative::methods]
 impl RustTest {
-    fn _init(_owner: MeshInstance) -> Self {
+    fn _init(_owner: &MeshInstance) -> Self {
         RustTest {
             start: gdnative::Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
@@ -48,18 +48,12 @@ impl RustTest {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, owner: MeshInstance) {
+    fn _ready(&mut self, owner: &MeshInstance) {
         owner.set_physics_process(true);
-        self.start = owner.translation();
-        godot_warn!("Start: {:?}", self.start);
-        godot_warn!(
-            "Parent name: {:?}",
-            owner.get_parent().expect("Missing parent").name()
-        );
     }
 
     #[export]
-    unsafe fn _physics_process(&mut self, owner: MeshInstance, delta: f64) {
+    fn _physics_process(&mut self, owner: &MeshInstance, delta: f64) {
         use gdnative::{api::SpatialMaterial, Color, Vector3};
 
         self.time += delta as f32;

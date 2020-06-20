@@ -7,6 +7,7 @@
 #![allow(clippy::style, clippy::complexity, clippy::perf)]
 
 use super::*;
+use crate::object::{self, PersistentRef};
 use crate::private::get_api;
 use crate::sys;
 use crate::sys::GodotApi;

@@ -34,7 +34,7 @@ const MOB_TYPES: [MobType; 3] = [MobType::Walk, MobType::Swim, MobType::Fly];
 
 #[methods]
 impl Mob {
-    fn _init(_owner: RigidBody2D) -> Self {
+    fn _init(_owner: &RigidBody2D) -> Self {
         Mob {
             min_speed: 150.0,
             max_speed: 250.0,
@@ -42,22 +42,23 @@ impl Mob {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, owner: RigidBody2D) {
+    fn _ready(&mut self, owner: &RigidBody2D) {
         let mut rng = rand::thread_rng();
-        let animated_sprite: AnimatedSprite = owner
-            .get_typed_node("animated_sprite")
-            .expect("Unable to cast to AnimatedSprite");
-
+        let animated_sprite: &AnimatedSprite = unsafe { owner.get_typed_node("animated_sprite") };
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
     }
 
     #[export]
-    unsafe fn on_visibility_screen_exited(&self, owner: RigidBody2D) {
-        owner.queue_free()
+    fn on_visibility_screen_exited(&self, owner: &RigidBody2D) {
+        unsafe {
+            owner.claim().queue_free();
+        }
     }
 
     #[export]
-    unsafe fn on_start_game(&self, owner: RigidBody2D) {
-        owner.queue_free();
+    fn on_start_game(&self, owner: &RigidBody2D) {
+        unsafe {
+            owner.claim().queue_free();
+        }
     }
 }
