@@ -1,24 +1,18 @@
 use crate::api::*;
 use crate::documentation::class_doc_link;
 use crate::rust_safe_name;
-use crate::GeneratorResult;
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use std::collections::HashSet;
-use std::io::Write;
 
 fn skip_method(name: &str) -> bool {
     const METHODS: &[&str] = &["free", "reference", "unreference"];
     METHODS.contains(&name)
 }
 
-pub fn generate_method_table(
-    output: &mut impl Write,
-    api: &Api,
-    class: &GodotClass,
-) -> GeneratorResult {
+pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
     let has_underscore = api.api_underscore.contains(&class.name);
 
     let method_table = format_ident!("{}MethodTable", class.name);
@@ -113,29 +107,20 @@ pub fn generate_method_table(
         }
     };
 
-    let code = quote! {
+    quote! {
         #struct_definition
         #methods
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_method_impl(
-    output: &mut impl Write,
-    class: &GodotClass,
-    method: &GodotMethod,
-) -> GeneratorResult {
+pub fn generate_method_impl(class: &GodotClass, method: &GodotMethod) -> TokenStream {
     let MethodName {
         rust_name: method_name,
         ..
     } = method.get_name();
 
     if skip_method(&method_name) {
-        return Ok(());
+        return Default::default();
     }
 
     let rust_ret_type = if method.has_varargs {
@@ -257,7 +242,7 @@ pub fn generate_method_impl(
         quote! { pub(crate) }
     };
 
-    let code = quote! {
+    quote! {
         #[doc(hidden)]
         #[inline]
         #visibility unsafe fn #class_method_name(obj_ptr: *mut sys::godot_object, #(#args,)* #varargs) -> #rust_ret_type {
@@ -266,12 +251,7 @@ pub fn generate_method_impl(
             let method_bind: *mut sys::godot_method_bind = #method_table::get(gd_api).#rust_method_name;
             #method_body
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
 /// Removes 'get_' from the beginning of `name` if `name` is a property getter on `class`.

@@ -1,11 +1,8 @@
 use crate::api::*;
-use crate::GeneratorResult;
 
 use heck::SnakeCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-
-use std::io::Write;
 
 pub fn generate_reference_ctor(class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", class.name);
@@ -66,7 +63,7 @@ pub fn generate_non_reference_ctor(class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
     let name = &class.name;
     let class_name = format_ident!("{}", class.name);
     let addref_if_reference = if class.is_refcounted() {
@@ -77,7 +74,7 @@ pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -
         }
     };
 
-    let code = quote! {
+    quote! {
         impl crate::private::godot_object::Sealed for #class_name {}
 
         unsafe impl GodotObject for #class_name {
@@ -114,38 +111,24 @@ pub fn generate_godot_object_impl(output: &mut impl Write, class: &GodotClass) -
                 variant.try_to_object_with_error::<Self>()
             }
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_instantiable_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_instantiable_impl(class: &GodotClass) -> TokenStream {
     assert!(class.instantiable, "class should be instantiable");
 
     let class_name = format_ident!("{}", class.name);
-    let code = quote! {
+    quote! {
         impl Instanciable for #class_name {
             #[inline]
             fn construct() -> Self {
                 #class_name::new()
             }
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_free_impl(
-    output: &mut impl Write,
-    api: &Api,
-    class: &GodotClass,
-) -> GeneratorResult {
+pub fn generate_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", class.name);
     let free_output = if class.instantiable && !class.is_pointer_safe() {
         quote! {
@@ -169,15 +152,10 @@ pub fn generate_free_impl(
         Default::default()
     };
 
-    let code = quote! {
+    quote! {
         #free_output
         #queue_free_output
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
 pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
@@ -264,7 +242,7 @@ pub fn generate_upcast(api: &Api, base_class_name: &str, is_pointer_safe: bool) 
     }
 }
 
-pub fn generate_deref_impl(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
     assert!(
         !class.base_class.is_empty(),
         "should not be called on a class with no base_class"
@@ -273,7 +251,7 @@ pub fn generate_deref_impl(output: &mut impl Write, class: &GodotClass) -> Gener
     let class_name = format_ident!("{}", class.name);
     let base_class = format_ident!("{}", class.base_class);
 
-    let code = quote! {
+    quote! {
         impl std::ops::Deref for #class_name {
             type Target = #base_class;
 
@@ -293,39 +271,29 @@ pub fn generate_deref_impl(output: &mut impl Write, class: &GodotClass) -> Gener
                 }
             }
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_reference_clone(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_reference_clone(class: &GodotClass) -> TokenStream {
     assert!(class.is_refcounted(), "Only call with refcounted classes");
 
     let class_name = format_ident!("{}", class.name);
 
-    let code = quote! {
+    quote! {
         impl Clone for #class_name {
             #[inline]
             fn clone(&self) -> Self {
                 self.new_ref()
             }
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_impl_ref_counted(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_impl_ref_counted(class: &GodotClass) -> TokenStream {
     assert!(class.is_refcounted(), "Only call with refcounted classes");
 
     let class_name = format_ident!("{}", class.name);
-    let code = quote! {
+    quote! {
         impl RefCounted for #class_name {
             /// Creates a new reference to the same reference-counted object.
             #[inline]
@@ -339,19 +307,14 @@ pub fn generate_impl_ref_counted(output: &mut impl Write, class: &GodotClass) ->
                 }
             }
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_drop(class: &GodotClass) -> TokenStream {
     assert!(class.is_refcounted(), "Only call with refcounted classes");
 
     let class_name = format_ident!("{}", class.name);
-    let code = quote! {
+    quote! {
         impl Drop for #class_name {
             #[inline]
             fn drop(&mut self) {
@@ -362,12 +325,7 @@ pub fn generate_drop(output: &mut impl Write, class: &GodotClass) -> GeneratorRe
                 }
             }
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
 pub fn generate_gdnative_library_singleton_getter(class: &GodotClass) -> TokenStream {

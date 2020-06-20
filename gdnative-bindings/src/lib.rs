@@ -15,6 +15,4 @@ use libc;
 use std::ops::*;
 use std::sync::Once;
 
-include!(concat!(env!("OUT_DIR"), "/bindings_types.rs"));
-include!(concat!(env!("OUT_DIR"), "/bindings_traits.rs"));
-include!(concat!(env!("OUT_DIR"), "/bindings_methods.rs"));
+include!(concat!(env!("OUT_DIR"), "/generated.rs"));
