@@ -1,16 +1,14 @@
 use crate::api::*;
 use crate::methods;
 use crate::special_methods;
-use crate::GeneratorResult;
 
 use heck::CamelCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use std::collections::HashSet;
-use std::io::Write;
 
-pub fn generate_class_struct(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_class_struct(class: &GodotClass) -> TokenStream {
     // FIXME(#390): non-RefCounted types should not be Clone
     let derive_copy = if !class.is_refcounted() {
         quote! {
@@ -22,26 +20,17 @@ pub fn generate_class_struct(output: &mut impl Write, class: &GodotClass) -> Gen
 
     let class_name = format_ident!("{}", &class.name);
 
-    let code = quote! {
+    quote! {
         #derive_copy
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         pub struct #class_name {
             this: *mut sys::godot_object,
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_class_impl(
-    output: &mut impl Write,
-    api: &Api,
-    class: &GodotClass,
-) -> GeneratorResult {
+pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
     let class_singleton = if class.singleton {
         special_methods::generate_singleton_getter(class)
     } else {
@@ -80,7 +69,7 @@ pub fn generate_class_impl(
     let class_dynamic_cast = special_methods::generate_dynamic_cast(class);
 
     let class_name = format_ident!("{}", class.name);
-    let struct_impl = quote! {
+    quote! {
         impl #class_name {
             #class_singleton
             #class_singleton_getter
@@ -89,15 +78,10 @@ pub fn generate_class_impl(
             #class_upcast
             #class_dynamic_cast
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", struct_impl)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_class_constants(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_class_constants(class: &GodotClass) -> TokenStream {
     assert!(
         !class.constants.is_empty(),
         "Only call on class with constants."
@@ -119,18 +103,13 @@ pub fn generate_class_constants(output: &mut impl Write, class: &GodotClass) -> 
 
     let class_name = format_ident!("{}", &class.name);
 
-    let code = quote! {
+    quote! {
         #[doc="Constants"]
         #[allow(non_upper_case_globals)]
         impl #class_name {
             #constants
         }
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -168,7 +147,7 @@ const ENUM_VARIANTS_TO_SKIP: &[EnumReference<'static>] = &[
     },
 ];
 
-pub fn generate_enums(output: &mut impl Write, class: &GodotClass) -> GeneratorResult {
+pub fn generate_enums(class: &GodotClass) -> TokenStream {
     // TODO: check whether the start of the variant name is
     // equal to the end of the enum name and if so don't repeat it
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
@@ -240,14 +219,9 @@ pub fn generate_enums(output: &mut impl Write, class: &GodotClass) -> GeneratorR
         }
     }).collect();
 
-    let code = quote! {
+    quote! {
         #(#enums)*
-    };
-
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
 fn try_remove_prefix(key: &str, prefix: &str) -> Option<String> {

@@ -1,6 +1,7 @@
 use crate::api::*;
 use crate::GeneratorResult;
 
+use proc_macro2::TokenStream;
 use quote::quote;
 
 use std::io::Write;
@@ -18,11 +19,7 @@ pub fn official_doc_url(class: &GodotClass) -> String {
     )
 }
 
-pub fn generate_class_documentation(
-    output: &mut impl Write,
-    api: &Api,
-    class: &GodotClass,
-) -> GeneratorResult {
+pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStream {
     let has_parent = class.base_class != "";
     let singleton_str = if class.singleton { "singleton " } else { "" };
     let ownership_type = if class.is_refcounted() {
@@ -127,18 +124,14 @@ references to it on other threads.
 [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#,
     );
 
-    let code = quote! {
+    quote! {
         #[doc=#summary_doc]
         #[doc=#official_docs]
         #[doc=#memory_management_docs]
         #[doc=#base_class_docs]
         #[doc=#tools_docs]
         #[doc=#safety_doc]
-    };
-    generated_at!(output);
-    write!(output, "{}", code)?;
-
-    Ok(())
+    }
 }
 
 fn list_base_classes(output: &mut impl Write, api: &Api, parent_name: &str) -> GeneratorResult {

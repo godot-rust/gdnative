@@ -1,20 +1,9 @@
 #[macro_use]
 extern crate serde_derive;
 
-use quote::{format_ident, quote};
+use proc_macro2::TokenStream;
 
-macro_rules! generated_at {
-    ($output:ident) => {
-        #[cfg(feature = "debug")]
-        writeln!(
-            $output,
-            "\n\n// GENERATED at {}:{}:{}\n",
-            module_path!(),
-            line!(),
-            column!()
-        )?;
-    };
-}
+use quote::{format_ident, quote};
 
 pub mod api;
 mod classes;
@@ -24,7 +13,6 @@ mod methods;
 mod special_methods;
 
 use std::collections::HashSet;
-use std::io::Write;
 
 pub use crate::api::*;
 use crate::classes::*;
@@ -37,127 +25,138 @@ use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
-pub fn generate_bindings(
-    output_types_impls: &mut impl Write,
-    output_trait_impls: &mut impl Write,
-    output_method_table: &mut impl Write,
-    ignore: Option<HashSet<String>>,
-) -> GeneratorResult {
+pub fn generate_bindings(ignore: Option<HashSet<String>>) -> TokenStream {
     let to_ignore = ignore.unwrap_or_default();
 
     let api = Api::new();
 
-    generate_imports(output_types_impls)?;
+    let imports = generate_imports();
 
-    for class in &api.classes {
+    let classes = api.classes.iter().filter_map(|class| {
         // ignore classes that have been generated before.
         if to_ignore.contains(&class.name) {
-            continue;
+            return None;
         }
 
-        generate_class_bindings(
-            output_types_impls,
-            output_trait_impls,
-            output_method_table,
-            &api,
-            &class,
-        )?;
-    }
+        Some(generate_class_bindings(&api, &class))
+    });
 
-    Ok(())
+    quote! {
+        #imports
+        #(#classes)*
+    }
 }
 
-pub fn generate_imports(output: &mut impl Write) -> GeneratorResult {
-    let expanded = quote! {
+pub fn generate_imports() -> TokenStream {
+    quote! {
         use std::os::raw::c_char;
         use std::ptr;
         use std::mem;
-    };
-
-    generated_at!(output);
-    write!(output, "{}", expanded)?;
-
-    Ok(())
+    }
 }
 
-pub fn generate_class(
-    output_types_impls: &mut impl Write,
-    output_trait_impls: &mut impl Write,
-    output_method_table: &mut impl Write,
-    class_name: &str,
-) -> GeneratorResult {
+pub fn generate_class(class_name: &str) -> TokenStream {
     let api = Api::new();
 
     let class = api.find_class(class_name);
 
     if let Some(mut class) = class {
-        generate_class_bindings(
-            output_types_impls,
-            output_trait_impls,
-            output_method_table,
-            &api,
-            &mut class,
-        )?;
+        generate_class_bindings(&api, &mut class)
+    } else {
+        Default::default()
     }
-
-    Ok(())
 }
 
-fn generate_class_bindings(
-    output_types_impls: &mut impl Write,
-    output_trait_impls: &mut impl Write,
-    output_method_table: &mut impl Write,
-    api: &Api,
-    class: &GodotClass,
-) -> GeneratorResult {
+fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
     // types and methods
-    {
-        generate_class_documentation(output_types_impls, &api, class)?;
+    let types_and_methods = {
+        let documentation = generate_class_documentation(&api, class);
 
-        generate_class_struct(output_types_impls, class)?;
+        let class_struct = generate_class_struct(class);
 
-        generate_enums(output_types_impls, class)?;
+        let enums = generate_enums(class);
 
-        if !class.constants.is_empty() {
-            generate_class_constants(output_types_impls, class)?;
+        let constants = if !class.constants.is_empty() {
+            generate_class_constants(class)
+        } else {
+            Default::default()
+        };
+
+        let class_impl = generate_class_impl(&api, class);
+
+        quote! {
+            #documentation
+            #class_struct
+            #enums
+            #constants
+            #class_impl
         }
-
-        generate_class_impl(output_types_impls, &api, class)?;
-    }
+    };
 
     // traits
-    {
-        generate_godot_object_impl(output_trait_impls, class)?;
+    let traits = {
+        let object_impl = generate_godot_object_impl(class);
 
-        generate_free_impl(output_trait_impls, &api, class)?;
+        let free_impl = generate_free_impl(&api, class);
 
-        if !class.base_class.is_empty() {
-            generate_deref_impl(output_trait_impls, class)?;
-        }
+        let base_class = if !class.base_class.is_empty() {
+            generate_deref_impl(class)
+        } else {
+            Default::default()
+        };
 
         // RefCounted
-        if class.is_refcounted() {
-            generate_impl_ref_counted(output_trait_impls, class)?;
-            generate_reference_clone(output_trait_impls, class)?;
-            generate_drop(output_trait_impls, class)?;
-        }
+        let ref_counted = if class.is_refcounted() {
+            let ref_counted = generate_impl_ref_counted(class);
+            let ref_clone = generate_reference_clone(class);
+            let gen_drop = generate_drop(class);
+
+            quote! {
+                #ref_counted
+                #ref_clone
+                #gen_drop
+            }
+        } else {
+            Default::default()
+        };
 
         // Instantiable
-        if class.instantiable {
-            generate_instantiable_impl(output_trait_impls, class)?;
+        let instantiable = if class.instantiable {
+            generate_instantiable_impl(class)
+        } else {
+            Default::default()
+        };
+        quote! {
+            #object_impl
+            #free_impl
+            #base_class
+            #ref_counted
+            #instantiable
         }
-    }
+    };
 
     // methods and method table for classes with functions
-    if class.instantiable || !class.methods.is_empty() {
-        generate_method_table(output_method_table, &api, class)?;
+    let methods_and_table = if class.instantiable || !class.methods.is_empty() {
+        let table = generate_method_table(&api, class);
 
-        for method in &class.methods {
-            generate_method_impl(output_method_table, class, method)?;
+        let methods = class
+            .methods
+            .iter()
+            .map(|method| generate_method_impl(class, method));
+
+        quote! {
+            #table
+            #(#methods)*
         }
-    }
+    } else {
+        Default::default()
+    };
 
-    Ok(())
+    quote! {
+        #types_and_methods
+        #traits
+        #methods_and_table
+    }
 }
 
 fn rust_safe_name(name: &str) -> proc_macro2::Ident {
@@ -176,7 +175,7 @@ fn rust_safe_name(name: &str) -> proc_macro2::Ident {
 #[cfg(test)]
 pub(crate) mod test_prelude {
     use super::*;
-    use std::io::BufWriter;
+    use std::io::{BufWriter, Write};
 
     macro_rules! validate_and_clear_buffer {
         ($buffer:ident) => {
@@ -200,60 +199,74 @@ pub(crate) mod test_prelude {
         let api = Api::new();
         let mut buffer = BufWriter::new(Vec::with_capacity(16384));
         for class in &api.classes {
-            generate_class_documentation(&mut buffer, &api, &class).unwrap();
+            let code = generate_class_documentation(&api, &class);
+            write!(&mut buffer, "{}", code).unwrap();
             write!(&mut buffer, "{}", quote! { struct Docs {} }).unwrap();
             validate_and_clear_buffer!(buffer);
 
-            generate_class_struct(&mut buffer, &class).unwrap();
+            let code = generate_class_struct(&class);
+            write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
-            generate_enums(&mut buffer, &class).unwrap();
+            let code = generate_enums(&class);
+            write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             if !class.constants.is_empty() {
-                generate_class_constants(&mut buffer, &class).unwrap();
+                let code = generate_class_constants(&class);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
-            generate_class_impl(&mut buffer, &api, &class).unwrap();
+            let code = generate_class_impl(&api, &class);
+            write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             // traits
-            generate_godot_object_impl(&mut buffer, &class).unwrap();
+            let code = generate_godot_object_impl(&class);
+            write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
-            generate_free_impl(&mut buffer, &api, &class).unwrap();
+            let code = generate_free_impl(&api, &class);
+            write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             if !class.base_class.is_empty() {
-                generate_deref_impl(&mut buffer, &class).unwrap();
+                let code = generate_deref_impl(&class);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
             // RefCounted
             if class.is_refcounted() {
-                generate_impl_ref_counted(&mut buffer, &class).unwrap();
+                let code = generate_impl_ref_counted(&class);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
 
-                generate_reference_clone(&mut buffer, &class).unwrap();
+                let code = generate_reference_clone(&class);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
 
-                generate_drop(&mut buffer, &class).unwrap();
+                let code = generate_drop(&class);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
             // Instantiable
             if class.instantiable {
-                generate_instantiable_impl(&mut buffer, &class).unwrap();
+                let code = generate_instantiable_impl(&class);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
             // methods and method table
-            generate_method_table(&mut buffer, &api, &class).unwrap();
+            let code = generate_method_table(&api, &class);
+            write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             for method in &class.methods {
-                generate_method_impl(&mut buffer, &class, method).unwrap();
+                let code = generate_method_impl(&class, method);
+                write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
         }
