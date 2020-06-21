@@ -8,7 +8,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(_handle: &init::InitHandle) {}
+pub(crate) fn register(_handle: init::InitHandle) {}
 
 fn test_variant_ops() -> bool {
     println!(" -- test_variant_ops");

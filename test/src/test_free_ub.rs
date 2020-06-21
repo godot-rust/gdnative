@@ -11,7 +11,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(handle: &init::InitHandle) {
+pub(crate) fn register(handle: init::InitHandle) {
     handle.add_class::<Bar>();
 }
 

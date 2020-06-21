@@ -116,7 +116,7 @@ script:
     fi
 
   - if [[ "$CI_STAGE_CARGO_CLIPPY" == "yes" ]]; then
-      cargo clippy --all --all-features;
+      cargo clippy --all --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
     fi
 
   - if [[ "$CI_STAGE_CARGO_TEST" == "yes" ]]; then

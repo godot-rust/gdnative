@@ -224,12 +224,12 @@ fn init(handle: init::InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
 
-    test_derive::register(&handle);
-    test_free_ub::register(&handle);
-    test_register::register(&handle);
-    test_return_leak::register(&handle);
-    test_variant_call_args::register(&handle);
-    test_variant_ops::register(&handle);
+    test_derive::register(handle);
+    test_free_ub::register(handle);
+    test_register::register(handle);
+    test_return_leak::register(handle);
+    test_variant_call_args::register(handle);
+    test_variant_ops::register(handle);
 }
 
 godot_gdnative_init!();

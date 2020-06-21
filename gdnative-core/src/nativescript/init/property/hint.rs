@@ -72,8 +72,7 @@ where
     }
 
     /// Formats the hint as a Godot hint string.
-    #[inline]
-    pub fn to_godot_hint_string(&self) -> GodotString {
+    fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
         write!(s, "{},{}", self.min, self.max).unwrap();
@@ -127,8 +126,7 @@ impl EnumHint {
     }
 
     /// Formats the hint as a Godot hint string.
-    #[inline]
-    pub fn to_godot_hint_string(&self) -> GodotString {
+    fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
         let mut iter = self.values.iter();
@@ -242,8 +240,7 @@ impl ExpEasingHint {
     }
 
     /// Formats the hint as a Godot hint string.
-    #[inline]
-    pub fn to_godot_hint_string(&self) -> GodotString {
+    fn to_godot_hint_string(self) -> GodotString {
         let mut s = String::new();
 
         if self.is_attenuation {

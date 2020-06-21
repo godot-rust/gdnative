@@ -64,7 +64,7 @@ impl InitHandle {
 
     /// Registers a new class to the engine.
     #[inline]
-    pub fn add_class<C>(&self)
+    pub fn add_class<C>(self)
     where
         C: NativeClassMethods,
     {
@@ -73,7 +73,7 @@ impl InitHandle {
 
     /// Registers a new tool class to the engine.
     #[inline]
-    pub fn add_tool_class<C>(&self)
+    pub fn add_tool_class<C>(self)
     where
         C: NativeClassMethods,
     {
@@ -81,7 +81,7 @@ impl InitHandle {
     }
 
     #[inline]
-    fn add_maybe_tool_class<C>(&self, is_tool: bool)
+    fn add_maybe_tool_class<C>(self, is_tool: bool)
     where
         C: NativeClassMethods,
     {

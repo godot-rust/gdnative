@@ -287,6 +287,8 @@ mod tests {
             let mut write = access.into_owned();
             let slice = write.as_mut_slice();
             assert_eq!(8, slice.len());
+
+            #[allow(clippy::needless_range_loop)]
             for i in 0..8 {
                 slice[i] = (i * 2) as i64;
             }

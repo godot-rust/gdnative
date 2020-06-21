@@ -8,7 +8,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(_handle: &init::InitHandle) {}
+pub(crate) fn register(_handle: init::InitHandle) {}
 
 fn test_derive_to_variant() -> bool {
     println!(" -- test_derive_to_variant");
@@ -54,6 +54,7 @@ fn test_derive_to_variant() -> bool {
     mod variant_with {
         use gdnative::{FromVariantError, GodotString, ToVariant, Variant};
 
+        #[allow(clippy::trivially_copy_pass_by_ref)]
         pub fn to_variant(_ptr: &*mut ()) -> Variant {
             GodotString::from("*mut ()").to_variant()
         }

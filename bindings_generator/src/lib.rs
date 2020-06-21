@@ -25,6 +25,7 @@ use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
+#[allow(clippy::implicit_hasher)]
 pub fn generate_bindings(ignore: Option<HashSet<String>>) -> TokenStream {
     let to_ignore = ignore.unwrap_or_default();
 
@@ -60,8 +61,8 @@ pub fn generate_class(class_name: &str) -> TokenStream {
 
     let class = api.find_class(class_name);
 
-    if let Some(mut class) = class {
-        generate_class_bindings(&api, &mut class)
+    if let Some(class) = class {
+        generate_class_bindings(&api, &class)
     } else {
         Default::default()
     }
@@ -173,7 +174,7 @@ pub(crate) mod test_prelude {
         ($buffer:ident) => {
             $buffer.flush().unwrap();
             let content = std::str::from_utf8($buffer.get_ref()).unwrap();
-            if let Err(_) = syn::parse_file(&content) {
+            if syn::parse_file(&content).is_err() {
                 let mut code_file = std::env::temp_dir();
                 code_file.set_file_name("bad_code.rs");
                 std::fs::write(&code_file, &content).unwrap();

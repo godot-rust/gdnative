@@ -1,7 +1,5 @@
 //! Property registration.
 
-use std::mem;
-
 use crate::nativescript::{Instance, NativeClass};
 use crate::object::{GodotObject, RefCounted};
 use crate::private::get_api;
@@ -311,8 +309,8 @@ bitflags::bitflags! {
 
 impl Usage {
     #[inline]
-    pub fn to_sys(&self) -> sys::godot_property_usage_flags {
-        unsafe { mem::transmute(*self) }
+    pub fn to_sys(self) -> sys::godot_property_usage_flags {
+        self.bits() as sys::godot_property_usage_flags
     }
 }
 
