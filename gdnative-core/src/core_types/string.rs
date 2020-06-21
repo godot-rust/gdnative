@@ -1,6 +1,6 @@
 use crate::private::get_api;
 use crate::sys;
-use crate::RefCounted;
+use crate::NewRef;
 
 use std::cmp::Ordering;
 use std::ffi::CStr;
@@ -219,7 +219,7 @@ impl_basic_traits_as_sys!(
         Drop => godot_string_destroy;
         Eq => godot_string_operator_equal;
         Default => godot_string_new;
-        RefCounted => godot_string_new_copy;
+        NewRef => godot_string_new_copy;
     }
 );
 

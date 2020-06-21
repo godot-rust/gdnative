@@ -11,7 +11,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(handle: &init::InitHandle) {
+pub(crate) fn register(handle: init::InitHandle) {
     handle.add_class::<Bar>();
 }
 
@@ -23,7 +23,7 @@ impl NativeClass for Bar {
     fn class_name() -> &'static str {
         "Bar"
     }
-    fn init(_owner: Node) -> Bar {
+    fn init(_owner: &Node) -> Bar {
         Bar(42, None)
     }
     fn register_properties(_builder: &init::ClassBuilder<Self>) {}
@@ -38,19 +38,17 @@ impl Bar {
 #[methods]
 impl Bar {
     #[export]
-    fn free_is_not_ub(&mut self, owner: Node) -> bool {
+    fn free_is_not_ub(&mut self, owner: &Node) -> bool {
         unsafe {
-            owner.free();
+            owner.claim().free();
         }
         assert_eq!(42, self.0, "self should not point to garbage");
         true
     }
 
     #[export]
-    fn set_script_is_not_ub(&mut self, owner: Node) -> bool {
-        unsafe {
-            owner.set_script(None);
-        }
+    fn set_script_is_not_ub(&mut self, owner: &Node) -> bool {
+        owner.set_script(None);
         assert_eq!(42, self.0, "self should not point to garbage");
         true
     }
@@ -70,27 +68,34 @@ fn test_owner_free_ub() -> bool {
     let ok = std::panic::catch_unwind(|| {
         let drop_counter = Arc::new(AtomicUsize::new(0));
 
-        let bar = Instance::<Bar>::new();
-        unsafe {
+        {
+            let bar = Instance::<Bar>::new();
+            let bar = unsafe { bar.assume_safe() };
+
             bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
-            let base = bar.into_base();
+
             assert_eq!(
                 Some(true),
-                base.call("set_script_is_not_ub".into(), &[]).try_to_bool()
+                bar.base()
+                    .call("set_script_is_not_ub".into(), &[])
+                    .try_to_bool()
             );
-            base.free();
+
+            unsafe {
+                bar.claim().free();
+            }
         }
 
-        let bar = Instance::<Bar>::new();
-        unsafe {
+        {
+            let bar = Instance::<Bar>::new();
+            let bar = unsafe { bar.assume_safe() };
             bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
+
             assert_eq!(
                 Some(true),
-                bar.into_base()
-                    .call("free_is_not_ub".into(), &[])
-                    .try_to_bool()
+                bar.base().call("free_is_not_ub".into(), &[]).try_to_bool()
             );
         }
 

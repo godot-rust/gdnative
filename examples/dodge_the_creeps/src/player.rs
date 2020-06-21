@@ -23,7 +23,7 @@ impl Player {
         });
     }
 
-    fn _init(_owner: Area2D) -> Self {
+    fn _init(_owner: &Area2D) -> Self {
         Player {
             speed: 400.0,
             screen_size: Vector2::new(0.0, 0.0),
@@ -31,16 +31,15 @@ impl Player {
     }
 
     #[export]
-    unsafe fn _ready(&mut self, owner: Area2D) {
-        self.screen_size = owner.get_viewport().unwrap().size();
+    fn _ready(&mut self, owner: &Area2D) {
+        let viewport = unsafe { owner.get_viewport().unwrap().assume_safe() };
+        self.screen_size = viewport.size();
         owner.hide();
     }
 
     #[export]
-    unsafe fn _process(&mut self, owner: Area2D, delta: f32) {
-        let animated_sprite: AnimatedSprite = owner
-            .get_typed_node("animated_sprite")
-            .expect("Unable to cast to AnimatedSprite");
+    fn _process(&mut self, owner: &Area2D, delta: f32) {
+        let animated_sprite: &AnimatedSprite = unsafe { owner.get_typed_node("animated_sprite") };
 
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
@@ -86,25 +85,23 @@ impl Player {
     }
 
     #[export]
-    unsafe fn on_player_body_entered(&self, owner: Area2D, _body: PhysicsBody2D) {
+    fn on_player_body_entered(&self, owner: &Area2D, _body: Ptr<PhysicsBody2D>) {
         owner.hide();
         owner.emit_signal("hit".into(), &[]);
 
-        let collision_shape: CollisionShape2D = owner
-            .get_typed_node("collision_shape_2d")
-            .expect("Unable to cast to CollisionShape2D");
+        let collision_shape: &CollisionShape2D =
+            unsafe { owner.get_typed_node("collision_shape_2d") };
 
         collision_shape.set_deferred("disabled".into(), true.into());
     }
 
     #[export]
-    pub unsafe fn start(&self, owner: Area2D, pos: Vector2) {
+    pub fn start(&self, owner: &Area2D, pos: Vector2) {
         owner.set_global_position(pos);
         owner.show();
 
-        let collision_shape: CollisionShape2D = owner
-            .get_typed_node("collision_shape_2d")
-            .expect("Unable to cast to CollisionShape2D");
+        let collision_shape: &CollisionShape2D =
+            unsafe { owner.get_typed_node("collision_shape_2d") };
 
         collision_shape.set_disabled(false);
     }

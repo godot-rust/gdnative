@@ -40,7 +40,6 @@ use crate::nativescript::NativeClass;
 use crate::nativescript::NativeClassMethods;
 use crate::nativescript::UserData;
 use crate::private::get_api;
-use crate::RefCounted;
 use crate::Variant;
 
 pub mod property;
@@ -65,7 +64,7 @@ impl InitHandle {
 
     /// Registers a new class to the engine.
     #[inline]
-    pub fn add_class<C>(&self)
+    pub fn add_class<C>(self)
     where
         C: NativeClassMethods,
     {
@@ -74,7 +73,7 @@ impl InitHandle {
 
     /// Registers a new tool class to the engine.
     #[inline]
-    pub fn add_tool_class<C>(&self)
+    pub fn add_tool_class<C>(self)
     where
         C: NativeClassMethods,
     {
@@ -82,7 +81,7 @@ impl InitHandle {
     }
 
     #[inline]
-    fn add_maybe_tool_class<C>(&self, is_tool: bool)
+    fn add_maybe_tool_class<C>(self, is_tool: bool)
     where
         C: NativeClassMethods,
     {
@@ -97,7 +96,19 @@ impl InitHandle {
                 ) -> *mut libc::c_void {
                     use std::panic::{self, AssertUnwindSafe};
 
-                    let owner = match object::godot_cast::<C::Base>(this) {
+                    let this = match ptr::NonNull::new(this) {
+                        Some(this) => this,
+                        None => {
+                            godot_error!(
+                                "gdnative-core: error constructing {}: owner pointer is null",
+                                C::class_name(),
+                            );
+
+                            return ptr::null_mut();
+                        }
+                    };
+
+                    let owner = match object::RawObject::<C::Base>::try_from_sys_ref(this) {
                         Some(owner) => owner,
                         None => {
                             godot_error!(
@@ -109,7 +120,9 @@ impl InitHandle {
                         }
                     };
 
-                    let val = match panic::catch_unwind(AssertUnwindSafe(|| C::init(owner))) {
+                    let val = match panic::catch_unwind(AssertUnwindSafe(|| {
+                        C::init(C::Base::cast_ref(owner))
+                    })) {
                         Ok(val) => val,
                         Err(_) => {
                             godot_error!(

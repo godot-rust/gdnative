@@ -82,7 +82,8 @@ macro_rules! godot_wrap_method_inner {
             ) -> $crate::sys::godot_variant {
 
                 use std::panic::{self, AssertUnwindSafe};
-                use $crate::nativescript::Instance;
+                use $crate::nativescript::{NativeClass, Instance, RefInstance};
+                use $crate::object::{GodotObject, PersistentRef};
 
                 if user_data.is_null() {
                     $crate::godot_error!(
@@ -92,8 +93,21 @@ macro_rules! godot_wrap_method_inner {
                     return $crate::Variant::new().forget();
                 }
 
+                let this = match std::ptr::NonNull::new(this) {
+                    Some(this) => this,
+                    None => {
+                        $crate::godot_error!(
+                            "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
+                            stringify!($type_name),
+                        );
+                        return $crate::Variant::new().forget();
+                    },
+                };
+
                 let __catch_result = panic::catch_unwind(move || {
-                    let __instance: Instance<$type_name> = Instance::from_raw(this, user_data);
+                    let this = <<<$type_name as NativeClass>::Base as GodotObject>::PersistentRef>::from_sys(this);
+                    let this = <<$type_name as NativeClass>::Base as GodotObject>::cast_ref(this.as_raw());
+                    let __instance = RefInstance::<$type_name>::from_raw_unchecked(this, user_data);
 
                     let num_args = num_args as isize;
 

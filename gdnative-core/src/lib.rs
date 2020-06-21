@@ -1,28 +1,23 @@
 //! # Rust bindings for the Godot game engine
 //!
-//! This crate contains high-level wrappers around the Godot game engine's gdnative API.
-//! Some of the types were automatically generated from the engine's JSON API description,
-//! and some other types are hand made wrappers around the core C types.
+//! This crate contains high-level wrappers around the core types of Godot Engine's GDNative
+//! API, and the NativeScript feature which enables Rust code to be used as scripts.
 //!
-//! ## Memory management
+//! ## Memory management for core types
 //!
-//! ### Reference counting
-//!
-//! A lot of the types provided by the engine are internally reference counted and
-//! allow mutable aliasing.
-//! In rust parlance this means that a type such as `gdnative::ConcavePolygonShape2D`
-//! is functionally equivalent to a `Rc<Cell<Something>>` rather than `Rc<Something>`.
+//! Wrappers for most core types expose safe Rust interfaces, and it's unnecessary to mind
+//! memory management most of the times. The exceptions are `VariantArray` and `Dictionary`,
+//! internally reference-counted collections with "interior mutability" in Rust parlance. These
+//! types are modelled using the "typestate" pattern to enforce that the official
+//! [thread-safety guidelines][thread-safety]. For more information, read the type-level
+//! documentation for these types.
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
-//! content when using the `Clone` trait, most of these types do not implement `Clone`
-//! and instead implement [`RefCounted`](./trait.RefCounted.html) which provides a
-//! `new_ref(&self) -> Self` method to create references to the same collection or object.
+//! content when using the `Clone` trait, some types do not implement `Clone` and instead
+//! implement [`NewRef`](./trait.NewRef.html) which provides a `new_ref(&self) -> Self` method
+//! to create references to the same collection or object.
 //!
-//! ### Manually managed objects
-//!
-//! Some types are manually managed. This means that ownership can be passed to the
-//! engine or the object must be carefully deallocated using the object's `free`  method.
-//!
+//! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 
 #![deny(clippy::missing_inline_in_public_items)]
 #![allow(clippy::transmute_ptr_to_ptr)]
@@ -49,9 +44,9 @@ pub mod nativescript;
 pub use nativescript::*;
 
 mod generated;
+mod new_ref;
 #[doc(hidden)]
 pub mod object;
-mod ref_counted;
 pub mod thread_access;
 
 /// Internal low-level API for use by macros and generated bindings. Not a part of the public API.
@@ -59,8 +54,10 @@ pub mod thread_access;
 pub mod private;
 
 pub use crate::generated::*;
-pub use crate::object::{Free, GodotObject, Instanciable, QueueFree};
-pub use crate::ref_counted::*;
+pub use crate::new_ref::NewRef;
+pub use crate::object::{
+    GodotObject, Instanciable, ManuallyManaged, Ptr, QueueFree, Ref, RefCounted,
+};
 
 pub use sys::GodotApi;
 

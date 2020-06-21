@@ -54,7 +54,7 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                     #name_str
                 }
 
-                fn init(owner: Self::Base) -> Self {
+                fn init(owner: &Self::Base) -> Self {
                     Self::_init(owner)
                 }
 

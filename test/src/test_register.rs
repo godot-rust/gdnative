@@ -8,7 +8,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(handle: &init::InitHandle) {
+pub(crate) fn register(handle: init::InitHandle) {
     handle.add_class::<RegisterSignal>();
     handle.add_class::<RegisterProperty>();
 }
@@ -22,7 +22,7 @@ impl NativeClass for RegisterSignal {
     fn class_name() -> &'static str {
         "RegisterSignal"
     }
-    fn init(_owner: Reference) -> RegisterSignal {
+    fn init(_owner: &Reference) -> RegisterSignal {
         RegisterSignal
     }
     fn register_properties(builder: &init::ClassBuilder<Self>) {
@@ -51,7 +51,7 @@ impl NativeClass for RegisterProperty {
     fn class_name() -> &'static str {
         "RegisterProperty"
     }
-    fn init(_owner: Reference) -> RegisterProperty {
+    fn init(_owner: &Reference) -> RegisterProperty {
         RegisterProperty { value: 42 }
     }
     fn register_properties(builder: &init::ClassBuilder<Self>) {
@@ -67,12 +67,12 @@ impl NativeClass for RegisterProperty {
 #[methods]
 impl RegisterProperty {
     #[export]
-    fn set_value(&mut self, _owner: Reference, value: i64) {
+    fn set_value(&mut self, _owner: &Reference, value: i64) {
         self.value = value;
     }
 
     #[export]
-    fn get_value(&self, _owner: Reference) -> i64 {
+    fn get_value(&self, _owner: &Reference) -> i64 {
         self.value
     }
 }
@@ -85,17 +85,15 @@ fn test_register_property() -> bool {
 
         let base = obj.into_base();
 
-        unsafe {
-            assert_eq!(Some(42), base.call("get_value".into(), &[]).try_to_i64());
+        assert_eq!(Some(42), base.call("get_value".into(), &[]).try_to_i64());
 
-            base.set("value".into(), 54.to_variant());
+        base.set("value".into(), 54.to_variant());
 
-            assert_eq!(Some(54), base.call("get_value".into(), &[]).try_to_i64());
+        assert_eq!(Some(54), base.call("get_value".into(), &[]).try_to_i64());
 
-            base.call("set_value".into(), &[4242.to_variant()]);
+        base.call("set_value".into(), &[4242.to_variant()]);
 
-            assert_eq!(Some(4242), base.call("get_value".into(), &[]).try_to_i64());
-        }
+        assert_eq!(Some(4242), base.call("get_value".into(), &[]).try_to_i64());
     })
     .is_ok();
 

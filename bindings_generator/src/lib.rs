@@ -25,6 +25,7 @@ use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
+#[allow(clippy::implicit_hasher)]
 pub fn generate_bindings(ignore: Option<HashSet<String>>) -> TokenStream {
     let to_ignore = ignore.unwrap_or_default();
 
@@ -60,8 +61,8 @@ pub fn generate_class(class_name: &str) -> TokenStream {
 
     let class = api.find_class(class_name);
 
-    if let Some(mut class) = class {
-        generate_class_bindings(&api, &mut class)
+    if let Some(class) = class {
+        generate_class_bindings(&api, &class)
     } else {
         Default::default()
     }
@@ -97,7 +98,7 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
     let traits = {
         let object_impl = generate_godot_object_impl(class);
 
-        let free_impl = generate_free_impl(&api, class);
+        let free_impl = generate_queue_free_impl(&api, class);
 
         let base_class = if !class.base_class.is_empty() {
             generate_deref_impl(class)
@@ -105,19 +106,10 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
             Default::default()
         };
 
-        // RefCounted
-        let ref_counted = if class.is_refcounted() {
-            let ref_counted = generate_impl_ref_counted(class);
-            let ref_clone = generate_reference_clone(class);
-            let gen_drop = generate_drop(class);
-
-            quote! {
-                #ref_counted
-                #ref_clone
-                #gen_drop
-            }
+        let mem_type = if class.is_refcounted() {
+            generate_impl_ref_counted(class)
         } else {
-            Default::default()
+            generate_impl_manually_managed(class)
         };
 
         // Instantiable
@@ -126,11 +118,12 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
         } else {
             Default::default()
         };
+
         quote! {
             #object_impl
             #free_impl
             #base_class
-            #ref_counted
+            #mem_type
             #instantiable
         }
     };
@@ -142,7 +135,7 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
         let methods = class
             .methods
             .iter()
-            .map(|method| generate_method_impl(class, method));
+            .map(|method| generate_method_impl(&api, class, method));
 
         quote! {
             #table
@@ -181,7 +174,7 @@ pub(crate) mod test_prelude {
         ($buffer:ident) => {
             $buffer.flush().unwrap();
             let content = std::str::from_utf8($buffer.get_ref()).unwrap();
-            if let Err(_) = syn::parse_file(&content) {
+            if syn::parse_file(&content).is_err() {
                 let mut code_file = std::env::temp_dir();
                 code_file.set_file_name("bad_code.rs");
                 std::fs::write(&code_file, &content).unwrap();
@@ -227,7 +220,7 @@ pub(crate) mod test_prelude {
             write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
-            let code = generate_free_impl(&api, &class);
+            let code = generate_queue_free_impl(&api, &class);
             write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
@@ -242,12 +235,8 @@ pub(crate) mod test_prelude {
                 let code = generate_impl_ref_counted(&class);
                 write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
-
-                let code = generate_reference_clone(&class);
-                write!(&mut buffer, "{}", code).unwrap();
-                validate_and_clear_buffer!(buffer);
-
-                let code = generate_drop(&class);
+            } else {
+                let code = generate_impl_manually_managed(&class);
                 write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
@@ -265,7 +254,7 @@ pub(crate) mod test_prelude {
             validate_and_clear_buffer!(buffer);
 
             for method in &class.methods {
-                let code = generate_method_impl(&class, method);
+                let code = generate_method_impl(&api, &class, method);
                 write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }

@@ -9,23 +9,13 @@ use quote::{format_ident, quote};
 use std::collections::HashSet;
 
 pub fn generate_class_struct(class: &GodotClass) -> TokenStream {
-    // FIXME(#390): non-RefCounted types should not be Clone
-    let derive_copy = if !class.is_refcounted() {
-        quote! {
-            #[derive(Copy, Clone)]
-        }
-    } else {
-        TokenStream::new()
-    };
-
     let class_name = format_ident!("{}", &class.name);
 
     quote! {
-        #derive_copy
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         pub struct #class_name {
-            this: *mut sys::godot_object,
+            this: object::RawObject<Self>,
         }
     }
 }
@@ -44,11 +34,7 @@ pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
     };
 
     let class_instanciable = if class.instantiable {
-        if class.is_refcounted() {
-            special_methods::generate_reference_ctor(class)
-        } else {
-            special_methods::generate_non_reference_ctor(class)
-        }
+        special_methods::generate_ctor(class)
     } else {
         Default::default()
     };
@@ -66,8 +52,6 @@ pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
     let class_upcast =
         special_methods::generate_upcast(&api, &class.base_class, class.is_pointer_safe());
 
-    let class_dynamic_cast = special_methods::generate_dynamic_cast(class);
-
     let class_name = format_ident!("{}", class.name);
     quote! {
         impl #class_name {
@@ -76,7 +60,6 @@ pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
             #class_instanciable
             #class_methods
             #class_upcast
-            #class_dynamic_cast
         }
     }
 }

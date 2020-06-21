@@ -16,22 +16,22 @@ impl Rid {
     }
 
     #[inline]
-    pub fn get_id(&self) -> i32 {
+    pub fn get_id(self) -> i32 {
         unsafe { (get_api().godot_rid_get_id)(&self.0) }
     }
 
     #[inline]
-    pub fn operator_less(&self, b: &Rid) -> bool {
+    pub fn operator_less(self, b: Rid) -> bool {
         unsafe { (get_api().godot_rid_operator_less)(&self.0, &b.0) }
     }
 
     #[inline]
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid(self) -> bool {
         self.to_u64() != 0
     }
 
     #[inline]
-    fn to_u64(&self) -> u64 {
+    fn to_u64(self) -> u64 {
         unsafe {
             // std::mem::transmute needs source and destination types to have the same size. On 32
             // bit systems sizeof(void *) != size_of<u64>() so this fails to compile. The bindings
@@ -43,7 +43,7 @@ impl Rid {
 
     #[doc(hidden)]
     #[inline]
-    pub fn sys(&self) -> *const sys::godot_rid {
+    pub fn sys(self) -> *const sys::godot_rid {
         &self.0
     }
 

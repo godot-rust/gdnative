@@ -18,13 +18,13 @@ pub enum ManageErrs {
 #[user_data(user_data::LocalCellData<Main>)]
 pub struct Main {
     #[property]
-    mob: PackedScene,
+    mob: Ref<PackedScene>,
     score: i64,
 }
 
 #[methods]
 impl Main {
-    fn _init(_owner: Node) -> Self {
+    fn _init(_owner: &Node) -> Self {
         Main {
             mob: PackedScene::new(),
             score: 0,
@@ -32,45 +32,30 @@ impl Main {
     }
 
     #[export]
-    fn _ready(&self, _owner: Node) {}
-
-    #[export]
-    unsafe fn game_over(&self, owner: Node) {
-        let score_timer: Timer = owner
-            .get_typed_node("score_timer")
-            .expect("Unable to cast to Timer");
-
-        let mob_timer: Timer = owner
-            .get_typed_node("mob_timer")
-            .expect("Unable to cast to Timer");
+    fn game_over(&self, owner: &Node) {
+        let score_timer: &Timer = unsafe { owner.get_typed_node("score_timer") };
+        let mob_timer: &Timer = unsafe { owner.get_typed_node("mob_timer") };
 
         score_timer.stop();
         mob_timer.stop();
 
-        let hud_node: CanvasLayer = owner
-            .get_typed_node("hud")
-            .expect("Unable to cast to CanvasLayer");
-
-        Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
+        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        hud_node
+            .cast_instance::<hud::HUD>()
             .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
-    unsafe fn new_game(&mut self, owner: Node) {
-        let start_position: Position2D = owner
-            .get_typed_node("start_position")
-            .expect("Unable to cast to Position2D");
-        let player: Area2D = owner
-            .get_typed_node("player")
-            .expect("Unable to cast to Area2D");
-        let start_timer: Timer = owner
-            .get_typed_node("start_timer")
-            .expect("Unable to cast to Timer");
+    fn new_game(&mut self, owner: &Node) {
+        let start_position: &Position2D = unsafe { owner.get_typed_node("start_position") };
+        let player: &Area2D = unsafe { owner.get_typed_node("player") };
+        let start_timer: &Timer = unsafe { owner.get_typed_node("start_timer") };
 
         self.score = 0;
 
-        Instance::<player::Player>::try_from_unsafe_base(player)
+        player
+            .cast_instance::<player::Player>()
             .and_then(|player| {
                 player
                     .map(|x, o| x.start(o, start_position.position()))
@@ -80,11 +65,9 @@ impl Main {
 
         start_timer.start(0.0);
 
-        let hud_node: CanvasLayer = owner
-            .get_typed_node("hud")
-            .expect("Unable to cast to CanvasLayer");
-
-        Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
+        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        hud_node
+            .cast_instance::<hud::HUD>()
             .and_then(|hud| {
                 hud.map(|x, o| {
                     x.update_score(o, self.score);
@@ -96,37 +79,30 @@ impl Main {
     }
 
     #[export]
-    unsafe fn on_start_timer_timeout(&self, owner: Node) {
-        owner
-            .get_typed_node::<Timer, _>("mob_timer")
-            .expect("Unable to cast to Timer")
-            .start(0.0);
-        owner
-            .get_typed_node::<Timer, _>("score_timer")
-            .expect("Unable to cast to Timer")
-            .start(0.0);
+    fn on_start_timer_timeout(&self, owner: &Node) {
+        let mob_timer: &Timer = unsafe { owner.get_typed_node("mob_timer") };
+        let score_timer: &Timer = unsafe { owner.get_typed_node("score_timer") };
+        mob_timer.start(0.0);
+        score_timer.start(0.0);
     }
 
     #[export]
-    unsafe fn on_score_timer_timeout(&mut self, owner: Node) {
+    fn on_score_timer_timeout(&mut self, owner: &Node) {
         self.score += 1;
 
-        let hud_node: CanvasLayer = owner
-            .get_typed_node("hud")
-            .expect("Unable to cast to CanvasLayer");
-
-        Instance::<hud::HUD>::try_from_unsafe_base(hud_node)
+        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        hud_node
+            .cast_instance::<hud::HUD>()
             .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
-    unsafe fn on_mob_timer_timeout(&self, owner: Node) {
-        let mob_spawn_location: PathFollow2D = owner
-            .get_typed_node("mob_path/mob_spawn_locations")
-            .expect("Unable to cast to PathFollow2D");
+    fn on_mob_timer_timeout(&self, owner: &Node) {
+        let mob_spawn_location: &PathFollow2D =
+            unsafe { owner.get_typed_node("mob_path/mob_spawn_locations") };
 
-        let mob_scene: RigidBody2D = instance_scene(&self.mob).unwrap();
+        let mob_scene: &RigidBody2D = instance_scene(&self.mob).unwrap();
 
         let mut rng = rand::thread_rng();
         let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
@@ -142,7 +118,7 @@ impl Main {
         mob_scene.set_rotation(direction);
         let d = direction as f32;
 
-        let mob = Instance::<mob::Mob>::try_from_unsafe_base(mob_scene).unwrap();
+        let mob = mob_scene.cast_instance::<mob::Mob>().unwrap();
 
         mob.map(|x, mob_owner| {
             mob_scene
@@ -151,11 +127,8 @@ impl Main {
             mob_scene
                 .set_linear_velocity(mob_scene.linear_velocity().rotated(Angle { radians: d }));
 
-            let hud_node: CanvasLayer = owner
-                .get_typed_node("hud")
-                .expect("Unable to cast to CanvasLayer");
-
-            let hud = Instance::<hud::HUD>::try_from_unsafe_base(hud_node).unwrap();
+            let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+            let hud = hud_node.cast_instance::<hud::HUD>().unwrap();
 
             hud.map(|_, o| {
                 o.connect(
@@ -175,13 +148,14 @@ impl Main {
 
 /// Root here is needs to be the same type (or a parent type) of the node that you put in the child
 ///   scene as the root. For instance Spatial is used for this example.
-unsafe fn instance_scene<Root>(scene: &PackedScene) -> Result<Root, ManageErrs>
+fn instance_scene<Root>(scene: &PackedScene) -> Result<&Root, ManageErrs>
 where
     Root: gdnative::GodotObject,
 {
     let inst_option = scene.instance(PackedScene::GEN_EDIT_STATE_DISABLED);
 
     if let Some(instance) = inst_option {
+        let instance = unsafe { instance.assume_safe() };
         if let Some(instance_root) = instance.cast::<Root>() {
             Ok(instance_root)
         } else {

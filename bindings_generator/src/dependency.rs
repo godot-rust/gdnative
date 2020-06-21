@@ -8,6 +8,7 @@ use std::collections::HashSet;
 ///
 /// If many classes should be checked, a previous result can be
 /// passed to avoid unnecessary checks.
+#[allow(clippy::implicit_hasher)]
 pub fn strongly_connected_components(
     api: &Api,
     class: &str,

@@ -96,6 +96,16 @@ impl GodotClass {
     pub fn is_getter(&self, name: &str) -> bool {
         self.properties.iter().any(|p| p.getter == name)
     }
+
+    pub fn persistent_ref(&self) -> syn::Type {
+        let self_ty = format_ident!("{}", self.name);
+
+        if self.is_refcounted() {
+            syn::parse_quote!(object::Ref<#self_ty>)
+        } else {
+            syn::parse_quote!(object::Ptr<#self_ty>)
+        }
+    }
 }
 
 pub type ConstantName = String;
@@ -269,7 +279,7 @@ impl Ty {
         }
     }
 
-    pub fn to_rust(&self) -> syn::Type {
+    pub fn to_rust(&self, api: &Api) -> syn::Type {
         match self {
             Ty::Void => syn::parse_quote! {()},
             Ty::String => syn::parse_quote! { GodotString },
@@ -306,9 +316,20 @@ impl Ty {
                 syn::parse_quote! { #name }
             }
             Ty::Object(ref name) => {
-                let name = format_ident!("{}", name);
-                syn::parse_quote! { Option<#name> }
+                let class = api.find_class(name).expect("should be able to find class");
+                let persistent_ref = class.persistent_ref();
+                syn::parse_quote! { Option<#persistent_ref> }
             }
+        }
+    }
+
+    pub fn to_rust_arg(&self, api: &Api) -> syn::Type {
+        match self {
+            Ty::Object(ref name) => {
+                let name = format_ident!("{}", name);
+                syn::parse_quote! { Option<&#name> }
+            }
+            _ => self.to_rust(api),
         }
     }
 
@@ -349,7 +370,7 @@ impl Ty {
         }
     }
 
-    pub fn to_return_post(&self) -> TokenStream {
+    pub fn to_return_post(&self, api: &Api) -> TokenStream {
         match self {
             Ty::Void => Default::default(),
             Ty::F64 | &Ty::I64 | &Ty::Bool | &Ty::Enum(_) => {
@@ -382,7 +403,7 @@ impl Ty {
             | Ty::Int32Array
             | Ty::Float32Array
             | Ty::Variant => {
-                let rust_ty = self.to_rust();
+                let rust_ty = self.to_rust(api);
                 quote! {
                     #rust_ty::from_sys(ret)
                 }
@@ -390,11 +411,8 @@ impl Ty {
             Ty::Object(ref name) => {
                 let name = format_ident!("{}", name);
                 quote! {
-                    if ret.is_null() {
-                        None
-                    } else {
-                        Some(<#name>::from_return_position_sys(ret))
-                    }
+                    ptr::NonNull::new(ret)
+                        .map(|sys| <#name as GodotObject>::PersistentRef::move_from_sys(sys))
                 }
             }
             Ty::Result => {

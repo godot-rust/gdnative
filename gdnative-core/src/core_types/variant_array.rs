@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use crate::private::get_api;
 use crate::sys;
 
-use crate::RefCounted;
+use crate::NewRef;
 use crate::ToVariant;
 use crate::Variant;
 
@@ -332,7 +332,7 @@ impl Default for VariantArray<Shared> {
     }
 }
 
-impl RefCounted for VariantArray<Shared> {
+impl NewRef for VariantArray<Shared> {
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {

@@ -7,12 +7,12 @@ struct HelloWorld;
 
 #[gdnative::methods]
 impl HelloWorld {
-    fn _init(_owner: gdnative::api::Node) -> Self {
+    fn _init(_owner: &gdnative::api::Node) -> Self {
         HelloWorld
     }
 
     #[export]
-    fn _ready(&self, _owner: gdnative::api::Node) {
+    fn _ready(&self, _owner: &gdnative::api::Node) {
         godot_print!("hello, world.")
     }
 }

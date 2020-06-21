@@ -1,9 +1,7 @@
 //! Property registration.
 
-use std::mem;
-
 use crate::nativescript::{Instance, NativeClass};
-use crate::object::GodotObject;
+use crate::object::{GodotObject, RefCounted};
 use crate::private::get_api;
 use crate::*;
 
@@ -311,8 +309,8 @@ bitflags::bitflags! {
 
 impl Usage {
     #[inline]
-    pub fn to_sys(&self) -> sys::godot_property_usage_flags {
-        unsafe { mem::transmute(*self) }
+    pub fn to_sys(self) -> sys::godot_property_usage_flags {
+        self.bits() as sys::godot_property_usage_flags
     }
 }
 
@@ -427,9 +425,20 @@ mod impl_export {
         }
     }
 
-    impl<T> Export for T
+    impl<T> Export for Ref<T>
     where
-        T: GodotObject + ToVariant,
+        T: GodotObject + RefCounted,
+    {
+        type Hint = ();
+        #[inline]
+        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
+            ExportInfo::resource_type::<T>()
+        }
+    }
+
+    impl<T> Export for Ptr<T>
+    where
+        T: GodotObject + ManuallyManaged,
     {
         type Hint = ();
         #[inline]
@@ -441,7 +450,7 @@ mod impl_export {
     impl<T> Export for Instance<T>
     where
         T: NativeClass,
-        T::Base: ToVariant,
+        Instance<T>: ToVariant,
     {
         type Hint = ();
         #[inline]

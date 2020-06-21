@@ -113,7 +113,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_method_impl(class: &GodotClass, method: &GodotMethod) -> TokenStream {
+pub fn generate_method_impl(api: &Api, class: &GodotClass, method: &GodotMethod) -> TokenStream {
     let MethodName {
         rust_name: method_name,
         ..
@@ -124,14 +124,14 @@ pub fn generate_method_impl(class: &GodotClass, method: &GodotMethod) -> TokenSt
     }
 
     let rust_ret_type = if method.has_varargs {
-        Ty::Variant.to_rust()
+        Ty::Variant.to_rust(api)
     } else {
-        method.get_return_type().to_rust()
+        method.get_return_type().to_rust(api)
     };
 
     let args = method.arguments.iter().map(|argument| {
         let name = format_ident!("{}", rust_safe_name(&argument.name));
-        let typ = argument.get_type().to_rust();
+        let typ = argument.get_type().to_rust_arg(api);
         quote! {
             #name: #typ
         }
@@ -216,7 +216,7 @@ pub fn generate_method_impl(class: &GodotClass, method: &GodotMethod) -> TokenSt
             quote! { drop(#name); }
         });
 
-        let ret = method.get_return_type().to_return_post();
+        let ret = method.get_return_type().to_return_post(api);
 
         quote! {
             let mut argument_buffer : [*const libc::c_void; #arg_count] = [
@@ -282,7 +282,7 @@ pub fn generate_methods(
                 continue;
             }
 
-            let mut rust_ret_type = method.get_return_type().to_rust();
+            let mut rust_ret_type = method.get_return_type().to_rust(api);
 
             // Ensure that methods are not injected several times.
             let method_name_string = method_name.to_string();
@@ -294,7 +294,7 @@ pub fn generate_methods(
             let mut params_decl = TokenStream::new();
             let mut params_use = TokenStream::new();
             for argument in &method.arguments {
-                let ty = argument.get_type().to_rust();
+                let ty = argument.get_type().to_rust_arg(api);
                 let name = rust_safe_name(&argument.name);
                 params_decl.extend(quote! {
                     , #name: #ty
@@ -321,26 +321,17 @@ pub fn generate_methods(
                 });
             }
 
-            //let namespace = format!("gdnative_{:?}_private::", api.namespaces[&class.name]);
-            let namespace = "";
-
             // Adjust getters to match guideline conventions:
             // https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter
             let rusty_method_name = rename_property_getter(&method_name, &class);
 
             let rusty_name = format_ident!("{}", rusty_method_name);
-            let function_name = format_ident!("{}{}_{}", namespace, class.name, method_name);
-
-            let maybe_unsafe = if is_safe {
-                Default::default()
-            } else {
-                quote! { unsafe }
-            };
+            let function_name = format_ident!("{}_{}", class.name, method_name);
 
             let output = quote! {
                 #[inline]
-                pub #maybe_unsafe fn #rusty_name(&self #params_decl) -> #rust_ret_type {
-                    unsafe { #function_name(self.this #params_use) }
+                pub fn #rusty_name(&self #params_decl) -> #rust_ret_type {
+                    unsafe { #function_name(self.this.sys().as_ptr() #params_use) }
                 }
             };
             result.extend(output);
@@ -399,7 +390,7 @@ fn generate_argument_pre(ty: &Ty, name: proc_macro2::Ident) -> TokenStream {
         &Ty::Object(_) => {
             quote! {
                 if let Some(arg) = &#name {
-                    arg.to_sys() as *const _ as *const _
+                    arg.as_ptr() as *const _ as *const _
                 } else {
                     ptr::null()
                 }

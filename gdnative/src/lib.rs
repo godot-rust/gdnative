@@ -4,33 +4,51 @@
 //! Some of the types were automatically generated from the engine's JSON API description,
 //! and some other types are hand made wrappers around the core C types.
 //!
-//! ## Memory management
+//! ## Memory management for core types
 //!
-//! ### Reference counting
-//!
-//! A lot of the types provided by the engine are internally reference counted and
-//! allow mutable aliasing.
-//! In rust parlance this means that a type such as `gdnative::ConcavePolygonShape2D`
-//! is functionally equivalent to a `Rc<Cell<Something>>` rather than `Rc<Something>`.
+//! Wrappers for most core types expose safe Rust interfaces, and it's unnecessary to mind
+//! memory management most of the times. The exceptions are `VariantArray` and `Dictionary`,
+//! internally reference-counted collections with "interior mutability" in Rust parlance. These
+//! types are modelled using the "typestate" pattern to enforce that the official
+//! [thread-safety guidelines][thread-safety]. For more information, read the type-level
+//! documentation for these types.
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
-//! content when using the `Clone` trait, most of these types do not implement `Clone`
-//! and instead implement [`RefCounted`](./trait.RefCounted.html) which provides a
-//! `new_ref(&self) -> Self` method to create references to the same collection or object.
+//! content when using the `Clone` trait, some types do not implement `Clone` and instead
+//! implement [`NewRef`](./trait.NewRef.html) which provides a `new_ref(&self) -> Self` method
+//! to create references to the same collection or object.
 //!
-//! ### Manually managed objects
+//! ## Generated API types
 //!
-//! Some types are manually managed. This means that ownership can be passed to the
-//! engine or the object must be carefully deallocated using the object's `free`  method.
+//! The `api` module contains high-level wrappers for all the API types generated from a
+//! JSON description of the API. The generated types are tied to a specific version, which
+//! is currently `3.2.1-stable` for the crates.io version. If you want to use the bindings
+//! with another version of the engine, see the instructions [here][custom-version] on
+//! generating custom bindings.
 //!
-
-// TODO: document feature flags
+//! ### Memory management
+//!
+//! API types may be reference-counted or manually-managed. This is indicated by the
+//! `RefCounted` and `ManuallyManaged` marker traits.
+//!
+//! The API types may exist in two reference forms: bare and "persistent". Bare references
+//! to API types, like `&'a Node`, represent valid and safe references to Godot objects.
+//! As such, API methods may be called safely on them. Persistent references, like `Ptr<Node>`
+//! or `Ref<Reference>`, have `'static` lifetime and can be persisted, but are not always safe
+//! to use. For more information on how to use persistent references to manually-managed objects
+//! safely, see the documentation on `Ptr::assume_safe`.
+//!
+//! ## Feature flags
+//!
+//! ### `bindings`
+//!
+//! *Enabled* by default. Includes the crates.io version of the bindings in the `api` module.
+//!
+//! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
+//! [custom-version]: https://github.com/godot-rust/godot-rust/#other-versions-or-custom-builds
+//!
 
 // TODO: add logo using #![doc(html_logo_url = "https://<url>")]
-
-// TODO: currently the generated classes are not showing in the the gdnative crate
-// documentation, and are only appearing in the sub-crates. It would make the doc
-// a lot easier to navigate if we could gather all classes here.
 
 #[doc(inline)]
 pub use gdnative_core::*;

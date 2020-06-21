@@ -4,61 +4,38 @@ use heck::SnakeCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-pub fn generate_reference_ctor(class: &GodotClass) -> TokenStream {
-    let class_name = format_ident!("{}", class.name);
+pub fn generate_ctor(class: &GodotClass) -> TokenStream {
     let method_table = format_ident!("{}MethodTable", class.name);
-    quote! {
-        // Constructor
-        #[inline]
-        pub fn new() -> Self {
-            unsafe {
-                let gd_api = get_api();
-                let ctor = #method_table::get(gd_api).class_constructor.unwrap();
-                let obj = ctor();
-                object::init_ref_count(obj);
+    let persistent_ref = class.persistent_ref();
 
-                #class_name {
-                    this: obj
-                }
-            }
-        }
-    }
-}
+    let documentation = if class.is_refcounted() {
+        r#"Creates a new instance of this object.
 
-pub fn generate_non_reference_ctor(class: &GodotClass) -> TokenStream {
-    let class_name = format_ident!("{}", class.name);
-    let method_table = format_ident!("{}MethodTable", class.name);
+This is a reference-counted type. The returned object is automatically managed
+by `Ref`."#
+    } else {
+        r#"Creates a new instance of this object.
 
-    let documentation = format!(
-        r#"/// Constructor.
-///
-/// Because this type is not reference counted, the lifetime of the returned object
-/// is *not* automatically managed.
-/// Immediately after creation, the object is owned by the caller, and can be
-/// passed to the engine (in which case the engine will be responsible for
-/// destroying the object) or destroyed manually using `{}::free`."#,
-        class_name
-    );
+Because this type is not reference counted, the lifetime of the returned object
+is *not* automatically managed.
+
+Immediately after creation, the object is owned by the caller, and can be
+passed to the engine (in which case the engine will be responsible for
+destroying the object) or destroyed manually using `Ptr::free`, or preferably
+`Ptr::queue_free` if it is a `Node`."#
+    };
 
     quote! {
         #[doc=#documentation]
         #[inline]
-        pub fn new() -> Self {
+        pub fn new() -> #persistent_ref {
             unsafe {
                 let gd_api = get_api();
                 let ctor = #method_table::get(gd_api).class_constructor.unwrap();
-                let this = ctor();
+                let obj = ptr::NonNull::new(ctor()).expect("constructor should not return null");
 
-                #class_name {
-                    this
-                }
+                <#persistent_ref>::init_from_sys(obj)
             }
-        }
-
-        /// Manually deallocate the object.
-        #[inline]
-        pub unsafe fn free(self) {
-            (get_api().godot_object_destroy)(self.this);
         }
     }
 }
@@ -66,50 +43,23 @@ pub fn generate_non_reference_ctor(class: &GodotClass) -> TokenStream {
 pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
     let name = &class.name;
     let class_name = format_ident!("{}", class.name);
-    let addref_if_reference = if class.is_refcounted() {
-        quote! { object::add_ref(obj); }
-    } else {
-        quote! {
-           // Not reference-counted.
-        }
-    };
+    let persistent_ref = class.persistent_ref();
 
     quote! {
         impl crate::private::godot_object::Sealed for #class_name {}
 
         unsafe impl GodotObject for #class_name {
+            type PersistentRef = #persistent_ref;
+
             #[inline]
             fn class_name() -> &'static str {
                 #name
-            }
-
-            #[inline]
-            unsafe fn from_sys(obj: *mut sys::godot_object) -> Self {
-                #addref_if_reference
-                Self { this: obj, }
-            }
-
-            #[inline]
-            unsafe fn from_return_position_sys(obj: *mut sys::godot_object) -> Self {
-                Self { this: obj, }
-            }
-
-            #[inline]
-            unsafe fn to_sys(&self) -> *mut sys::godot_object {
-                self.this
             }
         }
 
         impl ToVariant for #class_name {
             #[inline]
             fn to_variant(&self) -> Variant { Variant::from_object(self) }
-        }
-
-        impl FromVariant for #class_name {
-            #[inline]
-            fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-                variant.try_to_object_with_error::<Self>()
-            }
         }
     }
 }
@@ -121,31 +71,23 @@ pub fn generate_instantiable_impl(class: &GodotClass) -> TokenStream {
     quote! {
         impl Instanciable for #class_name {
             #[inline]
-            fn construct() -> Self {
+            fn construct() -> Self::PersistentRef {
                 #class_name::new()
             }
         }
     }
 }
 
-pub fn generate_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
+pub fn generate_queue_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", class.name);
-    let free_output = if class.instantiable && !class.is_pointer_safe() {
-        quote! {
-            impl Free for #class_name {
-                #[inline]
-                unsafe fn godot_free(self) { self.free() }
-            }
-        }
-    } else {
-        Default::default()
-    };
 
     let queue_free_output = if class.name == "Node" || api.class_inherits(&class, "Node") {
         quote! {
             impl QueueFree for #class_name {
                 #[inline]
-                unsafe fn godot_queue_free(&mut self) { self.queue_free() }
+                unsafe fn godot_queue_free(obj: *mut sys::godot_object) {
+                    Node_queue_free(obj)
+                }
             }
         }
     } else {
@@ -153,7 +95,6 @@ pub fn generate_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
     };
 
     quote! {
-        #free_output
         #queue_free_output
     }
 }
@@ -167,7 +108,6 @@ pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
         class.name.as_ref()
     };
 
-    let class_name = format_ident!("{}", class.name);
     let singleton_name = format!("{}\0", s_name);
 
     assert!(
@@ -176,31 +116,12 @@ pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
     );
     quote! {
         #[inline]
-        pub fn godot_singleton() -> Self {
+        pub fn godot_singleton() -> &'static Self {
             unsafe {
                 let this = (get_api().godot_global_get_singleton)(#singleton_name.as_ptr() as *mut _);
-
-                #class_name {
-                    this
-                }
-            }
-        }
-    }
-}
-
-pub fn generate_dynamic_cast(class: &GodotClass) -> TokenStream {
-    let maybe_unsafe = if class.is_pointer_safe() {
-        Default::default()
-    } else {
-        quote! {unsafe}
-    };
-
-    quote! {
-        /// Generic dynamic cast.
-        #[inline]
-        pub #maybe_unsafe fn cast<T: GodotObject>(&self) -> Option<T> {
-        unsafe {
-                object::godot_cast::<T>(self.this)
+                let this = ptr::NonNull::new(this).expect("singleton should not be null");
+                let this = object::RawObject::from_sys_ref_unchecked::<'static>(this);
+                Self::cast_ref(this)
             }
         }
     }
@@ -211,28 +132,13 @@ pub fn generate_upcast(api: &Api, base_class_name: &str, is_pointer_safe: bool) 
         let snake_name = class_name_to_snake_case(&base_class_name);
         let parent_class = format_ident!("{}", parent.name);
         let to_snake_name = format_ident!("to_{}", snake_name);
-        let addref_if_reference = if parent.is_refcounted() {
-            quote! {
-                unsafe { object::add_ref(self.this); }
-            }
-        } else {
-            quote! {
-                // Not reference-counted.
-            }
-        };
-        let maybe_unsafe = if is_pointer_safe {
-            Default::default()
-        } else {
-            quote! { unsafe }
-        };
 
         let upcast = generate_upcast(api, &parent.base_class, is_pointer_safe);
         quote! {
             /// Up-cast.
             #[inline]
-            pub #maybe_unsafe fn #to_snake_name(&self) -> #parent_class {
-                #addref_if_reference
-                unsafe { #parent_class::from_sys(self.this) }
+            pub fn #to_snake_name(&self) -> &#parent_class {
+                unsafe { #parent_class::cast_ref(self.this.cast_unchecked()) }
             }
 
             #upcast
@@ -274,57 +180,26 @@ pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_reference_clone(class: &GodotClass) -> TokenStream {
-    assert!(class.is_refcounted(), "Only call with refcounted classes");
-
-    let class_name = format_ident!("{}", class.name);
-
-    quote! {
-        impl Clone for #class_name {
-            #[inline]
-            fn clone(&self) -> Self {
-                self.new_ref()
-            }
-        }
-    }
-}
-
 pub fn generate_impl_ref_counted(class: &GodotClass) -> TokenStream {
     assert!(class.is_refcounted(), "Only call with refcounted classes");
 
     let class_name = format_ident!("{}", class.name);
-    quote! {
-        impl RefCounted for #class_name {
-            /// Creates a new reference to the same reference-counted object.
-            #[inline]
-            fn new_ref(&self) -> Self {
-                unsafe {
-                    object::add_ref(self.this);
 
-                    Self {
-                        this: self.this,
-                    }
-                }
-            }
-        }
+    quote! {
+        unsafe impl object::RefCounted for #class_name {}
     }
 }
 
-pub fn generate_drop(class: &GodotClass) -> TokenStream {
-    assert!(class.is_refcounted(), "Only call with refcounted classes");
+pub fn generate_impl_manually_managed(class: &GodotClass) -> TokenStream {
+    assert!(
+        !class.is_refcounted(),
+        "Only call with manually managed classes"
+    );
 
     let class_name = format_ident!("{}", class.name);
+
     quote! {
-        impl Drop for #class_name {
-            #[inline]
-            fn drop(&mut self) {
-                unsafe {
-                    if object::unref(self.this) {
-                        (get_api().godot_object_destroy)(self.this);
-                    }
-                }
-            }
-        }
+        unsafe impl object::ManuallyManaged for #class_name {}
     }
 }
 
@@ -339,11 +214,12 @@ pub fn generate_gdnative_library_singleton_getter(class: &GodotClass) -> TokenSt
         ///
         /// See also `Instance::new` for a typed API.
         #[inline]
-        pub fn current_library() -> Self {
-            let this = gdnative_core::private::get_gdnative_library_sys();
-
-            Self {
-                this
+        pub fn current_library() -> &'static Self {
+            unsafe {
+                let this = gdnative_core::private::get_gdnative_library_sys();
+                let this = ptr::NonNull::new(this).expect("singleton should not be null");
+                let this = object::RawObject::from_sys_ref_unchecked(this);
+                Self::cast_ref(this)
             }
         }
     }

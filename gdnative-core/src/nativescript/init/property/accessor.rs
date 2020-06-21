@@ -1,13 +1,13 @@
 //! Types and traits for property accessors.
-
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 use crate::nativescript::user_data::UserData;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
 use crate::nativescript::NativeClass;
-use crate::object::GodotObject;
+use crate::object::{GodotObject, RawObject};
 use crate::*;
 
 mod invalid;
@@ -70,18 +70,24 @@ pub struct Mut;
 /// Helper trait for setters, generic over `self` argument mutability.
 pub trait MapSet<C: NativeClass, F, T> {
     type Err: Debug;
-    fn map_set(user_data: &C::UserData, op: &F, owner: C::Base, value: T) -> Result<(), Self::Err>;
+    fn map_set(user_data: &C::UserData, op: &F, owner: &C::Base, value: T)
+        -> Result<(), Self::Err>;
 }
 
 impl<C, F, T> MapSet<C, F, T> for Shr
 where
     C: NativeClass,
     C::UserData: Map,
-    F: 'static + Fn(&C, C::Base, T),
+    F: 'static + Fn(&C, &C::Base, T),
 {
     type Err = <C::UserData as Map>::Err;
     #[inline]
-    fn map_set(user_data: &C::UserData, op: &F, owner: C::Base, value: T) -> Result<(), Self::Err> {
+    fn map_set(
+        user_data: &C::UserData,
+        op: &F,
+        owner: &C::Base,
+        value: T,
+    ) -> Result<(), Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner, value))
     }
 }
@@ -90,11 +96,16 @@ impl<C, F, T> MapSet<C, F, T> for Mut
 where
     C: NativeClass,
     C::UserData: MapMut,
-    F: 'static + Fn(&mut C, C::Base, T),
+    F: 'static + Fn(&mut C, &C::Base, T),
 {
     type Err = <C::UserData as MapMut>::Err;
     #[inline]
-    fn map_set(user_data: &C::UserData, op: &F, owner: C::Base, value: T) -> Result<(), Self::Err> {
+    fn map_set(
+        user_data: &C::UserData,
+        op: &F,
+        owner: &C::Base,
+        value: T,
+    ) -> Result<(), Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner, value))
     }
 }
@@ -107,7 +118,7 @@ pub struct Ref;
 /// Helper trait for setters, generic over `self` argument mutability and return kind.
 pub trait MapGet<C: NativeClass, F, T> {
     type Err: Debug;
-    fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err>;
+    fn map_get(user_data: &C::UserData, op: &F, owner: &C::Base) -> Result<Variant, Self::Err>;
 }
 
 impl<C, F, T> MapGet<C, F, T> for (Shr, Owned)
@@ -115,11 +126,11 @@ where
     C: NativeClass,
     C::UserData: Map,
     T: ToVariant,
-    F: 'static + Fn(&C, C::Base) -> T,
+    F: 'static + Fn(&C, &C::Base) -> T,
 {
     type Err = <C::UserData as Map>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
+    fn map_get(user_data: &C::UserData, op: &F, owner: &C::Base) -> Result<Variant, Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -129,11 +140,11 @@ where
     C: NativeClass,
     C::UserData: Map,
     T: ToVariant,
-    F: 'static + Fn(&C, C::Base) -> &T,
+    F: 'static + for<'r> Fn(&'r C, &C::Base) -> &'r T,
 {
     type Err = <C::UserData as Map>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
+    fn map_get(user_data: &C::UserData, op: &F, owner: &C::Base) -> Result<Variant, Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -143,11 +154,11 @@ where
     C: NativeClass,
     C::UserData: MapMut,
     T: ToVariant,
-    F: 'static + Fn(&mut C, C::Base) -> T,
+    F: 'static + Fn(&mut C, &C::Base) -> T,
 {
     type Err = <C::UserData as MapMut>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
+    fn map_get(user_data: &C::UserData, op: &F, owner: &C::Base) -> Result<Variant, Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -157,11 +168,11 @@ where
     C: NativeClass,
     C::UserData: MapMut,
     T: ToVariant,
-    F: 'static + Fn(&mut C, C::Base) -> &T,
+    F: 'static + for<'r> Fn(&'r mut C, &C::Base) -> &'r T,
 {
     type Err = <C::UserData as MapMut>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: C::Base) -> Result<Variant, Self::Err> {
+    fn map_get(user_data: &C::UserData, op: &F, owner: &C::Base) -> Result<Variant, Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -196,9 +207,20 @@ where
                 return;
             }
 
+            let this = match NonNull::new(this) {
+                Some(this) => this,
+                None => {
+                    godot_error!(
+                        "gdnative-core: owner pointer for {} is null",
+                        C::class_name(),
+                    );
+                    return;
+                }
+            };
+
             let result = std::panic::catch_unwind(|| unsafe {
                 let user_data = C::UserData::clone_from_user_data_unchecked(class as *const _);
-                let owner = C::Base::from_sys(this);
+                let owner = C::Base::cast_ref(RawObject::from_sys_ref_unchecked(this));
                 let func = &*(method as *const F);
 
                 match T::from_variant(Variant::cast_ref(val)) {
@@ -260,9 +282,20 @@ where
                 return Variant::new().forget();
             }
 
+            let this = match NonNull::new(this) {
+                Some(this) => this,
+                None => {
+                    godot_error!(
+                        "gdnative-core: owner pointer for {} is null",
+                        C::class_name(),
+                    );
+                    return Variant::new().forget();
+                }
+            };
+
             let result = std::panic::catch_unwind(|| unsafe {
                 let user_data = C::UserData::clone_from_user_data_unchecked(class as *const _);
-                let owner = C::Base::from_sys(this);
+                let owner = C::Base::cast_ref(RawObject::from_sys_ref_unchecked(this));
                 let func = &*(method as *const F);
 
                 match <(SelfArg, RetKind)>::map_get(&user_data, func, owner) {

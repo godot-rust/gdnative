@@ -7,8 +7,6 @@ use quote::quote;
 use std::io::Write;
 
 pub fn class_doc_link(class: &GodotClass) -> String {
-    // TODO: link the correct crate
-    // let subcrate = get_crate(class);
     format!("[{name}](struct.{name}.html)", name = class.name)
 }
 
@@ -59,22 +57,23 @@ See the [documentation of this class]({url}) in the Godot engine's official docu
     );
 
     let memory_management_docs = if class.is_refcounted() {
-        format!(
-            r#"## Memory management
+        r#"## Memory management
 
 The lifetime of this object is automatically managed through reference counting."#
-        )
+            .to_string()
     } else if class.instantiable {
         format!(
             r#"## Memory management
 
 Non reference counted objects such as the ones of this type are usually owned by the engine.
 
-`{name}` is an unsafe pointer, and all of its methods are unsafe.
+`{name}` is a reference-only type. As it is not reference counted, persistent references can
+only exist in the unsafe `Ptr<{name}>` form.
 
 In the cases where Rust code owns an object of this type, for example if the object was just
 created on the Rust side and not passed to the engine yet, ownership should be either given
-to the engine or the object must be manually destroyed using `{name}::free`."#,
+to the engine or the object must be manually destroyed using `Ptr::free`, or `Ptr::queue_free`
+if it is a `Node`."#,
             name = class.name
         )
     } else {
@@ -102,27 +101,23 @@ to the engine or the object must be manually destroyed using `{name}::free`."#,
     let base_class_docs = std::str::from_utf8(&base_class_docs).unwrap();
 
     let tools_docs = if class.api_type == "tools" {
-        format!(
-            r#"
+        r#"
 ## Tool
 
-This class is used to interact with Godot's editor."#,
-        )
+This class is used to interact with Godot's editor."#
     } else {
-        "".into()
+        ""
     };
 
-    let safety_doc = format!(
-        r#"
+    let safety_doc = r#"
 ## Safety
 
 All types in the Godot API have "interior mutability" in Rust parlance. Their use
 must follow the official [thread-safety guidelines][thread-safety]. Specifically, it is
 undefined behavior to pass an instance to Rust code without locking a mutex if there are
-references to it on other threads.
+active references to it on other threads.
 
-[thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#,
-    );
+[thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#;
 
     quote! {
         #[doc=#summary_doc]
@@ -138,7 +133,7 @@ fn list_base_classes(output: &mut impl Write, api: &Api, parent_name: &str) -> G
     if let Some(parent) = api.find_class(parent_name) {
         let class_link = class_doc_link(&parent);
 
-        write!(output, " - {}\n", class_link)?;
+        writeln!(output, " - {}", class_link)?;
 
         if parent.base_class != "" {
             list_base_classes(output, api, &parent.base_class)?;

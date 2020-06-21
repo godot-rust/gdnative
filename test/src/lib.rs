@@ -75,9 +75,14 @@ fn test_constructor() -> bool {
     let lib = GDNativeLibrary::new();
     let _ = lib.is_singleton();
 
-    unsafe {
-        let path = Path2D::new();
+    let path = Path2D::new();
+
+    {
+        let path = unsafe { path.assume_safe() };
         let _ = path.z_index();
+    }
+
+    unsafe {
         path.free();
     }
 
@@ -109,7 +114,7 @@ impl NativeClass for Foo {
     fn class_name() -> &'static str {
         "Foo"
     }
-    fn init(_owner: Reference) -> Foo {
+    fn init(_owner: &Reference) -> Foo {
         Foo(42)
     }
     fn register_properties(_builder: &init::ClassBuilder<Self>) {}
@@ -123,7 +128,7 @@ impl NativeClass for NotFoo {
     fn class_name() -> &'static str {
         "NotFoo"
     }
-    fn init(_owner: Reference) -> NotFoo {
+    fn init(_owner: &Reference) -> NotFoo {
         NotFoo
     }
     fn register_properties(_builder: &init::ClassBuilder<Self>) {}
@@ -132,14 +137,14 @@ impl NativeClass for NotFoo {
 #[methods]
 impl Foo {
     #[export]
-    fn answer(&self, _owner: Reference) -> i64 {
+    fn answer(&self, _owner: &Reference) -> i64 {
         self.0
     }
 
     #[export]
     fn choose(
         &self,
-        _owner: Reference,
+        _owner: &Reference,
         a: GodotString,
         which: bool,
         b: GodotString,
@@ -152,7 +157,7 @@ impl Foo {
     }
 
     #[export]
-    fn choose_variant(&self, _owner: Reference, a: i32, what: Variant, b: f64) -> Variant {
+    fn choose_variant(&self, _owner: &Reference, a: i32, what: Variant, b: f64) -> Variant {
         let what = what.try_to_string().expect("should be string");
         match what.as_str() {
             "int" => a.to_variant(),
@@ -171,16 +176,13 @@ fn test_rust_class_construction() -> bool {
         assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
 
         let base = foo.into_base();
-        assert_eq!(
-            Some(42),
-            unsafe { base.call("answer".into(), &[]) }.try_to_i64()
-        );
+        assert_eq!(Some(42), base.call("answer".into(), &[]).try_to_i64());
 
-        let foo = Instance::<Foo>::try_from_base(base).expect("should be able to downcast");
+        let foo = Instance::<Foo>::try_from_base(&*base).expect("should be able to downcast");
         assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
 
         let base = foo.into_base();
-        assert!(Instance::<NotFoo>::try_from_base(base).is_none());
+        assert!(Instance::<NotFoo>::try_from_base(&*base).is_none());
     })
     .is_ok();
 
@@ -196,7 +198,7 @@ fn test_rust_class_construction() -> bool {
 struct OptionalArgs;
 
 impl OptionalArgs {
-    fn _init(_owner: Reference) -> Self {
+    fn _init(_owner: &Reference) -> Self {
         OptionalArgs
     }
 }
@@ -207,7 +209,7 @@ impl OptionalArgs {
     #[allow(clippy::many_single_char_names)]
     fn opt_sum(
         &self,
-        _owner: Reference,
+        _owner: &Reference,
         a: i64,
         b: i64,
         #[opt] c: i64,
@@ -222,12 +224,12 @@ fn init(handle: init::InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
 
-    test_derive::register(&handle);
-    test_free_ub::register(&handle);
-    test_register::register(&handle);
-    test_return_leak::register(&handle);
-    test_variant_call_args::register(&handle);
-    test_variant_ops::register(&handle);
+    test_derive::register(handle);
+    test_free_ub::register(handle);
+    test_register::register(handle);
+    test_return_leak::register(handle);
+    test_variant_call_args::register(handle);
+    test_variant_ops::register(handle);
 }
 
 godot_gdnative_init!();

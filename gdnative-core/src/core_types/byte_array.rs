@@ -5,7 +5,7 @@ pub type ByteArray = TypedArray<u8>;
 
 godot_test!(
     test_byte_array_access {
-        use crate::RefCounted as _;
+        use crate::NewRef as _;
 
         let arr = (0..8).collect::<ByteArray>();
 
