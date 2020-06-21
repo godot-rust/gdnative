@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 use std::collections::HashMap;
+use syn::spanned::Spanned;
 use syn::{Data, DeriveInput, Fields, Ident, Meta, MetaList, NestedMeta, Path, Type};
 
 mod property_args;
@@ -14,7 +15,10 @@ pub(crate) struct DeriveData {
 }
 
 pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
-    let data = parse_derive_input(input);
+    let data = match parse_derive_input(input) {
+        Ok(val) => val,
+        Err(err) => return err,
+    };
 
     // generate NativeClass impl
     let trait_impl = {
@@ -70,11 +74,13 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
     trait_impl.into()
 }
 
-fn parse_derive_input(input: TokenStream) -> DeriveData {
+fn parse_derive_input(input: TokenStream) -> Result<DeriveData, TokenStream> {
+    let span = proc_macro2::Span::call_site();
+
     let input = match syn::parse_macro_input::parse::<DeriveInput>(input) {
         Ok(val) => val,
         Err(err) => {
-            panic!("{}", err);
+            return Err(err.to_compile_error().into());
         }
     };
 
@@ -84,92 +90,103 @@ fn parse_derive_input(input: TokenStream) -> DeriveData {
         .attrs
         .iter()
         .find(|a| a.path.is_ident("inherit"))
-        .expect("No \"inherit\" attribute found");
+        .ok_or_else(|| {
+            syn::Error::new(span, "No \"inherit\" attribute found").to_compile_error()
+        })?;
 
     // read base class
     let base = inherit_attr
         .parse_args::<Type>()
-        .expect("`inherits` attribute requires the base type as an argument.");
+        .map_err(|err| err.to_compile_error())?;
 
     let register_callback = input
         .attrs
         .iter()
         .find(|a| a.path.is_ident("register_with"))
-        .map(|attr| {
-            attr.parse_args::<Path>()
-                .expect("`register_with` attributes requires a function as an argument.")
-        });
+        .map(|attr| attr.parse_args::<Path>().map_err(|e| e.to_compile_error()))
+        .transpose()?;
 
-    let user_data = input
-        .attrs
-        .iter()
-        .find(|a| a.path.is_ident("user_data"))
-        .map(|attr| {
-            attr.parse_args::<Type>()
-                .expect("`userdata` attribute requires a type as an argument.")
-        })
-        .unwrap_or_else(|| {
-            syn::parse::<Type>(quote! { ::gdnative::user_data::DefaultUserData<#ident> }.into())
-                .expect("quoted tokens should be a valid type")
-        });
+    let user_data =
+        input
+            .attrs
+            .iter()
+            .find(|a| a.path.is_ident("user_data"))
+            .map(|attr| {
+                attr.parse_args::<Type>()
+                    .map_err(|err| err.to_compile_error())
+            })
+            .unwrap_or_else(|| {
+                Ok(syn::parse::<Type>(
+                    quote! { ::gdnative::user_data::DefaultUserData<#ident> }.into(),
+                )
+                .expect("quoted tokens for default userdata should be a valid type"))
+            })?;
 
     // make sure it's a struct
     let struct_data = if let Data::Struct(data) = input.data {
         data
     } else {
-        panic!("NativeClass derive macro only works on structs.");
+        return Err(
+            syn::Error::new(span, "NativeClass derive macro only works on structs.")
+                .to_compile_error()
+                .into(),
+        );
     };
 
-    // read exported properties
-    let properties = if let Fields::Named(names) = &struct_data.fields {
-        names
-            .named
-            .iter()
-            .filter_map(|field| {
-                let mut property_args = None;
+    // Find all fields with a `#[property]` attribute
+    let mut properties = HashMap::new();
 
-                for attr in field.attrs.iter() {
-                    if !attr.path.is_ident("property") {
-                        continue;
-                    }
+    if let Fields::Named(names) = &struct_data.fields {
+        for field in &names.named {
+            let mut property_args = None;
 
-                    let meta = attr
-                        .parse_meta()
-                        .expect("should be able to parse attribute arguments");
-
-                    match meta {
-                        Meta::List(MetaList { nested, .. }) => {
-                            property_args
-                                .get_or_insert_with(PropertyAttrArgsBuilder::default)
-                                .extend(nested.iter().map(|arg| match arg {
-                                    NestedMeta::Meta(Meta::NameValue(ref pair)) => pair,
-                                    _ => panic!("unexpected argument: {:?}", arg),
-                                }));
-                        }
-                        Meta::Path(_) => {
-                            property_args.get_or_insert_with(PropertyAttrArgsBuilder::default);
-                        }
-                        _ => {
-                            panic!("unexpected meta variant: {:?}", meta);
-                        }
-                    }
+            for attr in field.attrs.iter() {
+                if !attr.path.is_ident("property") {
+                    continue;
                 }
 
-                property_args.map(|builder| {
-                    let ident = field.ident.clone().expect("fields should be named");
-                    (ident, builder.done())
-                })
-            })
-            .collect::<HashMap<_, _>>()
-    } else {
-        HashMap::new()
+                let meta = attr.parse_meta().map_err(|e| e.to_compile_error())?;
+
+                match meta {
+                    Meta::List(MetaList { nested, .. }) => {
+                        let attr_args_builder =
+                            property_args.get_or_insert_with(PropertyAttrArgsBuilder::default);
+
+                        for arg in &nested {
+                            if let NestedMeta::Meta(Meta::NameValue(ref pair)) = arg {
+                                attr_args_builder.extend(std::iter::once(pair));
+                            } else {
+                                let msg = format!("Unexpected argument: {:?}", arg);
+                                return Err(syn::Error::new(arg.span(), msg)
+                                    .to_compile_error()
+                                    .into());
+                            }
+                        }
+                    }
+                    Meta::Path(_) => {
+                        property_args.get_or_insert_with(PropertyAttrArgsBuilder::default);
+                    }
+                    m => {
+                        let msg = format!("Unexpected meta variant: {:?}", m);
+                        return Err(syn::Error::new(m.span(), msg).to_compile_error().into());
+                    }
+                }
+            }
+
+            if let Some(builder) = property_args {
+                let ident = field.ident.clone().ok_or_else(|| {
+                    syn::Error::new(field.ident.span(), "Fileds should be named").to_compile_error()
+                })?;
+                properties.insert(ident, builder.done());
+            }
+        }
     };
 
-    DeriveData {
+    Ok(DeriveData {
         name: ident,
         base,
         register_callback,
         user_data,
         properties,
-    }
+    })
 }

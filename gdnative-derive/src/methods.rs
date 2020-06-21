@@ -1,8 +1,7 @@
-use syn::{FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
+use syn::{spanned::Spanned, FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
 
 use proc_macro::TokenStream;
 use std::boxed::Box;
-use syn::export::Span;
 
 pub(crate) struct ClassMethodExport {
     pub(crate) class_ty: Box<Type>,
@@ -21,7 +20,10 @@ pub(crate) struct ExportArgs {
 }
 
 pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    let (impl_block, export) = parse_method_export(meta, input);
+    let (impl_block, export) = match parse_method_export(meta, input) {
+        Ok(val) => val,
+        Err(toks) => return toks,
+    };
 
     let output = {
         let class_name = export.class_ty;
@@ -30,27 +32,35 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
             .methods
             .into_iter()
             .map(|ExportMethod { sig, args }| {
+                let sig_span = sig.ident.span();
+
                 let name = sig.ident;
                 let name_string = name.to_string();
+                let ret_span = sig.output.span();
                 let ret_ty = match sig.output {
-                    syn::ReturnType::Default => quote!(()),
-                    syn::ReturnType::Type(_, ty) => quote!( #ty ),
+                    syn::ReturnType::Default => quote_spanned!(ret_span => ()),
+                    syn::ReturnType::Type(_, ty) => quote_spanned!( ret_span => #ty ),
                 };
 
                 let arg_count = sig.inputs.len();
 
                 if arg_count < 2 {
-                    panic!("exported methods must take self and owner as arguments.");
+                    return syn::Error::new(
+                        sig_span,
+                        "exported methods must take self and owner as arguments",
+                    )
+                    .to_compile_error();
                 }
 
                 let optional_args = match args.optional_args {
                     Some(count) => {
                         let max_optional = arg_count - 2; // self and owner
                         if count > max_optional {
-                            panic!(
+                            let message = format!(
                                 "there can be at most {} optional arguments, got {}",
-                                max_optional, count
+                                max_optional, count,
                             );
+                            return syn::Error::new(sig_span, message).to_compile_error();
                         }
                         count
                     }
@@ -58,14 +68,15 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                 };
 
                 let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
+                    let span = arg.span();
                     if n < arg_count - optional_args {
-                        quote!(#arg ,)
+                        quote_spanned!(span => #arg ,)
                     } else {
-                        quote!(#[opt] #arg ,)
+                        quote_spanned!(span => #[opt] #arg ,)
                     }
                 });
 
-                quote!(
+                quote_spanned!( sig_span=>
                     {
                         let method = gdnative::godot_wrap_method!(
                             #class_name,
@@ -101,16 +112,18 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
 /// Parse the input.
 ///
 /// Returns the TokenStream of the impl block together with a description of methods to export.
-fn parse_method_export(_meta: TokenStream, input: TokenStream) -> (ItemImpl, ClassMethodExport) {
+fn parse_method_export(
+    _meta: TokenStream,
+    input: TokenStream,
+) -> Result<(ItemImpl, ClassMethodExport), TokenStream> {
     let ast = match syn::parse_macro_input::parse::<ItemImpl>(input) {
         Ok(impl_block) => impl_block,
         Err(err) => {
-            // if the impl block is ill-formed there is no point in error handling.
-            panic!("{}", err);
+            return Err(err.to_compile_error().into());
         }
     };
 
-    impl_gdnative_expose(ast)
+    Ok(impl_gdnative_expose(ast))
 }
 
 /// Extract the data to export from the impl block.
@@ -135,9 +148,11 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     // extract all methods that have the #[export] attribute.
     // add all items back to the impl block again.
     for func in ast.items {
-        let item = match func {
+        let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
+
+                let mut errors = vec![];
 
                 // only allow the "outer" style, aka #[thing] item.
                 method.attrs.retain(|attr| {
@@ -160,33 +175,62 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                 use quote::ToTokens;
                                 use syn::{Meta, MetaNameValue, NestedMeta};
 
-                                let meta =
-                                    attr.parse_meta().expect("cannot parse attribute arguments");
+                                let meta = match attr.parse_meta() {
+                                    Ok(val) => val,
+                                    Err(err) => {
+                                        errors.push(err);
+                                        return false;
+                                    }
+                                };
 
                                 let pairs: Vec<_> = match meta {
                                     Meta::List(list) => list
                                         .nested
                                         .into_pairs()
-                                        .map(|p| match p.into_value() {
-                                            NestedMeta::Meta(Meta::NameValue(pair)) => pair,
-                                            unexpected => panic!(
-                                                "unexpected argument in list: {}",
-                                                unexpected.into_token_stream()
-                                            ),
+                                        .filter_map(|p| {
+                                            let span = p.span();
+                                            match p.into_value() {
+                                                NestedMeta::Meta(Meta::NameValue(pair)) => {
+                                                    Some(pair)
+                                                }
+                                                unexpected => {
+                                                    let msg = format!(
+                                                        "unexpected argument in list: {}",
+                                                        unexpected.into_token_stream()
+                                                    );
+                                                    errors.push(syn::Error::new(span, msg));
+                                                    None
+                                                }
+                                            }
                                         })
                                         .collect(),
                                     Meta::NameValue(pair) => vec![pair],
-                                    meta => panic!(
-                                        "unexpected attribute argument: {}",
-                                        meta.into_token_stream()
-                                    ),
+                                    meta => {
+                                        let span = meta.span();
+                                        let msg = format!(
+                                            "unexpected attribute argument: {}",
+                                            meta.into_token_stream()
+                                        );
+                                        errors.push(syn::Error::new(span, msg));
+                                        return false;
+                                    }
                                 };
 
-                                for MetaNameValue { path, .. } in pairs.into_iter() {
-                                    let last =
-                                        path.segments.last().expect("the path should not be empty");
+                                for MetaNameValue { path, .. } in pairs {
+                                    let last = match path.segments.last() {
+                                        Some(val) => val,
+                                        None => {
+                                            errors.push(syn::Error::new(
+                                                path.span(),
+                                                "the path should not be empty",
+                                            ));
+                                            return false;
+                                        }
+                                    };
                                     let unexpected = last.ident.to_string();
-                                    panic!("unknown option for export: `{}`", unexpected);
+                                    let msg =
+                                        format!("unknown option for export: `{}`", unexpected);
+                                    errors.push(syn::Error::new(last.span(), msg));
                                 }
                             }
 
@@ -219,12 +263,20 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                         if is_optional {
                             if n < 2 {
-                                panic!("self and owner cannot be optional");
+                                errors.push(syn::Error::new(
+                                    arg.span(),
+                                    "self or owner cannot be optional",
+                                ));
+                                continue;
                             }
 
                             *optional_args.get_or_insert(0) += 1;
                         } else if optional_args.is_some() {
-                            panic!("cannot add required parameters after optional ones");
+                            errors.push(syn::Error::new(
+                                arg.span(),
+                                "cannot add required parameters after optional ones",
+                            ));
+                            continue;
                         }
                     }
 
@@ -236,12 +288,16 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     });
                 }
 
-                ImplItem::Method(method)
+                errors
+                    .into_iter()
+                    .map(|err| ImplItem::Verbatim(err.to_compile_error()))
+                    .chain(std::iter::once(ImplItem::Method(method)))
+                    .collect()
             }
-            item => item,
+            item => vec![item],
         };
 
-        result.items.push(item);
+        result.items.extend(items);
     }
 
     // check if the export methods have the proper "shape", the write them
@@ -249,17 +305,29 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     {
         for mut method in methods_to_export {
             let generics = &method.sig.generics;
+            let span = method.sig.ident.span();
 
             if generics.type_params().count() > 0 {
-                eprintln!("type parameters not allowed in exported functions");
+                let toks =
+                    syn::Error::new(span, "Type parameters not allowed in exported functions")
+                        .to_compile_error();
+                result.items.push(ImplItem::Verbatim(toks));
                 continue;
             }
             if generics.lifetimes().count() > 0 {
-                eprintln!("lifetime parameters not allowed in exported functions");
+                let toks = syn::Error::new(
+                    span,
+                    "Lifetime parameters not allowed in exported functions",
+                )
+                .to_compile_error();
+                result.items.push(ImplItem::Verbatim(toks));
                 continue;
             }
             if generics.const_params().count() > 0 {
-                eprintln!("const parameters not allowed in exported functions");
+                let toks =
+                    syn::Error::new(span, "const parameters not allowed in exported functions")
+                        .to_compile_error();
+                result.items.push(ImplItem::Verbatim(toks));
                 continue;
             }
 
@@ -279,7 +347,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                 attrs: vec![],
                                 by_ref: None,
                                 mutability: None,
-                                ident: syn::Ident::new(&name, Span::call_site()),
+                                ident: syn::Ident::new(&name, span),
                                 subpat: None,
                             }));
                         }
