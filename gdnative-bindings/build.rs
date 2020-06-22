@@ -14,10 +14,11 @@ fn main() {
     {
         let mut output = BufWriter::new(File::create(&output_rs).unwrap());
 
+        let api = Api::new();
         // gdnative-core already implements all dependencies of Object
-        let to_ignore = strongly_connected_components(&Api::new(), "Object", None);
+        let to_ignore = strongly_connected_components(&api, "Object", None);
 
-        let code = generate_bindings(Some(to_ignore));
+        let code = generate_bindings(&api, Some(to_ignore));
         write!(&mut output, "{}", code).unwrap();
     }
 
