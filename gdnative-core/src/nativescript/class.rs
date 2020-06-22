@@ -4,8 +4,10 @@ use crate::nativescript::init::ClassBuilder;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
 use crate::nativescript::UserData;
-use crate::object::{ManuallyManaged, PersistentRef, Ptr, RawObject, Ref, RefCounted};
+use crate::object::{QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw, SafeDeref};
 use crate::private::get_api;
+use crate::ref_kind::{ManuallyManaged, RefCounted};
+use crate::thread_access::{Shared, ThreadAccess, ThreadLocal, Unique};
 use crate::FromVariant;
 use crate::FromVariantError;
 use crate::GodotObject;
@@ -67,6 +69,22 @@ pub trait NativeClass: Sized + 'static {
     /// Register any exported properties to Godot.
     #[inline]
     fn register_properties(_builder: &ClassBuilder<Self>) {}
+
+    /// Convenience method to create an `Instance<Self, Unique>`. This is a new `Self::Base`
+    /// with the script attached.
+    ///
+    /// If `Self::Base` is manually-managed, then the resulting `Instance` must be passed to
+    /// the engine or manually freed with `Instance::free`. Otherwise, the base object will be
+    /// leaked.
+    ///
+    /// Must be called after the library is initialized.
+    #[inline]
+    fn new_instance() -> Instance<Self, Unique>
+    where
+        Self::Base: Instanciable,
+    {
+        Instance::new()
+    }
 }
 
 /// Trait used to provide information of Godot-exposed methods of a script class.
@@ -80,8 +98,8 @@ pub trait NativeClassMethods: NativeClass {
 /// `Instance`s can be worked on directly using `map` and `map_mut` if the base object is
 /// reference-counted. Otherwise, use `assume_safe` to obtain a temporary `RefInstance`.
 #[derive(Debug)]
-pub struct Instance<T: NativeClass> {
-    owner: <T::Base as GodotObject>::PersistentRef,
+pub struct Instance<T: NativeClass, Access: ThreadAccess> {
+    owner: Ref<T::Base, Access>,
     script: T::UserData,
 }
 
@@ -93,9 +111,13 @@ pub struct RefInstance<'a, T: NativeClass> {
     script: T::UserData,
 }
 
-impl<T: NativeClass> Instance<T> {
+impl<T: NativeClass> Instance<T, Unique> {
     /// Creates a `T::Base` with the script `T` attached. Both `T::Base` and `T` must have zero
     /// argument constructors.
+    ///
+    /// If `T::Base` is manually-managed, then the resulting `Instance` must be passed to
+    /// the engine or manually freed with `Instance::free`. Otherwise, the base object will be
+    /// leaked.
     ///
     /// Must be called after the library is initialized.
     #[inline]
@@ -174,10 +196,12 @@ impl<T: NativeClass> Instance<T> {
             Instance { owner, script }
         }
     }
+}
 
+impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access> {
     /// Returns the base object, dropping the script wrapper.
     #[inline]
-    pub fn into_base(self) -> <T::Base as GodotObject>::PersistentRef {
+    pub fn into_base(self) -> Ref<T::Base, Access> {
         self.owner
     }
 
@@ -189,13 +213,13 @@ impl<T: NativeClass> Instance<T> {
 
     /// Returns the base object and the script wrapper.
     #[inline]
-    pub fn decouple(self) -> (<T::Base as GodotObject>::PersistentRef, T::UserData) {
+    pub fn decouple(self) -> (Ref<T::Base, Access>, T::UserData) {
         (self.owner, self.script)
     }
 
     /// Returns a reference to the base object.
     #[inline]
-    pub fn base(&self) -> &<T::Base as GodotObject>::PersistentRef {
+    pub fn base(&self) -> &Ref<T::Base, Access> {
         &self.owner
     }
 
@@ -204,28 +228,42 @@ impl<T: NativeClass> Instance<T> {
     pub fn script(&self) -> &T::UserData {
         &self.script
     }
+}
 
-    /// Try to downcast `&T::Base` to `Instance<T>`.
+impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access>
+where
+    RefImplBound: SafeAsRaw<<T::Base as GodotObject>::RefKind, Access>,
+{
+    /// Try to downcast `Ref<T::Base, Access>` to `Instance<T>`, without changing the reference
+    /// count if reference-counted.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original `Ref` if the cast failed.
     #[inline]
-    pub fn try_from_base(owner: &T::Base) -> Option<Self> {
-        RefInstance::try_from_base(owner).map(RefInstance::claim)
+    pub fn try_from_base(owner: Ref<T::Base, Access>) -> Result<Self, Ref<T::Base, Access>> {
+        let user_data = match try_get_user_data_ptr::<T>(owner.as_raw()) {
+            Some(user_data) => user_data,
+            None => return Err(owner),
+        };
+
+        let script = unsafe { T::UserData::clone_from_user_data_unchecked(user_data) };
+
+        Ok(Instance { owner, script })
+    }
+
+    /// Try to downcast `Ref<T::Base, Access>` to `Instance<T>`, without changing the reference
+    /// count if reference-counted. Shorthand for `Self::try_from_base().ok()`.
+    #[inline]
+    pub fn from_base(owner: Ref<T::Base, Access>) -> Option<Self> {
+        Self::try_from_base(owner).ok()
     }
 }
 
-/// Methods for instances with reference-counted base classes.
-impl<T: NativeClass> Instance<T>
+impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access>
 where
-    T::Base: GodotObject<PersistentRef = Ref<T::Base>> + RefCounted,
+    RefImplBound: SafeDeref<<T::Base as GodotObject>::RefKind, Access>,
 {
-    /// Try to downcast `Ref<T::Base>` to `Instance<T>` without changing the reference count.
-    #[inline]
-    pub fn try_from_ref_base(owner: Ref<T::Base>) -> Option<Self> {
-        let user_data = try_get_user_data_ptr::<T>(&*owner)?;
-        let script = unsafe { T::UserData::clone_from_user_data_unchecked(user_data) };
-
-        Some(Instance { owner, script })
-    }
-
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
     #[inline]
@@ -250,51 +288,115 @@ where
 }
 
 /// Methods for instances with manually-managed base classes.
-impl<T: NativeClass> Instance<T>
-where
-    T::Base: GodotObject<PersistentRef = Ptr<T::Base>> + ManuallyManaged,
-{
-    /// Assume that `self` is safe to use during the `'a` lifetime. This lifetime is unbounded
-    /// and inferred by the compiler unless given explicitly.
+impl<T: NativeClass> Instance<T, Shared> {
+    /// Assume that `self` is safe to use.
     ///
     /// This is *not* guaranteed to be a no-op at runtime.
     ///
     /// # Safety
     ///
-    /// It's safe to call `assume_safe` only if the constraints of `Ptr::assume_safe`
+    /// It's safe to call `assume_safe` only if the constraints of `Ref::assume_safe`
     /// are satisfied for the base object.
     #[inline]
-    pub unsafe fn assume_safe<'a>(self) -> RefInstance<'a, T> {
+    pub unsafe fn assume_safe<'a>(&self) -> RefInstance<'a, T> {
         RefInstance {
-            owner: self.owner.assume_safe::<'a>(),
+            owner: self.owner.assume_safe(),
+            script: self.script.clone(),
+        }
+    }
+}
+
+impl<T: NativeClass> Instance<T, Unique>
+where
+    T::Base: GodotObject<RefKind = ManuallyManaged>,
+{
+    /// Frees the base object and user-data wrapper.
+    ///
+    /// Same as `self.into_base().free()`.
+    #[inline]
+    pub fn free(self) {
+        self.into_base().free()
+    }
+}
+
+impl<T: NativeClass> Instance<T, Unique>
+where
+    T::Base: GodotObject<RefKind = ManuallyManaged> + QueueFree,
+{
+    /// Queues the base object and user-data wrapper for deallocation in the near future.
+    /// This should be preferred to `free` for `Node`s.
+    ///
+    /// Same as `self.into_base().queue_free()`.
+    #[inline]
+    pub fn queue_free(self) {
+        self.into_base().queue_free()
+    }
+}
+
+impl<T: NativeClass> Instance<T, Unique> {
+    /// Coverts into a `Shared` instance.
+    #[inline]
+    pub fn into_shared(self) -> Instance<T, Shared> {
+        Instance {
+            owner: self.owner.into_shared(),
             script: self.script,
         }
     }
+}
 
-    /// Assume that `self` to use during the lifetime of the input reference. The input
-    /// reference is unused and may be anything. This is a convenience wrapper around
-    /// `assume_safe`.
-    ///
-    /// This is *not* guaranteed to be a no-op at runtime.
-    ///
-    /// # Safety
-    ///
-    /// It's safe to call `assume_safe_during` only if the constraints of
-    /// `Ptr::assume_safe` are satisfied for the base object.
+impl<T: NativeClass> Instance<T, Unique>
+where
+    T::Base: GodotObject<RefKind = RefCounted>,
+{
+    /// Coverts into a `ThreadLocal` instance.
     #[inline]
-    pub unsafe fn assume_safe_during<'a, L: 'a>(self, _lifetime: &'a L) -> RefInstance<'a, T> {
-        self.assume_safe::<'a>()
+    pub fn into_thread_local(self) -> Instance<T, ThreadLocal> {
+        Instance {
+            owner: self.owner.into_thread_local(),
+            script: self.script,
+        }
     }
+}
 
-    /// Manually frees the base object of this instance.
+impl<T: NativeClass> Instance<T, Shared> {
+    /// Assume that `self` is the unique reference to the underlying base object.
+    ///
+    /// This is guaranteed to be a no-op at runtime if `debug_assertions` is disabled. Runtime
+    /// sanity checks may be added in debug builds to help catch bugs.
     ///
     /// # Safety
     ///
-    /// During the call, the underlying object must be valid, and this thread must have
-    /// exclusive access to the object.
+    /// Calling `assume_unique` when `self` isn't the unique reference is instant undefined
+    /// behavior. This is a much stronger assumption than `assume_safe` and should be used with
+    /// care.
     #[inline]
-    pub unsafe fn free(self) {
-        self.owner.free();
+    pub unsafe fn assume_unique(self) -> Instance<T, Unique> {
+        Instance {
+            owner: self.owner.assume_unique(),
+            script: self.script,
+        }
+    }
+}
+
+impl<T: NativeClass> Instance<T, Shared>
+where
+    T::Base: GodotObject<RefKind = RefCounted>,
+{
+    /// Assume that all references to the underlying object is local to the current thread.
+    ///
+    /// This is guaranteed to be a no-op at runtime.
+    ///
+    /// # Safety
+    ///
+    /// Calling `assume_thread_local` when there are references on other threads is instant
+    /// undefined behavior. This is a much stronger assumption than `assume_safe` and should
+    /// be used with care.
+    #[inline]
+    pub unsafe fn assume_thread_local(self) -> Instance<T, ThreadLocal> {
+        Instance {
+            owner: self.owner.assume_thread_local(),
+            script: self.script,
+        }
     }
 }
 
@@ -314,7 +416,7 @@ impl<'a, T: NativeClass> RefInstance<'a, T> {
     /// Try to downcast `&T::Base` to `RefInstance<T>`.
     #[inline]
     pub fn try_from_base(owner: &'a T::Base) -> Option<Self> {
-        let user_data = try_get_user_data_ptr::<T>(owner)?;
+        let user_data = try_get_user_data_ptr::<T>(owner.as_raw())?;
         unsafe { Some(Self::from_raw_unchecked(owner, user_data)) }
     }
 
@@ -324,15 +426,6 @@ impl<'a, T: NativeClass> RefInstance<'a, T> {
     pub unsafe fn from_raw_unchecked(owner: &'a T::Base, user_data: *mut libc::c_void) -> Self {
         let script = T::UserData::clone_from_user_data_unchecked(user_data);
         RefInstance { owner, script }
-    }
-
-    /// Returns a persistent version of this instance.
-    #[inline]
-    pub fn claim(self) -> Instance<T> {
-        Instance {
-            owner: self.owner.claim(),
-            script: self.script,
-        }
     }
 }
 
@@ -364,9 +457,10 @@ where
     }
 }
 
-impl<T> Clone for Instance<T>
+impl<T, Access: ThreadAccess> Clone for Instance<T, Access>
 where
     T: NativeClass,
+    Ref<T::Base, Access>: Clone,
 {
     #[inline]
     fn clone(&self) -> Self {
@@ -390,9 +484,10 @@ where
     }
 }
 
-impl<T> ToVariant for Instance<T>
+impl<T, Access: ThreadAccess> ToVariant for Instance<T, Access>
 where
     T: NativeClass,
+    Ref<T::Base, Access>: ToVariant,
 {
     #[inline]
     fn to_variant(&self) -> Variant {
@@ -400,35 +495,25 @@ where
     }
 }
 
-impl<'a, T> ToVariant for RefInstance<'a, T>
+impl<T> FromVariant for Instance<T, Shared>
 where
     T: NativeClass,
-{
-    #[inline]
-    fn to_variant(&self) -> Variant {
-        self.owner.to_variant()
-    }
-}
-
-impl<T> FromVariant for Instance<T>
-where
-    T: NativeClass,
-    T::Base: GodotObject<PersistentRef = Ref<T::Base>> + RefCounted,
+    T::Base: GodotObject<RefKind = RefCounted>,
 {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        let owner = Ref::<T::Base>::from_variant(variant)?;
-        Self::try_from_base(&*owner).ok_or(FromVariantError::InvalidInstance {
+        let owner = Ref::<T::Base, Shared>::from_variant(variant)?;
+        Self::from_base(owner).ok_or(FromVariantError::InvalidInstance {
             expected: T::class_name(),
         })
     }
 }
 
-fn try_get_user_data_ptr<T: NativeClass>(owner: &T::Base) -> Option<*mut libc::c_void> {
+fn try_get_user_data_ptr<T: NativeClass>(owner: &RawObject<T::Base>) -> Option<*mut libc::c_void> {
     unsafe {
         let api = get_api();
 
-        let owner_ptr = owner.as_ptr();
+        let owner_ptr = owner.sys().as_ptr();
 
         let type_tag = (api.godot_nativescript_get_type_tag)(owner_ptr);
         if type_tag.is_null() {

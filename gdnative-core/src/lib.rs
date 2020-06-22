@@ -47,6 +47,7 @@ mod generated;
 mod new_ref;
 #[doc(hidden)]
 pub mod object;
+pub mod ref_kind;
 pub mod thread_access;
 
 /// Internal low-level API for use by macros and generated bindings. Not a part of the public API.
@@ -55,9 +56,7 @@ pub mod private;
 
 pub use crate::generated::*;
 pub use crate::new_ref::NewRef;
-pub use crate::object::{
-    GodotObject, Instanciable, ManuallyManaged, Ptr, QueueFree, Ref, RefCounted,
-};
+pub use crate::object::{GodotObject, Instanciable, QueueFree, Ref};
 
 pub use sys::GodotApi;
 

@@ -51,14 +51,14 @@ impl Mob {
     #[export]
     fn on_visibility_screen_exited(&self, owner: &RigidBody2D) {
         unsafe {
-            owner.claim().queue_free();
+            owner.assume_unique().queue_free();
         }
     }
 
     #[export]
     fn on_start_game(&self, owner: &RigidBody2D) {
         unsafe {
-            owner.claim().queue_free();
+            owner.assume_unique().queue_free();
         }
     }
 }

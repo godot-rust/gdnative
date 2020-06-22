@@ -81,7 +81,7 @@ fn test_register_property() -> bool {
     println!(" -- test_register_property");
 
     let ok = std::panic::catch_unwind(|| {
-        let obj = Instance::<RegisterProperty>::new();
+        let obj = RegisterProperty::new_instance();
 
         let base = obj.into_base();
 

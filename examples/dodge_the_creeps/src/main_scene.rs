@@ -3,15 +3,11 @@ use crate::hud;
 use crate::mob;
 use crate::player;
 use gdnative::api::*;
+use gdnative::ref_kind::ManuallyManaged;
+use gdnative::thread_access::{Shared, Unique};
 use gdnative::*;
 use rand::*;
 use std::f64::consts::PI;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ManageErrs {
-    CouldNotMakeInstance,
-    RootClassNotRigidBody2D(String),
-}
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -26,7 +22,7 @@ pub struct Main {
 impl Main {
     fn _init(_owner: &Node) -> Self {
         Main {
-            mob: PackedScene::new(),
+            mob: PackedScene::new().into_shared(),
             score: 0,
         }
     }
@@ -102,13 +98,12 @@ impl Main {
         let mob_spawn_location: &PathFollow2D =
             unsafe { owner.get_typed_node("mob_path/mob_spawn_locations") };
 
-        let mob_scene: &RigidBody2D = instance_scene(&self.mob).unwrap();
+        let mob_scene: Ref<RigidBody2D, _> = instance_scene(&self.mob);
 
         let mut rng = rand::thread_rng();
         let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
 
         mob_spawn_location.set_offset(offset.into());
-        owner.add_child(Some(mob_scene.to_node()), false);
 
         let mut direction = mob_spawn_location.rotation() + PI / 2.0;
 
@@ -121,11 +116,11 @@ impl Main {
         let mob = mob_scene.cast_instance::<mob::Mob>().unwrap();
 
         mob.map(|x, mob_owner| {
-            mob_scene
+            mob_owner
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
-            mob_scene
-                .set_linear_velocity(mob_scene.linear_velocity().rotated(Angle { radians: d }));
+            mob_owner
+                .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
 
             let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
             let hud = hud_node.cast_instance::<hud::HUD>().unwrap();
@@ -133,7 +128,7 @@ impl Main {
             hud.map(|_, o| {
                 o.connect(
                     "start_game".into(),
-                    Some(mob_owner.to_object()),
+                    Some(unsafe { mob_owner.to_object().assume_shared() }),
                     "on_start_game".into(),
                     VariantArray::new_shared(),
                     0,
@@ -143,27 +138,29 @@ impl Main {
             .unwrap();
         })
         .unwrap();
+
+        owner.add_child(
+            Some(mob.into_base().cast::<Node>().unwrap().into_shared()),
+            false,
+        );
     }
 }
 
 /// Root here is needs to be the same type (or a parent type) of the node that you put in the child
 ///   scene as the root. For instance Spatial is used for this example.
-fn instance_scene<Root>(scene: &PackedScene) -> Result<&Root, ManageErrs>
+fn instance_scene<Root>(scene: &Ref<PackedScene, Shared>) -> Ref<Root, Unique>
 where
-    Root: gdnative::GodotObject,
+    Root: gdnative::GodotObject<RefKind = ManuallyManaged>,
 {
-    let inst_option = scene.instance(PackedScene::GEN_EDIT_STATE_DISABLED);
+    let scene = unsafe { scene.assume_safe() };
 
-    if let Some(instance) = inst_option {
-        let instance = unsafe { instance.assume_safe() };
-        if let Some(instance_root) = instance.cast::<Root>() {
-            Ok(instance_root)
-        } else {
-            Err(ManageErrs::RootClassNotRigidBody2D(
-                instance.name().to_string(),
-            ))
-        }
-    } else {
-        Err(ManageErrs::CouldNotMakeInstance)
-    }
+    let instance = scene
+        .instance(PackedScene::GEN_EDIT_STATE_DISABLED)
+        .expect("should be able to instance scene");
+
+    let instance = unsafe { instance.assume_unique() };
+
+    instance
+        .try_cast::<Root>()
+        .expect("root node type should be correct")
 }

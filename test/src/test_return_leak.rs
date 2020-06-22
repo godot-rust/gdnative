@@ -66,15 +66,13 @@ fn test_return_leak() -> bool {
         // Create an instance of the probe, and drop the reference after setting the property
         // to it. After this block, the only reference should be the one in `animation_tree`.
         {
-            let animation_tree = unsafe { animation_tree.assume_safe() };
-
-            let probe = Instance::<Probe>::new();
+            let probe = Probe::new_instance();
             probe
                 .map_mut(|probe, _| probe.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
 
-            let base = probe.into_base();
-            animation_tree.set_tree_root(Some(&*base.cast().unwrap()));
+            let base = probe.into_base().into_shared();
+            animation_tree.set_tree_root(Some(base.cast().unwrap()));
         }
 
         assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));
@@ -82,17 +80,11 @@ fn test_return_leak() -> bool {
         // Take the reference out of the property and drop it. The probe should be dropped after
         // this block.
         {
-            let _probe_reference = {
-                let animation_tree = unsafe { animation_tree.assume_safe() };
-
-                // This happens via ptrcall, which is what's being tested.
-                animation_tree.tree_root().unwrap()
-            };
+            // This happens via ptrcall, which is what's being tested.
+            let _probe_reference = animation_tree.tree_root().unwrap();
 
             // Free `animation_tree` so the reference inside is dropped.
-            unsafe {
-                animation_tree.free();
-            }
+            animation_tree.free();
 
             // `probe_reference` should now be the only reference left.
             assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));

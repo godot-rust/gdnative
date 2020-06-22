@@ -124,14 +124,14 @@ pub fn generate_method_impl(api: &Api, class: &GodotClass, method: &GodotMethod)
     }
 
     let rust_ret_type = if method.has_varargs {
-        Ty::Variant.to_rust(api)
+        Ty::Variant.to_rust()
     } else {
-        method.get_return_type().to_rust(api)
+        method.get_return_type().to_rust()
     };
 
     let args = method.arguments.iter().map(|argument| {
         let name = format_ident!("{}", rust_safe_name(&argument.name));
-        let typ = argument.get_type().to_rust_arg(api);
+        let typ = argument.get_type().to_rust_arg();
         quote! {
             #name: #typ
         }
@@ -282,7 +282,7 @@ pub fn generate_methods(
                 continue;
             }
 
-            let mut rust_ret_type = method.get_return_type().to_rust(api);
+            let mut rust_ret_type = method.get_return_type().to_rust();
 
             // Ensure that methods are not injected several times.
             let method_name_string = method_name.to_string();
@@ -294,7 +294,7 @@ pub fn generate_methods(
             let mut params_decl = TokenStream::new();
             let mut params_use = TokenStream::new();
             for argument in &method.arguments {
-                let ty = argument.get_type().to_rust_arg(api);
+                let ty = argument.get_type().to_rust_arg();
                 let name = rust_safe_name(&argument.name);
                 params_decl.extend(quote! {
                     , #name: #ty

@@ -4,7 +4,6 @@ use std::fmt;
 use std::mem::{forget, transmute};
 use std::ptr;
 
-use crate::object::PersistentRef;
 use crate::private::get_api;
 use crate::thread_access::*;
 
@@ -611,7 +610,7 @@ impl Variant {
     );
 
     #[inline]
-    pub fn try_to_object<T>(&self) -> Option<T::PersistentRef>
+    pub fn try_to_object<T>(&self) -> Option<Ref<T, Shared>>
     where
         T: GodotObject,
     {
@@ -619,7 +618,7 @@ impl Variant {
     }
 
     #[inline]
-    pub fn try_to_object_with_error<T>(&self) -> Result<T::PersistentRef, FromVariantError>
+    pub fn try_to_object_with_error<T>(&self) -> Result<Ref<T, Shared>, FromVariantError>
     where
         T: GodotObject,
     {
@@ -636,7 +635,7 @@ impl Variant {
                     to: T::class_name(),
                 })?;
 
-            Ok(T::PersistentRef::from_sys(obj.sys()))
+            Ok(Ref::from_sys(obj.sys()))
         }
     }
 
@@ -1243,28 +1242,14 @@ where
 }
 impl<'a, T> ToVariantEq for &'a mut T where T: ToVariantEq {}
 
-impl<T: GodotObject + ManuallyManaged> ToVariant for Ptr<T> {
+impl<T: GodotObject> ToVariant for Ref<T, Shared> {
     #[inline]
     fn to_variant(&self) -> Variant {
         Variant::from_object_ptr(self.as_ptr())
     }
 }
 
-impl<T: GodotObject<PersistentRef = Self> + ManuallyManaged> FromVariant for Ptr<T> {
-    #[inline]
-    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        variant.try_to_object_with_error::<T>()
-    }
-}
-
-impl<T: GodotObject + RefCounted> ToVariant for Ref<T> {
-    #[inline]
-    fn to_variant(&self) -> Variant {
-        Variant::from_object_ptr(self.as_ptr())
-    }
-}
-
-impl<T: GodotObject<PersistentRef = Self> + RefCounted> FromVariant for Ref<T> {
+impl<T: GodotObject> FromVariant for Ref<T, Shared> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         variant.try_to_object_with_error::<T>()

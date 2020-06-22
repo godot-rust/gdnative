@@ -106,12 +106,6 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
             Default::default()
         };
 
-        let mem_type = if class.is_refcounted() {
-            generate_impl_ref_counted(class)
-        } else {
-            generate_impl_manually_managed(class)
-        };
-
         // Instantiable
         let instantiable = if class.instantiable {
             generate_instantiable_impl(class)
@@ -123,7 +117,6 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
             #object_impl
             #free_impl
             #base_class
-            #mem_type
             #instantiable
         }
     };
@@ -226,17 +219,6 @@ pub(crate) mod test_prelude {
 
             if !class.base_class.is_empty() {
                 let code = generate_deref_impl(&class);
-                write!(&mut buffer, "{}", code).unwrap();
-                validate_and_clear_buffer!(buffer);
-            }
-
-            // RefCounted
-            if class.is_refcounted() {
-                let code = generate_impl_ref_counted(&class);
-                write!(&mut buffer, "{}", code).unwrap();
-                validate_and_clear_buffer!(buffer);
-            } else {
-                let code = generate_impl_manually_managed(&class);
                 write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }

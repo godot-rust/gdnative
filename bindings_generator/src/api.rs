@@ -96,16 +96,6 @@ impl GodotClass {
     pub fn is_getter(&self, name: &str) -> bool {
         self.properties.iter().any(|p| p.getter == name)
     }
-
-    pub fn persistent_ref(&self) -> syn::Type {
-        let self_ty = format_ident!("{}", self.name);
-
-        if self.is_refcounted() {
-            syn::parse_quote!(object::Ref<#self_ty>)
-        } else {
-            syn::parse_quote!(object::Ptr<#self_ty>)
-        }
-    }
 }
 
 pub type ConstantName = String;
@@ -279,7 +269,7 @@ impl Ty {
         }
     }
 
-    pub fn to_rust(&self, api: &Api) -> syn::Type {
+    pub fn to_rust(&self) -> syn::Type {
         match self {
             Ty::Void => syn::parse_quote! {()},
             Ty::String => syn::parse_quote! { GodotString },
@@ -316,20 +306,19 @@ impl Ty {
                 syn::parse_quote! { #name }
             }
             Ty::Object(ref name) => {
-                let class = api.find_class(name).expect("should be able to find class");
-                let persistent_ref = class.persistent_ref();
-                syn::parse_quote! { Option<#persistent_ref> }
+                let name = format_ident!("{}", name);
+                syn::parse_quote! { Option<Ref<#name, thread_access::Shared>> }
             }
         }
     }
 
-    pub fn to_rust_arg(&self, api: &Api) -> syn::Type {
+    pub fn to_rust_arg(&self) -> syn::Type {
         match self {
             Ty::Object(ref name) => {
                 let name = format_ident!("{}", name);
-                syn::parse_quote! { Option<&#name> }
+                syn::parse_quote! { Option<Ref<#name, thread_access::Shared>> }
             }
-            _ => self.to_rust(api),
+            _ => self.to_rust(),
         }
     }
 
@@ -403,7 +392,7 @@ impl Ty {
             | Ty::Int32Array
             | Ty::Float32Array
             | Ty::Variant => {
-                let rust_ty = self.to_rust(api);
+                let rust_ty = self.to_rust();
                 quote! {
                     #rust_ty::from_sys(ret)
                 }
@@ -412,7 +401,7 @@ impl Ty {
                 let name = format_ident!("{}", name);
                 quote! {
                     ptr::NonNull::new(ret)
-                        .map(|sys| <#name as GodotObject>::PersistentRef::move_from_sys(sys))
+                        .map(|sys| <Ref<#name, thread_access::Shared>>::move_from_sys(sys))
                 }
             }
             Ty::Result => {

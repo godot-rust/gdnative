@@ -67,8 +67,8 @@ The lifetime of this object is automatically managed through reference counting.
 
 Non reference counted objects such as the ones of this type are usually owned by the engine.
 
-`{name}` is a reference-only type. As it is not reference counted, persistent references can
-only exist in the unsafe `Ptr<{name}>` form.
+`{name}` is a reference-only type. Persistent references can
+only exist in the unsafe `Ref<{name}>` form.
 
 In the cases where Rust code owns an object of this type, for example if the object was just
 created on the Rust side and not passed to the engine yet, ownership should be either given

@@ -1,8 +1,9 @@
 //! Property registration.
 
 use crate::nativescript::{Instance, NativeClass};
-use crate::object::{GodotObject, RefCounted};
+use crate::object::GodotObject;
 use crate::private::get_api;
+use crate::thread_access::Shared;
 use crate::*;
 
 use super::ClassBuilder;
@@ -425,9 +426,9 @@ mod impl_export {
         }
     }
 
-    impl<T> Export for Ref<T>
+    impl<T> Export for Ref<T, Shared>
     where
-        T: GodotObject + RefCounted,
+        T: GodotObject,
     {
         type Hint = ();
         #[inline]
@@ -436,21 +437,10 @@ mod impl_export {
         }
     }
 
-    impl<T> Export for Ptr<T>
-    where
-        T: GodotObject + ManuallyManaged,
-    {
-        type Hint = ();
-        #[inline]
-        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
-            ExportInfo::resource_type::<T>()
-        }
-    }
-
-    impl<T> Export for Instance<T>
+    impl<T> Export for Instance<T, Shared>
     where
         T: NativeClass,
-        Instance<T>: ToVariant,
+        Instance<T, Shared>: ToVariant,
     {
         type Hint = ();
         #[inline]
