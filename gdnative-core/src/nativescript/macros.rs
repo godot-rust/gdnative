@@ -188,7 +188,7 @@ macro_rules! godot_wrap_method_inner {
                                 $($pname,)*
                                 $($opt_pname,)*
                             );
-                            <$retty as $crate::ToVariant>::to_variant(&ret)
+                            <$retty as $crate::OwnedToVariant>::owned_to_variant(ret)
                         })
                         .unwrap_or_else(|err| {
                             $crate::godot_error!("gdnative-core: method call failed with error: {:?}", err);
