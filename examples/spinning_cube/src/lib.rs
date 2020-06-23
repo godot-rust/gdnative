@@ -3,7 +3,6 @@ extern crate gdnative;
 
 use gdnative::api::MeshInstance;
 use gdnative::init::property::{EnumHint, IntHint, StringHint};
-use gdnative::GodotObject;
 
 #[derive(gdnative::NativeClass)]
 #[inherit(MeshInstance)]

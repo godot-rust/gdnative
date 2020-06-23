@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::fmt::{self, Debug};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -249,6 +250,20 @@ where
 
     #[inline]
     fn deref(&self) -> &Self::Target {
+        RefImplBound::impl_as_ref(self).obj
+    }
+}
+
+/// `Ref<T, Access>` can be safely dereferenced if either:
+///
+/// - `T` is reference-counted and `Access` is not `Shared`,
+/// - or, `T` is manually-managed and `Access` is `Unique`.
+impl<T: GodotObject, Access: ThreadAccess> Borrow<T> for Ref<T, Access>
+where
+    RefImplBound: SafeDeref<T::RefKind, Access>,
+{
+    #[inline]
+    fn borrow(&self) -> &T {
         RefImplBound::impl_as_ref(self).obj
     }
 }
@@ -631,7 +646,7 @@ impl<T: GodotObject, Access: ThreadAccess> Ref<T, Access> {
 }
 
 /// A temporary safe pointer to Godot objects that tracks thread access status.
-pub struct TRef<'a, T: GodotObject, Access: ThreadAccess> {
+pub struct TRef<'a, T: GodotObject, Access: ThreadAccess = Shared> {
     obj: &'a T,
     _marker: PhantomData<Access>,
 }
@@ -667,12 +682,26 @@ impl<'a, T: GodotObject, Access: ThreadAccess> AsRef<T> for TRef<'a, T, Access> 
     }
 }
 
+impl<'a, T: GodotObject, Access: ThreadAccess> Borrow<T> for TRef<'a, T, Access> {
+    #[inline]
+    fn borrow(&self) -> &T {
+        self.obj
+    }
+}
+
 impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
     fn new(obj: &'a T) -> Self {
         TRef {
             obj,
             _marker: PhantomData,
         }
+    }
+
+    /// Returns the underlying reference without thread access.
+    #[inline]
+    #[allow(clippy::should_implement_trait)]
+    pub fn as_ref(self) -> &'a T {
+        self.obj
     }
 
     /// Performs a dynamic reference cast to target type, keeping the thread access info.

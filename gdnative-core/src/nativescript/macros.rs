@@ -59,6 +59,16 @@ macro_rules! godot_wrap_method_parameter_count {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! godot_wrap_method_inner_strip_ref {
+    (& $lt:lifetime mut $(rest:tt)*) => ($($rest)*);
+    (& $lt:lifetime $(rest:tt)*) => ($($rest)*);
+    (& mut $(rest:tt)*) => ($($rest)*);
+    (& $(rest:tt)*) => ($($rest)*);
+    ($(rest:tt)*) => ($($rest)*);
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! godot_wrap_method_inner {
     (
         $type_name:ty,
@@ -82,7 +92,7 @@ macro_rules! godot_wrap_method_inner {
             ) -> $crate::sys::godot_variant {
 
                 use std::panic::{self, AssertUnwindSafe};
-                use $crate::nativescript::{NativeClass, Instance, RefInstance};
+                use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
                 use $crate::object::{GodotObject, Ref, TRef};
 
                 if user_data.is_null() {
@@ -173,7 +183,11 @@ macro_rules! godot_wrap_method_inner {
 
                     let __ret = __instance
                         .$map_method(|__rust_val, $owner| {
-                            let ret = __rust_val.$method_name($owner, $($pname,)* $($opt_pname,)*);
+                            let ret = __rust_val.$method_name(
+                                OwnerArg::from_safe_ref($owner),
+                                $($pname,)*
+                                $($opt_pname,)*
+                            );
                             <$retty as $crate::ToVariant>::to_variant(&ret)
                         })
                         .unwrap_or_else(|err| {

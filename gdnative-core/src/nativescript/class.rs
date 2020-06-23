@@ -94,6 +94,33 @@ pub trait NativeClassMethods: NativeClass {
     fn register(builder: &ClassBuilder<Self>);
 }
 
+/// Trait for types that can be used as the `owner` arguments of exported methods.
+pub trait OwnerArg<'a, T: GodotObject, Access: ThreadAccess + 'static> {
+    fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self;
+}
+
+impl<'a, T, Access> OwnerArg<'a, T, Access> for &'a T
+where
+    T: GodotObject,
+    Access: ThreadAccess + 'static,
+{
+    #[inline]
+    fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self {
+        owner.as_ref()
+    }
+}
+
+impl<'a, T, Access> OwnerArg<'a, T, Access> for TRef<'a, T, Access>
+where
+    T: GodotObject,
+    Access: ThreadAccess + 'static,
+{
+    #[inline]
+    fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self {
+        owner
+    }
+}
+
 /// A persistent reference to a GodotObject with a rust NativeClass attached.
 ///
 /// `Instance`s can be worked on directly using `map` and `map_mut` if the base object is
@@ -271,9 +298,9 @@ where
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
-        F: FnOnce(&T, &T::Base) -> U,
+        F: FnOnce(&T, TRef<'_, T::Base, Access>) -> U,
     {
-        self.script.map(|script| op(script, &*self.owner))
+        self.script.map(|script| op(script, self.owner.as_ref()))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -282,9 +309,10 @@ where
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
-        F: FnOnce(&mut T, &T::Base) -> U,
+        F: FnOnce(&mut T, TRef<'_, T::Base, Access>) -> U,
     {
-        self.script.map_mut(|script| op(script, &*self.owner))
+        self.script
+            .map_mut(|script| op(script, self.owner.as_ref()))
     }
 }
 
@@ -414,7 +442,7 @@ impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access> {
         &self.script
     }
 
-    /// Try to downcast `&T::Base` to `RefInstance<T>`.
+    /// Try to downcast `TRef<'a, T::Base, Access>` to `RefInstance<T>`.
     #[inline]
     pub fn try_from_base(owner: TRef<'a, T::Base, Access>) -> Option<Self> {
         let user_data = try_get_user_data_ptr::<T>(owner.as_raw())?;
@@ -444,9 +472,9 @@ where
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
-        F: FnOnce(&T, &T::Base) -> U,
+        F: FnOnce(&T, TRef<'_, T::Base, Access>) -> U,
     {
-        self.script.map(|script| op(script, &*self.owner))
+        self.script.map(|script| op(script, self.owner))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -455,9 +483,9 @@ where
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
-        F: FnOnce(&mut T, &T::Base) -> U,
+        F: FnOnce(&mut T, TRef<'_, T::Base, Access>) -> U,
     {
-        self.script.map_mut(|script| op(script, &*self.owner))
+        self.script.map_mut(|script| op(script, self.owner))
     }
 }
 

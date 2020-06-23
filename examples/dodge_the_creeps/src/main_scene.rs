@@ -38,7 +38,7 @@ impl Main {
         let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
-            .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
+            .and_then(|hud| hud.map(|x, o| x.show_game_over(&*o)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
@@ -54,7 +54,7 @@ impl Main {
             .cast_instance::<player::Player>()
             .and_then(|player| {
                 player
-                    .map(|x, o| x.start(o, start_position.position()))
+                    .map(|x, o| x.start(&*o, start_position.position()))
                     .ok()
             })
             .unwrap_or_else(|| godot_print!("Unable to get player"));
@@ -66,8 +66,8 @@ impl Main {
             .cast_instance::<hud::HUD>()
             .and_then(|hud| {
                 hud.map(|x, o| {
-                    x.update_score(o, self.score);
-                    x.show_message(o, "Get Ready".into());
+                    x.update_score(&*o, self.score);
+                    x.show_message(&*o, "Get Ready".into());
                 })
                 .ok()
             })
@@ -89,7 +89,7 @@ impl Main {
         let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
-            .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
+            .and_then(|hud| hud.map(|x, o| x.update_score(&*o, self.score)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
@@ -113,6 +113,9 @@ impl Main {
         mob_scene.set_rotation(direction);
         let d = direction as f32;
 
+        let mob_scene = unsafe { mob_scene.into_shared().assume_safe() };
+        owner.add_child(mob_scene.cast().unwrap(), false);
+
         let mob = mob_scene.cast_instance::<mob::Mob>().unwrap();
 
         mob.map(|x, mob_owner| {
@@ -128,7 +131,7 @@ impl Main {
             hud.map(|_, o| {
                 o.connect(
                     "start_game".into(),
-                    unsafe { mob_owner.to_object().assume_shared() },
+                    mob_owner.cast().unwrap(),
                     "on_start_game".into(),
                     VariantArray::new_shared(),
                     0,
@@ -138,8 +141,6 @@ impl Main {
             .unwrap();
         })
         .unwrap();
-
-        owner.add_child(mob.into_base().cast::<Node>().unwrap().into_shared(), false);
     }
 }
 
