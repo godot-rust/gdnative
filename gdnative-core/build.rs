@@ -16,9 +16,10 @@ fn main() {
     {
         let mut output = File::create(&generated_rs).unwrap();
 
-        let classes = strongly_connected_components(&Api::new(), "Object", None);
+        let api = Api::new();
+        let classes = strongly_connected_components(&api, "Object", None);
 
-        let code = classes.iter().map(|class| generate_class(&class));
+        let code = classes.iter().map(|class| generate_class(&api, &class));
         let code = quote! {
             #(#code)*
         };

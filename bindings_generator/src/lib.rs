@@ -26,10 +26,8 @@ use std::io;
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
 #[allow(clippy::implicit_hasher)]
-pub fn generate_bindings(ignore: Option<HashSet<String>>) -> TokenStream {
+pub fn generate_bindings(api: &Api, ignore: Option<HashSet<String>>) -> TokenStream {
     let to_ignore = ignore.unwrap_or_default();
-
-    let api = Api::new();
 
     let imports = generate_imports();
 
@@ -56,9 +54,7 @@ pub fn generate_imports() -> TokenStream {
     }
 }
 
-pub fn generate_class(class_name: &str) -> TokenStream {
-    let api = Api::new();
-
+pub fn generate_class(api: &Api, class_name: &str) -> TokenStream {
     let class = api.find_class(class_name);
 
     if let Some(class) = class {
