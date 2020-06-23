@@ -2,6 +2,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
 
+use miniserde::Deserialize;
+miniserde::make_place!(Place);
+
 pub struct Api {
     pub classes: Vec<GodotClass>,
     pub api_underscore: HashSet<String>,
@@ -10,7 +13,7 @@ pub struct Api {
 impl Api {
     pub fn new() -> Self {
         let mut api = Api {
-            classes: serde_json::from_str(get_api_json())
+            classes: miniserde::json::from_str(get_api_json())
                 .expect("Failed to parse the API description"),
             api_underscore: Default::default(),
         };
