@@ -80,7 +80,7 @@ impl SignalSubscriber {
         emitter
             .connect(
                 GodotString::from_str("tick"),
-                Some(object),
+                object,
                 GodotString::from_str("notify"),
                 VariantArray::new_shared(),
                 0,
@@ -89,7 +89,7 @@ impl SignalSubscriber {
         emitter
             .connect(
                 GodotString::from_str("tick_with_data"),
-                Some(object),
+                object,
                 GodotString::from_str("notify_with_data"),
                 VariantArray::new_shared(),
                 0,

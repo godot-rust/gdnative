@@ -4,7 +4,7 @@ use crate::nativescript::init::ClassBuilder;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
 use crate::nativescript::UserData;
-use crate::object::{QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw, SafeDeref};
+use crate::object::{QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw, SafeDeref, TRef};
 use crate::private::get_api;
 use crate::ref_kind::{ManuallyManaged, RefCounted};
 use crate::thread_access::{Shared, ThreadAccess, ThreadLocal, Unique};
@@ -13,6 +13,7 @@ use crate::FromVariantError;
 use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
+use crate::OwnedToVariant;
 use crate::Reference;
 use crate::ToVariant;
 use crate::Variant;
@@ -106,8 +107,8 @@ pub struct Instance<T: NativeClass, Access: ThreadAccess> {
 /// A reference to a GodotObject with a rust NativeClass attached that is assumed safe during
 /// a certain lifetime.
 #[derive(Debug)]
-pub struct RefInstance<'a, T: NativeClass> {
-    owner: &'a T::Base,
+pub struct RefInstance<'a, T: NativeClass, Access: ThreadAccess> {
+    owner: TRef<'a, T::Base, Access>,
     script: T::UserData,
 }
 
@@ -298,7 +299,7 @@ impl<T: NativeClass> Instance<T, Shared> {
     /// It's safe to call `assume_safe` only if the constraints of `Ref::assume_safe`
     /// are satisfied for the base object.
     #[inline]
-    pub unsafe fn assume_safe<'a>(&self) -> RefInstance<'a, T> {
+    pub unsafe fn assume_safe<'a>(&self) -> RefInstance<'a, T, Shared> {
         RefInstance {
             owner: self.owner.assume_safe(),
             script: self.script.clone(),
@@ -400,10 +401,10 @@ where
     }
 }
 
-impl<'a, T: NativeClass> RefInstance<'a, T> {
+impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access> {
     /// Returns a reference to the base object with the same lifetime.
     #[inline]
-    pub fn base(&self) -> &'a T::Base {
+    pub fn base(&self) -> TRef<'a, T::Base, Access> {
         self.owner
     }
 
@@ -415,7 +416,7 @@ impl<'a, T: NativeClass> RefInstance<'a, T> {
 
     /// Try to downcast `&T::Base` to `RefInstance<T>`.
     #[inline]
-    pub fn try_from_base(owner: &'a T::Base) -> Option<Self> {
+    pub fn try_from_base(owner: TRef<'a, T::Base, Access>) -> Option<Self> {
         let user_data = try_get_user_data_ptr::<T>(owner.as_raw())?;
         unsafe { Some(Self::from_raw_unchecked(owner, user_data)) }
     }
@@ -423,14 +424,17 @@ impl<'a, T: NativeClass> RefInstance<'a, T> {
     /// Pairs an `owner` and `user_data` without checking validity. Internal interface.
     #[doc(hidden)]
     #[inline]
-    pub unsafe fn from_raw_unchecked(owner: &'a T::Base, user_data: *mut libc::c_void) -> Self {
+    pub unsafe fn from_raw_unchecked(
+        owner: TRef<'a, T::Base, Access>,
+        user_data: *mut libc::c_void,
+    ) -> Self {
         let script = T::UserData::clone_from_user_data_unchecked(user_data);
         RefInstance { owner, script }
     }
 }
 
 /// Methods for instances with reference-counted base classes.
-impl<'a, T: NativeClass> RefInstance<'a, T>
+impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access>
 where
     T::Base: GodotObject,
 {
@@ -442,7 +446,7 @@ where
         T::UserData: Map,
         F: FnOnce(&T, &T::Base) -> U,
     {
-        self.script.map(|script| op(script, self.owner))
+        self.script.map(|script| op(script, &*self.owner))
     }
 
     /// Calls a function with a NativeClass instance and its owner, and returns its return
@@ -453,7 +457,7 @@ where
         T::UserData: MapMut,
         F: FnOnce(&mut T, &T::Base) -> U,
     {
-        self.script.map_mut(|script| op(script, self.owner))
+        self.script.map_mut(|script| op(script, &*self.owner))
     }
 }
 
@@ -471,7 +475,7 @@ where
     }
 }
 
-impl<'a, T> Clone for RefInstance<'a, T>
+impl<'a, T, Access: ThreadAccess> Clone for RefInstance<'a, T, Access>
 where
     T: NativeClass,
 {
@@ -492,6 +496,16 @@ where
     #[inline]
     fn to_variant(&self) -> Variant {
         self.owner.to_variant()
+    }
+}
+
+impl<T> OwnedToVariant for Instance<T, Unique>
+where
+    T: NativeClass,
+{
+    #[inline]
+    fn owned_to_variant(self) -> Variant {
+        self.into_base().owned_to_variant()
     }
 }
 

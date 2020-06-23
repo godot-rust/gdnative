@@ -316,7 +316,7 @@ impl Ty {
         match self {
             Ty::Object(ref name) => {
                 let name = format_ident!("{}", name);
-                syn::parse_quote! { Option<Ref<#name, thread_access::Shared>> }
+                syn::parse_quote! { impl AsArg<Target = #name> }
             }
             _ => self.to_rust(),
         }

@@ -56,7 +56,7 @@ pub mod private;
 
 pub use crate::generated::*;
 pub use crate::new_ref::NewRef;
-pub use crate::object::{GodotObject, Instanciable, QueueFree, Ref};
+pub use crate::object::{AsArg, GodotObject, Instanciable, Null, QueueFree, Ref, TRef};
 
 pub use sys::GodotApi;
 

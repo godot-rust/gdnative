@@ -157,9 +157,7 @@ pub fn generate_method_impl(api: &Api, class: &GodotClass, method: &GodotMethod)
             let new_var = match arg.get_type() {
                 Ty::Object(_) => {
                     quote! {
-                        let #name: Variant = if let Some(o) = &#name {
-                           o.to_variant()
-                       } else { Variant::new() };
+                        let #name: Variant = #name.to_arg_variant();
                     }
                 }
                 Ty::String => {
@@ -389,11 +387,7 @@ fn generate_argument_pre(ty: &Ty, name: proc_macro2::Ident) -> TokenStream {
         }
         &Ty::Object(_) => {
             quote! {
-                if let Some(arg) = &#name {
-                    arg.as_ptr() as *const _ as *const _
-                } else {
-                    ptr::null()
-                }
+                #name.as_arg_ptr() as *const _ as *const _
             }
         }
         _ => Default::default(),

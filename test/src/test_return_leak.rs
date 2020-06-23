@@ -72,7 +72,7 @@ fn test_return_leak() -> bool {
                 .expect("lock should not fail");
 
             let base = probe.into_base().into_shared();
-            animation_tree.set_tree_root(Some(base.cast().unwrap()));
+            animation_tree.set_tree_root(base.cast().unwrap());
         }
 
         assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));

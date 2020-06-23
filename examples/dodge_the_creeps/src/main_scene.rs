@@ -29,13 +29,13 @@ impl Main {
 
     #[export]
     fn game_over(&self, owner: &Node) {
-        let score_timer: &Timer = unsafe { owner.get_typed_node("score_timer") };
-        let mob_timer: &Timer = unsafe { owner.get_typed_node("mob_timer") };
+        let score_timer = unsafe { owner.get_typed_node::<Timer, _>("score_timer") };
+        let mob_timer = unsafe { owner.get_typed_node::<Timer, _>("mob_timer") };
 
         score_timer.stop();
         mob_timer.stop();
 
-        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
             .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
@@ -44,9 +44,9 @@ impl Main {
 
     #[export]
     fn new_game(&mut self, owner: &Node) {
-        let start_position: &Position2D = unsafe { owner.get_typed_node("start_position") };
-        let player: &Area2D = unsafe { owner.get_typed_node("player") };
-        let start_timer: &Timer = unsafe { owner.get_typed_node("start_timer") };
+        let start_position = unsafe { owner.get_typed_node::<Position2D, _>("start_position") };
+        let player = unsafe { owner.get_typed_node::<Area2D, _>("player") };
+        let start_timer = unsafe { owner.get_typed_node::<Timer, _>("start_timer") };
 
         self.score = 0;
 
@@ -61,7 +61,7 @@ impl Main {
 
         start_timer.start(0.0);
 
-        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
             .and_then(|hud| {
@@ -76,8 +76,8 @@ impl Main {
 
     #[export]
     fn on_start_timer_timeout(&self, owner: &Node) {
-        let mob_timer: &Timer = unsafe { owner.get_typed_node("mob_timer") };
-        let score_timer: &Timer = unsafe { owner.get_typed_node("score_timer") };
+        let mob_timer = unsafe { owner.get_typed_node::<Timer, _>("mob_timer") };
+        let score_timer = unsafe { owner.get_typed_node::<Timer, _>("score_timer") };
         mob_timer.start(0.0);
         score_timer.start(0.0);
     }
@@ -86,7 +86,7 @@ impl Main {
     fn on_score_timer_timeout(&mut self, owner: &Node) {
         self.score += 1;
 
-        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
             .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
@@ -95,8 +95,8 @@ impl Main {
 
     #[export]
     fn on_mob_timer_timeout(&self, owner: &Node) {
-        let mob_spawn_location: &PathFollow2D =
-            unsafe { owner.get_typed_node("mob_path/mob_spawn_locations") };
+        let mob_spawn_location =
+            unsafe { owner.get_typed_node::<PathFollow2D, _>("mob_path/mob_spawn_locations") };
 
         let mob_scene: Ref<RigidBody2D, _> = instance_scene(&self.mob);
 
@@ -122,13 +122,13 @@ impl Main {
             mob_owner
                 .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
 
-            let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+            let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
             let hud = hud_node.cast_instance::<hud::HUD>().unwrap();
 
             hud.map(|_, o| {
                 o.connect(
                     "start_game".into(),
-                    Some(unsafe { mob_owner.to_object().assume_shared() }),
+                    unsafe { mob_owner.to_object().assume_shared() },
                     "on_start_game".into(),
                     VariantArray::new_shared(),
                     0,
@@ -139,10 +139,7 @@ impl Main {
         })
         .unwrap();
 
-        owner.add_child(
-            Some(mob.into_base().cast::<Node>().unwrap().into_shared()),
-            false,
-        );
+        owner.add_child(mob.into_base().cast::<Node>().unwrap().into_shared(), false);
     }
 }
 

@@ -7,7 +7,7 @@
 #![allow(clippy::style, clippy::complexity, clippy::perf)]
 
 use super::*;
-use crate::object::{self};
+use crate::object::{self, AsArg};
 use crate::private::get_api;
 use crate::ref_kind;
 use crate::sys;

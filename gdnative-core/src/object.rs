@@ -33,20 +33,17 @@ pub unsafe trait GodotObject: Sized + crate::private::godot_object::Sealed {
 
     fn class_name() -> &'static str;
 
+    /// Creates an explicitly null reference of `Self` as a method argument. This makes type
+    /// inference easier for the compiler compared to `Option`.
+    #[inline]
+    fn null() -> Null<Self> {
+        Null::null()
+    }
+
     /// Performs a dynamic reference cast to target type.
     #[inline]
     fn cast<T: GodotObject>(&self) -> Option<&T> {
         self.as_raw().cast().map(T::cast_ref)
-    }
-
-    /// Convenience method to downcast to `RefInstance` where `self` is the base object.
-    #[inline]
-    #[cfg(feature = "nativescript")]
-    fn cast_instance<T>(&self) -> Option<RefInstance<'_, T>>
-    where
-        T: NativeClass<Base = Self>,
-    {
-        RefInstance::try_from_base(self)
     }
 
     /// Creates a reference to `Self` given a `RawObject` reference.
@@ -223,18 +220,27 @@ impl<T: GodotObject + Instanciable> Ref<T, Unique> {
         T::construct()
     }
 }
-/// Methods for references that can be dereferenced safely.
-impl<T: GodotObject, Access: ThreadAccess> AsRef<T> for Ref<T, Access>
+
+impl<T: GodotObject, Access: ThreadAccess> Ref<T, Access>
 where
     RefImplBound: SafeDeref<T::RefKind, Access>,
 {
+    /// Returns a safe temporary reference that tracks thread access.
+    ///
+    /// `Ref<T, Access>` can be safely dereferenced if either:
+    ///
+    /// - `T` is reference-counted and `Access` is not `Shared`,
+    /// - or, `T` is manually-managed and `Access` is `Unique`.
     #[inline]
-    fn as_ref(&self) -> &T {
+    pub fn as_ref(&self) -> TRef<'_, T, Access> {
         RefImplBound::impl_as_ref(self)
     }
 }
 
-/// Methods for references that can be dereferences safely.
+/// `Ref<T, Access>` can be safely dereferenced if either:
+///
+/// - `T` is reference-counted and `Access` is not `Shared`,
+/// - or, `T` is manually-managed and `Access` is `Unique`.
 impl<T: GodotObject, Access: ThreadAccess> Deref for Ref<T, Access>
 where
     RefImplBound: SafeDeref<T::RefKind, Access>,
@@ -243,7 +249,7 @@ where
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        self.as_ref()
+        RefImplBound::impl_as_ref(self).obj
     }
 }
 
@@ -299,6 +305,7 @@ where
     /// Performs a downcast to a `NativeClass` instance, keeping the reference count.
     /// Shorthand for `try_cast_instance().ok()`.
     #[inline]
+    #[cfg(feature = "nativescript")]
     pub fn cast_instance<C>(self) -> Option<Instance<C, Access>>
     where
         C: NativeClass<Base = T>,
@@ -312,6 +319,7 @@ where
     ///
     /// Returns `Err(self)` if the cast failed.
     #[inline]
+    #[cfg(feature = "nativescript")]
     pub fn try_cast_instance<C>(self) -> Result<Instance<C, Access>, Self>
     where
         C: NativeClass<Base = T>,
@@ -354,7 +362,7 @@ impl<T: GodotObject> Ref<T, Shared> {
     ///
     /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
     #[inline(always)]
-    pub unsafe fn assume_safe<'a>(&self) -> &'a T {
+    pub unsafe fn assume_safe<'a>(&self) -> TRef<'a, T, Shared> {
         T::RefKind::impl_assume_safe(self)
     }
 
@@ -399,7 +407,7 @@ impl<T: GodotObject<RefKind = ManuallyManaged>> Ref<T, Shared> {
     /// guarantee that the operation is safe.**
     #[inline]
     #[allow(clippy::trivially_copy_pass_by_ref)]
-    pub unsafe fn assume_safe_if_sane<'a>(&self) -> Option<&'a T> {
+    pub unsafe fn assume_safe_if_sane<'a>(&self) -> Option<TRef<'a, T, Shared>> {
         if self.is_instance_sane() {
             Some(self.assume_safe_unchecked())
         } else {
@@ -607,8 +615,170 @@ impl<T: GodotObject, Access: ThreadAccess> Ref<T, Access> {
         ret
     }
 
-    unsafe fn assume_safe_unchecked<'a>(&self) -> &'a T {
-        T::cast_ref(self.as_raw_unchecked())
+    /// Assume that the reference is safe in an `unsafe` context even if it can be used safely.
+    /// For internal use in macros.
+    ///
+    /// This is guaranteed to be a no-op at runtime.
+    ///
+    /// # Safety
+    ///
+    /// The same safety constraints as `assume_safe` applies.
+    #[doc(hidden)]
+    #[inline(always)]
+    pub unsafe fn assume_safe_unchecked<'a>(&self) -> TRef<'a, T, Access> {
+        TRef::new(T::cast_ref(self.as_raw_unchecked()))
+    }
+}
+
+/// A temporary safe pointer to Godot objects that tracks thread access status.
+pub struct TRef<'a, T: GodotObject, Access: ThreadAccess> {
+    obj: &'a T,
+    _marker: PhantomData<Access>,
+}
+
+impl<'a, T: GodotObject, Access: ThreadAccess> Copy for TRef<'a, T, Access> {}
+impl<'a, T: GodotObject, Access: ThreadAccess> Clone for TRef<'a, T, Access> {
+    #[inline]
+    fn clone(&self) -> Self {
+        TRef::new(self.obj)
+    }
+}
+
+impl<'a, T: GodotObject, Access: ThreadAccess> Debug for TRef<'a, T, Access> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}({:p})", T::class_name(), self.obj)
+    }
+}
+
+impl<'a, T: GodotObject, Access: ThreadAccess> Deref for TRef<'a, T, Access> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.obj
+    }
+}
+
+impl<'a, T: GodotObject, Access: ThreadAccess> AsRef<T> for TRef<'a, T, Access> {
+    #[inline]
+    fn as_ref(&self) -> &T {
+        self.obj
+    }
+}
+
+impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
+    fn new(obj: &'a T) -> Self {
+        TRef {
+            obj,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Performs a dynamic reference cast to target type, keeping the thread access info.
+    #[inline]
+    pub fn cast<U: GodotObject>(self) -> Option<TRef<'a, U, Access>> {
+        self.obj.cast().map(TRef::new)
+    }
+
+    /// Convenience method to downcast to `RefInstance` where `self` is the base object.
+    #[inline]
+    #[cfg(feature = "nativescript")]
+    pub fn cast_instance<C>(self) -> Option<RefInstance<'a, C, Access>>
+    where
+        C: NativeClass<Base = T>,
+    {
+        RefInstance::try_from_base(self)
+    }
+}
+
+impl<'a, Kind, T, Access> TRef<'a, T, Access>
+where
+    Kind: RefKind,
+    T: GodotObject<RefKind = Kind>,
+    Access: NonUniqueThreadAccess,
+{
+    /// Persists this reference into a persistent `Ref` with the same thread access.
+    ///
+    /// This is only available for non-`Unique` accesses.
+    #[inline]
+    pub fn claim(self) -> Ref<T, Access> {
+        unsafe { Ref::from_sys(self.obj.as_raw().sys()) }
+    }
+}
+
+/// Trait for safe conversion from Godot object references into API method arguments. This is
+/// a sealed trait with no public interface.
+pub trait AsArg: private::Sealed {
+    type Target: GodotObject;
+
+    #[doc(hidden)]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object;
+
+    #[doc(hidden)]
+    #[inline]
+    unsafe fn to_arg_variant(&self) -> crate::Variant {
+        crate::Variant::from_object_ptr(self.as_arg_ptr())
+    }
+}
+
+/// Represents an explicit null reference in method arguments. This works around type inference
+/// issues with `Option`. You may create `Null`s with `Null::null` or `GodotObject::null`.
+pub struct Null<T>(PhantomData<T>);
+
+impl<T: GodotObject> Null<T> {
+    /// Creates an explicitly null reference that can be used as a method argument.
+    #[inline]
+    pub fn null() -> Self {
+        Null(PhantomData)
+    }
+}
+
+impl<'a, T> private::Sealed for Null<T> {}
+impl<'a, T: GodotObject> AsArg for Null<T> {
+    type Target = T;
+
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        std::ptr::null_mut()
+    }
+}
+
+impl<'a, T: GodotObject> private::Sealed for TRef<'a, T, Shared> {}
+impl<'a, T: GodotObject> AsArg for TRef<'a, T, Shared> {
+    type Target = T;
+
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_ptr()
+    }
+}
+
+impl<T: GodotObject> AsArg for Ref<T, Shared> {
+    type Target = T;
+
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_ptr()
+    }
+}
+
+impl<T: GodotObject> AsArg for Ref<T, Unique> {
+    type Target = T;
+
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_ptr()
+    }
+}
+
+impl<'a, T: GodotObject> private::Sealed for &'a Ref<T, Shared> {}
+impl<'a, T: GodotObject> AsArg for &'a Ref<T, Shared> {
+    type Target = T;
+
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_ptr()
     }
 }
 
@@ -617,7 +787,7 @@ impl<T: GodotObject, Access: ThreadAccess> Ref<T, Access> {
 pub unsafe trait SafeDeref<Kind: RefKind, Access: ThreadAccess> {
     /// Returns a safe reference to the underlying object.
     #[doc(hidden)]
-    fn impl_as_ref<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Access>) -> &T;
+    fn impl_as_ref<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Access>) -> TRef<'_, T, Access>;
 }
 
 /// Trait for persistent `Ref`s that point to valid objects. This is an internal interface.
@@ -634,14 +804,18 @@ pub struct RefImplBound {
 
 unsafe impl SafeDeref<ManuallyManaged, Unique> for RefImplBound {
     #[inline]
-    fn impl_as_ref<T: GodotObject<RefKind = ManuallyManaged>>(this: &Ref<T, Unique>) -> &T {
+    fn impl_as_ref<T: GodotObject<RefKind = ManuallyManaged>>(
+        this: &Ref<T, Unique>,
+    ) -> TRef<'_, T, Unique> {
         unsafe { this.assume_safe_unchecked() }
     }
 }
 
 unsafe impl<Access: LocalThreadAccess> SafeDeref<RefCounted, Access> for RefImplBound {
     #[inline]
-    fn impl_as_ref<T: GodotObject<RefKind = RefCounted>>(this: &Ref<T, Access>) -> &T {
+    fn impl_as_ref<T: GodotObject<RefKind = RefCounted>>(
+        this: &Ref<T, Access>,
+    ) -> TRef<'_, T, Access> {
         unsafe { this.assume_safe_unchecked() }
     }
 }
@@ -669,7 +843,9 @@ pub trait RefKindSpec: Sized {
     type PtrWrapper: PtrWrapper;
 
     #[doc(hidden)]
-    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(this: &Ref<T, Shared>) -> &'a T
+    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
+        this: &Ref<T, Shared>,
+    ) -> TRef<'a, T, Shared>
     where
         Self: RefKind;
 
@@ -695,7 +871,9 @@ impl RefKindSpec for ManuallyManaged {
     type PtrWrapper = Forget;
 
     #[inline(always)]
-    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(this: &Ref<T, Shared>) -> &'a T {
+    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
+        this: &Ref<T, Shared>,
+    ) -> TRef<'a, T, Shared> {
         debug_assert!(
             this.is_instance_sane(),
             "assume_safe called on an invalid pointer"
@@ -724,7 +902,9 @@ impl RefKindSpec for RefCounted {
     type PtrWrapper = UnRef;
 
     #[inline(always)]
-    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(this: &Ref<T, Shared>) -> &'a T {
+    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
+        this: &Ref<T, Shared>,
+    ) -> TRef<'a, T, Shared> {
         this.assume_safe_unchecked()
     }
 

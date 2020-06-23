@@ -83,7 +83,7 @@ macro_rules! godot_wrap_method_inner {
 
                 use std::panic::{self, AssertUnwindSafe};
                 use $crate::nativescript::{NativeClass, Instance, RefInstance};
-                use $crate::object::{GodotObject, Ref};
+                use $crate::object::{GodotObject, Ref, TRef};
 
                 if user_data.is_null() {
                     $crate::godot_error!(
@@ -105,9 +105,9 @@ macro_rules! godot_wrap_method_inner {
                 };
 
                 let __catch_result = panic::catch_unwind(move || {
-                    let this = <Ref<<$type_name as NativeClass>::Base, $crate::thread_access::Shared>>::from_sys(this);
-                    let this = <<$type_name as NativeClass>::Base as GodotObject>::cast_ref(this.as_raw_unchecked());
-                    let __instance = RefInstance::<$type_name>::from_raw_unchecked(this, user_data);
+                    let this: Ref<<$type_name as NativeClass>::Base, $crate::thread_access::Shared> = Ref::from_sys(this);
+                    let this: TRef<'_, <$type_name as NativeClass>::Base, _> = this.assume_safe_unchecked();
+                    let __instance: RefInstance<'_, $type_name, _> = RefInstance::from_raw_unchecked(this, user_data);
 
                     let num_args = num_args as isize;
 

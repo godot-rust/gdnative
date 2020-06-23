@@ -48,7 +48,7 @@ impl Bar {
 
     #[export]
     fn set_script_is_not_ub(&mut self, owner: &Node) -> bool {
-        owner.set_script(None);
+        owner.set_script(Null::null());
         assert_eq!(42, self.0, "self should not point to garbage");
         true
     }

@@ -44,7 +44,8 @@ impl Mob {
     #[export]
     fn _ready(&mut self, owner: &RigidBody2D) {
         let mut rng = rand::thread_rng();
-        let animated_sprite: &AnimatedSprite = unsafe { owner.get_typed_node("animated_sprite") };
+        let animated_sprite =
+            unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
     }
 

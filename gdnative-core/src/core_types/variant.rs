@@ -331,20 +331,18 @@ impl Variant {
 
     /// Creates a `Variant` wrapping a Godot object.
     #[inline]
-    pub fn from_object<T>(val: &T) -> Variant
+    pub fn from_object<R>(val: R) -> Variant
     where
-        T: GodotObject,
+        R: AsArg,
     {
-        Self::from_object_ptr(val.as_ptr())
+        unsafe { R::to_arg_variant(&val) }
     }
 
-    fn from_object_ptr(val: *mut sys::godot_object) -> Variant {
-        unsafe {
-            let api = get_api();
-            let mut dest = sys::godot_variant::default();
-            (api.godot_variant_new_object)(&mut dest, val);
-            Variant(dest)
-        }
+    pub(crate) unsafe fn from_object_ptr(val: *mut sys::godot_object) -> Variant {
+        let api = get_api();
+        let mut dest = sys::godot_variant::default();
+        (api.godot_variant_new_object)(&mut dest, val);
+        Variant(dest)
     }
 
     /// Creates a `Variant` wrapping a signed integer value.
@@ -859,13 +857,13 @@ impl<'l> From<&'l str> for Variant {
     }
 }
 
-impl<T> From<T> for Variant
+impl<R> From<R> for Variant
 where
-    T: GodotObject,
+    R: AsArg,
 {
     #[inline]
-    fn from(val: T) -> Variant {
-        Variant::from_object(&val)
+    fn from(val: R) -> Variant {
+        Variant::from_object(val)
     }
 }
 
@@ -984,6 +982,18 @@ godot_test!(
 /// Convenience attribute that sets `skip_to_variant` and `skip_from_variant`.
 pub trait ToVariant {
     fn to_variant(&self) -> Variant;
+}
+
+/// Types that can only be safely converted to a `Variant` as owned values. Such types cannot
+/// implement `ToVariant` in general, but can still be passed to API methods as arguments, or
+/// used as return values. Notably, this includes `Unique` references to Godot objects and
+/// instances.
+///
+/// This trait should not be implemented by users.
+///
+/// This has a blanket implementation for all types that have `ToVariant`.
+pub trait OwnedToVariant {
+    fn owned_to_variant(self) -> Variant;
 }
 
 /// Trait for types whose `ToVariant` implementations preserve equivalence.
@@ -1205,6 +1215,13 @@ impl fmt::Display for FromVariantError {
     }
 }
 
+impl<T: ToVariant> OwnedToVariant for T {
+    #[inline]
+    fn owned_to_variant(self) -> Variant {
+        self.to_variant()
+    }
+}
+
 impl ToVariant for () {
     #[inline]
     fn to_variant(&self) -> Variant {
@@ -1245,7 +1262,21 @@ impl<'a, T> ToVariantEq for &'a mut T where T: ToVariantEq {}
 impl<T: GodotObject> ToVariant for Ref<T, Shared> {
     #[inline]
     fn to_variant(&self) -> Variant {
-        Variant::from_object_ptr(self.as_ptr())
+        unsafe { Variant::from_object_ptr(self.as_ptr()) }
+    }
+}
+
+impl<T: GodotObject> OwnedToVariant for Ref<T, Unique> {
+    #[inline]
+    fn owned_to_variant(self) -> Variant {
+        unsafe { Variant::from_object_ptr(self.as_ptr()) }
+    }
+}
+
+impl<'a, T: GodotObject> ToVariant for TRef<'a, T, Shared> {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        unsafe { Variant::from_object_ptr(self.as_ptr()) }
     }
 }
 

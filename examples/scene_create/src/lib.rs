@@ -76,7 +76,7 @@ impl SceneCreate {
                 // You need to parent the new scene under some node if you want it in the scene.
                 //   We parent it under ourselves.
                 let node = unsafe { spatial.to_node().assume_shared() };
-                owner.add_child(Some(node), false);
+                owner.add_child(node, false);
                 self.children_spawned += 1;
             }
             Err(err) => godot_print!("Could not instance Child : {:?}", err),
