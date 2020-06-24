@@ -39,7 +39,8 @@ impl Player {
 
     #[export]
     fn _process(&mut self, owner: &Area2D, delta: f32) {
-        let animated_sprite: &AnimatedSprite = unsafe { owner.get_typed_node("animated_sprite") };
+        let animated_sprite =
+            unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
 
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
@@ -85,12 +86,12 @@ impl Player {
     }
 
     #[export]
-    fn on_player_body_entered(&self, owner: &Area2D, _body: Ptr<PhysicsBody2D>) {
+    fn on_player_body_entered(&self, owner: &Area2D, _body: Ref<PhysicsBody2D>) {
         owner.hide();
         owner.emit_signal("hit".into(), &[]);
 
-        let collision_shape: &CollisionShape2D =
-            unsafe { owner.get_typed_node("collision_shape_2d") };
+        let collision_shape =
+            unsafe { owner.get_typed_node::<CollisionShape2D, _>("collision_shape_2d") };
 
         collision_shape.set_deferred("disabled".into(), true.into());
     }
@@ -100,8 +101,8 @@ impl Player {
         owner.set_global_position(pos);
         owner.show();
 
-        let collision_shape: &CollisionShape2D =
-            unsafe { owner.get_typed_node("collision_shape_2d") };
+        let collision_shape =
+            unsafe { owner.get_typed_node::<CollisionShape2D, _>("collision_shape_2d") };
 
         collision_shape.set_disabled(false);
     }

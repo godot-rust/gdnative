@@ -76,15 +76,8 @@ fn test_constructor() -> bool {
     let _ = lib.is_singleton();
 
     let path = Path2D::new();
-
-    {
-        let path = unsafe { path.assume_safe() };
-        let _ = path.z_index();
-    }
-
-    unsafe {
-        path.free();
-    }
+    let _ = path.z_index();
+    path.free();
 
     true
 }
@@ -171,18 +164,18 @@ fn test_rust_class_construction() -> bool {
     println!(" -- test_rust_class_construction");
 
     let ok = std::panic::catch_unwind(|| {
-        let foo = Instance::<Foo>::new();
+        let foo = Foo::new_instance();
 
-        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
+        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
         let base = foo.into_base();
         assert_eq!(Some(42), base.call("answer".into(), &[]).try_to_i64());
 
-        let foo = Instance::<Foo>::try_from_base(&*base).expect("should be able to downcast");
-        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(owner) }));
+        let foo = Instance::<Foo, _>::try_from_base(base).expect("should be able to downcast");
+        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
         let base = foo.into_base();
-        assert!(Instance::<NotFoo>::try_from_base(&*base).is_none());
+        assert!(Instance::<NotFoo, _>::try_from_base(base).is_err());
     })
     .is_ok();
 

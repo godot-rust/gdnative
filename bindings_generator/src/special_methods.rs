@@ -6,7 +6,6 @@ use quote::{format_ident, quote};
 
 pub fn generate_ctor(class: &GodotClass) -> TokenStream {
     let method_table = format_ident!("{}MethodTable", class.name);
-    let persistent_ref = class.persistent_ref();
 
     let documentation = if class.is_refcounted() {
         r#"Creates a new instance of this object.
@@ -28,13 +27,13 @@ destroying the object) or destroyed manually using `Ptr::free`, or preferably
     quote! {
         #[doc=#documentation]
         #[inline]
-        pub fn new() -> #persistent_ref {
+        pub fn new() -> Ref<Self, thread_access::Unique> {
             unsafe {
                 let gd_api = get_api();
                 let ctor = #method_table::get(gd_api).class_constructor.unwrap();
                 let obj = ptr::NonNull::new(ctor()).expect("constructor should not return null");
 
-                <#persistent_ref>::init_from_sys(obj)
+                Ref::init_from_sys(obj)
             }
         }
     }
@@ -43,23 +42,23 @@ destroying the object) or destroyed manually using `Ptr::free`, or preferably
 pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
     let name = &class.name;
     let class_name = format_ident!("{}", class.name);
-    let persistent_ref = class.persistent_ref();
+
+    let ref_kind = if class.is_refcounted() {
+        quote! { ref_kind::RefCounted }
+    } else {
+        quote! { ref_kind::ManuallyManaged }
+    };
 
     quote! {
         impl crate::private::godot_object::Sealed for #class_name {}
 
         unsafe impl GodotObject for #class_name {
-            type PersistentRef = #persistent_ref;
+            type RefKind = #ref_kind;
 
             #[inline]
             fn class_name() -> &'static str {
                 #name
             }
-        }
-
-        impl ToVariant for #class_name {
-            #[inline]
-            fn to_variant(&self) -> Variant { Variant::from_object(self) }
         }
     }
 }
@@ -71,7 +70,7 @@ pub fn generate_instantiable_impl(class: &GodotClass) -> TokenStream {
     quote! {
         impl Instanciable for #class_name {
             #[inline]
-            fn construct() -> Self::PersistentRef {
+            fn construct() -> Ref<Self, thread_access::Unique> {
                 #class_name::new()
             }
         }
@@ -177,29 +176,6 @@ pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
                 }
             }
         }
-    }
-}
-
-pub fn generate_impl_ref_counted(class: &GodotClass) -> TokenStream {
-    assert!(class.is_refcounted(), "Only call with refcounted classes");
-
-    let class_name = format_ident!("{}", class.name);
-
-    quote! {
-        unsafe impl object::RefCounted for #class_name {}
-    }
-}
-
-pub fn generate_impl_manually_managed(class: &GodotClass) -> TokenStream {
-    assert!(
-        !class.is_refcounted(),
-        "Only call with manually managed classes"
-    );
-
-    let class_name = format_ident!("{}", class.name);
-
-    quote! {
-        unsafe impl object::ManuallyManaged for #class_name {}
     }
 }
 

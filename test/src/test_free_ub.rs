@@ -40,7 +40,7 @@ impl Bar {
     #[export]
     fn free_is_not_ub(&mut self, owner: &Node) -> bool {
         unsafe {
-            owner.claim().free();
+            owner.assume_unique().free();
         }
         assert_eq!(42, self.0, "self should not point to garbage");
         true
@@ -48,7 +48,7 @@ impl Bar {
 
     #[export]
     fn set_script_is_not_ub(&mut self, owner: &Node) -> bool {
-        owner.set_script(None);
+        owner.set_script(Null::null());
         assert_eq!(42, self.0, "self should not point to garbage");
         true
     }
@@ -69,8 +69,7 @@ fn test_owner_free_ub() -> bool {
         let drop_counter = Arc::new(AtomicUsize::new(0));
 
         {
-            let bar = Instance::<Bar>::new();
-            let bar = unsafe { bar.assume_safe() };
+            let bar = Bar::new_instance();
 
             bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
@@ -82,14 +81,11 @@ fn test_owner_free_ub() -> bool {
                     .try_to_bool()
             );
 
-            unsafe {
-                bar.claim().free();
-            }
+            bar.into_base().free();
         }
 
         {
-            let bar = Instance::<Bar>::new();
-            let bar = unsafe { bar.assume_safe() };
+            let bar = Bar::new_instance();
             bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
 

@@ -7,10 +7,12 @@
 #![allow(clippy::style, clippy::complexity, clippy::perf)]
 
 use super::*;
-use crate::object::{self, PersistentRef};
+use crate::object::{self, AsArg};
 use crate::private::get_api;
+use crate::ref_kind;
 use crate::sys;
 use crate::sys::GodotApi;
+use crate::thread_access;
 
 use libc;
 use std::ops::*;

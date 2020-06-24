@@ -67,8 +67,8 @@ The lifetime of this object is automatically managed through reference counting.
 
 Non reference counted objects such as the ones of this type are usually owned by the engine.
 
-`{name}` is a reference-only type. As it is not reference counted, persistent references can
-only exist in the unsafe `Ptr<{name}>` form.
+`{name}` is a reference-only type. Persistent references can
+only exist in the unsafe `Ref<{name}>` form.
 
 In the cases where Rust code owns an object of this type, for example if the object was just
 created on the Rust side and not passed to the engine yet, ownership should be either given
@@ -112,10 +112,12 @@ This class is used to interact with Godot's editor."#
     let safety_doc = r#"
 ## Safety
 
-All types in the Godot API have "interior mutability" in Rust parlance. Their use
-must follow the official [thread-safety guidelines][thread-safety]. Specifically, it is
-undefined behavior to pass an instance to Rust code without locking a mutex if there are
-active references to it on other threads.
+All types in the Godot API have "interior mutability" in Rust parlance.
+To enforce that the official [thread-safety guidelines][thread-safety] are
+followed, the typestate pattern is used in the `Ref` and `TRef` smart pointers,
+and the `Instance` API. The typestate `Access` in these types tracks whether the
+access is unique, shared, or exclusive to the current thread. For more information,
+see the type-level documentation on `Ref`.
 
 [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#;
 

@@ -82,8 +82,8 @@ macro_rules! godot_wrap_method_inner {
             ) -> $crate::sys::godot_variant {
 
                 use std::panic::{self, AssertUnwindSafe};
-                use $crate::nativescript::{NativeClass, Instance, RefInstance};
-                use $crate::object::{GodotObject, PersistentRef};
+                use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+                use $crate::object::{GodotObject, Ref, TRef};
 
                 if user_data.is_null() {
                     $crate::godot_error!(
@@ -105,9 +105,9 @@ macro_rules! godot_wrap_method_inner {
                 };
 
                 let __catch_result = panic::catch_unwind(move || {
-                    let this = <<<$type_name as NativeClass>::Base as GodotObject>::PersistentRef>::from_sys(this);
-                    let this = <<$type_name as NativeClass>::Base as GodotObject>::cast_ref(this.as_raw());
-                    let __instance = RefInstance::<$type_name>::from_raw_unchecked(this, user_data);
+                    let this: Ref<<$type_name as NativeClass>::Base, $crate::thread_access::Shared> = Ref::from_sys(this);
+                    let this: TRef<'_, <$type_name as NativeClass>::Base, _> = this.assume_safe_unchecked();
+                    let __instance: RefInstance<'_, $type_name, _> = RefInstance::from_raw_unchecked(this, user_data);
 
                     let num_args = num_args as isize;
 
@@ -173,8 +173,12 @@ macro_rules! godot_wrap_method_inner {
 
                     let __ret = __instance
                         .$map_method(|__rust_val, $owner| {
-                            let ret = __rust_val.$method_name($owner, $($pname,)* $($opt_pname,)*);
-                            <$retty as $crate::ToVariant>::to_variant(&ret)
+                            let ret = __rust_val.$method_name(
+                                OwnerArg::from_safe_ref($owner),
+                                $($pname,)*
+                                $($opt_pname,)*
+                            );
+                            <$retty as $crate::OwnedToVariant>::owned_to_variant(ret)
                         })
                         .unwrap_or_else(|err| {
                             $crate::godot_error!("gdnative-core: method call failed with error: {:?}", err);

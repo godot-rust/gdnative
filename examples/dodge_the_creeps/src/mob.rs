@@ -44,21 +44,22 @@ impl Mob {
     #[export]
     fn _ready(&mut self, owner: &RigidBody2D) {
         let mut rng = rand::thread_rng();
-        let animated_sprite: &AnimatedSprite = unsafe { owner.get_typed_node("animated_sprite") };
+        let animated_sprite =
+            unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
     }
 
     #[export]
     fn on_visibility_screen_exited(&self, owner: &RigidBody2D) {
         unsafe {
-            owner.claim().queue_free();
+            owner.assume_unique().queue_free();
         }
     }
 
     #[export]
     fn on_start_game(&self, owner: &RigidBody2D) {
         unsafe {
-            owner.claim().queue_free();
+            owner.assume_unique().queue_free();
         }
     }
 }

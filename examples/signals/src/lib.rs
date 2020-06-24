@@ -70,17 +70,17 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn _ready(&mut self, owner: &Label) {
+    fn _ready(&mut self, owner: TRef<Label>) {
         let emitter = &mut owner
             .get_node(NodePath::from_str("../SignalEmitter"))
             .unwrap();
         let emitter = unsafe { emitter.assume_safe() };
 
-        let object = &owner.to_object();
+        let object = owner.cast().unwrap();
         emitter
             .connect(
                 GodotString::from_str("tick"),
-                Some(*object),
+                object,
                 GodotString::from_str("notify"),
                 VariantArray::new_shared(),
                 0,
@@ -89,7 +89,7 @@ impl SignalSubscriber {
         emitter
             .connect(
                 GodotString::from_str("tick_with_data"),
-                Some(*object),
+                object,
                 GodotString::from_str("notify_with_data"),
                 VariantArray::new_shared(),
                 0,

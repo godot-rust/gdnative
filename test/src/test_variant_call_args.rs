@@ -53,9 +53,9 @@ fn test_variant_call_args() -> bool {
     println!(" -- test_variant_call_args");
 
     let ok = std::panic::catch_unwind(|| {
-        let obj = Instance::<VariantCallArgs>::new();
+        let obj = Instance::<VariantCallArgs, _>::new();
 
-        let mut base = obj.into_base().to_variant();
+        let mut base = obj.into_base().into_shared().to_variant();
 
         assert_eq!(
             Some(42),

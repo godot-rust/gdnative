@@ -3,8 +3,10 @@ extern crate gdnative;
 extern crate euclid;
 
 use euclid::vec3;
-use gdnative::api::{PackedScene, ResourceLoader, Spatial};
-use gdnative::{GodotObject, GodotString, Ref, Variant};
+use gdnative::api::{Node, PackedScene, ResourceLoader, Spatial};
+use gdnative::ref_kind::ManuallyManaged;
+use gdnative::thread_access::{ThreadLocal, Unique};
+use gdnative::{GodotString, Ref, Variant};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ManageErrs {
@@ -16,7 +18,7 @@ pub enum ManageErrs {
 #[inherit(Spatial)]
 struct SceneCreate {
     // Store the loaded scene for a very slight performance boost but mostly to show you how.
-    template: Option<Ref<PackedScene>>,
+    template: Option<Ref<PackedScene, ThreadLocal>>,
     children_spawned: u32,
 }
 
@@ -73,7 +75,8 @@ impl SceneCreate {
 
                 // You need to parent the new scene under some node if you want it in the scene.
                 //   We parent it under ourselves.
-                owner.add_child(Some(spatial.to_node()), false);
+                let node: Ref<Node, _> = spatial.cast().unwrap();
+                owner.add_child(node.into_shared(), false);
                 self.children_spawned += 1;
             }
             Err(err) => godot_print!("Could not instance Child : {:?}", err),
@@ -97,7 +100,7 @@ impl SceneCreate {
         let last_child = owner.get_child(num_children - 1);
         if let Some(node) = last_child {
             unsafe {
-                node.queue_free();
+                node.assume_unique().queue_free();
             }
             self.children_spawned -= 1;
         }
@@ -110,34 +113,32 @@ fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<SceneCreate>();
 }
 
-pub fn load_scene(path: &str) -> Option<Ref<PackedScene>> {
+pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
     let scene = ResourceLoader::godot_singleton().load(
         GodotString::from_str(path), // could also use path.into() here
         GodotString::from_str("PackedScene"),
         false,
-    );
+    )?;
 
-    scene.and_then(|s| s.cast::<PackedScene>())
+    let scene = unsafe { scene.assume_thread_local() };
+
+    scene.cast::<PackedScene>()
 }
 
 /// Root here is needs to be the same type (or a parent type) of the node that you put in the child
 ///   scene as the root. For instance Spatial is used for this example.
-fn instance_scene<Root>(scene: &PackedScene) -> Result<&Root, ManageErrs>
+fn instance_scene<Root>(scene: &PackedScene) -> Result<Ref<Root, Unique>, ManageErrs>
 where
-    Root: gdnative::GodotObject,
+    Root: gdnative::GodotObject<RefKind = ManuallyManaged>,
 {
-    let inst_option = scene.instance(0); // 0 - GEN_EDIT_STATE_DISABLED
+    let instance = scene
+        .instance(PackedScene::GEN_EDIT_STATE_DISABLED)
+        .ok_or(ManageErrs::CouldNotMakeInstance)?;
+    let instance = unsafe { instance.assume_unique() };
 
-    if let Some(instance) = inst_option {
-        let instance = unsafe { instance.assume_safe() };
-        if let Some(instance_root) = instance.cast::<Root>() {
-            Ok(instance_root)
-        } else {
-            Err(ManageErrs::RootClassNotSpatial(instance.name().to_string()))
-        }
-    } else {
-        Err(ManageErrs::CouldNotMakeInstance)
-    }
+    instance
+        .try_cast::<Root>()
+        .map_err(|instance| ManageErrs::RootClassNotSpatial(instance.name().to_string()))
 }
 
 fn update_panel(owner: &Spatial, num_children: i64) {

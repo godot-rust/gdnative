@@ -3,15 +3,11 @@ use crate::hud;
 use crate::mob;
 use crate::player;
 use gdnative::api::*;
+use gdnative::ref_kind::ManuallyManaged;
+use gdnative::thread_access::{Shared, Unique};
 use gdnative::*;
 use rand::*;
 use std::f64::consts::PI;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ManageErrs {
-    CouldNotMakeInstance,
-    RootClassNotRigidBody2D(String),
-}
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -26,31 +22,31 @@ pub struct Main {
 impl Main {
     fn _init(_owner: &Node) -> Self {
         Main {
-            mob: PackedScene::new(),
+            mob: PackedScene::new().into_shared(),
             score: 0,
         }
     }
 
     #[export]
     fn game_over(&self, owner: &Node) {
-        let score_timer: &Timer = unsafe { owner.get_typed_node("score_timer") };
-        let mob_timer: &Timer = unsafe { owner.get_typed_node("mob_timer") };
+        let score_timer = unsafe { owner.get_typed_node::<Timer, _>("score_timer") };
+        let mob_timer = unsafe { owner.get_typed_node::<Timer, _>("mob_timer") };
 
         score_timer.stop();
         mob_timer.stop();
 
-        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
-            .and_then(|hud| hud.map(|x, o| x.show_game_over(o)).ok())
+            .and_then(|hud| hud.map(|x, o| x.show_game_over(&*o)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
     fn new_game(&mut self, owner: &Node) {
-        let start_position: &Position2D = unsafe { owner.get_typed_node("start_position") };
-        let player: &Area2D = unsafe { owner.get_typed_node("player") };
-        let start_timer: &Timer = unsafe { owner.get_typed_node("start_timer") };
+        let start_position = unsafe { owner.get_typed_node::<Position2D, _>("start_position") };
+        let player = unsafe { owner.get_typed_node::<Area2D, _>("player") };
+        let start_timer = unsafe { owner.get_typed_node::<Timer, _>("start_timer") };
 
         self.score = 0;
 
@@ -58,20 +54,20 @@ impl Main {
             .cast_instance::<player::Player>()
             .and_then(|player| {
                 player
-                    .map(|x, o| x.start(o, start_position.position()))
+                    .map(|x, o| x.start(&*o, start_position.position()))
                     .ok()
             })
             .unwrap_or_else(|| godot_print!("Unable to get player"));
 
         start_timer.start(0.0);
 
-        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
             .and_then(|hud| {
                 hud.map(|x, o| {
-                    x.update_score(o, self.score);
-                    x.show_message(o, "Get Ready".into());
+                    x.update_score(&*o, self.score);
+                    x.show_message(&*o, "Get Ready".into());
                 })
                 .ok()
             })
@@ -80,8 +76,8 @@ impl Main {
 
     #[export]
     fn on_start_timer_timeout(&self, owner: &Node) {
-        let mob_timer: &Timer = unsafe { owner.get_typed_node("mob_timer") };
-        let score_timer: &Timer = unsafe { owner.get_typed_node("score_timer") };
+        let mob_timer = unsafe { owner.get_typed_node::<Timer, _>("mob_timer") };
+        let score_timer = unsafe { owner.get_typed_node::<Timer, _>("score_timer") };
         mob_timer.start(0.0);
         score_timer.start(0.0);
     }
@@ -90,25 +86,24 @@ impl Main {
     fn on_score_timer_timeout(&mut self, owner: &Node) {
         self.score += 1;
 
-        let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
         hud_node
             .cast_instance::<hud::HUD>()
-            .and_then(|hud| hud.map(|x, o| x.update_score(o, self.score)).ok())
+            .and_then(|hud| hud.map(|x, o| x.update_score(&*o, self.score)).ok())
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
     fn on_mob_timer_timeout(&self, owner: &Node) {
-        let mob_spawn_location: &PathFollow2D =
-            unsafe { owner.get_typed_node("mob_path/mob_spawn_locations") };
+        let mob_spawn_location =
+            unsafe { owner.get_typed_node::<PathFollow2D, _>("mob_path/mob_spawn_locations") };
 
-        let mob_scene: &RigidBody2D = instance_scene(&self.mob).unwrap();
+        let mob_scene: Ref<RigidBody2D, _> = instance_scene(&self.mob);
 
         let mut rng = rand::thread_rng();
         let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
 
         mob_spawn_location.set_offset(offset.into());
-        owner.add_child(Some(mob_scene.to_node()), false);
 
         let mut direction = mob_spawn_location.rotation() + PI / 2.0;
 
@@ -118,22 +113,25 @@ impl Main {
         mob_scene.set_rotation(direction);
         let d = direction as f32;
 
+        let mob_scene = unsafe { mob_scene.into_shared().assume_safe() };
+        owner.add_child(mob_scene.cast().unwrap(), false);
+
         let mob = mob_scene.cast_instance::<mob::Mob>().unwrap();
 
         mob.map(|x, mob_owner| {
-            mob_scene
+            mob_owner
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
 
-            mob_scene
-                .set_linear_velocity(mob_scene.linear_velocity().rotated(Angle { radians: d }));
+            mob_owner
+                .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
 
-            let hud_node: &CanvasLayer = unsafe { owner.get_typed_node("hud") };
+            let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
             let hud = hud_node.cast_instance::<hud::HUD>().unwrap();
 
             hud.map(|_, o| {
                 o.connect(
                     "start_game".into(),
-                    Some(mob_owner.to_object()),
+                    mob_owner.cast().unwrap(),
                     "on_start_game".into(),
                     VariantArray::new_shared(),
                     0,
@@ -148,22 +146,19 @@ impl Main {
 
 /// Root here is needs to be the same type (or a parent type) of the node that you put in the child
 ///   scene as the root. For instance Spatial is used for this example.
-fn instance_scene<Root>(scene: &PackedScene) -> Result<&Root, ManageErrs>
+fn instance_scene<Root>(scene: &Ref<PackedScene, Shared>) -> Ref<Root, Unique>
 where
-    Root: gdnative::GodotObject,
+    Root: gdnative::GodotObject<RefKind = ManuallyManaged>,
 {
-    let inst_option = scene.instance(PackedScene::GEN_EDIT_STATE_DISABLED);
+    let scene = unsafe { scene.assume_safe() };
 
-    if let Some(instance) = inst_option {
-        let instance = unsafe { instance.assume_safe() };
-        if let Some(instance_root) = instance.cast::<Root>() {
-            Ok(instance_root)
-        } else {
-            Err(ManageErrs::RootClassNotRigidBody2D(
-                instance.name().to_string(),
-            ))
-        }
-    } else {
-        Err(ManageErrs::CouldNotMakeInstance)
-    }
+    let instance = scene
+        .instance(PackedScene::GEN_EDIT_STATE_DISABLED)
+        .expect("should be able to instance scene");
+
+    let instance = unsafe { instance.assume_unique() };
+
+    instance
+        .try_cast::<Root>()
+        .expect("root node type should be correct")
 }
