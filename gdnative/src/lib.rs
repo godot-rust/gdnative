@@ -31,12 +31,13 @@
 //! API types may be reference-counted or manually-managed. This is indicated by the
 //! `RefCounted` and `ManuallyManaged` marker traits.
 //!
-//! The API types may exist in two reference forms: bare and "persistent". Bare references
+//! The API types can exist in three reference forms: bare, `TRef` and `Ref`. Bare references
 //! to API types, like `&'a Node`, represent valid and safe references to Godot objects.
-//! As such, API methods may be called safely on them. Persistent references, like `Ptr<Node>`
-//! or `Ref<Reference>`, have `'static` lifetime and can be persisted, but are not always safe
-//! to use. For more information on how to use persistent references to manually-managed objects
-//! safely, see the documentation on `Ptr::assume_safe`.
+//! As such, API methods may be called safely on them. `TRef` adds typestate tracking, which
+//! enable additional abilities like being able to be passed to the engine. `Ref`, or
+//! "persistent" references, have `'static` lifetime, but are not always safe to use. For more
+//! information on how to use persistent references safely, see the type-level documentation
+//! on `Ref`.
 //!
 //! ## Feature flags
 //!

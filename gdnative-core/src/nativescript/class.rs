@@ -94,11 +94,23 @@ pub trait NativeClassMethods: NativeClass {
     fn register(builder: &ClassBuilder<Self>);
 }
 
-/// Trait for types that can be used as the `owner` arguments of exported methods.
-pub trait OwnerArg<'a, T: GodotObject, Access: ThreadAccess + 'static> {
+/// Trait for types that can be used as the `owner` arguments of exported methods. This trait
+/// is sealed and has no public interface.
+///
+/// # Safety
+///
+/// Whenever a NativeScript methods is called, it's assumed that the owner is safe to use.
+/// When calling a method that may call non-thread-safe methods on its owner from non-Rust
+/// code, the official [thread-safety guidelines][thread-safety] must be followed to prevent
+/// undefined behavior.
+///
+/// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
+pub trait OwnerArg<'a, T: GodotObject, Access: ThreadAccess + 'static>: private::Sealed {
+    #[doc(hidden)]
     fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self;
 }
 
+impl<'a, T> private::Sealed for &'a T where T: GodotObject {}
 impl<'a, T, Access> OwnerArg<'a, T, Access> for &'a T
 where
     T: GodotObject,
@@ -110,6 +122,12 @@ where
     }
 }
 
+impl<'a, T, Access> private::Sealed for TRef<'a, T, Access>
+where
+    T: GodotObject,
+    Access: ThreadAccess + 'static,
+{
+}
 impl<'a, T, Access> OwnerArg<'a, T, Access> for TRef<'a, T, Access>
 where
     T: GodotObject,
@@ -125,6 +143,8 @@ where
 ///
 /// `Instance`s can be worked on directly using `map` and `map_mut` if the base object is
 /// reference-counted. Otherwise, use `assume_safe` to obtain a temporary `RefInstance`.
+///
+/// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
 pub struct Instance<T: NativeClass, Access: ThreadAccess> {
     owner: Ref<T::Base, Access>,
@@ -133,6 +153,8 @@ pub struct Instance<T: NativeClass, Access: ThreadAccess> {
 
 /// A reference to a GodotObject with a rust NativeClass attached that is assumed safe during
 /// a certain lifetime.
+///
+/// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
 pub struct RefInstance<'a, T: NativeClass, Access: ThreadAccess> {
     owner: TRef<'a, T::Base, Access>,
@@ -568,4 +590,8 @@ fn try_get_user_data_ptr<T: NativeClass>(owner: &RawObject<T::Base>) -> Option<*
 
         Some((api.godot_nativescript_get_userdata)(owner_ptr))
     }
+}
+
+mod private {
+    pub trait Sealed {}
 }

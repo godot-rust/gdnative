@@ -59,16 +59,6 @@ macro_rules! godot_wrap_method_parameter_count {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! godot_wrap_method_inner_strip_ref {
-    (& $lt:lifetime mut $(rest:tt)*) => ($($rest)*);
-    (& $lt:lifetime $(rest:tt)*) => ($($rest)*);
-    (& mut $(rest:tt)*) => ($($rest)*);
-    (& $(rest:tt)*) => ($($rest)*);
-    ($(rest:tt)*) => ($($rest)*);
-}
-
-#[doc(hidden)]
-#[macro_export]
 macro_rules! godot_wrap_method_inner {
     (
         $type_name:ty,

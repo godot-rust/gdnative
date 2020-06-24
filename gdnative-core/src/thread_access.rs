@@ -2,7 +2,10 @@
 
 /// Marker that indicates that a value currently only has a
 /// single unique reference.
-pub struct Unique;
+///
+/// Using this marker causes the type to be `!Sync`.
+pub struct Unique(std::marker::PhantomData<*const ()>);
+unsafe impl Send for Unique {}
 
 /// Marker that indicates that a value currently might be shared in the same or
 /// over multiple threads.
