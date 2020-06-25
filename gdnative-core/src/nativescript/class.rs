@@ -4,7 +4,10 @@ use crate::nativescript::init::ClassBuilder;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
 use crate::nativescript::UserData;
-use crate::object::{QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw, SafeDeref, TRef};
+use crate::object::{
+    AssumeSafeLifetime, LifetimeConstraint, QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw,
+    SafeDeref, TRef,
+};
 use crate::private::get_api;
 use crate::ref_kind::{ManuallyManaged, RefCounted};
 use crate::thread_access::{Shared, ThreadAccess, ThreadLocal, Unique};
@@ -349,7 +352,10 @@ impl<T: NativeClass> Instance<T, Shared> {
     /// It's safe to call `assume_safe` only if the constraints of `Ref::assume_safe`
     /// are satisfied for the base object.
     #[inline]
-    pub unsafe fn assume_safe<'a>(&self) -> RefInstance<'a, T, Shared> {
+    pub unsafe fn assume_safe<'a, 'r>(&'r self) -> RefInstance<'a, T, Shared>
+    where
+        AssumeSafeLifetime<'a, 'r>: LifetimeConstraint<<T::Base as GodotObject>::RefKind>,
+    {
         RefInstance {
             owner: self.owner.assume_safe(),
             script: self.script.clone(),

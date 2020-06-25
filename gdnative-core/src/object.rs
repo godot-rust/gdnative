@@ -412,7 +412,8 @@ impl<T: GodotObject> Ref<T, Shared> {
     ///
     /// 1. During the entirety of `'a`, the underlying object will always be valid.
     ///
-    ///     *This is always true for reference-counted types.*
+    ///     *This is always true for reference-counted types.* For them, the `'a` lifetime will
+    ///     be constrained to the lifetime of `&self`.
     ///
     ///     This means that any methods called on the resulting reference will not free it,
     ///     unless it's the last operation within the lifetime.
@@ -432,7 +433,10 @@ impl<T: GodotObject> Ref<T, Shared> {
     ///
     /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
     #[inline(always)]
-    pub unsafe fn assume_safe<'a>(&self) -> TRef<'a, T, Shared> {
+    pub unsafe fn assume_safe<'a, 'r>(&'r self) -> TRef<'a, T, Shared>
+    where
+        AssumeSafeLifetime<'a, 'r>: LifetimeConstraint<T::RefKind>,
+    {
         T::RefKind::impl_assume_safe(self)
     }
 
@@ -1101,6 +1105,19 @@ impl Drop for UnRef {
         }
     }
 }
+
+/// Trait for constraining `assume_safe` lifetimes to the one of `&self` when `T` is
+/// reference-counted. This is an internal interface.
+pub trait LifetimeConstraint<Kind: RefKind> {}
+
+/// Type used to check lifetime constraint depending on `RefKind`. Internal interface.
+#[doc(hidden)]
+pub struct AssumeSafeLifetime<'a, 'r> {
+    _marker: PhantomData<(&'a (), &'r ())>,
+}
+
+impl<'a, 'r> LifetimeConstraint<ManuallyManaged> for AssumeSafeLifetime<'a, 'r> {}
+impl<'a, 'r: 'a> LifetimeConstraint<RefCounted> for AssumeSafeLifetime<'a, 'r> {}
 
 mod private {
     pub trait Sealed {}
