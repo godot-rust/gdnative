@@ -74,12 +74,11 @@ fn test_owner_free_ub() -> bool {
             bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
 
-            assert_eq!(
-                Some(true),
+            assert_eq!(Some(true), unsafe {
                 bar.base()
                     .call("set_script_is_not_ub".into(), &[])
                     .try_to_bool()
-            );
+            });
 
             bar.into_base().free();
         }
@@ -89,10 +88,9 @@ fn test_owner_free_ub() -> bool {
             bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
                 .expect("lock should not fail");
 
-            assert_eq!(
-                Some(true),
+            assert_eq!(Some(true), unsafe {
                 bar.base().call("free_is_not_ub".into(), &[]).try_to_bool()
-            );
+            });
         }
 
         // the values are eventually dropped
