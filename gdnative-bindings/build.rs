@@ -16,7 +16,7 @@ fn main() {
 
         let api = Api::new();
 
-        let code = generate_bindings(&api, None);
+        let code = generate_bindings(&api);
         write!(&mut output, "{}", code).unwrap();
     }
 
