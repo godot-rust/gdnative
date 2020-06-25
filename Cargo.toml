@@ -14,3 +14,6 @@ members = [
     "examples/dodge_the_creeps",
     "impl/proc_macros"
 ]
+
+[profile.dev.package.miniserde]
+opt-level = 0

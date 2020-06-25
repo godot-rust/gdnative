@@ -233,13 +233,16 @@ mod api_wrapper {
     use std::io::Write as _;
     use std::path;
 
-    #[derive(Debug, serde::Deserialize)]
+    use miniserde::{de, Deserialize};
+    miniserde::make_place!(Place);
+
+    #[derive(Debug, Deserialize)]
     struct ApiRoot {
         core: Api,
         extensions: Vec<Api>,
     }
 
-    #[derive(Debug, serde::Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct Api {
         name: Option<String>,
         #[serde(rename = "type")]
@@ -250,20 +253,20 @@ mod api_wrapper {
         functions: Vec<Function>,
     }
 
-    #[derive(Debug, serde::Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct Version {
         major: u32,
         minor: u32,
     }
 
-    #[derive(Debug, serde::Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct Function {
         name: String,
         return_type: String,
         arguments: Vec<Argument>,
     }
 
-    #[derive(Debug, serde::Deserialize)]
+    #[derive(Debug)]
     struct Argument {
         type_: String,
         name: String,
@@ -363,6 +366,48 @@ mod api_wrapper {
         }
     }
 
+    // Used to convert [String, String] in JSON into the Argument struct.
+    impl Deserialize for Argument {
+        fn begin(out: &mut Option<Self>) -> &mut dyn de::Visitor {
+            impl de::Visitor for Place<Argument> {
+                fn seq(&mut self) -> miniserde::Result<Box<dyn de::Seq + '_>> {
+                    Ok(Box::new(ArgumentBuilder {
+                        out: &mut self.out,
+                        tuple: (None, None),
+                    }))
+                }
+            }
+
+            struct ArgumentBuilder<'a> {
+                out: &'a mut Option<Argument>,
+                tuple: (Option<String>, Option<String>),
+            }
+
+            impl<'a> de::Seq for ArgumentBuilder<'a> {
+                fn element(&mut self) -> miniserde::Result<&mut dyn de::Visitor> {
+                    if self.tuple.0.is_none() {
+                        Ok(Deserialize::begin(&mut self.tuple.0))
+                    } else if self.tuple.1.is_none() {
+                        Ok(Deserialize::begin(&mut self.tuple.1))
+                    } else {
+                        Err(miniserde::Error)
+                    }
+                }
+
+                fn finish(&mut self) -> miniserde::Result<()> {
+                    if let (Some(a), Some(b)) = (self.tuple.0.take(), self.tuple.1.take()) {
+                        *self.out = Some(Argument { type_: a, name: b });
+                        Ok(())
+                    } else {
+                        Err(miniserde::Error)
+                    }
+                }
+            }
+
+            Place::new(out)
+        }
+    }
+
     fn godot_api_struct_ident(type_: &str, version_major: u32, version_minor: u32) -> Ident {
         match (type_, version_major, version_minor) {
             ("CORE", 1, 0) => format_ident!("godot_gdnative_core_api_struct"),
@@ -405,10 +450,11 @@ mod api_wrapper {
     ) {
         let from_json = from_json.as_ref();
         let to = to.as_ref();
-        let api_json_file =
-            File::open(from_json).unwrap_or_else(|_| panic!("No such file: {:?}", from_json));
-        let api_root: ApiRoot = serde_json::from_reader(api_json_file)
-            .expect(&"File ({:?}) does not contain expected JSON");
+        let api_json_file = std::fs::read_to_string(from_json)
+            .unwrap_or_else(|_| panic!("No such file: {:?}", from_json));
+        eprintln!("{}", &api_json_file);
+        let api_root: ApiRoot = miniserde::json::from_str(&api_json_file)
+            .unwrap_or_else(|_| panic!("Could not parse ({:?}) into ApiRoot", from_json));
         let struct_fields = godot_api_functions(&api_root);
         let impl_constructor = api_constructor(&api_root);
         let wrapper = quote! {

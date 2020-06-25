@@ -16,7 +16,5 @@ debug = []
 heck = "0.3.0"
 proc-macro2 = "1.0.6"
 quote = "1.0.2"
-serde = "1.0.15"
-serde_derive = "1.0.15"
-serde_json = "1.0.3"
 syn = { version = "1.0", features = ["full", "extra-traits", "visit"] }
+miniserde = "=0.1.13"
