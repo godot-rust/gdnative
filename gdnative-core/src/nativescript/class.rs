@@ -8,7 +8,7 @@ use crate::object::{
     AssumeSafeLifetime, LifetimeConstraint, QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw,
     SafeDeref, TRef,
 };
-use crate::private::get_api;
+use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted};
 use crate::thread_access::{Shared, ThreadAccess, ThreadLocal, Unique};
 use crate::FromVariant;
@@ -17,7 +17,6 @@ use crate::GodotObject;
 use crate::GodotString;
 use crate::Instanciable;
 use crate::OwnedToVariant;
-use crate::Reference;
 use crate::ToVariant;
 use crate::Variant;
 
@@ -193,11 +192,18 @@ impl<T: NativeClass> Instance<T, Unique> {
                 class_name,
                 b"set_library\0".as_ptr() as *const libc::c_char,
             );
-            let object_set_script = crate::ObjectMethodTable::get(gd_api).set_script;
+
+            let object_set_script = (gd_api.godot_method_bind_get_method)(
+                b"Object\0".as_ptr() as *const _,
+                b"set_script\0".as_ptr() as *const _,
+            );
 
             let native_script =
                 NonNull::new(ctor()).expect("NativeScript constructor should not return null");
-            let native_script = RawObject::<Reference>::from_sys_ref_unchecked(native_script);
+            let native_script =
+                RawObject::<ReferenceCountedClassPlaceholder>::from_sys_ref_unchecked(
+                    native_script,
+                );
             native_script.init_ref_count();
 
             let script_class_name = GodotString::from(T::class_name());

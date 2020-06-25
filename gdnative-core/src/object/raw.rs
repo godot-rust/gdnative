@@ -6,7 +6,6 @@ use crate::private::get_api;
 use crate::ref_kind::RefCounted;
 use crate::sys;
 use crate::GodotString;
-use crate::ObjectMethodTable;
 
 use super::GodotObject;
 
@@ -70,7 +69,12 @@ impl<T: GodotObject> RawObject<T> {
     #[inline]
     pub fn class_name(&self) -> String {
         let api = crate::private::get_api();
-        let get_class_method = ObjectMethodTable::get(api).get_class;
+        let get_class_method = unsafe {
+            (api.godot_method_bind_get_method)(
+                b"Object\0".as_ptr() as *const _,
+                b"get_class\0".as_ptr() as *const _,
+            )
+        };
         let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
         let mut class_name = sys::godot_string::default();
         let ret_ptr = &mut class_name as *mut sys::godot_string;
@@ -126,10 +130,13 @@ impl<T: GodotObject<RefKind = RefCounted>> RawObject<T> {
     /// Increase the reference count of the object.
     #[inline]
     pub fn add_ref(&self) {
-        use crate::ReferenceMethodTable;
-
         let api = crate::private::get_api();
-        let addref_method = ReferenceMethodTable::get(api).reference;
+        let addref_method = unsafe {
+            (api.godot_method_bind_get_method)(
+                b"Reference\0".as_ptr() as *const _,
+                b"reference\0".as_ptr() as *const _,
+            )
+        };
         let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
         let mut ok = false;
         let ok_ptr = &mut ok as *mut bool;
@@ -158,10 +165,12 @@ impl<T: GodotObject<RefKind = RefCounted>> RawObject<T> {
     /// reference.
     #[inline]
     pub unsafe fn unref(&self) -> bool {
-        use crate::ReferenceMethodTable;
-
         let api = crate::private::get_api();
-        let unref_method = ReferenceMethodTable::get(api).unreference;
+        let unref_method = (api.godot_method_bind_get_method)(
+            b"Reference\0".as_ptr() as *const _,
+            b"unreference\0".as_ptr() as *const _,
+        );
+
         let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
         let mut last_reference = false;
         let ret_ptr = &mut last_reference as *mut bool;
@@ -200,12 +209,14 @@ impl<T: GodotObject<RefKind = RefCounted>> RawObject<T> {
     /// This function assumes that no other references are held at the time.
     #[inline]
     pub unsafe fn init_ref_count(&self) {
-        use crate::ReferenceMethodTable;
-
         let obj = self.sys().as_ptr();
 
         let api = crate::private::get_api();
-        let init_method = ReferenceMethodTable::get(api).init_ref;
+        let init_method = (api.godot_method_bind_get_method)(
+            b"Reference\0".as_ptr() as *const _,
+            b"init_ref\0".as_ptr() as *const _,
+        );
+
         let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
         let mut ok = false;
         let ret_ptr = &mut ok as *mut bool;
@@ -235,7 +246,10 @@ impl<T: GodotObject> Debug for RawObject<T> {
 #[inline]
 unsafe fn ptr_is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
     let api = crate::private::get_api();
-    let method_bind = ObjectMethodTable::get(api).is_class;
+    let method_bind = (api.godot_method_bind_get_method)(
+        b"Object\0".as_ptr() as *const _,
+        b"is_class\0".as_ptr() as *const _,
+    );
 
     let mut class_name = (api.godot_string_chars_to_utf8_with_len)(
         class_name.as_ptr() as *const _,

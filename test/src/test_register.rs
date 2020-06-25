@@ -1,3 +1,4 @@
+use gdnative::api::Reference;
 use gdnative::*;
 
 pub(crate) fn run_tests() -> bool {

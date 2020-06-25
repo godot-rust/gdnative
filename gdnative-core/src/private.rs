@@ -23,11 +23,6 @@ pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
     GODOT_API = Some(api);
     GDNATIVE_LIBRARY_SYS = Some((*options).gd_native_library);
 
-    // Force the initialization of the method table of common types. This way we can
-    // assume that if the api object is alive we can fetch the method of these types
-    // without checking for initialization.
-    crate::ReferenceMethodTable::get(get_api());
-
     true
 }
 
@@ -100,3 +95,27 @@ unsafe fn report_init_error(
 pub mod godot_object {
     pub trait Sealed {}
 }
+
+pub(crate) struct ManuallyManagedClassPlaceholder;
+
+unsafe impl crate::object::GodotObject for ManuallyManagedClassPlaceholder {
+    type RefKind = crate::ref_kind::ManuallyManaged;
+
+    fn class_name() -> &'static str {
+        "{placeholder} manually managed object"
+    }
+}
+
+impl godot_object::Sealed for ManuallyManagedClassPlaceholder {}
+
+pub(crate) struct ReferenceCountedClassPlaceholder;
+
+unsafe impl crate::object::GodotObject for ReferenceCountedClassPlaceholder {
+    type RefKind = crate::ref_kind::RefCounted;
+
+    fn class_name() -> &'static str {
+        "{placeholder} reference counted object"
+    }
+}
+
+impl godot_object::Sealed for ReferenceCountedClassPlaceholder {}
