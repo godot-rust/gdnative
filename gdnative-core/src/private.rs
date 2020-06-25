@@ -23,6 +23,13 @@ pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
     GODOT_API = Some(api);
     GDNATIVE_LIBRARY_SYS = Some((*options).gd_native_library);
 
+    ObjectMethodTable::get(get_api());
+    ReferenceMethodTable::get(get_api());
+    #[cfg(feature = "nativescript")]
+    {
+        NativeScriptMethodTable::get(get_api());
+    }
+
     true
 }
 
@@ -119,3 +126,63 @@ unsafe impl crate::object::GodotObject for ReferenceCountedClassPlaceholder {
 }
 
 impl godot_object::Sealed for ReferenceCountedClassPlaceholder {}
+
+macro_rules! make_method_table {
+    (struct $tablename:ident for $class:ident { $($methods:ident,)* }) => {
+        pub(crate) struct $tablename {
+            $(pub(crate) $methods: *mut sys::godot_method_bind,)*
+        }
+
+        impl $tablename {
+            unsafe fn get_mut() -> &'static mut Self {
+                static mut TABLE: $tablename = $tablename {
+                    $($methods: std::ptr::null_mut(),)*
+                };
+
+                &mut TABLE
+            }
+
+            #[inline]
+            pub(crate) fn get(api: &sys::GodotApi) -> &'static Self {
+                unsafe {
+                    let table = Self::get_mut();
+                    static INIT: std::sync::Once = std::sync::Once::new();
+                    INIT.call_once(|| {
+                        Self::init(table, api);
+                    });
+
+                    table
+                }
+            }
+
+            #[inline(never)]
+            fn init(table: &mut Self, api: &sys::GodotApi) {
+                const CLASS_NAME: *const i8 = concat!(stringify!($class), "\0").as_ptr() as *const i8;
+
+                unsafe {
+                    $(table.$methods = (api.godot_method_bind_get_method)(CLASS_NAME, concat!(stringify!($methods), "\0").as_ptr() as *const i8);)*
+                }
+            }
+        }
+    };
+}
+
+make_method_table!(struct ObjectMethodTable for Object {
+    set_script,
+    get_class,
+    is_class,
+});
+
+make_method_table!(struct ReferenceMethodTable for Reference {
+    reference,
+    unreference,
+    init_ref,
+});
+
+// Add this one here too. It's not easy to use this macro from the
+// nativescript module without making this macro public.
+#[cfg(feature = "nativescript")]
+make_method_table!(struct NativeScriptMethodTable for NativeScript {
+    set_class_name,
+    set_library,
+});

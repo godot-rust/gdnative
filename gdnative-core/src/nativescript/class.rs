@@ -180,23 +180,16 @@ impl<T: NativeClass> Instance<T, Unique> {
     {
         unsafe {
             let gd_api = get_api();
+            let nativescript_methods = crate::private::NativeScriptMethodTable::get(gd_api);
 
             // The API functions take NUL-terminated C strings. &CStr is not used for its runtime cost.
             let class_name = b"NativeScript\0".as_ptr() as *const libc::c_char;
             let ctor = (gd_api.godot_get_class_constructor)(class_name).unwrap();
-            let set_class_name = (gd_api.godot_method_bind_get_method)(
-                class_name,
-                b"set_class_name\0".as_ptr() as *const libc::c_char,
-            );
-            let set_library = (gd_api.godot_method_bind_get_method)(
-                class_name,
-                b"set_library\0".as_ptr() as *const libc::c_char,
-            );
 
-            let object_set_script = (gd_api.godot_method_bind_get_method)(
-                b"Object\0".as_ptr() as *const _,
-                b"set_script\0".as_ptr() as *const _,
-            );
+            let set_class_name = nativescript_methods.set_class_name;
+            let set_library = nativescript_methods.set_library;
+
+            let object_set_script = crate::private::ObjectMethodTable::get(gd_api).set_script;
 
             let native_script =
                 NonNull::new(ctor()).expect("NativeScript constructor should not return null");
