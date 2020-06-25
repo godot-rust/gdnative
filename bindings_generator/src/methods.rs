@@ -113,7 +113,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_method_impl(api: &Api, class: &GodotClass, method: &GodotMethod) -> TokenStream {
+pub fn generate_method_impl(class: &GodotClass, method: &GodotMethod) -> TokenStream {
     let MethodName {
         rust_name: method_name,
         ..
@@ -214,7 +214,7 @@ pub fn generate_method_impl(api: &Api, class: &GodotClass, method: &GodotMethod)
             quote! { drop(#name); }
         });
 
-        let ret = method.get_return_type().to_return_post(api);
+        let ret = method.get_return_type().to_return_post();
 
         quote! {
             let mut argument_buffer : [*const libc::c_void; #arg_count] = [

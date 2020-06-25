@@ -121,7 +121,7 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
         let methods = class
             .methods
             .iter()
-            .map(|method| generate_method_impl(&api, class, method));
+            .map(|method| generate_method_impl(class, method));
 
         quote! {
             #table
@@ -229,7 +229,7 @@ pub(crate) mod test_prelude {
             validate_and_clear_buffer!(buffer);
 
             for method in &class.methods {
-                let code = generate_method_impl(&api, &class, method);
+                let code = generate_method_impl(&class, method);
                 write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }

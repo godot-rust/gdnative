@@ -362,7 +362,7 @@ impl Ty {
         }
     }
 
-    pub fn to_return_post(&self, api: &Api) -> TokenStream {
+    pub fn to_return_post(&self) -> TokenStream {
         match self {
             Ty::Void => Default::default(),
             Ty::F64 | &Ty::I64 | &Ty::Bool | &Ty::Enum(_) => {
