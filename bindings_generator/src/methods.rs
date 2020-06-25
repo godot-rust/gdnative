@@ -261,6 +261,12 @@ fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
     }
 }
 
+const UNSAFE_OBJECT_METHODS: &[(&'static str, &'static str)] = &[
+    ("Object", "call"),
+    ("Object", "vcall"),
+    ("Object", "call_deferred"),
+];
+
 pub fn generate_methods(
     api: &Api,
     method_set: &mut HashSet<String>,
@@ -326,9 +332,15 @@ pub fn generate_methods(
             let rusty_name = format_ident!("{}", rusty_method_name);
             let function_name = format_ident!("{}_{}", class.name, method_name);
 
+            let maybe_unsafe = if UNSAFE_OBJECT_METHODS.contains(&(&class.name, method_name)) {
+                quote! { unsafe }
+            } else {
+                Default::default()
+            };
+
             let output = quote! {
                 #[inline]
-                pub fn #rusty_name(&self #params_decl) -> #rust_ret_type {
+                pub #maybe_unsafe fn #rusty_name(&self #params_decl) -> #rust_ret_type {
                     unsafe { #function_name(self.this.sys().as_ptr() #params_use) }
                 }
             };
