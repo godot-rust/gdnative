@@ -318,6 +318,7 @@ pub struct StringName(pub(crate) sys::godot_string_name);
 
 impl StringName {
     #[inline]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str<S>(s: S) -> Self
     where
         S: AsRef<str>,
