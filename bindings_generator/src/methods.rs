@@ -271,7 +271,6 @@ pub fn generate_methods(
     api: &Api,
     method_set: &mut HashSet<String>,
     class_name: &str,
-    is_safe: bool,
     is_leaf: bool,
 ) -> TokenStream {
     let mut result = TokenStream::new();
@@ -345,17 +344,6 @@ pub fn generate_methods(
                 }
             };
             result.extend(output);
-        }
-
-        // Reference includes all of Object's methods so they are safe.
-        if class.base_class == "Reference" {
-            result.extend(generate_methods(
-                api,
-                method_set,
-                &class.base_class,
-                is_safe,
-                false,
-            ));
         }
     }
     result

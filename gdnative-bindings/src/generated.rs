@@ -10,6 +10,4 @@ use gdnative_core::sys;
 use gdnative_core::sys::GodotApi;
 use gdnative_core::vector3;
 
-use crate::generated::reference::*;
-
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));

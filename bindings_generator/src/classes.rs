@@ -41,13 +41,8 @@ pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
 
     let mut method_set = HashSet::default();
 
-    let class_methods = methods::generate_methods(
-        &api,
-        &mut method_set,
-        &class.name,
-        class.is_pointer_safe(),
-        true,
-    );
+    let class_methods =
+        methods::generate_methods(&api, &mut method_set, &class.name, class.is_pointer_safe());
 
     let class_upcast =
         special_methods::generate_upcast(&api, &class.base_class, class.is_pointer_safe());
