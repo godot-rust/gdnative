@@ -106,7 +106,7 @@ macro_rules! godot_print {
 
         #[allow(unused_unsafe)]
         unsafe {
-            let msg = $crate::GodotString::from_str(msg);
+            let msg = $crate::core_types::GodotString::from_str(msg);
             ($crate::private::get_api().godot_print)(&msg.to_sys() as *const _);
         }
     });

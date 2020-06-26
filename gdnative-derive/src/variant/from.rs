@@ -55,7 +55,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
 
             quote! {
                 {
-                    let __dict = ::gdnative::Dictionary::from_variant(#input_ident)
+                    let __dict = ::gdnative::core_types::Dictionary::from_variant(#input_ident)
                         .map_err(|__err| FVE::InvalidEnumRepr {
                             expected: VariantEnumRepr::ExternallyTagged,
                             error: Box::new(__err),
@@ -102,15 +102,15 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
 
     let result = quote! {
         #[allow(unused_variables)]
-        impl #generics ::gdnative::FromVariant for #ident #generics #where_clause {
+        impl #generics ::gdnative::core_types::FromVariant for #ident #generics #where_clause {
             fn from_variant(
-                #input_ident: &::gdnative::Variant
-            ) -> ::std::result::Result<Self, ::gdnative::FromVariantError> {
-                use ::gdnative::ToVariant;
-                use ::gdnative::FromVariant;
-                use ::gdnative::FromVariantError as FVE;
-                use ::gdnative::VariantEnumRepr;
-                use ::gdnative::VariantStructRepr;
+                #input_ident: &::gdnative::core_types::Variant
+            ) -> ::std::result::Result<Self, ::gdnative::core_types::FromVariantError> {
+                use ::gdnative::core_types::ToVariant;
+                use ::gdnative::core_types::FromVariant;
+                use ::gdnative::core_types::FromVariantError as FVE;
+                use ::gdnative::core_types::VariantEnumRepr;
+                use ::gdnative::core_types::VariantStructRepr;
 
                 #return_expr
             }

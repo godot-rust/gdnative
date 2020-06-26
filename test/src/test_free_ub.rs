@@ -1,5 +1,4 @@
-use gdnative::api::*;
-use gdnative::*;
+use gdnative::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::Arc;
 
@@ -11,7 +10,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(handle: init::InitHandle) {
+pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<Bar>();
 }
 
@@ -26,7 +25,7 @@ impl NativeClass for Bar {
     fn init(_owner: &Node) -> Bar {
         Bar(42, None)
     }
-    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
+    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 impl Bar {
@@ -99,7 +98,7 @@ fn test_owner_free_ub() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_owner_free_ub failed");
+        gdnative::godot_error!("   !! Test test_owner_free_ub failed");
     }
 
     ok

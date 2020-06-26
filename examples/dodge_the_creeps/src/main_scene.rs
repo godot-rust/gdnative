@@ -2,10 +2,8 @@ use crate::extensions::NodeExt as _;
 use crate::hud;
 use crate::mob;
 use crate::player;
-use gdnative::api::*;
-use gdnative::ref_kind::ManuallyManaged;
-use gdnative::thread_access::{Shared, Unique};
-use gdnative::*;
+use gdnative::api::{Area2D, PathFollow2D, Position2D, RigidBody2D};
+use gdnative::prelude::*;
 use rand::*;
 use std::f64::consts::PI;
 

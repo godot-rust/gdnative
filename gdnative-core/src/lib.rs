@@ -36,15 +36,11 @@ extern crate approx;
 mod macros;
 
 pub mod core_types;
-pub use core_types::*;
 
 #[cfg(feature = "nativescript")]
 pub mod nativescript;
-#[cfg(feature = "nativescript")]
-pub use nativescript::*;
 
 mod new_ref;
-#[doc(hidden)]
 pub mod object;
 pub mod ref_kind;
 pub mod thread_access;
@@ -53,12 +49,11 @@ pub mod thread_access;
 #[doc(hidden)]
 pub mod private;
 
-pub use crate::new_ref::NewRef;
-pub use crate::object::{AsArg, GodotObject, Instanciable, Null, QueueFree, Ref, TRef};
+//
+// Re-exports
+//
 
-pub use sys::GodotApi;
+pub use new_ref::NewRef;
+pub use object::{GodotObject, Null, Ref, TRef};
 
-#[doc(inline)]
-pub use error::GodotError;
-
-pub type GodotResult = Result<(), GodotError>;
+pub type GodotResult = Result<(), core_types::error::GodotError>;

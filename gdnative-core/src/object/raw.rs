@@ -2,10 +2,10 @@ use std::fmt::{self, Debug};
 use std::marker::PhantomData;
 use std::ptr::{self, NonNull};
 
+use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::ref_kind::RefCounted;
 use crate::sys;
-use crate::GodotString;
 
 use super::GodotObject;
 

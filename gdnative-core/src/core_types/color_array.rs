@@ -1,5 +1,5 @@
-use crate::typed_array::TypedArray;
-use crate::Color;
+use crate::core_types::typed_array::TypedArray;
+use crate::core_types::Color;
 
 /// A reference-counted vector of `Color` that uses Godot's pool allocator.
 pub type ColorArray = TypedArray<Color>;

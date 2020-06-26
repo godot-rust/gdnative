@@ -50,7 +50,7 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
         let name_str = quote!(#name).to_string();
 
         quote!(
-            impl gdnative::NativeClass for #name {
+            impl ::gdnative::nativescript::NativeClass for #name {
                 type Base = #base;
                 type UserData = #user_data;
 
@@ -62,7 +62,7 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                     Self::_init(owner)
                 }
 
-                fn register_properties(builder: &gdnative::init::ClassBuilder<Self>) {
+                fn register_properties(builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
                     #(#properties)*;
                     #register_callback
                 }
@@ -106,21 +106,20 @@ fn parse_derive_input(input: TokenStream) -> Result<DeriveData, TokenStream> {
         .map(|attr| attr.parse_args::<Path>().map_err(|e| e.to_compile_error()))
         .transpose()?;
 
-    let user_data =
-        input
-            .attrs
-            .iter()
-            .find(|a| a.path.is_ident("user_data"))
-            .map(|attr| {
-                attr.parse_args::<Type>()
-                    .map_err(|err| err.to_compile_error())
-            })
-            .unwrap_or_else(|| {
-                Ok(syn::parse::<Type>(
-                    quote! { ::gdnative::user_data::DefaultUserData<#ident> }.into(),
-                )
-                .expect("quoted tokens for default userdata should be a valid type"))
-            })?;
+    let user_data = input
+        .attrs
+        .iter()
+        .find(|a| a.path.is_ident("user_data"))
+        .map(|attr| {
+            attr.parse_args::<Type>()
+                .map_err(|err| err.to_compile_error())
+        })
+        .unwrap_or_else(|| {
+            Ok(syn::parse::<Type>(
+                quote! { ::gdnative::nativescript::user_data::DefaultUserData<#ident> }.into(),
+            )
+            .expect("quoted tokens for default userdata should be a valid type"))
+        })?;
 
     // make sure it's a struct
     let struct_data = if let Data::Struct(data) = input.data {

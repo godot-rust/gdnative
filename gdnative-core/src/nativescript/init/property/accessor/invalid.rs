@@ -2,6 +2,7 @@
 
 use std::mem;
 
+use crate::core_types::{FromVariant, ToVariant, Variant};
 use crate::nativescript::NativeClass;
 use crate::*;
 

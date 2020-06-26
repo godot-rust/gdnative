@@ -90,7 +90,7 @@ macro_rules! godot_wrap_method_inner {
                         "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
                         stringify!($type_name),
                     );
-                    return $crate::Variant::new().forget();
+                    return $crate::core_types::Variant::new().forget();
                 }
 
                 let this = match std::ptr::NonNull::new(this) {
@@ -100,7 +100,7 @@ macro_rules! godot_wrap_method_inner {
                             "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
                             stringify!($type_name),
                         );
-                        return $crate::Variant::new().forget();
+                        return $crate::core_types::Variant::new().forget();
                     },
                 };
 
@@ -114,20 +114,20 @@ macro_rules! godot_wrap_method_inner {
                     let num_required_params = $crate::godot_wrap_method_parameter_count!($($pname,)*);
                     if num_args < num_required_params {
                         $crate::godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
-                        return $crate::Variant::new();
+                        return $crate::core_types::Variant::new();
                     }
 
                     let num_optional_params = $crate::godot_wrap_method_parameter_count!($($opt_pname,)*);
                     let num_max_params = num_required_params + num_optional_params;
                     if num_args > num_max_params {
                         $crate::godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
-                        return $crate::Variant::new();
+                        return $crate::core_types::Variant::new();
                     }
 
                     let mut offset = 0;
                     $(
-                        let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-                        let $pname = match <$pty as $crate::FromVariant>::from_variant(_variant) {
+                        let _variant: &$crate::core_types::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
+                        let $pname = match <$pty as $crate::core_types::FromVariant>::from_variant(_variant) {
                             Ok(val) => val,
                             Err(err) => {
                                 $crate::godot_error!(
@@ -137,7 +137,7 @@ macro_rules! godot_wrap_method_inner {
                                     ty = stringify!($pty),
                                     err = err,
                                 );
-                                return $crate::Variant::new();
+                                return $crate::core_types::Variant::new();
                             },
                         };
 
@@ -146,9 +146,9 @@ macro_rules! godot_wrap_method_inner {
 
                     $(
                         let $opt_pname = if offset < num_args {
-                            let _variant: &$crate::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
+                            let _variant: &$crate::core_types::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
 
-                            let $opt_pname = match <$opt_pty as $crate::FromVariant>::from_variant(_variant) {
+                            let $opt_pname = match <$opt_pty as $crate::core_types::FromVariant>::from_variant(_variant) {
                                 Ok(val) => val,
                                 Err(err) => {
                                     $crate::godot_error!(
@@ -158,7 +158,7 @@ macro_rules! godot_wrap_method_inner {
                                         ty = stringify!($opt_pty),
                                         err = err,
                                     );
-                                    return $crate::Variant::new();
+                                    return $crate::core_types::Variant::new();
                                 },
                             };
 
@@ -178,12 +178,12 @@ macro_rules! godot_wrap_method_inner {
                                 $($pname,)*
                                 $($opt_pname,)*
                             );
-                            <$retty as $crate::OwnedToVariant>::owned_to_variant(ret)
+                            <$retty as $crate::core_types::OwnedToVariant>::owned_to_variant(ret)
                         })
                         .unwrap_or_else(|err| {
                             $crate::godot_error!("gdnative-core: method call failed with error: {:?}", err);
                             $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                            $crate::Variant::new()
+                            $crate::core_types::Variant::new()
                         });
 
                     std::mem::drop(__instance);
@@ -194,7 +194,7 @@ macro_rules! godot_wrap_method_inner {
                 __catch_result
                     .unwrap_or_else(|_err| {
                         $crate::godot_error!("gdnative-core: method panicked (check stderr for output)");
-                        $crate::Variant::new()
+                        $crate::core_types::Variant::new()
                     })
                     .forget()
             }

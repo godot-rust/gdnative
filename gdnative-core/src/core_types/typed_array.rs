@@ -4,10 +4,12 @@ use std::iter::{Extend, FromIterator};
 
 use gdnative_impl_proc_macros as macros;
 
-use crate::access::{Aligned, MaybeUnaligned};
+use crate::core_types::access::{Aligned, MaybeUnaligned};
+use crate::core_types::{
+    Color, GodotString, VariantArray, Vector2, Vector2Godot, Vector3, Vector3Godot,
+};
 use crate::private::get_api;
 use crate::NewRef;
-use crate::{Color, GodotString, VariantArray, Vector2, Vector2Godot, Vector3, Vector3Godot};
 
 /// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
 /// element types.
@@ -342,7 +344,7 @@ impl<'a, T: Element> ReadGuard<'a, T> {
     }
 }
 
-unsafe impl<'a, T: Element> crate::access::Guard for ReadGuard<'a, T> {
+unsafe impl<'a, T: Element> crate::core_types::access::Guard for ReadGuard<'a, T> {
     type Target = T;
 
     #[inline]
@@ -402,7 +404,7 @@ impl<'a, T: Element> WriteGuard<'a, T> {
     }
 }
 
-unsafe impl<'a, T: Element> crate::access::Guard for WriteGuard<'a, T> {
+unsafe impl<'a, T: Element> crate::core_types::access::Guard for WriteGuard<'a, T> {
     type Target = T;
 
     #[inline]
@@ -418,7 +420,7 @@ unsafe impl<'a, T: Element> crate::access::Guard for WriteGuard<'a, T> {
     }
 }
 
-unsafe impl<'a, T: Element> crate::access::WritePtr for WriteGuard<'a, T> {}
+unsafe impl<'a, T: Element> crate::core_types::access::WritePtr for WriteGuard<'a, T> {}
 
 impl<'a, T: Element> Drop for WriteGuard<'a, T> {
     #[inline]

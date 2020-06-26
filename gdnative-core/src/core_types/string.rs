@@ -419,7 +419,7 @@ where
 }
 
 godot_test!(test_string {
-    use crate::{GodotString, Variant, VariantType};
+    use crate::core_types::{GodotString, Variant, VariantType};
 
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);

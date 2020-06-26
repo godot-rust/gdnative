@@ -4,9 +4,9 @@ use std::marker::PhantomData;
 use crate::private::get_api;
 use crate::sys;
 
+use crate::core_types::ToVariant;
+use crate::core_types::Variant;
 use crate::NewRef;
-use crate::ToVariant;
-use crate::Variant;
 
 use crate::thread_access::*;
 

@@ -1,15 +1,15 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
+use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
-use crate::GodotString;
 
+use crate::core_types::ToVariant;
+use crate::core_types::ToVariantEq;
+use crate::core_types::Variant;
+use crate::core_types::VariantArray;
 use crate::NewRef;
-use crate::ToVariant;
-use crate::ToVariantEq;
-use crate::Variant;
-use crate::VariantArray;
 use std::fmt;
 
 use crate::thread_access::*;
@@ -518,7 +518,7 @@ impl Extend<(Variant, Variant)> for Dictionary<Unique> {
 godot_test!(test_dictionary {
     use std::collections::HashSet;
 
-    use crate::VariantType;
+    use crate::core_types::VariantType;
     let foo = Variant::from_str("foo");
     let bar = Variant::from_str("bar");
     let nope = Variant::from_str("nope");

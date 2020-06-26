@@ -1,5 +1,5 @@
-use crate::typed_array::TypedArray;
-use crate::Vector3;
+use crate::core_types::typed_array::TypedArray;
+use crate::core_types::Vector3;
 
 /// A reference-counted vector of `Vector3` that uses Godot's pool allocator.
 pub type Vector3Array = TypedArray<Vector3>;

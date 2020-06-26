@@ -1,5 +1,4 @@
-use gdnative::api::{Label, Node};
-use gdnative::*;
+use gdnative::prelude::*;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -12,20 +11,20 @@ struct SignalEmitter {
 
 #[methods]
 impl SignalEmitter {
-    fn register_signals(builder: &init::ClassBuilder<Self>) {
-        builder.add_signal(init::Signal {
+    fn register_signals(builder: &ClassBuilder<Self>) {
+        builder.add_signal(Signal {
             name: "tick",
             args: &[],
         });
 
-        builder.add_signal(init::Signal {
+        builder.add_signal(Signal {
             name: "tick_with_data",
             // Argument list used by the editor for GUI and generation of GDScript handlers. It can be omitted if the signal is only used from code.
-            args: &[init::SignalArgument {
+            args: &[SignalArgument {
                 name: "data",
                 default: Variant::from_i64(100),
-                export_info: init::ExportInfo::new(VariantType::I64),
-                usage: init::PropertyUsage::DEFAULT,
+                export_info: ExportInfo::new(VariantType::I64),
+                usage: PropertyUsage::DEFAULT,
             }],
         });
     }
@@ -116,11 +115,11 @@ impl SignalSubscriber {
     }
 }
 
-fn init(handle: init::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<SignalEmitter>();
     handle.add_class::<SignalSubscriber>();
 }
 
-godot_gdnative_init!();
-godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+gdnative::godot_gdnative_init!();
+gdnative::godot_nativescript_init!(init);
+gdnative::godot_gdnative_terminate!();

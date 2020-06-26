@@ -1,4 +1,4 @@
-use crate::{Angle, Point2, Vector2};
+use crate::core_types::{Angle, Point2, Vector2};
 use euclid::Trig;
 
 /// Helper methods for `Point2`.

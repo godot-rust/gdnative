@@ -3,9 +3,9 @@
 use std::fmt::{self, Write};
 use std::ops::RangeInclusive;
 
+use crate::core_types::GodotString;
+use crate::core_types::VariantType;
 use crate::sys;
-use crate::GodotString;
-use crate::VariantType;
 
 use super::ExportInfo;
 
@@ -16,7 +16,7 @@ use super::ExportInfo;
 /// Basic usage:
 ///
 /// ```rust
-/// use gdnative_core::init::property::hint::RangeHint;
+/// use gdnative_core::nativescript::init::property::hint::RangeHint;
 ///
 /// let hint: RangeHint<f64> = RangeHint::new(0.0, 20.0).or_greater();
 /// ```
@@ -110,7 +110,7 @@ where
 /// Basic usage:
 ///
 /// ```rust
-/// use gdnative_core::init::property::hint::EnumHint;
+/// use gdnative_core::nativescript::init::property::hint::EnumHint;
 ///
 /// let hint = EnumHint::new(vec!["Foo".into(), "Bar".into(), "Baz".into()]);
 /// ```

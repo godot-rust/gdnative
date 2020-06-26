@@ -1,4 +1,5 @@
-use gdnative::*;
+// use gdnative::*;
+use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
     let mut status = true;
@@ -8,7 +9,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(_handle: init::InitHandle) {}
+pub(crate) fn register(_handle: InitHandle) {}
 
 fn test_derive_to_variant() -> bool {
     println!(" -- test_derive_to_variant");
@@ -52,7 +53,7 @@ fn test_derive_to_variant() -> bool {
     }
 
     mod variant_with {
-        use gdnative::{FromVariantError, GodotString, ToVariant, Variant};
+        use gdnative::core_types::{FromVariantError, GodotString, ToVariant, Variant};
 
         #[allow(clippy::trivially_copy_pass_by_ref)]
         pub fn to_variant(_ptr: &*mut ()) -> Variant {
@@ -115,7 +116,7 @@ fn test_derive_to_variant() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_derive_to_variant failed");
+        gdnative::godot_error!("   !! Test test_derive_to_variant failed");
     }
 
     ok

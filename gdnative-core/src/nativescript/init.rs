@@ -36,11 +36,11 @@ use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
 
+use crate::core_types::{GodotString, Variant};
 use crate::nativescript::NativeClass;
 use crate::nativescript::NativeClassMethods;
 use crate::nativescript::UserData;
 use crate::private::get_api;
-use crate::Variant;
 
 pub mod property;
 

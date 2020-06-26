@@ -91,7 +91,7 @@ impl VariantRepr {
     pub(crate) fn to_variant(&self) -> TokenStream2 {
         match self {
             VariantRepr::Unit => {
-                quote! { ::gdnative::Dictionary::new().into_shared().to_variant() }
+                quote! { ::gdnative::core_types::Dictionary::new().into_shared().to_variant() }
             }
             VariantRepr::Tuple(fields) => {
                 if fields.len() == 1 {
@@ -112,7 +112,7 @@ impl VariantRepr {
 
                     quote! {
                         {
-                            let __array = ::gdnative::VariantArray::new();
+                            let __array = ::gdnative::core_types::VariantArray::new();
                             #(
                                 __array.push(&#exprs);
                             )*
@@ -135,10 +135,10 @@ impl VariantRepr {
 
                 quote! {
                     {
-                        let __dict = ::gdnative::Dictionary::new();
+                        let __dict = ::gdnative::core_types::Dictionary::new();
                         #(
                             {
-                                let __key = ::gdnative::GodotString::from(#name_string_literals).to_variant();
+                                let __key = ::gdnative::core_types::GodotString::from(#name_string_literals).to_variant();
                                 __dict.insert(&__key, &#exprs);
                             }
                         )*
@@ -200,7 +200,7 @@ impl VariantRepr {
 
                     quote! {
                         {
-                            ::gdnative::VariantArray::from_variant(#variant)
+                            ::gdnative::core_types::VariantArray::from_variant(#variant)
                                 .map_err(|__err| FVE::InvalidStructRepr {
                                     expected: VariantStructRepr::Tuple,
                                     error: Box::new(__err),
@@ -215,7 +215,7 @@ impl VariantRepr {
                                         #(
                                             let __index = #indices;
                                             let #non_skipped_idents = #non_skipped_exprs
-                                                .map_err(|err| FromVariantError::InvalidItem {
+                                                .map_err(|err| FVE::InvalidItem {
                                                     index: __index as usize,
                                                     error: Box::new(err),
                                                 })?;
@@ -259,7 +259,7 @@ impl VariantRepr {
 
                 quote! {
                     {
-                        ::gdnative::Dictionary::from_variant(#variant)
+                        ::gdnative::core_types::Dictionary::from_variant(#variant)
                             .map_err(|__err| FVE::InvalidStructRepr {
                                 expected: VariantStructRepr::Struct,
                                 error: Box::new(__err),
@@ -267,7 +267,7 @@ impl VariantRepr {
                             .and_then(|__dict| {
                                 #(
                                     let __field_name = #name_string_literals;
-                                    let __key = ::gdnative::GodotString::from(__field_name).to_variant();
+                                    let __key = ::gdnative::core_types::GodotString::from(__field_name).to_variant();
                                     let #non_skipped_idents = #exprs
                                         .map_err(|err| FVE::InvalidField {
                                             field_name: __field_name,
@@ -300,7 +300,7 @@ impl Field {
         if let Some(from_variant_with) = &self.attr.from_variant_with {
             quote!(#from_variant_with(#variant))
         } else {
-            quote!(FromVariant::from_variant(#variant))
+            quote!(::gdnative::core_types::FromVariant::from_variant(#variant))
         }
     }
 }

@@ -78,7 +78,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
 
                 quote_spanned!( sig_span=>
                     {
-                        let method = gdnative::godot_wrap_method!(
+                        let method = ::gdnative::godot_wrap_method!(
                             #class_name,
                             fn #name ( #( #args )* ) -> #ret_ty
                         );
@@ -93,10 +93,10 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
 
             #impl_block
 
-            impl gdnative::NativeClassMethods for #class_name {
+            impl gdnative::nativescript::NativeClassMethods for #class_name {
 
-                fn register(builder: &gdnative::init::ClassBuilder<Self>) {
-                    use gdnative::init::*;
+                fn register(builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
+                    use gdnative::nativescript::init::*;
 
                     #(#methods)*
                 }
