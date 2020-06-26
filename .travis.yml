@@ -1,5 +1,11 @@
 language: rust
 
+branches:
+  only:
+    - staging
+    - trying
+    - master
+
 matrix:
 
   allow_failures:
