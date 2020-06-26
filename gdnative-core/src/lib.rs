@@ -43,7 +43,6 @@ pub mod nativescript;
 #[cfg(feature = "nativescript")]
 pub use nativescript::*;
 
-mod generated;
 mod new_ref;
 #[doc(hidden)]
 pub mod object;
@@ -54,7 +53,6 @@ pub mod thread_access;
 #[doc(hidden)]
 pub mod private;
 
-pub use crate::generated::*;
 pub use crate::new_ref::NewRef;
 pub use crate::object::{AsArg, GodotObject, Instanciable, Null, QueueFree, Ref, TRef};
 

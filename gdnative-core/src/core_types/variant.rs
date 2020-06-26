@@ -4,7 +4,7 @@ use std::fmt;
 use std::mem::{forget, transmute};
 use std::ptr;
 
-use crate::private::get_api;
+use crate::private::{get_api, ManuallyManagedClassPlaceholder};
 use crate::thread_access::*;
 
 // TODO: implement Debug, PartialEq, etc.
@@ -625,7 +625,8 @@ impl Variant {
             let obj = self.try_as_sys_of_type(VariantType::Object)?;
             let obj = ptr::NonNull::new((api.godot_variant_as_object)(obj))
                 .ok_or(FromVariantError::InvalidNil)?;
-            let obj = object::RawObject::<Object>::from_sys_ref_unchecked(obj);
+            let obj =
+                object::RawObject::<ManuallyManagedClassPlaceholder>::from_sys_ref_unchecked(obj);
             let obj = obj
                 .cast::<T>()
                 .ok_or_else(|| FromVariantError::CannotCast {

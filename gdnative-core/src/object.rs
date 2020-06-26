@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
-use crate::private::get_api;
+use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted, RefKind};
 use crate::sys;
 use crate::thread_access::{
@@ -1100,7 +1100,7 @@ impl Drop for UnRef {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            let raw = RawObject::<crate::Reference>::from_sys_ref_unchecked(self.0);
+            let raw = RawObject::<ReferenceCountedClassPlaceholder>::from_sys_ref_unchecked(self.0);
             raw.unref_and_free_if_last();
         }
     }

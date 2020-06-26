@@ -9,8 +9,6 @@ mod documentation;
 mod methods;
 mod special_methods;
 
-use std::collections::HashSet;
-
 pub use crate::api::*;
 use crate::classes::*;
 pub use crate::dependency::*;
@@ -22,20 +20,13 @@ use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
-#[allow(clippy::implicit_hasher)]
-pub fn generate_bindings(api: &Api, ignore: Option<HashSet<String>>) -> TokenStream {
-    let to_ignore = ignore.unwrap_or_default();
-
+pub fn generate_bindings(api: &Api) -> TokenStream {
     let imports = generate_imports();
 
-    let classes = api.classes.iter().filter_map(|class| {
-        // ignore classes that have been generated before.
-        if to_ignore.contains(&class.name) {
-            return None;
-        }
-
-        Some(generate_class_bindings(&api, &class))
-    });
+    let classes = api
+        .classes
+        .iter()
+        .map(|class| generate_class_bindings(&api, class));
 
     quote! {
         #imports
