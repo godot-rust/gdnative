@@ -8,6 +8,10 @@ fn main() {
     header_binding::generate(&manifest_dir, &out_dir);
 
     api_wrapper::generate(&api_json_file, &out_dir, "api_wrapper.rs");
+
+    // Only re-run build.rs if the gdnative_api.json file has been updated.
+    // Manually rebuilding the crate will ignore this.
+    println!("cargo:rerun-if-changed={}", api_json_file);
 }
 
 mod header_binding {

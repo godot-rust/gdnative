@@ -9,6 +9,9 @@ license = "MIT"
 workspace = ".."
 edition = "2018"
 
+[features]
+formatted = []
+
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.8.1" }
 gdnative-core = { path = "../gdnative-core", version = "0.8.1" }
