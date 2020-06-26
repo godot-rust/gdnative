@@ -1495,6 +1495,19 @@
 				]
 			},
 			{
+				"name": "get_tracker_id",
+				"return_type": "int",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "get_tracks_orientation",
 				"return_type": "bool",
 				"is_editor": false,
@@ -33183,6 +33196,19 @@
 		],
 		"methods": [
 			{
+				"name": "_texture_changed",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": true,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "_update_render_thread",
 				"return_type": "void",
 				"is_editor": false,
@@ -45729,7 +45755,26 @@
 						"default_value": ""
 					},
 					{
-						"name": "pass",
+						"name": "password",
+						"type": "String",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
+				"name": "parse",
+				"return_type": "enum.Error",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "data",
 						"type": "String",
 						"has_default_value": false,
 						"default_value": ""
@@ -45798,7 +45843,7 @@
 						"default_value": ""
 					},
 					{
-						"name": "pass",
+						"name": "password",
 						"type": "String",
 						"has_default_value": false,
 						"default_value": ""
@@ -56196,7 +56241,7 @@
 			},
 			{
 				"name": "get_plugin_icon",
-				"return_type": "Object",
+				"return_type": "Texture",
 				"is_editor": false,
 				"is_noscript": false,
 				"is_const": false,
@@ -75275,7 +75320,7 @@
 		"properties": [
 			{
 				"name": "echo",
-				"type": "int",
+				"type": "bool",
 				"getter": "is_echo",
 				"setter": "set_echo",
 				"index": -1
@@ -131013,6 +131058,25 @@
 				]
 			},
 			{
+				"name": "get_bind_name",
+				"return_type": "String",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "bind_index",
+						"type": "int",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
 				"name": "get_bind_pose",
 				"return_type": "Transform",
 				"is_editor": false,
@@ -131070,6 +131134,31 @@
 					{
 						"name": "bind_count",
 						"type": "int",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
+				"name": "set_bind_name",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "bind_index",
+						"type": "int",
+						"has_default_value": false,
+						"default_value": ""
+					},
+					{
+						"name": "name",
+						"type": "String",
 						"has_default_value": false,
 						"default_value": ""
 					}
@@ -187555,7 +187644,7 @@
 	},
 	{
 		"name": "_Marshalls",
-		"base_class": "Reference",
+		"base_class": "Object",
 		"api_type": "core",
 		"singleton": true,
 		"singleton_name": "Marshalls",
