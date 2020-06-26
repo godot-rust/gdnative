@@ -4,7 +4,11 @@ target
 **/Cargo.lock
 .vscode
 .idea
-test/project/lib
+
+# ignore all files in test/project/lib/, except the .gitkeep as the directory should still be there
+test/project/lib/*
+!test/project/lib/.gitkeep
+
 **/.import/*
 
 #os specific
