@@ -12,6 +12,11 @@ static mut GDNATIVE_LIBRARY_SYS: Option<*mut sys::godot_object> = None;
 /// This is intended to be an internal interface.
 #[inline]
 pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
+    if let Err(err) = check_api_compatibility(options) {
+        report_init_error(options, err);
+        return false;
+    }
+
     let api = match sys::GodotApi::from_raw((*options).api_struct) {
         Ok(api) => api,
         Err(e) => {
@@ -31,6 +36,36 @@ pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
     }
 
     true
+}
+
+unsafe fn check_api_compatibility(
+    options: *const sys::godot_gdnative_init_options,
+) -> Result<(), sys::InitError> {
+    use crate::sys::godot_gdnative_api_struct as api_struct;
+    let mut api: *const api_struct = (*options).api_struct as *const api_struct;
+
+    // Check for unsupported versions
+    loop {
+        let sys::godot_gdnative_api_struct {
+            type_,
+            version,
+            next,
+        } = *api;
+
+        // Godot 4 is not yet supported
+        if type_ == crate::sys::GDNATIVE_API_TYPES_GDNATIVE_CORE
+            && version.major == 1
+            && version.minor == 3
+        {
+            return Err(sys::InitError::Generic{ message: "GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396".into() });
+        }
+
+        api = next;
+        if api.is_null() {
+            break;
+        }
+    }
+    Ok(())
 }
 
 /// Returns a reference to the current API struct.
