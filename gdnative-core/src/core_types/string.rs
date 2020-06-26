@@ -318,12 +318,12 @@ pub struct StringName(pub(crate) sys::godot_string_name);
 
 impl StringName {
     #[inline]
-    pub fn from_str<S>(s: S)
+    pub fn from_str<S>(s: S) -> Self
     where
         S: AsRef<str>,
     {
         let gd_string = GodotString::from_str(s);
-        StringName::from_godot_string(&gd_string);
+        StringName::from_godot_string(&gd_string)
     }
 
     #[inline]
