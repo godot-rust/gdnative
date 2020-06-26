@@ -1,3 +1,4 @@
+use heck::{CamelCase as _, SnakeCase as _};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
@@ -19,6 +20,11 @@ impl Api {
         };
 
         api.strip_leading_underscores();
+
+        api.classes
+            .iter_mut()
+            .flat_map(|class| class.enums.iter_mut())
+            .for_each(|e| e.strip_common_prefix());
 
         api
     }
@@ -122,6 +128,74 @@ impl core::cmp::PartialOrd for Enum {
     }
 }
 
+impl Enum {
+    pub fn strip_common_prefix(&mut self) {
+        // If there is only 1 variant, there are no 'common' prefixes.
+        if self.values.len() <= 1 {
+            return;
+        }
+
+        let mut variants: Vec<_> = self.values.iter().map(|v| (&v.0[..], *v.1)).collect();
+
+        // Build a map of prefix to occurrence
+        loop {
+            let underscore_index = variants[0].0.chars().enumerate().find_map(|(index, ch)| {
+                if ch == '_' {
+                    Some(index)
+                } else {
+                    None
+                }
+            });
+
+            let underscore_index = match underscore_index {
+                Some(index) if index > 0 => index,
+                Some(_) | None => break,
+            };
+
+            // Get a slice up to and including the `_`
+            let prefix = &variants[0].0[..=underscore_index];
+
+            if !variants.iter().all(|v| v.0.starts_with(prefix)) {
+                break;
+            }
+
+            // remove common prefix from variants
+            variants.iter_mut().for_each(|(ref mut name, _)| {
+                *name = &name[prefix.len()..];
+            });
+        }
+
+        let new_variants: HashMap<_, _> = variants
+            .into_iter()
+            .map(|(name, value)| {
+                let starts_with_number = name
+                    .chars()
+                    .next()
+                    .expect("name should not be empty")
+                    .is_numeric();
+
+                let capacity = if starts_with_number {
+                    name.len() + 1
+                } else {
+                    name.len()
+                };
+
+                let mut n = String::with_capacity(capacity);
+
+                // prefix numeric enum variants with `_`
+                if starts_with_number {
+                    n.push('_');
+                }
+
+                n.push_str(name);
+                (n, value)
+            })
+            .collect();
+
+        self.values = new_variants;
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct Property {
     pub name: String,
@@ -199,6 +273,7 @@ pub enum Ty {
     Bool,
     Vector2,
     Vector3,
+    Vector3Axis,
     Quat,
     Transform,
     Transform2D,
@@ -222,8 +297,8 @@ pub enum Ty {
     Result,
     VariantType,
     VariantOperator,
-    Enum(String),
-    Object(String),
+    Enum(syn::TypePath),
+    Object(syn::TypePath),
 }
 
 impl Ty {
@@ -259,16 +334,26 @@ impl Ty {
             "enum.Error" => Ty::Result,
             "enum.Variant::Type" => Ty::VariantType,
             "enum.Variant::Operator" => Ty::VariantOperator,
+            "enum.Vector3::Axis" => Ty::Vector3Axis,
             ty if ty.starts_with("enum.") => {
+                // Enums may reference known types (above list), check if it's a known type first
                 let mut split = ty[5..].split("::");
-                let mut class = split.next().unwrap();
-                if class.starts_with('_') {
-                    class = &class[1..];
+                let class_name = split.next().unwrap();
+                let name = format_ident!("{}", split.next().unwrap().to_camel_case());
+                let module = format_ident!("{}", class_name.to_snake_case());
+                // Is it a known type?
+                match Ty::from_src(&class_name) {
+                    Ty::Enum(_) | Ty::Object(_) => {
+                        Ty::Enum(syn::parse_quote! { crate::generated::#module::#name })
+                    }
+                    _ => Ty::Enum(syn::parse_quote! { #module::#name }),
                 }
-                let name = split.next().unwrap();
-                Ty::Enum(format!("{}{}", class, name))
             }
-            ty => Ty::Object(ty.into()),
+            ty => {
+                let module = format_ident!("{}", ty.to_snake_case());
+                let ty = format_ident!("{}", ty);
+                Ty::Object(syn::parse_quote! { crate::generated::#module::#ty })
+            }
         }
     }
 
@@ -281,6 +366,7 @@ impl Ty {
             Ty::Bool => syn::parse_quote! { bool },
             Ty::Vector2 => syn::parse_quote! { Vector2 },
             Ty::Vector3 => syn::parse_quote! { Vector3 },
+            Ty::Vector3Axis => syn::parse_quote! { vector3::Axis },
             Ty::Quat => syn::parse_quote! { Quat },
             Ty::Transform => syn::parse_quote! { Transform },
             Ty::Transform2D => syn::parse_quote! { Transform2D },
@@ -304,13 +390,9 @@ impl Ty {
             Ty::Result => syn::parse_quote! { GodotResult },
             Ty::VariantType => syn::parse_quote! { VariantType },
             Ty::VariantOperator => syn::parse_quote! { VariantOperator },
-            Ty::Enum(ref name) => {
-                let name = format_ident!("{}", name);
-                syn::parse_quote! { #name }
-            }
-            Ty::Object(ref name) => {
-                let name = format_ident!("{}", name);
-                syn::parse_quote! { Option<Ref<#name, thread_access::Shared>> }
+            Ty::Enum(path) => syn::parse_quote! { #path },
+            Ty::Object(path) => {
+                syn::parse_quote! { Option<Ref<#path, thread_access::Shared>> }
             }
         }
     }
@@ -318,7 +400,6 @@ impl Ty {
     pub fn to_rust_arg(&self) -> syn::Type {
         match self {
             Ty::Object(ref name) => {
-                let name = format_ident!("{}", name);
                 syn::parse_quote! { impl AsArg<Target = #name> }
             }
             _ => self.to_rust(),
@@ -334,6 +415,7 @@ impl Ty {
             Ty::Bool => Some(syn::parse_quote! { sys::godot_bool }),
             Ty::Vector2 => Some(syn::parse_quote! { sys::godot_vector2 }),
             Ty::Vector3 => Some(syn::parse_quote! { sys::godot_vector3 }),
+            Ty::Vector3Axis => None,
             Ty::Quat => Some(syn::parse_quote! { sys::godot_quat }),
             Ty::Transform => Some(syn::parse_quote! { sys::godot_transform }),
             Ty::Transform2D => Some(syn::parse_quote! { sys::godot_transform2d }),
@@ -370,6 +452,7 @@ impl Ty {
             }
             Ty::Vector2
             | Ty::Vector3
+            | Ty::Vector3Axis
             | Ty::Transform
             | Ty::Transform2D
             | Ty::Quat
@@ -400,11 +483,10 @@ impl Ty {
                     #rust_ty::from_sys(ret)
                 }
             }
-            Ty::Object(ref name) => {
-                let name = format_ident!("{}", name);
+            Ty::Object(ref path) => {
                 quote! {
                     ptr::NonNull::new(ret)
-                        .map(|sys| <Ref<#name, thread_access::Shared>>::move_from_sys(sys))
+                        .map(|sys| <Ref<#path, thread_access::Shared>>::move_from_sys(sys))
                 }
             }
             Ty::Result => {
