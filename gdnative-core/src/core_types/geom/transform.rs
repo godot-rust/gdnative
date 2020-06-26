@@ -1,4 +1,4 @@
-use crate::{Basis, Vector3};
+use crate::core_types::{Basis, Vector3};
 use euclid::{default, Point3D, Transform3D, UnknownUnit};
 
 /// 3D Transformation (3x4 matrix) Using basis + origin representation.

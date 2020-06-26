@@ -1,6 +1,6 @@
+use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
-use crate::GodotString;
 use crate::NewRef;
 use std::fmt;
 

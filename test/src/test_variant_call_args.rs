@@ -1,5 +1,4 @@
-use gdnative::api::Reference;
-use gdnative::*;
+use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
     let mut status = true;
@@ -9,7 +8,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(handle: init::InitHandle) {
+pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<VariantCallArgs>();
 }
 
@@ -24,7 +23,7 @@ impl NativeClass for VariantCallArgs {
     fn init(_owner: &Reference) -> VariantCallArgs {
         VariantCallArgs
     }
-    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
+    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 #[methods]
@@ -97,7 +96,7 @@ fn test_variant_call_args() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_variant_call_args failed");
+        gdnative::godot_error!("   !! Test test_variant_call_args failed");
     }
 
     ok

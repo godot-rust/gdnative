@@ -2,19 +2,21 @@
 extern crate gdnative;
 
 use gdnative::api::MeshInstance;
-use gdnative::init::property::{EnumHint, IntHint, StringHint};
+use gdnative::prelude::*;
+
+use gdnative::nativescript::init::property::{EnumHint, IntHint, StringHint};
 
 #[derive(gdnative::NativeClass)]
 #[inherit(MeshInstance)]
 #[register_with(register_properties)]
 struct RustTest {
-    start: gdnative::Vector3,
+    start: Vector3,
     time: f32,
     #[property(path = "base/rotate_speed")]
     rotate_speed: f64,
 }
 
-fn register_properties(builder: &gdnative::init::ClassBuilder<RustTest>) {
+fn register_properties(builder: &ClassBuilder<RustTest>) {
     builder
         .add_property::<String>("test/test_enum")
         .with_hint(StringHint::Enum(EnumHint::new(vec![
@@ -41,7 +43,7 @@ fn register_properties(builder: &gdnative::init::ClassBuilder<RustTest>) {
 impl RustTest {
     fn _init(_owner: &MeshInstance) -> Self {
         RustTest {
-            start: gdnative::Vector3::new(0.0, 0.0, 0.0),
+            start: Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
             rotate_speed: 0.05,
         }
@@ -54,7 +56,7 @@ impl RustTest {
 
     #[export]
     fn _physics_process(&mut self, owner: &MeshInstance, delta: f64) {
-        use gdnative::{api::SpatialMaterial, Color, Vector3};
+        use gdnative::api::SpatialMaterial;
 
         self.time += delta as f32;
         owner.rotate_y(self.rotate_speed * delta);
@@ -70,7 +72,7 @@ impl RustTest {
     }
 }
 
-fn init(handle: gdnative::init::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<RustTest>();
 }
 

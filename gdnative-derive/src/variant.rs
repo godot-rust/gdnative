@@ -61,11 +61,11 @@ pub(crate) fn parse_derive_input(
 }
 
 pub(crate) fn derive_to_variant(input: TokenStream) -> TokenStream {
-    let bound: syn::Path = syn::parse2(quote! { ::gdnative::ToVariant }).unwrap();
+    let bound: syn::Path = syn::parse2(quote! { ::gdnative::core_types::ToVariant }).unwrap();
     to::expand_to_variant(parse_derive_input(input, &bound, Direction::To))
 }
 
 pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
-    let bound: syn::Path = syn::parse2(quote! { ::gdnative::FromVariant }).unwrap();
+    let bound: syn::Path = syn::parse2(quote! { ::gdnative::core_types::FromVariant }).unwrap();
     from::expand_from_variant(parse_derive_input(input, &bound, Direction::From))
 }

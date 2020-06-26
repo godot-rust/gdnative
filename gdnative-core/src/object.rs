@@ -850,8 +850,8 @@ pub trait AsArg: private::Sealed {
 
     #[doc(hidden)]
     #[inline]
-    unsafe fn to_arg_variant(&self) -> crate::Variant {
-        crate::Variant::from_object_ptr(self.as_arg_ptr())
+    unsafe fn to_arg_variant(&self) -> crate::core_types::Variant {
+        crate::core_types::Variant::from_object_ptr(self.as_arg_ptr())
     }
 }
 

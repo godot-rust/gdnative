@@ -3,10 +3,7 @@ extern crate gdnative;
 extern crate euclid;
 
 use euclid::vec3;
-use gdnative::api::{Node, PackedScene, ResourceLoader, Spatial};
-use gdnative::ref_kind::ManuallyManaged;
-use gdnative::thread_access::{ThreadLocal, Unique};
-use gdnative::{GodotString, Ref, Variant};
+use gdnative::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ManageErrs {
@@ -109,7 +106,7 @@ impl SceneCreate {
     }
 }
 
-fn init(handle: gdnative::init::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<SceneCreate>();
 }
 

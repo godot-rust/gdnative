@@ -7,7 +7,7 @@ mod main_scene;
 mod mob;
 mod player;
 
-fn init(handle: gdnative::init::InitHandle) {
+fn init(handle: gdnative::prelude::InitHandle) {
     handle.add_class::<player::Player>();
     handle.add_class::<mob::Mob>();
     handle.add_class::<main_scene::Main>();

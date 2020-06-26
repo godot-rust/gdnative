@@ -1,6 +1,6 @@
 use crate::extensions::NodeExt as _;
-use gdnative::api::*;
-use gdnative::*;
+use gdnative::api::{AnimatedSprite, Area2D, CollisionShape2D, PhysicsBody2D};
+use gdnative::prelude::*;
 
 /// The player "class"
 #[derive(NativeClass)]
@@ -16,8 +16,8 @@ pub struct Player {
 
 #[methods]
 impl Player {
-    fn register_player(builder: &init::ClassBuilder<Self>) {
-        builder.add_signal(init::Signal {
+    fn register_player(builder: &ClassBuilder<Self>) {
+        builder.add_signal(Signal {
             name: "hit",
             args: &[],
         });

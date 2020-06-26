@@ -56,6 +56,8 @@ pub use gdnative_core::*;
 #[doc(inline)]
 pub use gdnative_derive::*;
 
+pub mod prelude;
+
 #[doc(inline)]
 #[cfg(feature = "bindings")]
 /// Bindings for the Godot Class API.

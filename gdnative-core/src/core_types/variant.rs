@@ -4,6 +4,8 @@ use std::fmt;
 use std::mem::{forget, transmute};
 use std::ptr;
 
+use crate::core_types::*;
+use crate::object::*;
 use crate::private::{get_api, ManuallyManagedClassPlaceholder};
 use crate::thread_access::*;
 
@@ -1508,7 +1510,7 @@ from_variant_from_sys!(
     impl FromVariant for Dictionary<Shared> as Dictionary : godot_variant_as_dictionary;
 );
 
-impl<T: crate::typed_array::Element> ToVariant for TypedArray<T> {
+impl<T: crate::core_types::typed_array::Element> ToVariant for TypedArray<T> {
     #[inline]
     fn to_variant(&self) -> Variant {
         unsafe {
@@ -1519,9 +1521,9 @@ impl<T: crate::typed_array::Element> ToVariant for TypedArray<T> {
         }
     }
 }
-impl<T: crate::typed_array::Element + Eq> ToVariantEq for TypedArray<T> {}
+impl<T: crate::core_types::typed_array::Element + Eq> ToVariantEq for TypedArray<T> {}
 
-impl<T: crate::typed_array::Element> FromVariant for TypedArray<T> {
+impl<T: crate::core_types::typed_array::Element> FromVariant for TypedArray<T> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         unsafe {

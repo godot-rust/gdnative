@@ -1,6 +1,5 @@
 use crate::extensions::NodeExt as _;
-use gdnative::api::*;
-use gdnative::*;
+use gdnative::prelude::*;
 
 #[derive(NativeClass)]
 #[inherit(CanvasLayer)]
@@ -10,8 +9,8 @@ pub struct HUD;
 
 #[methods]
 impl HUD {
-    fn register_hud(builder: &init::ClassBuilder<Self>) {
-        builder.add_signal(init::Signal {
+    fn register_hud(builder: &ClassBuilder<Self>) {
+        builder.add_signal(Signal {
             name: "start_game",
             args: &[],
         });

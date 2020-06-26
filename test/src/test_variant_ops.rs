@@ -1,4 +1,5 @@
-use gdnative::*;
+use gdnative::core_types::InvalidOp;
+use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
     let mut status = true;
@@ -8,7 +9,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(_handle: init::InitHandle) {}
+pub(crate) fn register(_handle: InitHandle) {}
 
 fn test_variant_ops() -> bool {
     println!(" -- test_variant_ops");
@@ -40,7 +41,7 @@ fn test_variant_ops() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_variant_ops failed");
+        gdnative::godot_error!("   !! Test test_variant_ops failed");
     }
 
     ok

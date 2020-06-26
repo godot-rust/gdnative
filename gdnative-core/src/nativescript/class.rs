@@ -1,5 +1,8 @@
 use std::ptr::NonNull;
 
+use crate::core_types::{
+    FromVariant, FromVariantError, GodotString, OwnedToVariant, ToVariant, Variant,
+};
 use crate::nativescript::init::ClassBuilder;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
@@ -8,17 +11,10 @@ use crate::object::{
     AssumeSafeLifetime, LifetimeConstraint, QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw,
     SafeDeref, TRef,
 };
+use crate::object::{GodotObject, Instanciable};
 use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted};
 use crate::thread_access::{Shared, ThreadAccess, ThreadLocal, Unique};
-use crate::FromVariant;
-use crate::FromVariantError;
-use crate::GodotObject;
-use crate::GodotString;
-use crate::Instanciable;
-use crate::OwnedToVariant;
-use crate::ToVariant;
-use crate::Variant;
 
 /// Trait used for describing and initializing a Godot script class.
 ///

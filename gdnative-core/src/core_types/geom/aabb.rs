@@ -1,4 +1,4 @@
-use crate::Vector3;
+use crate::core_types::Vector3;
 
 /// Axis-aligned bounding box.
 #[repr(C)]

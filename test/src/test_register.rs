@@ -1,5 +1,4 @@
-use gdnative::api::Reference;
-use gdnative::*;
+use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
     let mut status = true;
@@ -9,7 +8,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-pub(crate) fn register(handle: init::InitHandle) {
+pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<RegisterSignal>();
     handle.add_class::<RegisterProperty>();
 }
@@ -26,14 +25,14 @@ impl NativeClass for RegisterSignal {
     fn init(_owner: &Reference) -> RegisterSignal {
         RegisterSignal
     }
-    fn register_properties(builder: &init::ClassBuilder<Self>) {
-        builder.add_signal(gdnative::init::Signal {
+    fn register_properties(builder: &ClassBuilder<Self>) {
+        builder.add_signal(Signal {
             name: "progress",
-            args: &[gdnative::init::SignalArgument {
+            args: &[SignalArgument {
                 name: "amount",
-                default: gdnative::Variant::new(),
-                export_info: init::ExportInfo::new(VariantType::I64),
-                usage: gdnative::init::PropertyUsage::DEFAULT,
+                default: Variant::new(),
+                export_info: ExportInfo::new(VariantType::I64),
+                usage: PropertyUsage::DEFAULT,
             }],
         });
     }
@@ -55,7 +54,7 @@ impl NativeClass for RegisterProperty {
     fn init(_owner: &Reference) -> RegisterProperty {
         RegisterProperty { value: 42 }
     }
-    fn register_properties(builder: &init::ClassBuilder<Self>) {
+    fn register_properties(builder: &ClassBuilder<Self>) {
         builder
             .add_property("value")
             .with_default(42)
@@ -105,7 +104,7 @@ fn test_register_property() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_register_property failed");
+        gdnative::godot_error!("   !! Test test_register_property failed");
     }
 
     ok

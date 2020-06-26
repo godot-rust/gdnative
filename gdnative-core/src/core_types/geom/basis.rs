@@ -1,4 +1,4 @@
-use crate::{Quat, Vector3};
+use crate::core_types::{Quat, Vector3};
 use euclid::{approxeq::ApproxEq, default, Transform3D, UnknownUnit, Vector3D};
 
 /// A 3x3 matrix.

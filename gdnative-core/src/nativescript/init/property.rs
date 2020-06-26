@@ -1,10 +1,11 @@
 //! Property registration.
 
+use crate::core_types::*;
 use crate::nativescript::{Instance, NativeClass};
 use crate::object::GodotObject;
+use crate::object::Ref;
 use crate::private::get_api;
 use crate::thread_access::Shared;
-use crate::*;
 
 use super::ClassBuilder;
 

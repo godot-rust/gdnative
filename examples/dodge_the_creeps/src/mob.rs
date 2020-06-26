@@ -1,6 +1,6 @@
 use crate::extensions::NodeExt;
-use gdnative::api::*;
-use gdnative::*;
+use gdnative::api::{AnimatedSprite, RigidBody2D};
+use gdnative::prelude::*;
 use rand::seq::SliceRandom;
 
 #[derive(NativeClass)]

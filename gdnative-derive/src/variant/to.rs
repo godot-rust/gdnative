@@ -41,8 +41,8 @@ pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
                         let var_ident_string_literal = Literal::string(&var_ident_string);
                         quote! {
                             #ident::#var_ident #destructure_pattern => {
-                                let __dict = ::gdnative::Dictionary::new();
-                                let __key = ::gdnative::GodotString::from(#var_ident_string_literal).to_variant();
+                                let __dict = ::gdnative::core_types::Dictionary::new();
+                                let __key = ::gdnative::core_types::GodotString::from(#var_ident_string_literal).to_variant();
                                 let __value = #to_variant;
                                 __dict.insert(&__key, &__value);
                                 __dict.into_shared().to_variant()
@@ -63,10 +63,10 @@ pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
 
     let result = quote! {
         #[allow(unused_variables)]
-        impl #generics ::gdnative::ToVariant for #ident #generics #where_clause {
-            fn to_variant(&self) -> ::gdnative::Variant {
-                use ::gdnative::ToVariant;
-                use ::gdnative::FromVariant;
+        impl #generics ::gdnative::core_types::ToVariant for #ident #generics #where_clause {
+            fn to_variant(&self) -> ::gdnative::core_types::Variant {
+                use ::gdnative::core_types::ToVariant;
+                use ::gdnative::core_types::FromVariant;
 
                 #return_expr
             }

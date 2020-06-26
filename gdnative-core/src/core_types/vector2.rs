@@ -1,4 +1,4 @@
-use crate::{Angle, Rotation2D, Vector2};
+use crate::core_types::{Angle, Rotation2D, Vector2};
 
 /// Helper methods for `Vector2`.
 ///
@@ -107,10 +107,10 @@ impl Vector2Godot for Vector2 {
 
 godot_test!(
     test_vector2_variants {
-        use crate::ToVariant;
+        use crate::core_types::ToVariant;
 
         fn test(vector: Vector2, set_to: Vector2) {
-            use crate::FromVariant;
+            use crate::core_types::FromVariant;
             let api = crate::private::get_api();
 
             let copied = vector;
@@ -145,8 +145,8 @@ godot_test!(
 
 #[cfg(test)]
 mod tests {
-    use crate::vector2::Vector2Godot;
-    use crate::Vector2;
+    use crate::core_types::vector2::Vector2Godot;
+    use crate::core_types::Vector2;
 
     #[test]
     fn it_is_copy() {

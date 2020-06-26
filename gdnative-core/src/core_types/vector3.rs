@@ -1,4 +1,4 @@
-use crate::Vector3;
+use crate::core_types::Vector3;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u32)]
@@ -46,7 +46,7 @@ impl Vector3Godot for Vector3 {
 
 godot_test!(
     test_vector3_variants {
-        use crate::{FromVariant, ToVariant, Vector3};
+        use crate::core_types::{FromVariant, ToVariant, Vector3};
 
         fn test(vector: Vector3, set_to: Vector3) {
             let api = crate::private::get_api();
@@ -100,7 +100,7 @@ godot_test!(
 
 #[cfg(test)]
 mod tests {
-    use crate::Vector3;
+    use crate::core_types::Vector3;
 
     #[test]
     fn it_is_copy() {

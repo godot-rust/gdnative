@@ -1,7 +1,7 @@
 #![allow(clippy::blacklisted_name)]
 
 use gdnative::api::*;
-use gdnative::*;
+use gdnative::prelude::*;
 
 mod test_derive;
 mod test_free_ub;
@@ -16,42 +16,42 @@ pub extern "C" fn run_tests(
     _args: *mut gdnative::sys::godot_array,
 ) -> gdnative::sys::godot_variant {
     let mut status = true;
-    status &= gdnative::test_string();
+    status &= gdnative::core_types::test_string();
 
-    status &= gdnative::dictionary::test_dictionary();
+    status &= gdnative::core_types::dictionary::test_dictionary();
     // status &= gdnative::test_dictionary_clone_clear();
 
-    status &= gdnative::test_array();
-    status &= gdnative::test_array_debug();
+    status &= gdnative::core_types::test_array();
+    status &= gdnative::core_types::test_array_debug();
     // status &= gdnative::test_array_clone_clear();
 
-    status &= gdnative::test_variant_nil();
-    status &= gdnative::test_variant_i64();
-    status &= gdnative::test_variant_bool();
+    status &= gdnative::core_types::test_variant_nil();
+    status &= gdnative::core_types::test_variant_i64();
+    status &= gdnative::core_types::test_variant_bool();
 
-    status &= gdnative::test_vector2_variants();
+    status &= gdnative::core_types::test_vector2_variants();
 
-    status &= gdnative::test_vector3_variants();
+    status &= gdnative::core_types::test_vector3_variants();
 
-    status &= gdnative::test_variant_option();
-    status &= gdnative::test_variant_result();
-    status &= gdnative::test_to_variant_iter();
-    status &= gdnative::test_variant_tuple();
+    status &= gdnative::core_types::test_variant_option();
+    status &= gdnative::core_types::test_variant_result();
+    status &= gdnative::core_types::test_to_variant_iter();
+    status &= gdnative::core_types::test_variant_tuple();
 
-    status &= gdnative::test_byte_array_access();
-    status &= gdnative::test_byte_array_debug();
-    status &= gdnative::test_int32_array_access();
-    status &= gdnative::test_int32_array_debug();
-    status &= gdnative::test_float32_array_access();
-    status &= gdnative::test_float32_array_debug();
-    status &= gdnative::test_color_array_access();
-    status &= gdnative::test_color_array_debug();
-    status &= gdnative::test_string_array_access();
-    status &= gdnative::test_string_array_debug();
-    status &= gdnative::test_vector2_array_access();
-    status &= gdnative::test_vector2_array_debug();
-    status &= gdnative::test_vector3_array_access();
-    status &= gdnative::test_vector3_array_debug();
+    status &= gdnative::core_types::test_byte_array_access();
+    status &= gdnative::core_types::test_byte_array_debug();
+    status &= gdnative::core_types::test_int32_array_access();
+    status &= gdnative::core_types::test_int32_array_debug();
+    status &= gdnative::core_types::test_float32_array_access();
+    status &= gdnative::core_types::test_float32_array_debug();
+    status &= gdnative::core_types::test_color_array_access();
+    status &= gdnative::core_types::test_color_array_debug();
+    status &= gdnative::core_types::test_string_array_access();
+    status &= gdnative::core_types::test_string_array_debug();
+    status &= gdnative::core_types::test_vector2_array_access();
+    status &= gdnative::core_types::test_vector2_array_debug();
+    status &= gdnative::core_types::test_vector3_array_access();
+    status &= gdnative::core_types::test_vector3_array_debug();
 
     status &= test_constructor();
     status &= test_underscore_method_binding();
@@ -64,7 +64,7 @@ pub extern "C" fn run_tests(
     status &= test_variant_call_args::run_tests();
     status &= test_variant_ops::run_tests();
 
-    gdnative::Variant::from_bool(status).forget()
+    gdnative::core_types::Variant::from_bool(status).forget()
 }
 
 fn test_constructor() -> bool {
@@ -93,7 +93,7 @@ fn test_underscore_method_binding() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_underscore_method_binding failed");
+        gdnative::godot_error!("   !! Test test_underscore_method_binding failed");
     }
 
     ok
@@ -110,7 +110,7 @@ impl NativeClass for Foo {
     fn init(_owner: &Reference) -> Foo {
         Foo(42)
     }
-    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
+    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 struct NotFoo;
@@ -124,7 +124,7 @@ impl NativeClass for NotFoo {
     fn init(_owner: &Reference) -> NotFoo {
         NotFoo
     }
-    fn register_properties(_builder: &init::ClassBuilder<Self>) {}
+    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 #[methods]
@@ -182,7 +182,7 @@ fn test_rust_class_construction() -> bool {
     .is_ok();
 
     if !ok {
-        godot_error!("   !! Test test_rust_class_construction failed");
+        gdnative::godot_error!("   !! Test test_rust_class_construction failed");
     }
 
     ok
@@ -215,7 +215,7 @@ impl OptionalArgs {
     }
 }
 
-fn init(handle: init::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
 
@@ -227,6 +227,6 @@ fn init(handle: init::InitHandle) {
     test_variant_ops::register(handle);
 }
 
-godot_gdnative_init!();
-godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+gdnative::godot_gdnative_init!();
+gdnative::godot_nativescript_init!(init);
+gdnative::godot_gdnative_terminate!();
