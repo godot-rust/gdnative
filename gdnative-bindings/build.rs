@@ -20,9 +20,20 @@ fn main() {
         write!(&mut output, "{}", code).unwrap();
     }
 
+    if cfg!(feature = "formatted") {
+        format_file(&output_rs);
+    }
+
+    // build.rs will automatically be recompiled and run if it's dependencies are updated.
+    // Ignoring all but build.rs will keep from needless rebuilds.
+    // Manually rebuilding the crate will ignore this.
+    println!("cargo:rerun-if-changed=build.rs");
+}
+
+fn format_file(output_rs: &PathBuf) {
     print!(
         "Formatting generated file: {}... ",
-        output_rs.file_name().map(|s| s.to_str()).flatten().unwrap()
+        output_rs.file_name().and_then(|s| s.to_str()).unwrap()
     );
     match Command::new("rustup")
         .arg("run")
