@@ -7,12 +7,14 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
+    let api_data = std::fs::read_to_string("api.json").expect("Unable to read api.json");
+
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let generated_rs = out_path.join("generated.rs");
     let icalls_rs = out_path.join("icalls.rs");
 
-    let api = Api::new();
+    let api = Api::new(&api_data);
     let binding_res = generate_bindings(&api);
 
     {

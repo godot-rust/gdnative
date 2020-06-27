@@ -12,10 +12,18 @@ pub struct Api {
 }
 
 impl Api {
-    pub fn new() -> Self {
-        let mut api = Api {
-            classes: miniserde::json::from_str(get_api_json())
-                .expect("Failed to parse the API description"),
+    /// Construct an `Api` instance from JSON data.
+    ///
+    /// The JSON data can be generated from Godot using the following command:
+    ///
+    /// `/path/to/godot --gdnative-generate-json-api /path/to/api.json`
+    ///
+    /// # Panics
+    ///
+    /// If the `data` is not valid JSON data the function will panic.
+    pub fn new(data: &str) -> Self {
+        let mut api = Self {
+            classes: miniserde::json::from_str(data).expect("Invalid JSON data"),
             api_underscore: Default::default(),
         };
 
@@ -68,12 +76,6 @@ impl Api {
                 }
             }
         }
-    }
-}
-
-impl Default for Api {
-    fn default() -> Self {
-        Api::new()
     }
 }
 
@@ -554,8 +556,4 @@ impl Ty {
             }
         }
     }
-}
-
-pub fn get_api_json() -> &'static str {
-    include_str!("../api.json")
 }
