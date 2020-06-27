@@ -6,9 +6,9 @@ use heck::CamelCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 
-pub fn generate_class_struct(class: &GodotClass) -> TokenStream {
+pub(crate) fn generate_class_struct(class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", &class.name);
 
     quote! {
@@ -20,7 +20,11 @@ pub fn generate_class_struct(class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
+pub(crate) fn generate_class_impl(
+    api: &Api,
+    class: &GodotClass,
+    icalls: &mut HashMap<String, methods::MethodSig>,
+) -> TokenStream {
     let class_singleton = if class.singleton {
         special_methods::generate_singleton_getter(class)
     } else {
@@ -39,13 +43,9 @@ pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
         Default::default()
     };
 
-    let mut method_set = HashSet::default();
+    let class_methods = methods::generate_methods(class, icalls);
 
-    let class_methods =
-        methods::generate_methods(&api, &mut method_set, &class.name, class.is_pointer_safe());
-
-    let class_upcast =
-        special_methods::generate_upcast(&api, &class.base_class, class.is_pointer_safe());
+    let class_upcast = special_methods::generate_upcast(&api, &class.base_class);
 
     let class_name = format_ident!("{}", class.name);
     quote! {
@@ -59,7 +59,7 @@ pub fn generate_class_impl(api: &Api, class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_class_constants(class: &GodotClass) -> TokenStream {
+pub(crate) fn generate_class_constants(class: &GodotClass) -> TokenStream {
     assert!(
         !class.constants.is_empty(),
         "Only call on class with constants."
@@ -105,7 +105,7 @@ fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
     }
 }
 
-pub fn generate_enums(class: &GodotClass) -> TokenStream {
+pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
     // TODO: check whether the start of the variant name is
     // equal to the end of the enum name and if so don't repeat it
     // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.

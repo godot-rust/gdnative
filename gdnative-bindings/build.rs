@@ -9,19 +9,44 @@ use std::process::Command;
 fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    let output_rs = out_path.join("generated.rs");
+    let generated_rs = out_path.join("generated.rs");
+    let icalls_rs = out_path.join("icalls.rs");
+
+    let api = Api::new();
+    let binding_res = generate_bindings(&api);
 
     {
-        let mut output = BufWriter::new(File::create(&output_rs).unwrap());
+        use heck::SnakeCase as _;
 
-        let api = Api::new();
+        let mut output = BufWriter::new(File::create(&generated_rs).unwrap());
 
-        let code = generate_bindings(&api);
-        write!(&mut output, "{}", code).unwrap();
+        for (class_name, code) in binding_res.class_bindings {
+            write!(
+                &mut output,
+                r#"
+                pub mod {mod_name} {{
+                    use super::*;
+                    {content}
+                }}
+                pub use crate::generated::{mod_name}::{class_name};
+                "#,
+                mod_name = class_name.to_snake_case(),
+                class_name = class_name,
+                content = code,
+            )
+            .unwrap();
+        }
+    }
+
+    {
+        let mut output = BufWriter::new(File::create(&icalls_rs).unwrap());
+
+        write!(&mut output, "{}", binding_res.icalls).unwrap();
     }
 
     if cfg!(feature = "formatted") {
-        format_file(&output_rs);
+        format_file(&generated_rs);
+        format_file(&icalls_rs);
     }
 
     // build.rs will automatically be recompiled and run if it's dependencies are updated.

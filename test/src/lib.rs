@@ -7,6 +7,7 @@ mod test_derive;
 mod test_free_ub;
 mod test_register;
 mod test_return_leak;
+mod test_vararray_return;
 mod test_variant_call_args;
 mod test_variant_ops;
 
@@ -63,6 +64,7 @@ pub extern "C" fn run_tests(
     status &= test_return_leak::run_tests();
     status &= test_variant_call_args::run_tests();
     status &= test_variant_ops::run_tests();
+    status &= test_vararray_return::run_tests();
 
     gdnative::core_types::Variant::from_bool(status).forget()
 }
@@ -225,6 +227,7 @@ fn init(handle: InitHandle) {
     test_return_leak::register(handle);
     test_variant_call_args::register(handle);
     test_variant_ops::register(handle);
+    test_vararray_return::register(handle);
 }
 
 gdnative::godot_gdnative_init!();

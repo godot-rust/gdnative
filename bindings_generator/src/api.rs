@@ -406,6 +406,52 @@ impl Ty {
         }
     }
 
+    pub fn to_icall_arg(&self) -> syn::Type {
+        match self {
+            Ty::Object(_) => syn::parse_quote! { *mut sys::godot_object },
+            _ => self.to_rust(),
+        }
+    }
+
+    pub fn to_icall_return(&self) -> syn::Type {
+        match self {
+            Ty::Void => syn::parse_quote! { () },
+            Ty::String => syn::parse_quote! { sys::godot_string },
+            Ty::F64 => syn::parse_quote! { f64 },
+            Ty::I64 => syn::parse_quote! { i64 },
+            Ty::Bool => syn::parse_quote! { sys::godot_bool },
+            Ty::Vector2 => syn::parse_quote! { sys::godot_vector2 },
+            Ty::Vector3 => syn::parse_quote! { sys::godot_vector3 },
+
+            Ty::Quat => syn::parse_quote! { sys::godot_quat },
+            Ty::Transform => syn::parse_quote! { sys::godot_transform },
+            Ty::Transform2D => syn::parse_quote! { sys::godot_transform2d },
+            Ty::Rect2 => syn::parse_quote! { sys::godot_rect2 },
+            Ty::Plane => syn::parse_quote! { sys::godot_plane },
+            Ty::Basis => syn::parse_quote! { sys::godot_basis },
+            Ty::Color => syn::parse_quote! { sys::godot_color },
+            Ty::NodePath => syn::parse_quote! { sys::godot_node_path },
+            Ty::Variant => syn::parse_quote! { sys::godot_variant },
+            Ty::Aabb => syn::parse_quote! { sys::godot_aabb },
+            Ty::Rid => syn::parse_quote! { sys::godot_rid },
+            Ty::VariantArray => syn::parse_quote! { sys::godot_array },
+            Ty::Dictionary => syn::parse_quote! { sys::godot_dictionary },
+            Ty::ByteArray => syn::parse_quote! { sys::godot_pool_byte_array },
+            Ty::StringArray => syn::parse_quote! { sys::godot_pool_string_array },
+            Ty::Vector2Array => syn::parse_quote! { sys::godot_pool_vector2_array },
+            Ty::Vector3Array => syn::parse_quote! { sys::godot_pool_vector3_array },
+            Ty::ColorArray => syn::parse_quote! { sys::godot_pool_color_array },
+            Ty::Int32Array => syn::parse_quote! { sys::godot_pool_int_array },
+            Ty::Float32Array => syn::parse_quote! { sys::godot_pool_real_array },
+
+            Ty::Vector3Axis | Ty::Result | Ty::VariantType | Ty::VariantOperator | Ty::Enum(_) => {
+                syn::parse_quote! { i64 }
+            }
+
+            Ty::Object(_) => syn::parse_quote! { *mut sys::godot_object },
+        }
+    }
+
     pub fn to_sys(&self) -> Option<syn::Type> {
         match self {
             Ty::Void => None,
@@ -447,12 +493,15 @@ impl Ty {
     pub fn to_return_post(&self) -> TokenStream {
         match self {
             Ty::Void => Default::default(),
-            Ty::F64 | &Ty::I64 | &Ty::Bool | &Ty::Enum(_) => {
-                quote! { ret }
+            Ty::F64 | Ty::I64 | Ty::Bool => {
+                quote! { ret as _ }
             }
+            Ty::Enum(path) => {
+                quote! { #path(ret) }
+            }
+
             Ty::Vector2
             | Ty::Vector3
-            | Ty::Vector3Axis
             | Ty::Transform
             | Ty::Transform2D
             | Ty::Quat
@@ -462,6 +511,9 @@ impl Ty {
             | Ty::Plane
             | Ty::Color => {
                 quote! { mem::transmute(ret) }
+            }
+            Ty::Vector3Axis => {
+                quote! { mem::transmute(ret as u32) }
             }
             Ty::Rid => {
                 quote! { Rid::from_sys(ret) }
@@ -490,14 +542,14 @@ impl Ty {
                 }
             }
             Ty::Result => {
-                quote! { GodotError::result_from_sys(ret) }
+                quote! { GodotError::result_from_sys(ret as _) }
             }
             Ty::VariantType => {
-                quote! { VariantType::from_sys(ret) }
+                quote! { VariantType::from_sys(ret as _) }
             }
             Ty::VariantOperator => {
                 quote! {
-                    VariantOperator::try_from_sys(ret).expect("enum variant should be valid")
+                    VariantOperator::try_from_sys(ret as _).expect("enum variant should be valid")
                 }
             }
         }
