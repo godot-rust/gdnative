@@ -30,17 +30,33 @@ where
 }
 
 /// Trait for array access guards
-#[doc(hidden)]
+///
+/// This trait is sealed and has no public members.
 #[allow(clippy::len_without_is_empty)]
-pub unsafe trait Guard: Drop {
+pub unsafe trait Guard: Drop + private::Sealed {
+    #[doc(hidden)]
     type Target;
+
+    #[doc(hidden)]
     fn len(&self) -> usize;
+
+    #[doc(hidden)]
     fn read_ptr(&self) -> *const Self::Target;
 }
 
 /// Marker trait for write access guards
-#[doc(hidden)]
-pub unsafe trait WritePtr: Guard {}
+///
+/// This trait is sealed and has no public members.
+pub unsafe trait WritePtr: Guard + private::Sealed {}
+
+pub(crate) mod private {
+    use crate::core_types::typed_array::Element;
+
+    pub trait Sealed {}
+
+    impl<'a, T: Element> Sealed for crate::core_types::typed_array::ReadGuard<'a, T> {}
+    impl<'a, T: Element> Sealed for crate::core_types::typed_array::WriteGuard<'a, T> {}
+}
 
 impl<G: Guard> MaybeUnaligned<G> {
     #[inline]
@@ -216,6 +232,8 @@ mod tests {
         ptr: *const T,
         len: usize,
     }
+
+    impl<T> crate::core_types::access::private::Sealed for PtrGuard<T> {}
 
     impl<T> Drop for PtrGuard<T> {
         fn drop(&mut self) {}
