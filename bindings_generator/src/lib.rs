@@ -167,7 +167,7 @@ pub(crate) mod test_prelude {
 
     #[test]
     fn sanity_test_generated_code() {
-        let api = Api::new();
+        let api = Api::new(include_str!("../../gdnative-bindings/api.json"));
         let mut buffer = BufWriter::new(Vec::with_capacity(16384));
         for class in &api.classes {
             let mut icalls = HashMap::new();
