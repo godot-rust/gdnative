@@ -340,7 +340,14 @@ impl Variant {
         unsafe { R::to_arg_variant(&val) }
     }
 
-    pub(crate) unsafe fn from_object_ptr(val: *mut sys::godot_object) -> Variant {
+    /// Creats a `Variant` from a raw object pointer.
+    ///
+    /// # Safety
+    ///
+    /// The object pointer must be a valid pointer to a godot object.
+    #[doc(hidden)]
+    #[inline]
+    pub unsafe fn from_object_ptr(val: *mut sys::godot_object) -> Variant {
         let api = get_api();
         let mut dest = sys::godot_variant::default();
         (api.godot_variant_new_object)(&mut dest, val);

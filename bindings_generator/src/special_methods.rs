@@ -85,7 +85,8 @@ pub fn generate_queue_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
             impl QueueFree for #class_name {
                 #[inline]
                 unsafe fn godot_queue_free(obj: *mut sys::godot_object) {
-                    crate::generated::node::Node_queue_free(obj)
+                    let method_bind: *mut sys::godot_method_bind = crate::generated::node::NodeMethodTable::get(get_api()).queue_free;
+                    crate::icalls::icallptr_void(method_bind, obj)
                 }
             }
         }
@@ -126,14 +127,14 @@ pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_upcast(api: &Api, base_class_name: &str, is_pointer_safe: bool) -> TokenStream {
+pub fn generate_upcast(api: &Api, base_class_name: &str) -> TokenStream {
     if let Some(parent) = api.find_class(&base_class_name) {
         let snake_name = class_name_to_snake_case(&base_class_name);
         let parent_class = format_ident!("{}", parent.name);
         let parent_class_module = format_ident!("{}", parent.name.to_snake_case());
         let to_snake_name = format_ident!("to_{}", snake_name);
 
-        let upcast = generate_upcast(api, &parent.base_class, is_pointer_safe);
+        let upcast = generate_upcast(api, &parent.base_class);
         let qualified_parent_class = quote! {
             crate::generated::#parent_class_module::#parent_class
         };

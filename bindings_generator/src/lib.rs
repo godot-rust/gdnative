@@ -16,23 +16,38 @@ use crate::documentation::*;
 use crate::methods::*;
 use crate::special_methods::*;
 
-use heck::SnakeCase;
-
+use std::collections::HashMap;
 use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
-pub fn generate_bindings(api: &Api) -> TokenStream {
-    let imports = generate_imports();
+pub struct BindingResult {
+    pub class_bindings: HashMap<String, TokenStream>,
+    pub icalls: TokenStream,
+}
 
-    let classes = api
+pub fn generate_bindings(api: &Api) -> BindingResult {
+    let mut icalls = HashMap::new();
+
+    let class_bindings = api
         .classes
         .iter()
-        .map(|class| generate_class_bindings(&api, class));
+        .map(|class| {
+            (
+                class.name.clone(),
+                generate_class_bindings(&api, class, &mut icalls),
+            )
+        })
+        .collect();
 
-    quote! {
-        #imports
-        #(#classes)*
+    let icalls = icalls
+        .into_iter()
+        .map(|(name, sig)| generate_icall(name, sig))
+        .collect();
+
+    BindingResult {
+        class_bindings,
+        icalls,
     }
 }
 
@@ -44,17 +59,11 @@ pub fn generate_imports() -> TokenStream {
     }
 }
 
-pub fn generate_class(api: &Api, class_name: &str) -> TokenStream {
-    let class = api.find_class(class_name);
-
-    if let Some(class) = class {
-        generate_class_bindings(&api, &class)
-    } else {
-        Default::default()
-    }
-}
-
-fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
+fn generate_class_bindings(
+    api: &Api,
+    class: &GodotClass,
+    icalls: &mut HashMap<String, MethodSig>,
+) -> TokenStream {
     // types and methods
     let types_and_methods = {
         let documentation = generate_class_documentation(&api, class);
@@ -69,7 +78,7 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
             Default::default()
         };
 
-        let class_impl = generate_class_impl(&api, class);
+        let class_impl = generate_class_impl(&api, class, icalls);
 
         quote! {
             #documentation
@@ -107,33 +116,17 @@ fn generate_class_bindings(api: &Api, class: &GodotClass) -> TokenStream {
         }
     };
 
-    // methods and method table for classes with functions
-    let methods_and_table = if class.instantiable || !class.methods.is_empty() {
-        let table = generate_method_table(&api, class);
-
-        let methods = class
-            .methods
-            .iter()
-            .map(|method| generate_method_impl(class, method));
-
-        quote! {
-            #table
-            #(#methods)*
-        }
+    // method table for classes with functions
+    let method_table = if class.instantiable || !class.methods.is_empty() {
+        generate_method_table(&api, class)
     } else {
         Default::default()
     };
 
-    let module = format_ident!("{}", class.name.to_snake_case());
-    let class = format_ident!("{}", class.name);
     quote! {
-        pub mod #module {
-            use super::*;
-            #types_and_methods
-            #traits
-            #methods_and_table
-        }
-        pub use crate::generated::#module::#class;
+        #types_and_methods
+        #traits
+        #method_table
     }
 }
 
@@ -177,6 +170,8 @@ pub(crate) mod test_prelude {
         let api = Api::new();
         let mut buffer = BufWriter::new(Vec::with_capacity(16384));
         for class in &api.classes {
+            let mut icalls = HashMap::new();
+
             let code = generate_class_documentation(&api, &class);
             write!(&mut buffer, "{}", code).unwrap();
             write!(&mut buffer, "{}", quote! { struct Docs {} }).unwrap();
@@ -196,7 +191,7 @@ pub(crate) mod test_prelude {
                 validate_and_clear_buffer!(buffer);
             }
 
-            let code = generate_class_impl(&api, &class);
+            let code = generate_class_impl(&api, &class, &mut icalls);
             write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
@@ -222,13 +217,13 @@ pub(crate) mod test_prelude {
                 validate_and_clear_buffer!(buffer);
             }
 
-            // methods and method table
+            // icalls and method table
             let code = generate_method_table(&api, &class);
             write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
-            for method in &class.methods {
-                let code = generate_method_impl(&class, method);
+            for (name, sig) in icalls {
+                let code = generate_icall(name, sig);
                 write!(&mut buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
