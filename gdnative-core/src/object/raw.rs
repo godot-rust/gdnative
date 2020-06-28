@@ -16,7 +16,7 @@ use super::GodotObject;
 #[repr(C)]
 pub struct RawObject<T> {
     _opaque: [u8; 0],
-    _marker: PhantomData<T>,
+    _marker: PhantomData<(T, *const ())>,
 }
 
 impl<T: GodotObject> RawObject<T> {
