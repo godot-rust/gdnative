@@ -206,6 +206,17 @@ impl GodotString {
     pub fn from_sys(sys: sys::godot_string) -> Self {
         GodotString(sys)
     }
+
+    /// Clones `sys` into a `GodotString` without droping `sys`
+    #[doc(hidden)]
+    #[inline]
+    pub fn clone_from_sys(sys: sys::godot_string) -> Self {
+        let sys_string = GodotString(sys);
+        let this = sys_string.clone();
+        sys_string.forget();
+        this
+    }
+
     // TODO: many missing methods.
 }
 
