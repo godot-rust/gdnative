@@ -134,9 +134,9 @@ impl MethodSig {
     }
 }
 
-fn skip_method(name: &str) -> bool {
+fn skip_method(method: &GodotMethod, name: &str) -> bool {
     const METHODS: &[&str] = &["free", "reference", "unreference"];
-    METHODS.contains(&name)
+    METHODS.contains(&name) || method.is_virtual
 }
 
 pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
@@ -150,9 +150,10 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
     };
 
     let struct_methods = class.methods.iter().filter_map(|m| {
-        let rust_name = format_ident!("{}", m.get_name().rust_name);
-        if rust_name != "free" {
-            Some(quote! { pub #rust_name: *mut sys::godot_method_bind })
+        let rust_name = m.get_name().rust_name;
+        let rust_ident = format_ident!("{}", rust_name);
+        if !skip_method(m, rust_name) {
+            Some(quote! { pub #rust_ident: *mut sys::godot_method_bind })
         } else {
             None
         }
@@ -160,7 +161,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
 
     let struct_definition = quote! {
         #[doc(hidden)]
-        #[allow(non_camel_case_types)]
+        #[allow(non_camel_case_types, dead_code)]
         pub(crate) struct #method_table {
             pub class_constructor: sys::godot_class_constructor,
             #(#struct_methods),*
@@ -168,9 +169,10 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
     };
 
     let impl_methods = class.methods.iter().filter_map(|m| {
-        let rust_name = format_ident!("{}", m.get_name().rust_name);
-        if rust_name != "free" {
-            Some(quote! { #rust_name: 0 as *mut sys::godot_method_bind })
+        let rust_name = m.get_name().rust_name;
+        let rust_ident = format_ident!("{}", rust_name);
+        if !skip_method(m, rust_name) {
+            Some(quote! { #rust_ident: 0 as *mut sys::godot_method_bind })
         } else {
             None
         }
@@ -182,13 +184,13 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
             original_name,
         } = m.get_name();
 
-        let rust_name = format_ident!("{}", rust_name);
+        let rust_ident = format_ident!("{}", rust_name);
         let original_name = format!("{}\0", original_name);
 
-        if rust_name != "free" {
+        if !skip_method(m, rust_name) {
             assert!(original_name.ends_with('\0'), "original_name must be null terminated");
             Some(quote! {
-                table.#rust_name = (gd_api.godot_method_bind_get_method)(class_name, #original_name.as_ptr() as *const c_char );
+                table.#rust_ident = (gd_api.godot_method_bind_get_method)(class_name, #original_name.as_ptr() as *const c_char );
             })
         } else {
             None
@@ -211,6 +213,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
             }
 
             #[inline]
+            #[allow(dead_code)]
             pub fn get(gd_api: &GodotApi) -> &'static Self {
                 unsafe {
                     let table = Self::get_mut();
@@ -224,6 +227,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
             }
 
             #[inline(never)]
+            #[allow(dead_code)]
             fn init(table: &mut Self, gd_api: &GodotApi) {
                 unsafe {
                     let class_name = #lookup_name.as_ptr() as *const c_char;
@@ -287,7 +291,7 @@ pub(crate) fn generate_methods(
             ..
         } = method.get_name();
 
-        if skip_method(&method_name) {
+        if skip_method(&method, &method_name) {
             continue;
         }
 
