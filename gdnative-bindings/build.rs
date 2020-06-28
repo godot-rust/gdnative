@@ -18,26 +18,9 @@ fn main() {
     let binding_res = generate_bindings(&api);
 
     {
-        use heck::SnakeCase as _;
-
         let mut output = BufWriter::new(File::create(&generated_rs).unwrap());
 
-        for (class_name, code) in binding_res.class_bindings {
-            write!(
-                &mut output,
-                r#"
-                pub mod {mod_name} {{
-                    use super::*;
-                    {content}
-                }}
-                pub use crate::generated::{mod_name}::{class_name};
-                "#,
-                mod_name = class_name.to_snake_case(),
-                class_name = class_name,
-                content = code,
-            )
-            .unwrap();
-        }
+        generate(&out_path, &mut output, &binding_res);
     }
 
     {
@@ -55,6 +38,78 @@ fn main() {
     // Ignoring all but build.rs will keep from needless rebuilds.
     // Manually rebuilding the crate will ignore this.
     println!("cargo:rerun-if-changed=build.rs");
+}
+
+/// Output all the class bindings into the `generated.rs` file.
+#[cfg(not(features = "one_class_one_file"))]
+fn generate(
+    _out_path: &std::path::Path,
+    generated_file: &mut BufWriter<File>,
+    binding_res: &BindingResult,
+) {
+    use heck::SnakeCase as _;
+
+    for (class_name, code) in &binding_res.class_bindings {
+        write!(
+            generated_file,
+            r#"
+            pub mod {mod_name} {{
+                use super::*;
+                {content}
+            }}
+            pub use crate::generated::{mod_name}::{class_name};
+            "#,
+            mod_name = class_name.to_snake_case(),
+            class_name = class_name,
+            content = code,
+        )
+        .unwrap();
+    }
+}
+
+/// Output one file for each class and add `mod` and `use` declarations in
+/// the `generated.rs` file.
+#[cfg(features = "one_class_one_file")]
+fn generate(
+    out_path: &std::path::Path,
+    generated_file: &mut BufWriter<File>,
+    binding_res: &BindingResult,
+) {
+    use heck::SnakeCase as _;
+
+    for (class_name, code) in binding_res.class_bindings {
+        let mod_name = class_name.to_snake_case();
+
+        let mod_path = out_path.join(format!("{}.rs", mod_name));
+        let mut mod_output = BufWriter::new(File::create(&mod_path).unwrap());
+
+        write!(
+            &mut mod_output,
+            r#"use super::*;
+            {content}"#,
+            content = code,
+        )
+        .unwrap();
+
+        drop(mod_output);
+
+        if cfg!(feature = "formatted") {
+            format_file(&mod_path);
+        }
+
+        writeln!(
+            generated_file,
+            r#"
+            #[path = {:?}]
+            pub mod {mod_name};
+            pub use crate::generated::{mod_name}::{class_name};
+            "#,
+            mod_path.display(),
+            mod_name = mod_name,
+            class_name = class_name,
+        )
+        .unwrap();
+    }
 }
 
 fn format_file(output_rs: &PathBuf) {
