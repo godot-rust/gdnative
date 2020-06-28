@@ -5,7 +5,7 @@ use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
 
-use crate::core_types::ToVariant;
+use crate::core_types::OwnedToVariant;
 use crate::core_types::ToVariantEq;
 use crate::core_types::Variant;
 use crate::core_types::VariantArray;
@@ -473,8 +473,8 @@ impl<'a> IntoIterator for &'a Dictionary<Unique> {
 
 impl<K, V> FromIterator<(K, V)> for Dictionary<Unique>
 where
-    K: ToVariantEq,
-    V: ToVariant,
+    K: ToVariantEq + OwnedToVariant,
+    V: OwnedToVariant,
 {
     #[inline]
     fn from_iter<I: IntoIterator<Item = (K, V)>>(iter: I) -> Self {
@@ -484,33 +484,15 @@ where
     }
 }
 
-impl FromIterator<(Variant, Variant)> for Dictionary<Unique> {
-    #[inline]
-    fn from_iter<I: IntoIterator<Item = (Variant, Variant)>>(iter: I) -> Self {
-        let mut dic = Dictionary::new();
-        dic.extend(iter);
-        dic
-    }
-}
-
 impl<K, V> Extend<(K, V)> for Dictionary<Unique>
 where
-    K: ToVariantEq,
-    V: ToVariant,
+    K: ToVariantEq + OwnedToVariant,
+    V: OwnedToVariant,
 {
     #[inline]
     fn extend<I: IntoIterator<Item = (K, V)>>(&mut self, iter: I) {
         for (key, value) in iter {
-            self.insert(&key.to_variant(), &value.to_variant());
-        }
-    }
-}
-
-impl Extend<(Variant, Variant)> for Dictionary<Unique> {
-    #[inline]
-    fn extend<I: IntoIterator<Item = (Variant, Variant)>>(&mut self, iter: I) {
-        for (key, value) in iter {
-            self.insert(&key.to_variant(), &value.to_variant());
+            self.insert(&key.owned_to_variant(), &value.owned_to_variant());
         }
     }
 }

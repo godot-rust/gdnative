@@ -780,6 +780,8 @@ impl_basic_traits_as_sys!(
     }
 );
 
+impl Eq for Variant {}
+
 impl ToString for Variant {
     #[inline]
     fn to_string(&self) -> String {
@@ -1258,6 +1260,8 @@ where
 }
 impl<'a, T> ToVariantEq for &'a T where T: ToVariantEq {}
 
+impl ToVariantEq for Variant {}
+
 impl<'a, T> ToVariant for &'a mut T
 where
     T: ToVariant,
@@ -1453,6 +1457,20 @@ to_variant_as_sys! {
 impl ToVariantEq for Rid {}
 impl ToVariantEq for NodePath {}
 impl ToVariantEq for GodotString {}
+
+impl OwnedToVariant for Dictionary<Unique> {
+    #[inline]
+    fn owned_to_variant(self) -> Variant {
+        self.into_shared().to_variant()
+    }
+}
+
+impl OwnedToVariant for VariantArray<Unique> {
+    #[inline]
+    fn owned_to_variant(self) -> Variant {
+        self.into_shared().to_variant()
+    }
+}
 
 macro_rules! from_variant_transmute {
     (
