@@ -270,7 +270,7 @@ pub(crate) fn generate_methods(
                 quote! { (#name as u32) as i64 }
             }
 
-            Ty::Variant => quote! { #name.to_variant() },
+            Ty::Variant => quote! { #name.owned_to_variant() },
 
             Ty::String => quote! { #name.into() },
 
