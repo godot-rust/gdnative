@@ -153,16 +153,6 @@ mod header_binding {
         builder
     }
 
-    fn is_travis_ci() -> bool {
-        if let Ok(is_ci) = std::env::var("CI") {
-            if let Ok(is_travis) = std::env::var("TRAVIS") {
-                return is_ci == "true" && is_travis == "true";
-            }
-        }
-
-        false
-    }
-
     #[allow(clippy::single_match)]
     pub(crate) fn generate(manifest_dir: &str, out_dir: &str) {
         // on mac/iOS this will be modified, so it is marked as mutable.
@@ -183,6 +173,7 @@ mod header_binding {
         let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
         let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap();
         let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR").unwrap();
+        let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap();
 
         if target_vendor == "apple" {
             match apple_include_path() {
@@ -199,21 +190,25 @@ mod header_binding {
             builder = builder.clang_arg("--target=arm64-apple-ios");
         }
 
-        // Workaround: Somehow, Microsoft extensions aren't enabled by default on Travis's
-        // Windows environment. We need to enable it manually, or MSVC headers will fail to
-        // parse. We also need to manually define architecture macros, or the build will fail
-        // with an "Unsupported architecture" error.
+        // Workaround: Microsoft extensions aren't enabled by default for the `gnu` toolchain
+        // on Windows. We need to enable it manually, or MSVC headers will fail to parse. We
+        // also need to manually define architecture macros, or the build will fail with an
+        // "Unsupported architecture" error.
         //
-        // This does not happen with "normal" Windows environments.
-        if target_os == "windows" && is_travis_ci() {
-            if target_arch != "x86_64" {
-                panic!("Windows environment on Travis CI should be x86_64")
-            }
+        // This does not happen when the `msvc` toolchain is used.
+        if target_os == "windows" && target_env == "gnu" {
+            let arch_macro = match target_arch.as_str() {
+                "x86" => "_M_IX86",
+                "x86_64" => "_M_X64",
+                "arm" => "_M_ARM",
+                "aarch64" => "_M_ARM64",
+                _ => panic!("architecture {} not supported on Windows", target_arch),
+            };
 
             builder = builder
                 .clang_arg("-fms-extensions")
                 .clang_arg("-fmsc-version=1300")
-                .clang_arg("-D_M_X64=100");
+                .clang_arg(format!("-D{}=100", arch_macro));
         }
 
         if target_os == "android" {
