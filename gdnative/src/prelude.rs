@@ -8,7 +8,9 @@ pub use gdnative_core::core_types::{
     FromVariant, OwnedToVariant, ToVariant, Vector2Godot, Vector3Godot,
 };
 
-pub use gdnative_core::object::{AsArg, GodotObject, Instanciable, Null, QueueFree, Ref, TRef};
+pub use gdnative_core::object::{
+    AsArg, GodotObject, Instanciable, Null, QueueFree, Ref, SubClass, TRef,
+};
 pub use gdnative_core::ref_kind::{ManuallyManaged, RefCounted};
 pub use gdnative_core::thread_access::{Shared, ThreadLocal, Unique};
 

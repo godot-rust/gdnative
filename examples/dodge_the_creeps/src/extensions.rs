@@ -6,17 +6,18 @@ pub trait NodeExt {
     /// # Safety
     ///
     /// See `Ptr::assume_safe`.
-    unsafe fn get_typed_node<T: GodotObject, P: Into<NodePath>>(
-        &self,
-        path: P,
-    ) -> TRef<'_, T, Shared>;
+    unsafe fn get_typed_node<T, P>(&self, path: P) -> TRef<'_, T, Shared>
+    where
+        T: GodotObject + SubClass<Node>,
+        P: Into<NodePath>;
 }
 
 impl NodeExt for Node {
-    unsafe fn get_typed_node<T: GodotObject, P: Into<NodePath>>(
-        &self,
-        path: P,
-    ) -> TRef<'_, T, Shared> {
+    unsafe fn get_typed_node<T, P>(&self, path: P) -> TRef<'_, T, Shared>
+    where
+        T: GodotObject + SubClass<Node>,
+        P: Into<NodePath>,
+    {
         self.get_node(path.into())
             .expect("node should exist")
             .assume_safe()

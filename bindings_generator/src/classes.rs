@@ -21,7 +21,6 @@ pub(crate) fn generate_class_struct(class: &GodotClass) -> TokenStream {
 }
 
 pub(crate) fn generate_class_impl(
-    api: &Api,
     class: &GodotClass,
     icalls: &mut HashMap<String, methods::MethodSig>,
 ) -> TokenStream {
@@ -45,8 +44,6 @@ pub(crate) fn generate_class_impl(
 
     let class_methods = methods::generate_methods(class, icalls);
 
-    let class_upcast = special_methods::generate_upcast(&api, &class.base_class);
-
     let class_name = format_ident!("{}", class.name);
     quote! {
         impl #class_name {
@@ -54,7 +51,6 @@ pub(crate) fn generate_class_impl(
             #class_singleton_getter
             #class_instanciable
             #class_methods
-            #class_upcast
         }
     }
 }

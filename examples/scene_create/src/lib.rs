@@ -72,8 +72,7 @@ impl SceneCreate {
 
                 // You need to parent the new scene under some node if you want it in the scene.
                 //   We parent it under ourselves.
-                let node: Ref<Node, _> = spatial.cast().unwrap();
-                owner.add_child(node.into_shared(), false);
+                owner.add_child(spatial.into_shared(), false);
                 self.children_spawned += 1;
             }
             Err(err) => godot_print!("Could not instance Child : {:?}", err),

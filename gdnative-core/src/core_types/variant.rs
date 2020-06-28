@@ -335,7 +335,7 @@ impl Variant {
     #[inline]
     pub fn from_object<R>(val: R) -> Variant
     where
-        R: AsArg,
+        R: AsVariant,
     {
         unsafe { R::to_arg_variant(&val) }
     }
@@ -869,7 +869,7 @@ impl<'l> From<&'l str> for Variant {
 
 impl<R> From<R> for Variant
 where
-    R: AsArg,
+    R: AsVariant,
 {
     #[inline]
     fn from(val: R) -> Variant {
