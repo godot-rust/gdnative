@@ -195,7 +195,7 @@ fn test_rust_class_construction() -> bool {
 struct OptionalArgs;
 
 impl OptionalArgs {
-    fn _init(_owner: &Reference) -> Self {
+    fn new(_owner: &Reference) -> Self {
         OptionalArgs
     }
 }

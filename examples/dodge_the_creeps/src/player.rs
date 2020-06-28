@@ -23,7 +23,7 @@ impl Player {
         });
     }
 
-    fn _init(_owner: &Area2D) -> Self {
+    fn new(_owner: &Area2D) -> Self {
         Player {
             speed: 400.0,
             screen_size: Vector2::new(0.0, 0.0),

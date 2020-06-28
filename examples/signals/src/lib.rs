@@ -29,7 +29,7 @@ impl SignalEmitter {
         });
     }
 
-    fn _init(_owner: &Node) -> Self {
+    fn new(_owner: &Node) -> Self {
         SignalEmitter {
             timer: 0.0,
             data: 100,
@@ -64,7 +64,7 @@ struct SignalSubscriber {
 
 #[methods]
 impl SignalSubscriber {
-    fn _init(_owner: &Label) -> Self {
+    fn new(_owner: &Label) -> Self {
         SignalSubscriber { times_received: 0 }
     }
 
