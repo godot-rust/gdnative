@@ -34,7 +34,7 @@ const MOB_TYPES: [MobType; 3] = [MobType::Walk, MobType::Swim, MobType::Fly];
 
 #[methods]
 impl Mob {
-    fn _init(_owner: &RigidBody2D) -> Self {
+    fn new(_owner: &RigidBody2D) -> Self {
         Mob {
             min_speed: 150.0,
             max_speed: 250.0,

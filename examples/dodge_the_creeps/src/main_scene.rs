@@ -18,7 +18,7 @@ pub struct Main {
 
 #[methods]
 impl Main {
-    fn _init(_owner: &Node) -> Self {
+    fn new(_owner: &Node) -> Self {
         Main {
             mob: PackedScene::new().into_shared(),
             score: 0,

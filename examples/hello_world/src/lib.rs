@@ -9,7 +9,7 @@ struct HelloWorld;
 
 #[gdnative::methods]
 impl HelloWorld {
-    fn _init(_owner: &Node) -> Self {
+    fn new(_owner: &Node) -> Self {
         HelloWorld
     }
 

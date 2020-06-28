@@ -31,7 +31,7 @@ struct SceneCreate {
 
 #[gdnative::methods]
 impl SceneCreate {
-    fn _init(_owner: &Spatial) -> Self {
+    fn new(_owner: &Spatial) -> Self {
         SceneCreate {
             template: None, // Have not loaded this template yet.
             children_spawned: 0,

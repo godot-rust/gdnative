@@ -113,7 +113,7 @@ pub struct HelloWorld;
 impl HelloWorld {
 
     /// The "constructor" of the class.
-    fn _init(_owner: Node) -> Self {
+    fn new(_owner: Node) -> Self {
         HelloWorld
     }
 

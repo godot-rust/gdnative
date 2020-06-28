@@ -16,7 +16,7 @@ impl HUD {
         });
     }
 
-    fn _init(_owner: &CanvasLayer) -> Self {
+    fn new(_owner: &CanvasLayer) -> Self {
         HUD
     }
 

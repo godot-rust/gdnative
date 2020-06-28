@@ -41,7 +41,7 @@ fn register_properties(builder: &ClassBuilder<RustTest>) {
 
 #[gdnative::methods]
 impl RustTest {
-    fn _init(_owner: &MeshInstance) -> Self {
+    fn new(_owner: &MeshInstance) -> Self {
         RustTest {
             start: Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
