@@ -23,7 +23,7 @@ impl HUD {
     #[export]
     pub fn show_message(&self, owner: &CanvasLayer, text: String) {
         let message_label = unsafe { owner.get_typed_node::<Label, _>("message_label") };
-        message_label.set_text(text.into());
+        message_label.set_text(text);
         message_label.show();
 
         let timer = unsafe { owner.get_typed_node::<Timer, _>("message_timer") };
@@ -34,7 +34,7 @@ impl HUD {
         self.show_message(owner, "Game Over".into());
 
         let message_label = unsafe { owner.get_typed_node::<Label, _>("message_label") };
-        message_label.set_text("Dodge the\nCreeps!".into());
+        message_label.set_text("Dodge the\nCreeps!");
         message_label.show();
 
         let button = unsafe { owner.get_typed_node::<Button, _>("start_button") };
@@ -44,14 +44,14 @@ impl HUD {
     #[export]
     pub fn update_score(&self, owner: &CanvasLayer, score: i64) {
         let label = unsafe { owner.get_typed_node::<Label, _>("score_label") };
-        label.set_text(score.to_string().into());
+        label.set_text(score.to_string());
     }
 
     #[export]
     fn on_start_button_pressed(&self, owner: &CanvasLayer) {
         let button = unsafe { owner.get_typed_node::<Button, _>("start_button") };
         button.hide();
-        owner.emit_signal("start_game".into(), &[]);
+        owner.emit_signal("start_game", &[]);
     }
 
     #[export]

@@ -416,6 +416,8 @@ impl Ty {
 
     pub fn to_rust_arg(&self) -> syn::Type {
         match self {
+            Ty::Variant => syn::parse_quote! { impl ToVariant },
+            Ty::String => syn::parse_quote! { impl Into<GodotString> },
             Ty::Object(ref name) => {
                 syn::parse_quote! { impl AsArg<#name> }
             }

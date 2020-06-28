@@ -128,9 +128,9 @@ impl Main {
 
             hud.map(|_, o| {
                 o.connect(
-                    "start_game".into(),
+                    "start_game",
                     mob_owner,
-                    "on_start_game".into(),
+                    "on_start_game",
                     VariantArray::new_shared(),
                     0,
                 )

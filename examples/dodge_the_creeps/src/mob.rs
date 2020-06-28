@@ -46,7 +46,7 @@ impl Mob {
         let mut rng = rand::thread_rng();
         let animated_sprite =
             unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
-        animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str().into())
+        animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str())
     }
 
     #[export]
