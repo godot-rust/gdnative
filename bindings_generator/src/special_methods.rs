@@ -114,9 +114,30 @@ pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
         singleton_name.ends_with('\0'),
         "singleton_name should be null terminated"
     );
+
+    let (maybe_unsafe, doc) = if class.is_singleton_thread_safe() {
+        (
+            TokenStream::new(),
+            "Returns a reference to the singleton instance.",
+        )
+    } else {
+        let maybe_unsafe = quote! { unsafe };
+        let doc = r#"Returns a reference to the singleton instance.
+
+# Safety
+
+This singleton server is only safe to access from outside the main thread if thread-safe
+operations are enabled in the project settings. See the official
+[thread-safety guidelines][thread-safety] for more information.
+
+[thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#;
+        (maybe_unsafe, doc)
+    };
+
     quote! {
+        #[doc=#doc]
         #[inline]
-        pub fn godot_singleton() -> &'static Self {
+        pub #maybe_unsafe fn godot_singleton() -> &'static Self {
             unsafe {
                 let this = (get_api().godot_global_get_singleton)(#singleton_name.as_ptr() as *mut _);
                 let this = ptr::NonNull::new(this).expect("singleton should not be null");
@@ -181,6 +202,16 @@ pub fn generate_sub_class_impls<'a>(api: &'a Api, mut class: &'a GodotClass) -> 
     }
 
     tokens
+}
+
+pub fn generate_send_sync_impls(class: &GodotClass) -> TokenStream {
+    assert!(class.is_singleton_thread_safe());
+    let class_name = format_ident!("{}", class.name);
+
+    quote! {
+        unsafe impl Send for #class_name {}
+        unsafe impl Sync for #class_name {}
+    }
 }
 
 pub fn generate_gdnative_library_singleton_getter(class: &GodotClass) -> TokenStream {

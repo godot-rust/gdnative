@@ -110,12 +110,19 @@ fn generate_class_bindings(
             Default::default()
         };
 
+        let send_sync = if class.singleton && class.is_singleton_thread_safe() {
+            generate_send_sync_impls(class)
+        } else {
+            Default::default()
+        };
+
         quote! {
             #object_impl
             #free_impl
             #base_class
             #sub_class
             #instantiable
+            #send_sync
         }
     };
 

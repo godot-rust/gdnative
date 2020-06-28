@@ -105,6 +105,14 @@ impl GodotClass {
         }
     }
 
+    pub fn is_singleton_thread_safe(&self) -> bool {
+        assert!(self.singleton, "class is not a singleton");
+        match self.name.as_str() {
+            "VisualServer" | "PhysicsServer" | "Physics3DServer" | "Physics2DServer" => false,
+            _ => true,
+        }
+    }
+
     /// Returns the base class from `api` if `base_class` is not empty. Returns `None` otherwise.
     pub fn base_class<'a>(&self, api: &'a Api) -> Option<&'a Self> {
         self.base_class_name()
