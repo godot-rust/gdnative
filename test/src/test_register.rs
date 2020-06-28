@@ -86,19 +86,19 @@ fn test_register_property() -> bool {
         let base = obj.into_base();
 
         assert_eq!(Some(42), unsafe {
-            base.call("get_value".into(), &[]).try_to_i64()
+            base.call("get_value", &[]).try_to_i64()
         });
 
-        base.set("value".into(), 54.to_variant());
+        base.set("value", 54.to_variant());
 
         assert_eq!(Some(54), unsafe {
-            base.call("get_value".into(), &[]).try_to_i64()
+            base.call("get_value", &[]).try_to_i64()
         });
 
-        unsafe { base.call("set_value".into(), &[4242.to_variant()]) };
+        unsafe { base.call("set_value", &[4242.to_variant()]) };
 
         assert_eq!(Some(4242), unsafe {
-            base.call("get_value".into(), &[]).try_to_i64()
+            base.call("get_value", &[]).try_to_i64()
         });
     })
     .is_ok();

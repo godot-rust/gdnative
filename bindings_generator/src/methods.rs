@@ -266,6 +266,10 @@ pub(crate) fn generate_methods(
                 quote! { (#name as u32) as i64 }
             }
 
+            Ty::Variant => quote! { #name.to_variant() },
+
+            Ty::String => quote! { #name.into() },
+
             Ty::Enum(_) => quote! { #name.0 },
 
             Ty::Object(_) => quote! { #name.as_arg_ptr() },

@@ -128,9 +128,9 @@ impl Main {
 
             hud.map(|_, o| {
                 o.connect(
-                    "start_game".into(),
+                    "start_game",
                     mob_owner,
-                    "on_start_game".into(),
+                    "on_start_game",
                     VariantArray::new_shared(),
                     0,
                 )
@@ -146,7 +146,7 @@ impl Main {
 ///   scene as the root. For instance Spatial is used for this example.
 fn instance_scene<Root>(scene: &Ref<PackedScene, Shared>) -> Ref<Root, Unique>
 where
-    Root: gdnative::GodotObject<RefKind = ManuallyManaged>,
+    Root: gdnative::GodotObject<RefKind = ManuallyManaged> + SubClass<Node>,
 {
     let scene = unsafe { scene.assume_safe() };
 

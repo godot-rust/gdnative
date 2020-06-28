@@ -11,6 +11,7 @@ edition = "2018"
 
 [features]
 formatted = []
+one_class_one_file = []
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.8.1" }

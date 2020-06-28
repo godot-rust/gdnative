@@ -398,7 +398,7 @@ where
     #[inline]
     pub fn try_cast<U>(self) -> Result<Ref<U, Access>, Self>
     where
-        U: GodotObject<RefKind = T::RefKind>,
+        U: GodotObject<RefKind = T::RefKind> + SubClass<T>,
     {
         if self.as_raw().is_class::<U>() {
             Ok(unsafe { self.cast_unchecked() })

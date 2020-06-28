@@ -74,9 +74,7 @@ fn test_owner_free_ub() -> bool {
                 .expect("lock should not fail");
 
             assert_eq!(Some(true), unsafe {
-                bar.base()
-                    .call("set_script_is_not_ub".into(), &[])
-                    .try_to_bool()
+                bar.base().call("set_script_is_not_ub", &[]).try_to_bool()
             });
 
             bar.into_base().free();
@@ -88,7 +86,7 @@ fn test_owner_free_ub() -> bool {
                 .expect("lock should not fail");
 
             assert_eq!(Some(true), unsafe {
-                bar.base().call("free_is_not_ub".into(), &[]).try_to_bool()
+                bar.base().call("free_is_not_ub", &[]).try_to_bool()
             });
         }
 

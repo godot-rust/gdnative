@@ -88,12 +88,12 @@ impl Player {
     #[export]
     fn on_player_body_entered(&self, owner: &Area2D, _body: Ref<PhysicsBody2D>) {
         owner.hide();
-        owner.emit_signal("hit".into(), &[]);
+        owner.emit_signal("hit", &[]);
 
         let collision_shape =
             unsafe { owner.get_typed_node::<CollisionShape2D, _>("collision_shape_2d") };
 
-        collision_shape.set_deferred("disabled".into(), true.into());
+        collision_shape.set_deferred("disabled", true);
     }
 
     #[export]
