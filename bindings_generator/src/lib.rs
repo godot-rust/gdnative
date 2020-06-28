@@ -78,7 +78,7 @@ fn generate_class_bindings(
             Default::default()
         };
 
-        let class_impl = generate_class_impl(&api, class, icalls);
+        let class_impl = generate_class_impl(class, icalls);
 
         quote! {
             #documentation
@@ -101,6 +101,8 @@ fn generate_class_bindings(
             Default::default()
         };
 
+        let sub_class = generate_sub_class_impls(&api, class);
+
         // Instantiable
         let instantiable = if class.instantiable {
             generate_instantiable_impl(class)
@@ -112,6 +114,7 @@ fn generate_class_bindings(
             #object_impl
             #free_impl
             #base_class
+            #sub_class
             #instantiable
         }
     };
@@ -191,7 +194,7 @@ pub(crate) mod test_prelude {
                 validate_and_clear_buffer!(buffer);
             }
 
-            let code = generate_class_impl(&api, &class, &mut icalls);
+            let code = generate_class_impl(&class, &mut icalls);
             write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 

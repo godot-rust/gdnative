@@ -96,6 +96,21 @@ pub struct GodotClass {
 }
 
 impl GodotClass {
+    /// Returns the name of the base class if `base_class` is not empty. Returns `None` otherwise.
+    pub fn base_class_name(&self) -> Option<&str> {
+        if self.base_class.is_empty() {
+            None
+        } else {
+            Some(&self.base_class)
+        }
+    }
+
+    /// Returns the base class from `api` if `base_class` is not empty. Returns `None` otherwise.
+    pub fn base_class<'a>(&self, api: &'a Api) -> Option<&'a Self> {
+        self.base_class_name()
+            .map(|name| api.find_class(name).expect("base class should exist"))
+    }
+
     pub fn is_refcounted(&self) -> bool {
         self.is_reference || &self.name == "Reference"
     }
@@ -402,7 +417,7 @@ impl Ty {
     pub fn to_rust_arg(&self) -> syn::Type {
         match self {
             Ty::Object(ref name) => {
-                syn::parse_quote! { impl AsArg<Target = #name> }
+                syn::parse_quote! { impl AsArg<#name> }
             }
             _ => self.to_rust(),
         }

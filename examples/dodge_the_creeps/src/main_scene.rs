@@ -112,7 +112,7 @@ impl Main {
         let d = direction as f32;
 
         let mob_scene = unsafe { mob_scene.into_shared().assume_safe() };
-        owner.add_child(mob_scene.cast().unwrap(), false);
+        owner.add_child(mob_scene, false);
 
         let mob = mob_scene.cast_instance::<mob::Mob>().unwrap();
 
@@ -129,7 +129,7 @@ impl Main {
             hud.map(|_, o| {
                 o.connect(
                     "start_game".into(),
-                    mob_owner.cast().unwrap(),
+                    mob_owner,
                     "on_start_game".into(),
                     VariantArray::new_shared(),
                     0,

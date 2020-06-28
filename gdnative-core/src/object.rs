@@ -58,13 +58,31 @@ pub unsafe trait GodotObject: Sized + crate::private::godot_object::Sealed {
         Ref::new()
     }
 
-    /// Performs a dynamic reference cast to target type.
+    /// Performs a dynamic reference downcast to target type.
+    ///
+    /// The `cast` method can only be used for downcasts. For statically casting to a
+    /// supertype, use `upcast` instead.
     ///
     /// This method is only for conversion between engine types. To downcast to a `NativeScript`
     //// type from its base type, see `Ref::cast_instance` and `TRef::cast_instance`.
     #[inline]
-    fn cast<T: GodotObject>(&self) -> Option<&T> {
+    fn cast<T>(&self) -> Option<&T>
+    where
+        T: GodotObject + SubClass<Self>,
+    {
         self.as_raw().cast().map(T::cast_ref)
+    }
+
+    /// Performs a static reference upcast to a supertype that is guaranteed to be valid.
+    ///
+    /// This is guaranteed to be a no-op at runtime.
+    #[inline(always)]
+    fn upcast<T>(&self) -> &T
+    where
+        T: GodotObject,
+        Self: SubClass<T>,
+    {
+        unsafe { T::cast_ref(self.as_raw().cast_unchecked()) }
     }
 
     /// Creates a reference to `Self` given a `RawObject` reference. This is an internal
@@ -134,6 +152,12 @@ pub unsafe trait GodotObject: Sized + crate::private::godot_object::Sealed {
         Ref::from_sys(self.as_raw().sys())
     }
 }
+
+/// Marker trait for API types that are subclasses of another type. This trait is implemented
+/// by the bindings generator, and has no public interface. Users should not attempt to
+/// implement this trait.
+pub unsafe trait SubClass<A: GodotObject>: GodotObject {}
+unsafe impl<T: GodotObject> SubClass<T> for T {}
 
 /// GodotObjects that have a zero argument constructor.
 pub trait Instanciable: GodotObject {
@@ -333,15 +357,33 @@ where
     /// Performs a dynamic reference cast to target type, keeping the reference count.
     /// Shorthand for `try_cast().ok()`.
     ///
+    /// The `cast` method can only be used for downcasts. For statically casting to a
+    /// supertype, use `upcast` instead.
+    ///
     /// This is only possible between types with the same `RefKind`s, since otherwise the
     /// reference can get leaked. Casting between `Object` and `Reference` is possible on
     /// `TRef` and bare references.
     #[inline]
     pub fn cast<U>(self) -> Option<Ref<U, Access>>
     where
-        U: GodotObject<RefKind = T::RefKind>,
+        U: GodotObject<RefKind = T::RefKind> + SubClass<T>,
     {
         self.try_cast().ok()
+    }
+
+    /// Performs a static reference upcast to a supertype, keeping the reference count.
+    /// This is guaranteed to be valid.
+    ///
+    /// This is only possible between types with the same `RefKind`s, since otherwise the
+    /// reference can get leaked. Casting between `Object` and `Reference` is possible on
+    /// `TRef` and bare references.
+    #[inline]
+    pub fn upcast<U>(self) -> Ref<U, Access>
+    where
+        U: GodotObject<RefKind = T::RefKind>,
+        T: SubClass<U>,
+    {
+        unsafe { self.cast_unchecked() }
     }
 
     /// Performs a dynamic reference cast to target type, keeping the reference count.
@@ -358,15 +400,21 @@ where
     where
         U: GodotObject<RefKind = T::RefKind>,
     {
-        unsafe {
-            if self.as_raw().is_class::<U>() {
-                let ret = Ref::move_from_sys(self.ptr.as_non_null());
-                std::mem::forget(self);
-                Ok(ret)
-            } else {
-                Err(self)
-            }
+        if self.as_raw().is_class::<U>() {
+            Ok(unsafe { self.cast_unchecked() })
+        } else {
+            Err(self)
         }
+    }
+
+    /// Performs an unchecked cast.
+    unsafe fn cast_unchecked<U>(self) -> Ref<U, Access>
+    where
+        U: GodotObject<RefKind = T::RefKind>,
+    {
+        let ret = Ref::move_from_sys(self.ptr.as_non_null());
+        std::mem::forget(self);
+        ret
     }
 
     /// Performs a downcast to a `NativeClass` instance, keeping the reference count.
@@ -798,8 +846,24 @@ impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
 
     /// Performs a dynamic reference cast to target type, keeping the thread access info.
     #[inline]
-    pub fn cast<U: GodotObject>(self) -> Option<TRef<'a, U, Access>> {
+    pub fn cast<U>(self) -> Option<TRef<'a, U, Access>>
+    where
+        U: GodotObject + SubClass<T>,
+    {
         self.obj.cast().map(TRef::new)
+    }
+
+    /// Performs a static reference upcast to a supertype that is guaranteed to be valid,
+    /// keeping the thread access info.
+    ///
+    /// This is guaranteed to be a no-op at runtime.
+    #[inline(always)]
+    pub fn upcast<U>(&self) -> TRef<'a, U, Access>
+    where
+        U: GodotObject,
+        T: SubClass<U>,
+    {
+        TRef::new(self.obj.upcast())
     }
 
     /// Convenience method to downcast to `RefInstance` where `self` is the base object.
@@ -842,9 +906,7 @@ where
 /// that the reference will stay on the same thread.
 ///
 /// To explicitly pass a null reference to the engine, use `Null::null` or `GodotObject::null`.
-pub trait AsArg: private::Sealed {
-    type Target: GodotObject;
-
+pub trait AsArg<T>: private::Sealed {
     #[doc(hidden)]
     fn as_arg_ptr(&self) -> *mut sys::godot_object;
 
@@ -853,6 +915,14 @@ pub trait AsArg: private::Sealed {
     unsafe fn to_arg_variant(&self) -> crate::core_types::Variant {
         crate::core_types::Variant::from_object_ptr(self.as_arg_ptr())
     }
+}
+
+/// Trait for safe conversion from Godot object references into Variant. This is
+/// a sealed trait with no public interface.
+///
+/// Used for `Variant` methods and implementations as a trait bound to improve type inference.
+pub trait AsVariant: AsArg<<Self as AsVariant>::Target> {
+    type Target;
 }
 
 /// Represents an explicit null reference in method arguments. This works around type inference
@@ -868,51 +938,72 @@ impl<T: GodotObject> Null<T> {
 }
 
 impl<'a, T> private::Sealed for Null<T> {}
-impl<'a, T: GodotObject> AsArg for Null<T> {
-    type Target = T;
-
+impl<'a, T: GodotObject> AsArg<T> for Null<T> {
     #[inline]
     fn as_arg_ptr(&self) -> *mut sys::godot_object {
         std::ptr::null_mut()
     }
 }
+impl<'a, T: GodotObject> AsVariant for Null<T> {
+    type Target = T;
+}
 
 impl<'a, T: GodotObject> private::Sealed for TRef<'a, T, Shared> {}
-impl<'a, T: GodotObject> AsArg for TRef<'a, T, Shared> {
-    type Target = T;
-
+impl<'a, T, U> AsArg<U> for TRef<'a, T, Shared>
+where
+    T: GodotObject + SubClass<U>,
+    U: GodotObject,
+{
     #[inline]
     fn as_arg_ptr(&self) -> *mut sys::godot_object {
         self.as_ptr()
     }
 }
-
-impl<T: GodotObject> AsArg for Ref<T, Shared> {
+impl<'a, T: GodotObject> AsVariant for TRef<'a, T, Shared> {
     type Target = T;
+}
 
+impl<T, U> AsArg<U> for Ref<T, Shared>
+where
+    T: GodotObject + SubClass<U>,
+    U: GodotObject,
+{
     #[inline]
     fn as_arg_ptr(&self) -> *mut sys::godot_object {
         self.as_ptr()
     }
 }
-
-impl<T: GodotObject> AsArg for Ref<T, Unique> {
+impl<T: GodotObject> AsVariant for Ref<T, Shared> {
     type Target = T;
+}
 
+impl<T, U> AsArg<U> for Ref<T, Unique>
+where
+    T: GodotObject + SubClass<U>,
+    U: GodotObject,
+{
     #[inline]
     fn as_arg_ptr(&self) -> *mut sys::godot_object {
         self.as_ptr()
     }
+}
+impl<T: GodotObject> AsVariant for Ref<T, Unique> {
+    type Target = T;
 }
 
 impl<'a, T: GodotObject> private::Sealed for &'a Ref<T, Shared> {}
-impl<'a, T: GodotObject> AsArg for &'a Ref<T, Shared> {
-    type Target = T;
-
+impl<'a, T, U> AsArg<U> for &'a Ref<T, Shared>
+where
+    T: GodotObject + SubClass<U>,
+    U: GodotObject,
+{
     #[inline]
     fn as_arg_ptr(&self) -> *mut sys::godot_object {
         self.as_ptr()
     }
+}
+impl<'a, T: GodotObject> AsVariant for &'a Ref<T, Shared> {
+    type Target = T;
 }
 
 /// Trait for combinations of `RefKind` and `ThreadAccess` that can be dereferenced safely.

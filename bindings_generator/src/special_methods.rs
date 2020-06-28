@@ -127,31 +127,6 @@ pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
     }
 }
 
-pub fn generate_upcast(api: &Api, base_class_name: &str) -> TokenStream {
-    if let Some(parent) = api.find_class(&base_class_name) {
-        let snake_name = class_name_to_snake_case(&base_class_name);
-        let parent_class = format_ident!("{}", parent.name);
-        let parent_class_module = format_ident!("{}", parent.name.to_snake_case());
-        let to_snake_name = format_ident!("to_{}", snake_name);
-
-        let upcast = generate_upcast(api, &parent.base_class);
-        let qualified_parent_class = quote! {
-            crate::generated::#parent_class_module::#parent_class
-        };
-        quote! {
-            /// Up-cast.
-            #[inline]
-            pub fn #to_snake_name(&self) -> &#qualified_parent_class {
-                unsafe { #qualified_parent_class::cast_ref(self.this.cast_unchecked()) }
-            }
-
-            #upcast
-        }
-    } else {
-        Default::default()
-    }
-}
-
 pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
     assert!(
         !class.base_class.is_empty(),
@@ -189,6 +164,25 @@ pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
     }
 }
 
+pub fn generate_sub_class_impls<'a>(api: &'a Api, mut class: &'a GodotClass) -> TokenStream {
+    let class_name = format_ident!("{}", class.name);
+
+    let mut tokens = TokenStream::new();
+
+    while let Some(base_class) = class.base_class(api) {
+        let base_class_module = format_ident!("{}", base_class.name.to_snake_case());
+        let base_class_ident = format_ident!("{}", base_class.name);
+
+        tokens.extend(quote! {
+            unsafe impl SubClass<crate::generated::#base_class_module::#base_class_ident> for #class_name {}
+        });
+
+        class = base_class;
+    }
+
+    tokens
+}
+
 pub fn generate_gdnative_library_singleton_getter(class: &GodotClass) -> TokenStream {
     assert_eq!(
         class.name, "GDNativeLibrary",
@@ -208,23 +202,5 @@ pub fn generate_gdnative_library_singleton_getter(class: &GodotClass) -> TokenSt
                 Self::cast_ref(this)
             }
         }
-    }
-}
-
-pub fn class_name_to_snake_case(name: &str) -> String {
-    // TODO: this is a quick-n-dirty band-aid, it'd be better to
-    // programmatically do the right conversion, but to_snake_case
-    // currently translates "Node2D" into "node2_d".
-    match name {
-        "SpriteBase3D" => "sprite_base_3d".to_string(),
-        "Node2D" => "node_2d".to_string(),
-        "CollisionObject2D" => "collision_object_2d".to_string(),
-        "PhysicsBody2D" => "physics_body_2d".to_string(),
-        "VisibilityNotifier2D" => "visibility_notifier_2d".to_string(),
-        "Joint2D" => "joint_2d".to_string(),
-        "Shape2D" => "shape_2d".to_string(),
-        "Physics2DServer" => "physics_2d_server".to_string(),
-        "Physics2DDirectBodyState" => "physics_2d_direct_body_state".to_string(),
-        _ => name.to_snake_case(),
     }
 }
