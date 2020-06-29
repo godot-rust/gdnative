@@ -171,6 +171,7 @@ impl GodotString {
     /// This should be only used when certain that the receiving side is
     /// responsible for running the destructor for the object, otherwise
     /// it is leaked.
+    #[doc(hidden)]
     #[inline]
     pub fn forget(self) -> sys::godot_string {
         let v = self.0;
@@ -182,6 +183,7 @@ impl GodotString {
     ///
     /// The string remains owned by the rust wrapper and the receiver of
     /// the ffi representation should not run its destructor.
+    #[doc(hidden)]
     #[inline]
     pub fn to_sys(&self) -> sys::godot_string {
         self.0
