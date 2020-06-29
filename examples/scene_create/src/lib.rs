@@ -106,11 +106,7 @@ fn init(handle: InitHandle) {
 }
 
 pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
-    let scene = ResourceLoader::godot_singleton().load(
-        path,
-        "PackedScene",
-        false,
-    )?;
+    let scene = ResourceLoader::godot_singleton().load(path, "PackedScene", false)?;
 
     let scene = unsafe { scene.assume_thread_local() };
 

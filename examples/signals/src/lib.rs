@@ -48,10 +48,7 @@ impl SignalEmitter {
         if self.data % 2 == 0 {
             owner.emit_signal("tick", &[]);
         } else {
-            owner.emit_signal(
-                "tick_with_data",
-                &[Variant::from_i64(self.data)],
-            );
+            owner.emit_signal("tick_with_data", &[Variant::from_i64(self.data)]);
         }
     }
 }
@@ -70,19 +67,11 @@ impl SignalSubscriber {
 
     #[export]
     fn _ready(&mut self, owner: TRef<Label>) {
-        let emitter = &mut owner
-            .get_node(NodePath::from_str("../SignalEmitter"))
-            .unwrap();
+        let emitter = &mut owner.get_node("../SignalEmitter").unwrap();
         let emitter = unsafe { emitter.assume_safe() };
 
         emitter
-            .connect(
-                "tick",
-                owner,
-                "notify",
-                VariantArray::new_shared(),
-                0,
-            )
+            .connect("tick", owner, "notify", VariantArray::new_shared(), 0)
             .unwrap();
         emitter
             .connect(

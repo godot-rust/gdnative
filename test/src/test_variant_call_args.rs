@@ -57,10 +57,7 @@ fn test_variant_call_args() -> bool {
 
         let mut base = obj.into_base().into_shared().to_variant();
 
-        assert_eq!(
-            Some(42),
-            base.call("zero", &[]).unwrap().try_to_i64()
-        );
+        assert_eq!(Some(42), base.call("zero", &[]).unwrap().try_to_i64());
 
         assert_eq!(
             Some(126),
@@ -71,12 +68,9 @@ fn test_variant_call_args() -> bool {
 
         assert_eq!(
             Some(-10),
-            base.call(
-                "two",
-                &[Variant::from_i64(-1), Variant::from_i64(32),]
-            )
-            .unwrap()
-            .try_to_i64()
+            base.call("two", &[Variant::from_i64(-1), Variant::from_i64(32),])
+                .unwrap()
+                .try_to_i64()
         );
 
         assert_eq!(

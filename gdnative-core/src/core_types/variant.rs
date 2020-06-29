@@ -671,7 +671,11 @@ impl Variant {
     }
 
     #[inline]
-    pub fn call(&mut self, method: impl Into<GodotString>, args: &[Variant]) -> Result<Variant, CallError> {
+    pub fn call(
+        &mut self,
+        method: impl Into<GodotString>,
+        args: &[Variant],
+    ) -> Result<Variant, CallError> {
         let method = method.into();
         unsafe {
             let api = get_api();
