@@ -998,12 +998,16 @@ pub trait ToVariant {
 
 /// Types that can only be safely converted to a `Variant` as owned values. Such types cannot
 /// implement `ToVariant` in general, but can still be passed to API methods as arguments, or
-/// used as return values. Notably, this includes `Unique` references to Godot objects and
-/// instances.
+/// used as return values. Notably, this includes `Unique` arrays, dictionaries, and references
+/// to Godot objects and instances.
 ///
-/// This trait should not be implemented by users.
+/// This has a blanket implementation for all types that have `ToVariant`. As such, users
+/// should only derive or implement `OwnedToVariant` when `ToVariant` is not applicable.
 ///
-/// This has a blanket implementation for all types that have `ToVariant`.
+/// ## Deriving `OwnedToVariant`
+///
+/// The derive macro behaves the same as `ToVariant`. See the documentation for the latter for
+/// a detailed explanation.
 pub trait OwnedToVariant {
     fn owned_to_variant(self) -> Variant;
 }

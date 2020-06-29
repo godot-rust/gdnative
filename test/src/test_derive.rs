@@ -5,6 +5,7 @@ pub(crate) fn run_tests() -> bool {
     let mut status = true;
 
     status &= test_derive_to_variant();
+    status &= test_derive_owned_to_variant();
 
     status
 }
@@ -117,6 +118,44 @@ fn test_derive_to_variant() -> bool {
 
     if !ok {
         gdnative::godot_error!("   !! Test test_derive_to_variant failed");
+    }
+
+    ok
+}
+
+fn test_derive_owned_to_variant() -> bool {
+    println!(" -- test_derive_owned_to_variant");
+
+    #[derive(OwnedToVariant)]
+    struct ToVar {
+        arr: VariantArray<Unique>,
+    }
+
+    let ok = std::panic::catch_unwind(|| {
+        let data = ToVar {
+            arr: [1, 2, 3].iter().collect(),
+        };
+
+        let variant = data.owned_to_variant();
+        let dictionary = variant.try_to_dictionary().expect("should be dictionary");
+        let array = dictionary
+            .get(&"arr".into())
+            .try_to_array()
+            .expect("should be array");
+        assert_eq!(3, array.len());
+        assert_eq!(
+            &[1, 2, 3],
+            array
+                .iter()
+                .map(|v| v.try_to_i64().unwrap())
+                .collect::<Vec<_>>()
+                .as_slice()
+        );
+    })
+    .is_ok();
+
+    if !ok {
+        gdnative::godot_error!("   !! Test test_derive_owned_to_variant failed");
     }
 
     ok
