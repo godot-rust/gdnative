@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate gdnative;
-
 use gdnative::api::MeshInstance;
 use gdnative::prelude::*;
 
