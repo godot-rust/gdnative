@@ -22,6 +22,11 @@ pub use gdnative_core::nativescript::{
     ExportInfo, NativeClass, NativeClassMethods, PropertyUsage,
 };
 
+pub use gdnative_core::{
+    godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_nativescript_init,
+    godot_print, godot_warn,
+};
+
 pub use gdnative_derive::*;
 
 #[cfg(feature = "bindings")]

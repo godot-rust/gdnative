@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate gdnative;
-extern crate euclid;
-
 use euclid::vec3;
 use gdnative::prelude::*;
 

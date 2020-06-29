@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate gdnative;
-
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
