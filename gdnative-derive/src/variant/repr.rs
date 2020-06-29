@@ -2,6 +2,7 @@ use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
 use syn::{Fields, Ident, Type};
 
 use super::attr::{Attr, AttrBuilder};
+use super::ToVariantTrait;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) enum Repr {
@@ -88,7 +89,7 @@ impl VariantRepr {
         }
     }
 
-    pub(crate) fn to_variant(&self) -> TokenStream2 {
+    pub(crate) fn to_variant(&self, trait_kind: ToVariantTrait) -> TokenStream2 {
         match self {
             VariantRepr::Unit => {
                 quote! { ::gdnative::core_types::Dictionary::new().into_shared().to_variant() }
@@ -100,13 +101,13 @@ impl VariantRepr {
                     if field.attr.skip_to_variant {
                         panic!("cannot skip the only field in a tuple");
                     }
-                    field.to_variant()
+                    field.to_variant(trait_kind)
                 } else {
                     let exprs = fields.iter().filter_map(|f| {
                         if f.attr.skip_to_variant {
                             None
                         } else {
-                            Some(f.to_variant())
+                            Some(f.to_variant(trait_kind))
                         }
                     });
 
@@ -131,7 +132,7 @@ impl VariantRepr {
                 let name_string_literals =
                     name_strings.iter().map(|string| Literal::string(&string));
 
-                let exprs = fields.iter().map(|f| f.to_variant());
+                let exprs = fields.iter().map(|f| f.to_variant(trait_kind));
 
                 quote! {
                     {
@@ -287,12 +288,13 @@ impl VariantRepr {
 }
 
 impl Field {
-    fn to_variant(&self) -> TokenStream2 {
+    fn to_variant(&self, trait_kind: ToVariantTrait) -> TokenStream2 {
         let Field { ident, attr, .. } = self;
         if let Some(to_variant_with) = &attr.to_variant_with {
             quote!(#to_variant_with(#ident))
         } else {
-            quote!((#ident).to_variant())
+            let to_variant_fn = trait_kind.to_variant_fn();
+            quote!((#ident).#to_variant_fn())
         }
     }
 

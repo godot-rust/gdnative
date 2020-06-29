@@ -2,14 +2,21 @@ use proc_macro::TokenStream;
 use proc_macro2::Literal;
 
 use super::repr::Repr;
-use super::DeriveData;
+use super::{DeriveData, ToVariantTrait};
 
-pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
+pub(crate) fn expand_to_variant(
+    trait_kind: ToVariantTrait,
+    derive_data: DeriveData,
+) -> TokenStream {
     let DeriveData {
         ident,
         repr,
         mut generics,
     } = derive_data;
+
+    let trait_path = trait_kind.trait_path();
+    let to_variant_fn = trait_kind.to_variant_fn();
+    let to_variant_receiver = trait_kind.to_variant_receiver();
 
     for param in generics.type_params_mut() {
         param.default = None;
@@ -18,10 +25,10 @@ pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
     let return_expr = match repr {
         Repr::Struct(var_repr) => {
             let destructure_pattern = var_repr.destructure_pattern();
-            let to_variant = var_repr.to_variant();
+            let to_variant = var_repr.to_variant(trait_kind);
             quote! {
                 {
-                    let #ident #destructure_pattern = &self;
+                    let #ident #destructure_pattern = self;
                     #to_variant
                 }
             }
@@ -36,7 +43,7 @@ pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
                     .iter()
                     .map(|(var_ident, var_repr)| {
                         let destructure_pattern = var_repr.destructure_pattern();
-                        let to_variant = var_repr.to_variant();
+                        let to_variant = var_repr.to_variant(trait_kind);
                         let var_ident_string = format!("{}", var_ident);
                         let var_ident_string_literal = Literal::string(&var_ident_string);
                         quote! {
@@ -63,9 +70,9 @@ pub(crate) fn expand_to_variant(derive_data: DeriveData) -> TokenStream {
 
     let result = quote! {
         #[allow(unused_variables)]
-        impl #generics ::gdnative::core_types::ToVariant for #ident #generics #where_clause {
-            fn to_variant(&self) -> ::gdnative::core_types::Variant {
-                use ::gdnative::core_types::ToVariant;
+        impl #generics #trait_path for #ident #generics #where_clause {
+            fn #to_variant_fn(#to_variant_receiver) -> ::gdnative::core_types::Variant {
+                use #trait_path;
                 use ::gdnative::core_types::FromVariant;
 
                 #return_expr

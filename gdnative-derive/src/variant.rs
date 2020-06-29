@@ -22,6 +22,35 @@ pub(crate) enum Direction {
     From,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub(crate) enum ToVariantTrait {
+    ToVariant,
+    OwnedToVariant,
+}
+
+impl ToVariantTrait {
+    fn trait_path(self) -> syn::Path {
+        match self {
+            Self::ToVariant => parse_quote! { ::gdnative::core_types::ToVariant },
+            Self::OwnedToVariant => parse_quote! { ::gdnative::core_types::OwnedToVariant },
+        }
+    }
+
+    fn to_variant_fn(self) -> syn::Ident {
+        match self {
+            Self::ToVariant => parse_quote! { to_variant },
+            Self::OwnedToVariant => parse_quote! { owned_to_variant },
+        }
+    }
+
+    fn to_variant_receiver(self) -> syn::Receiver {
+        match self {
+            Self::ToVariant => parse_quote! { &self },
+            Self::OwnedToVariant => parse_quote! { self },
+        }
+    }
+}
+
 pub(crate) fn parse_derive_input(
     input: TokenStream,
     bound: &syn::Path,
@@ -60,9 +89,11 @@ pub(crate) fn parse_derive_input(
     }
 }
 
-pub(crate) fn derive_to_variant(input: TokenStream) -> TokenStream {
-    let bound: syn::Path = syn::parse2(quote! { ::gdnative::core_types::ToVariant }).unwrap();
-    to::expand_to_variant(parse_derive_input(input, &bound, Direction::To))
+pub(crate) fn derive_to_variant(trait_kind: ToVariantTrait, input: TokenStream) -> TokenStream {
+    to::expand_to_variant(
+        trait_kind,
+        parse_derive_input(input, &trait_kind.trait_path(), Direction::To),
+    )
 }
 
 pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {

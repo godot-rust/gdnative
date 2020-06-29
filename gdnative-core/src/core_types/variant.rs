@@ -998,12 +998,16 @@ pub trait ToVariant {
 
 /// Types that can only be safely converted to a `Variant` as owned values. Such types cannot
 /// implement `ToVariant` in general, but can still be passed to API methods as arguments, or
-/// used as return values. Notably, this includes `Unique` references to Godot objects and
-/// instances.
+/// used as return values. Notably, this includes `Unique` arrays, dictionaries, and references
+/// to Godot objects and instances.
 ///
-/// This trait should not be implemented by users.
+/// This has a blanket implementation for all types that have `ToVariant`. As such, users
+/// should only derive or implement `OwnedToVariant` when `ToVariant` is not applicable.
 ///
-/// This has a blanket implementation for all types that have `ToVariant`.
+/// ## Deriving `OwnedToVariant`
+///
+/// The derive macro behaves the same as `ToVariant`. See the documentation for the latter for
+/// a detailed explanation.
 pub trait OwnedToVariant {
     fn owned_to_variant(self) -> Variant;
 }
@@ -1032,7 +1036,7 @@ pub trait OwnedToVariant {
 ///
 /// impl ToVariantEq for MyTypedInt {}
 /// ```
-pub trait ToVariantEq: ToVariant + Eq {}
+pub trait ToVariantEq: Eq {}
 
 /// Types that can be converted from a `Variant`.
 ///
@@ -1251,27 +1255,27 @@ impl FromVariant for () {
 
 impl<'a, T> ToVariant for &'a T
 where
-    T: ToVariant,
+    T: ToVariant + ?Sized,
 {
     #[inline]
     fn to_variant(&self) -> Variant {
         T::to_variant(*self)
     }
 }
-impl<'a, T> ToVariantEq for &'a T where T: ToVariantEq {}
+impl<'a, T> ToVariantEq for &'a T where T: ToVariantEq + ?Sized {}
 
 impl ToVariantEq for Variant {}
 
 impl<'a, T> ToVariant for &'a mut T
 where
-    T: ToVariant,
+    T: ToVariant + ?Sized,
 {
     #[inline]
     fn to_variant(&self) -> Variant {
         T::to_variant(*self)
     }
 }
-impl<'a, T> ToVariantEq for &'a mut T where T: ToVariantEq {}
+impl<'a, T> ToVariantEq for &'a mut T where T: ToVariantEq + ?Sized {}
 
 impl<T: GodotObject> ToVariant for Ref<T, Shared> {
     #[inline]
@@ -1696,8 +1700,8 @@ impl<T: ToVariant, E: ToVariant> ToVariant for Result<T, E> {
     fn to_variant(&self) -> Variant {
         let dict = Dictionary::new();
         match &self {
-            Ok(val) => dict.insert(&"Ok".into(), &val.to_variant()),
-            Err(err) => dict.insert(&"Err".into(), &err.to_variant()),
+            Ok(val) => dict.insert("Ok", val),
+            Err(err) => dict.insert("Err", err),
         }
         dict.into_shared().to_variant()
     }
@@ -1891,11 +1895,11 @@ godot_test!(
     test_variant_result {
         let variant = Result::<i64, ()>::Ok(42 as i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(42), dict.get(&"Ok".into()).try_to_i64());
+        assert_eq!(Some(42), dict.get("Ok").try_to_i64());
 
         let variant = Result::<(), i64>::Err(54 as i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(54), dict.get(&"Err".into()).try_to_i64());
+        assert_eq!(Some(54), dict.get("Err").try_to_i64());
 
         let variant = Variant::from_bool(true);
         assert_eq!(
@@ -1910,11 +1914,11 @@ godot_test!(
         );
 
         let dict = Dictionary::new();
-        dict.insert(&"Ok".into(), &Variant::from_i64(42));
+        dict.insert("Ok", 42);
         assert_eq!(Ok(Ok(42)), Result::<i64, i64>::from_variant(&dict.into_shared().to_variant()));
 
         let dict = Dictionary::new();
-        dict.insert(&"Err".into(), &Variant::from_i64(54));
+        dict.insert("Err", 54);
         assert_eq!(Ok(Err(54)), Result::<i64, i64>::from_variant(&dict.into_shared().to_variant()));
     }
 
