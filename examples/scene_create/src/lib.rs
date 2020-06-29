@@ -60,7 +60,7 @@ impl SceneCreate {
             Ok(spatial) => {
                 // Here is how you rename the child...
                 let key_str = format!("child_{}", self.children_spawned);
-                spatial.set_name(GodotString::from_str(&key_str));
+                spatial.set_name(&key_str);
 
                 let x = (self.children_spawned % 10) as f32;
                 let z = (self.children_spawned / 10) as f32;
@@ -80,7 +80,7 @@ impl SceneCreate {
 
     #[export]
     fn remove_one(&mut self, owner: &Spatial, str: GodotString) {
-        godot_print!("Called remove_one({})", str.to_string());
+        godot_print!("Called remove_one({})", str);
         let num_children = owner.get_child_count();
         if num_children <= 0 {
             godot_print!("No children to delete");
@@ -107,8 +107,8 @@ fn init(handle: InitHandle) {
 
 pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
     let scene = ResourceLoader::godot_singleton().load(
-        GodotString::from_str(path), // could also use path.into() here
-        GodotString::from_str("PackedScene"),
+        path,
+        "PackedScene",
         false,
     )?;
 
@@ -138,7 +138,7 @@ fn update_panel(owner: &Spatial, num_children: i64) {
     //   from earlier)
     let panel_node_opt = owner.get_parent().and_then(|parent| {
         let parent = unsafe { parent.assume_safe() };
-        parent.find_node(GodotString::from_str("Panel"), true, false)
+        parent.find_node("Panel", true, false)
     });
 
     if let Some(panel_node) = panel_node_opt {
@@ -147,7 +147,7 @@ fn update_panel(owner: &Spatial, num_children: i64) {
         // Put the Node
         let mut as_variant = Variant::from_object(panel_node);
         match as_variant.call(
-            &GodotString::from_str("set_num_children"),
+            "set_num_children",
             &[Variant::from_u64(num_children as u64)],
         ) {
             Ok(_) => godot_print!("Called Panel OK."),

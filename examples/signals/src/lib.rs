@@ -46,10 +46,10 @@ impl SignalEmitter {
         self.data += 1;
 
         if self.data % 2 == 0 {
-            owner.emit_signal(GodotString::from_str("tick"), &[]);
+            owner.emit_signal("tick", &[]);
         } else {
             owner.emit_signal(
-                GodotString::from_str("tick_with_data"),
+                "tick_with_data",
                 &[Variant::from_i64(self.data)],
             );
         }
@@ -77,18 +77,18 @@ impl SignalSubscriber {
 
         emitter
             .connect(
-                GodotString::from_str("tick"),
+                "tick",
                 owner,
-                GodotString::from_str("notify"),
+                "notify",
                 VariantArray::new_shared(),
                 0,
             )
             .unwrap();
         emitter
             .connect(
-                GodotString::from_str("tick_with_data"),
+                "tick_with_data",
                 owner,
-                GodotString::from_str("notify_with_data"),
+                "notify_with_data",
                 VariantArray::new_shared(),
                 0,
             )
@@ -100,7 +100,7 @@ impl SignalSubscriber {
         self.times_received += 1;
         let msg = format!("Received signal \"tick\" {} times", self.times_received);
 
-        owner.set_text(GodotString::from_str(msg.as_str()));
+        owner.set_text(msg);
     }
 
     #[export]
@@ -110,7 +110,7 @@ impl SignalSubscriber {
             data.try_to_u64().unwrap()
         );
 
-        owner.set_text(GodotString::from_str(msg.as_str()));
+        owner.set_text(msg);
     }
 }
 

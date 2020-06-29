@@ -45,16 +45,16 @@ impl Player {
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
 
-        if Input::is_action_pressed(&input, GodotString::from_str("ui_right")) {
+        if Input::is_action_pressed(&input, "ui_right") {
             velocity.x += 1.0
         }
-        if Input::is_action_pressed(&input, GodotString::from_str("ui_left")) {
+        if Input::is_action_pressed(&input, "ui_left") {
             velocity.x -= 1.0
         }
-        if Input::is_action_pressed(&input, GodotString::from_str("ui_down")) {
+        if Input::is_action_pressed(&input, "ui_down") {
             velocity.y += 1.0
         }
-        if Input::is_action_pressed(&input, GodotString::from_str("ui_up")) {
+        if Input::is_action_pressed(&input, "ui_up") {
             velocity.y -= 1.0
         }
 
@@ -74,7 +74,7 @@ impl Player {
                 animated_sprite.set_flip_v(velocity.y > 0.0)
             }
 
-            animated_sprite.play(GodotString::from_str(animation), false);
+            animated_sprite.play(animation, false);
         } else {
             animated_sprite.stop();
         }

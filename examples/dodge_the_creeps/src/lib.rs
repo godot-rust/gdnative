@@ -1,5 +1,4 @@
-#[macro_use]
-extern crate gdnative;
+use gdnative::prelude::*;
 
 mod extensions;
 mod hud;
@@ -7,7 +6,7 @@ mod main_scene;
 mod mob;
 mod player;
 
-fn init(handle: gdnative::prelude::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<player::Player>();
     handle.add_class::<mob::Mob>();
     handle.add_class::<main_scene::Main>();
