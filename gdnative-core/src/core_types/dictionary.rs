@@ -6,6 +6,7 @@ use crate::private::get_api;
 use crate::sys;
 
 use crate::core_types::OwnedToVariant;
+use crate::core_types::ToVariant;
 use crate::core_types::ToVariantEq;
 use crate::core_types::Variant;
 use crate::core_types::VariantArray;
@@ -15,6 +16,10 @@ use std::fmt;
 use crate::thread_access::*;
 
 /// A reference-counted `Dictionary` of `Variant` key-value pairs.
+///
+/// Generic methods on this type performs `Variant` conversion every time. This could
+/// be significant for complex structures. Users may convert arguments to `Variant`s before
+/// calling to avoid this behavior if necessary.
 ///
 /// # Safety
 ///
@@ -49,8 +54,11 @@ impl<Access: ThreadAccess> Dictionary<Access> {
 
     /// Returns true if the `Dictionary` contains the specified key.
     #[inline]
-    pub fn contains(&self, key: &Variant) -> bool {
-        unsafe { (get_api().godot_dictionary_has)(self.sys(), key.sys()) }
+    pub fn contains<K>(&self, key: K) -> bool
+    where
+        K: ToVariant + ToVariantEq,
+    {
+        unsafe { (get_api().godot_dictionary_has)(self.sys(), key.to_variant().sys()) }
     }
 
     /// Returns true if the `Dictionary` has all of the keys in the given array.
@@ -61,8 +69,16 @@ impl<Access: ThreadAccess> Dictionary<Access> {
 
     /// Returns a copy of the value corresponding to the key.
     #[inline]
-    pub fn get(&self, key: &Variant) -> Variant {
-        unsafe { Variant((get_api().godot_dictionary_get)(self.sys(), key.sys())) }
+    pub fn get<K>(&self, key: K) -> Variant
+    where
+        K: ToVariant + ToVariantEq,
+    {
+        unsafe {
+            Variant((get_api().godot_dictionary_get)(
+                self.sys(),
+                key.to_variant().sys(),
+            ))
+        }
     }
 
     /// Update an existing element corresponding ot the key.
@@ -71,9 +87,21 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     ///
     /// Panics if the entry for `key` does not exist.
     #[inline]
-    pub fn update(&self, key: &Variant, val: &Variant) {
-        assert!(self.contains(key), "Can only update entries that exist");
-        unsafe { (get_api().godot_dictionary_set)(self.sys_mut(), key.sys(), val.sys()) }
+    pub fn update<K, V>(&self, key: K, val: V)
+    where
+        K: ToVariant + ToVariantEq,
+        V: OwnedToVariant,
+    {
+        let key = key.to_variant();
+        assert!(self.contains(&key), "Can only update entries that exist");
+
+        unsafe {
+            (get_api().godot_dictionary_set)(
+                self.sys_mut(),
+                key.sys(),
+                val.owned_to_variant().sys(),
+            )
+        }
     }
 
     /// Returns a reference to the value corresponding to the key.
@@ -85,10 +113,13 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     ///
     /// `Variant` is reference-counted and thus cheaply cloned. Consider using `get` instead.
     #[inline]
-    pub unsafe fn get_ref(&self, key: &Variant) -> &Variant {
+    pub unsafe fn get_ref<K>(&self, key: K) -> &Variant
+    where
+        K: ToVariant + ToVariantEq,
+    {
         Variant::cast_ref((get_api().godot_dictionary_operator_index_const)(
             self.sys(),
-            key.sys(),
+            key.to_variant().sys(),
         ))
     }
 
@@ -101,10 +132,13 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     /// if the same `key` is provided, causing undefined behavior.
     #[inline]
     #[allow(clippy::mut_from_ref)]
-    pub unsafe fn get_mut_ref(&self, key: &Variant) -> &mut Variant {
+    pub unsafe fn get_mut_ref<K>(&self, key: K) -> &mut Variant
+    where
+        K: ToVariant + ToVariantEq,
+    {
         Variant::cast_mut_ref((get_api().godot_dictionary_operator_index)(
             self.sys_mut(),
-            key.sys(),
+            key.to_variant().sys(),
         ))
     }
 
@@ -261,14 +295,27 @@ impl Dictionary<Unique> {
 
     #[inline]
     /// Inserts or updates the value of the element corresponding to the key.
-    pub fn insert(&self, key: &Variant, val: &Variant) {
-        unsafe { (get_api().godot_dictionary_set)(self.sys_mut(), key.sys(), val.sys()) }
+    pub fn insert<K, V>(&self, key: K, val: V)
+    where
+        K: OwnedToVariant + ToVariantEq,
+        V: OwnedToVariant,
+    {
+        unsafe {
+            (get_api().godot_dictionary_set)(
+                self.sys_mut(),
+                key.owned_to_variant().sys(),
+                val.owned_to_variant().sys(),
+            )
+        }
     }
 
     /// Erase a key-value pair in the `Dictionary` by the specified key.
     #[inline]
-    pub fn erase(&self, key: &Variant) {
-        unsafe { (get_api().godot_dictionary_erase)(self.sys_mut(), key.sys()) }
+    pub fn erase<K>(&self, key: K)
+    where
+        K: ToVariant + ToVariantEq,
+    {
+        unsafe { (get_api().godot_dictionary_erase)(self.sys_mut(), key.to_variant().sys()) }
     }
 
     /// Clears the `Dictionary`, removing all key-value pairs.

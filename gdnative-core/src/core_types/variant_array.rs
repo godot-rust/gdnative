@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use crate::private::get_api;
 use crate::sys;
 
+use crate::core_types::OwnedToVariant;
 use crate::core_types::ToVariant;
 use crate::core_types::Variant;
 use crate::NewRef;
@@ -14,6 +15,10 @@ use std::fmt;
 
 /// A reference-counted `Variant` vector. Godot's generic array data type.
 /// Negative indices can be used to count from the right.
+///
+/// Generic methods on this type performs `Variant` conversion every time. This could
+/// be significant for complex structures. Users may convert arguments to `Variant`s before
+/// calling to avoid this behavior if necessary.
 ///
 /// # Safety
 ///
@@ -35,8 +40,8 @@ pub struct VariantArray<Access: ThreadAccess = Shared> {
 impl<Access: ThreadAccess> VariantArray<Access> {
     /// Sets the value of the element at the given offset.
     #[inline]
-    pub fn set(&self, idx: i32, val: &Variant) {
-        unsafe { (get_api().godot_array_set)(self.sys_mut(), idx, val.sys()) }
+    pub fn set<T: OwnedToVariant>(&self, idx: i32, val: T) {
+        unsafe { (get_api().godot_array_set)(self.sys_mut(), idx, val.owned_to_variant().sys()) }
     }
 
     /// Returns a copy of the element at the given offset.
@@ -75,8 +80,8 @@ impl<Access: ThreadAccess> VariantArray<Access> {
     }
 
     #[inline]
-    pub fn count(&self, val: &Variant) -> i32 {
-        unsafe { (get_api().godot_array_count)(self.sys(), val.sys()) }
+    pub fn count<T: ToVariant>(&self, val: T) -> i32 {
+        unsafe { (get_api().godot_array_count)(self.sys(), val.to_variant().sys()) }
     }
 
     /// Returns `true` if the `VariantArray` contains no elements.
@@ -95,29 +100,29 @@ impl<Access: ThreadAccess> VariantArray<Access> {
     /// Pass an initial search index as the second argument.
     /// Returns `-1` if value is not found.
     #[inline]
-    pub fn find(&self, what: &Variant, from: i32) -> i32 {
-        unsafe { (get_api().godot_array_find)(self.sys(), what.sys(), from) }
+    pub fn find<T: ToVariant>(&self, what: T, from: i32) -> i32 {
+        unsafe { (get_api().godot_array_find)(self.sys(), what.to_variant().sys(), from) }
     }
 
     /// Returns true if the `VariantArray` contains the specified value.
     #[inline]
-    pub fn contains(&self, what: &Variant) -> bool {
-        unsafe { (get_api().godot_array_has)(self.sys(), what.sys()) }
+    pub fn contains<T: ToVariant>(&self, what: T) -> bool {
+        unsafe { (get_api().godot_array_has)(self.sys(), what.to_variant().sys()) }
     }
 
     /// Searches the array in reverse order.
     /// Pass an initial search index as the second argument.
     /// If negative, the start index is considered relative to the end of the array.
     #[inline]
-    pub fn rfind(&self, what: &Variant, from: i32) -> i32 {
-        unsafe { (get_api().godot_array_rfind)(self.sys(), what.sys(), from) }
+    pub fn rfind<T: ToVariant>(&self, what: T, from: i32) -> i32 {
+        unsafe { (get_api().godot_array_rfind)(self.sys(), what.to_variant().sys(), from) }
     }
 
     /// Searches the array in reverse order for a value.
     /// Returns its index or `-1` if not found.
     #[inline]
-    pub fn find_last(&self, what: &Variant) -> i32 {
-        unsafe { (get_api().godot_array_find_last)(self.sys(), what.sys()) }
+    pub fn find_last<T: ToVariant>(&self, what: T) -> i32 {
+        unsafe { (get_api().godot_array_find_last)(self.sys(), what.to_variant().sys()) }
     }
 
     /// Inverts the order of the elements in the array.
@@ -225,8 +230,8 @@ impl VariantArray<Unique> {
 
     /// Removed the first occurrence of `val`.
     #[inline]
-    pub fn erase(&self, val: &Variant) {
-        unsafe { (get_api().godot_array_erase)(self.sys_mut(), val.sys()) }
+    pub fn erase<T: ToVariant>(&self, val: T) {
+        unsafe { (get_api().godot_array_erase)(self.sys_mut(), val.to_variant().sys()) }
     }
 
     #[inline]
@@ -236,9 +241,9 @@ impl VariantArray<Unique> {
 
     /// Appends an element at the end of the array.
     #[inline]
-    pub fn push(&self, val: &Variant) {
+    pub fn push<T: OwnedToVariant>(&self, val: T) {
         unsafe {
-            (get_api().godot_array_push_back)(self.sys_mut(), val.sys());
+            (get_api().godot_array_push_back)(self.sys_mut(), val.owned_to_variant().sys());
         }
     }
 
@@ -250,9 +255,9 @@ impl VariantArray<Unique> {
 
     /// Appends an element to the front of the array.
     #[inline]
-    pub fn push_front(&self, val: &Variant) {
+    pub fn push_front<T: OwnedToVariant>(&self, val: T) {
         unsafe {
-            (get_api().godot_array_push_front)(self.sys_mut(), val.sys());
+            (get_api().godot_array_push_front)(self.sys_mut(), val.owned_to_variant().sys());
         }
     }
 
@@ -264,8 +269,8 @@ impl VariantArray<Unique> {
 
     /// Insert a new int at a given position in the array.
     #[inline]
-    pub fn insert(&self, at: i32, val: &Variant) {
-        unsafe { (get_api().godot_array_insert)(self.sys_mut(), at, val.sys()) }
+    pub fn insert<T: OwnedToVariant>(&self, at: i32, val: T) {
+        unsafe { (get_api().godot_array_insert)(self.sys_mut(), at, val.owned_to_variant().sys()) }
     }
 
     /// Returns an iterator through all values in the `VariantArray`.
