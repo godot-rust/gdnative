@@ -425,6 +425,7 @@ impl Ty {
     pub fn to_rust_arg(&self) -> syn::Type {
         match self {
             Ty::Variant => syn::parse_quote! { impl OwnedToVariant },
+            Ty::NodePath => syn::parse_quote! { impl Into<NodePath> },
             Ty::String => syn::parse_quote! { impl Into<GodotString> },
             Ty::Object(ref name) => {
                 syn::parse_quote! { impl AsArg<#name> }

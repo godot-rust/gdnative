@@ -272,7 +272,7 @@ pub(crate) fn generate_methods(
 
             Ty::Variant => quote! { #name.owned_to_variant() },
 
-            Ty::String => quote! { #name.into() },
+            Ty::String | Ty::NodePath => quote! { #name.into() },
 
             Ty::Enum(_) => quote! { #name.0 },
 

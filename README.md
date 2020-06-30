@@ -99,8 +99,7 @@ crate-type = ["cdylib"]
 In the `src/lib.rs` file should have the following contents:
 
 ```rust
-use gdnative::*;
-use gdnative::api::Node;
+use gdnative::prelude::*;
 
 /// The HelloWorld "class"
 #[derive(NativeClass)]
@@ -113,7 +112,7 @@ pub struct HelloWorld;
 impl HelloWorld {
 
     /// The "constructor" of the class.
-    fn new(_owner: Node) -> Self {
+    fn new(_owner: &Node) -> Self {
         HelloWorld
     }
 
@@ -126,7 +125,7 @@ impl HelloWorld {
     // methods MUST have `owner: BaseClass` as their second arguments,
     // before all other arguments in the signature.
     #[export]
-    fn _ready(&self, _owner: Node) {
+    fn _ready(&self, _owner: &Node) {
         // The `godot_print!` macro works like `println!` but prints to the Godot-editor
         // output tab as well.
         godot_print!("hello, world.");
@@ -134,7 +133,7 @@ impl HelloWorld {
 }
 
 // Function that registers all exposed classes to Godot
-fn init(handle: gdnative::init::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<HelloWorld>();
 }
 

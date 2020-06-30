@@ -665,12 +665,18 @@ impl Variant {
     }
 
     #[inline]
-    pub fn has_method(&self, method: &GodotString) -> bool {
+    pub fn has_method(&self, method: impl Into<GodotString>) -> bool {
+        let method = method.into();
         unsafe { (get_api().godot_variant_has_method)(&self.0, &method.0) }
     }
 
     #[inline]
-    pub fn call(&mut self, method: &GodotString, args: &[Variant]) -> Result<Variant, CallError> {
+    pub fn call(
+        &mut self,
+        method: impl Into<GodotString>,
+        args: &[Variant],
+    ) -> Result<Variant, CallError> {
+        let method = method.into();
         unsafe {
             let api = get_api();
             let mut err = sys::godot_variant_call_error::default();
@@ -893,7 +899,7 @@ godot_test!(
         assert!(nil.try_to_vector2().is_none());
         assert!(nil.try_to_basis().is_none());
 
-        assert!(!nil.has_method(&GodotString::from_str("foo")));
+        assert!(!nil.has_method("foo"));
 
         let clone = nil.clone();
         assert!(clone == nil);
