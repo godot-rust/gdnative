@@ -454,6 +454,14 @@ mod api_wrapper {
         eprintln!("{}", &api_json_file);
         let api_root: ApiRoot = miniserde::json::from_str(&api_json_file)
             .unwrap_or_else(|_| panic!("Could not parse ({:?}) into ApiRoot", from_json));
+
+        for api in api_root.all_apis() {
+            // Currently don't support Godot 4.0
+            if api.version.major == 1 && api.version.minor == 3 {
+                panic!("GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396");
+            }
+        }
+
         let struct_fields = godot_api_functions(&api_root);
         let impl_constructor = api_constructor(&api_root);
         let wrapper = quote! {
