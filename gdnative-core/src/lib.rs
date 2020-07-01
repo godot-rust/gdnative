@@ -36,6 +36,7 @@ extern crate approx;
 mod macros;
 
 pub mod core_types;
+mod init;
 
 #[cfg(feature = "nativescript")]
 pub mod nativescript;
@@ -53,6 +54,7 @@ pub mod private;
 // Re-exports
 //
 
+pub use init::{InitializeInfo, TerminateInfo};
 pub use new_ref::NewRef;
 pub use object::{GodotObject, Null, Ref, TRef};
 
