@@ -1,6 +1,5 @@
 use crate::api::*;
 
-use heck::SnakeCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
@@ -155,7 +154,7 @@ pub fn generate_deref_impl(class: &GodotClass) -> TokenStream {
     );
 
     let class_name = format_ident!("{}", class.name);
-    let base_class_module = format_ident!("{}", class.base_class.to_snake_case(),);
+    let base_class_module = format_ident!("{}", class.base_class_module());
     let base_class = format_ident!("{}", class.base_class);
 
     let qualified_base_class = quote! {
@@ -191,7 +190,7 @@ pub fn generate_sub_class_impls<'a>(api: &'a Api, mut class: &'a GodotClass) -> 
     let mut tokens = TokenStream::new();
 
     while let Some(base_class) = class.base_class(api) {
-        let base_class_module = format_ident!("{}", base_class.name.to_snake_case());
+        let base_class_module = format_ident!("{}", base_class.module());
         let base_class_ident = format_ident!("{}", base_class.name);
 
         tokens.extend(quote! {

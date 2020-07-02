@@ -1,6 +1,6 @@
 #![allow(clippy::blacklisted_name)]
 
-use gdnative::api::*;
+use gdnative::api;
 use gdnative::prelude::*;
 
 mod test_derive;
@@ -74,10 +74,10 @@ fn test_constructor() -> bool {
 
     // Just create an object and call a method as a sanity check for the
     // generated constructors.
-    let lib = GDNativeLibrary::new();
+    let lib = api::GDNativeLibrary::new();
     let _ = lib.is_singleton();
 
-    let path = Path2D::new();
+    let path = api::Path2D::new();
     let _ = path.z_index();
     path.free();
 
