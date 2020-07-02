@@ -42,7 +42,7 @@ fn main() {
 }
 
 /// Output all the class bindings into the `generated.rs` file.
-#[cfg(not(features = "one_class_one_file"))]
+#[cfg(not(feature = "one_class_one_file"))]
 fn generate(
     _out_path: &std::path::Path,
     generated_file: &mut BufWriter<File>,
@@ -70,7 +70,7 @@ fn generate(
 
 /// Output one file for each class and add `mod` and `use` declarations in
 /// the `generated.rs` file.
-#[cfg(features = "one_class_one_file")]
+#[cfg(feature = "one_class_one_file")]
 fn generate(
     out_path: &std::path::Path,
     generated_file: &mut BufWriter<File>,
@@ -78,7 +78,7 @@ fn generate(
 ) {
     use heck::SnakeCase as _;
 
-    for (class_name, code) in binding_res.class_bindings {
+    for (class_name, code) in &binding_res.class_bindings {
         let mod_name = class_name.to_snake_case();
 
         let mod_path = out_path.join(format!("{}.rs", mod_name));
