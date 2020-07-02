@@ -12,7 +12,7 @@ edition = "2018"
 
 [features]
 default = ["bindings"]
-formatted = ["gdnative-bindings/formatted"]
+formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_file"]
 
 gd_test = ["gdnative-core/gd_test"]
 bindings = ["gdnative-bindings"]
