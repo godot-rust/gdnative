@@ -1,6 +1,8 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
+use gdnative_impl_proc_macros::doc_variant_collection_safety;
+
 use crate::private::get_api;
 use crate::sys;
 
@@ -25,7 +27,7 @@ use std::fmt;
 /// This is a reference-counted collection with "interior mutability" in Rust parlance.
 /// To enforce that the official [thread-safety guidelines][thread-safety] are
 /// followed this type uses the *typestate* pattern. The typestate `Access` tracks
-/// whether there is "unique" access (where pretty much all operations are safe)
+/// whether there is thread-local or unique access (where pretty much all operations are safe)
 /// or whether the value might be "shared", in which case not all operations are
 /// safe.
 ///
@@ -37,6 +39,7 @@ pub struct VariantArray<Access: ThreadAccess = Shared> {
     _marker: PhantomData<Access>,
 }
 
+/// Operations allowed on all arrays at any point in time.
 impl<Access: ThreadAccess> VariantArray<Access> {
     /// Sets the value of the element at the given offset.
     #[inline]
@@ -154,6 +157,16 @@ impl<Access: ThreadAccess> VariantArray<Access> {
         }
     }
 
+    /// Returns an iterator through all values in the `VariantArray`.
+    ///
+    /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
+    /// Modifying the same underlying collection while observing the safety assumptions will
+    /// not violate memory safely, but may lead to surprising behavior in the iterator.
+    #[inline]
+    pub fn iter(&self) -> Iter<'_, Access> {
+        self.into_iter()
+    }
+
     // TODO
     // pub fn sort_custom(&mut self, obj: ?, s: ?) {
     //     unimplemented!()
@@ -189,31 +202,16 @@ impl<Access: ThreadAccess> VariantArray<Access> {
             _marker: PhantomData,
         }
     }
-}
 
-impl VariantArray<Unique> {
-    /// Creates an empty `VariantArray`.
-    #[inline]
-    pub fn new() -> Self {
-        unsafe {
-            let mut sys = sys::godot_array::default();
-            (get_api().godot_array_new)(&mut sys);
-            Self::from_sys(sys)
-        }
-    }
-
-    /// Put this array under the "shared" access type.
-    #[inline]
-    pub fn into_shared(self) -> VariantArray<Shared> {
+    unsafe fn cast_access<A: ThreadAccess>(self) -> VariantArray<A> {
         let sys = self.sys;
         std::mem::forget(self);
-
-        VariantArray::<Shared> {
-            sys,
-            _marker: PhantomData,
-        }
+        VariantArray::from_sys(sys)
     }
+}
 
+/// Operations allowed on Dictionaries that can only be referenced to from the current thread.
+impl<Access: LocalThreadAccess> VariantArray<Access> {
     /// Clears the array, resizing to 0.
     #[inline]
     pub fn clear(&self) {
@@ -234,6 +232,7 @@ impl VariantArray<Unique> {
         unsafe { (get_api().godot_array_erase)(self.sys_mut(), val.to_variant().sys()) }
     }
 
+    /// Resizes the array, filling with `Nil` if necessary.
     #[inline]
     pub fn resize(&self, size: i32) {
         unsafe { (get_api().godot_array_resize)(self.sys_mut(), size) }
@@ -272,25 +271,10 @@ impl VariantArray<Unique> {
     pub fn insert<T: OwnedToVariant>(&self, at: i32, val: T) {
         unsafe { (get_api().godot_array_insert)(self.sys_mut(), at, val.owned_to_variant().sys()) }
     }
-
-    /// Returns an iterator through all values in the `VariantArray`.
-    ///
-    /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
-    /// Modifying the same underlying collection while observing the safety assumptions will
-    /// not violate memory safely, but may lead to surprising behavior in the iterator.
-    #[inline]
-    pub fn iter(&self) -> IterUnique {
-        self.into_iter()
-    }
 }
 
-impl VariantArray<Shared> {
-    /// Create a new shared array.
-    #[inline]
-    pub fn new_shared() -> Self {
-        VariantArray::<Unique>::new().into_shared()
-    }
-
+/// Operations allowed on non-unique arrays.
+impl<Access: NonUniqueThreadAccess> VariantArray<Access> {
     /// Assume that this is the only reference to this array, on which
     /// operations that change the container size can be safely performed.
     ///
@@ -303,23 +287,122 @@ impl VariantArray<Shared> {
     /// undefined behavior.
     #[inline]
     pub unsafe fn assume_unique(self) -> VariantArray<Unique> {
-        let sys = self.sys;
-        std::mem::forget(self);
+        self.cast_access()
+    }
+}
 
-        VariantArray::<Unique> {
-            sys,
-            _marker: PhantomData,
+/// Operations allowed on unique arrays.
+impl VariantArray<Unique> {
+    /// Creates an empty `VariantArray`.
+    #[inline]
+    pub fn new() -> Self {
+        unsafe {
+            let mut sys = sys::godot_array::default();
+            (get_api().godot_array_new)(&mut sys);
+            Self::from_sys(sys)
         }
     }
 
-    /// Returns an iterator through all values in the `VariantArray`.
-    ///
-    /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
-    /// Modifying the same underlying collection while observing the safety assumptions will
-    /// not violate memory safely, but may lead to surprising behavior in the iterator.
+    /// Put this array under the "shared" access type.
     #[inline]
-    pub fn iter(&self) -> IterShared {
-        self.into_iter()
+    pub fn into_shared(self) -> VariantArray<Shared> {
+        unsafe { self.cast_access() }
+    }
+
+    /// Put this array under the "thread-local" access type.
+    #[inline]
+    pub fn into_thread_local(self) -> VariantArray<ThreadLocal> {
+        unsafe { self.cast_access() }
+    }
+}
+
+/// Operations allowed on arrays that might be shared between different threads.
+impl VariantArray<Shared> {
+    /// Create a new shared array.
+    #[inline]
+    pub fn new_shared() -> Self {
+        VariantArray::<Unique>::new().into_shared()
+    }
+
+    /// Clears the array, resizing to 0.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn clear(&self) {
+        (get_api().godot_array_clear)(self.sys_mut());
+    }
+
+    /// Removes the element at `idx`.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn remove(&self, idx: i32) {
+        (get_api().godot_array_remove)(self.sys_mut(), idx)
+    }
+
+    /// Removed the first occurrence of `val`.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn erase<T: ToVariant>(&self, val: T) {
+        (get_api().godot_array_erase)(self.sys_mut(), val.to_variant().sys())
+    }
+
+    /// Resizes the array, filling with `Nil` if necessary.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn resize(&self, size: i32) {
+        (get_api().godot_array_resize)(self.sys_mut(), size)
+    }
+
+    /// Appends an element at the end of the array.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn push<T: OwnedToVariant>(&self, val: T) {
+        (get_api().godot_array_push_back)(self.sys_mut(), val.owned_to_variant().sys());
+    }
+
+    /// Removes an element at the end of the array.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn pop(&self) -> Variant {
+        Variant((get_api().godot_array_pop_back)(self.sys_mut()))
+    }
+
+    /// Appends an element to the front of the array.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn push_front<T: OwnedToVariant>(&self, val: T) {
+        (get_api().godot_array_push_front)(self.sys_mut(), val.owned_to_variant().sys());
+    }
+
+    /// Removes an element at the front of the array.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn pop_front(&self) -> Variant {
+        Variant((get_api().godot_array_pop_front)(self.sys_mut()))
+    }
+
+    /// Insert a new int at a given position in the array.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn insert<T: OwnedToVariant>(&self, at: i32, val: T) {
+        (get_api().godot_array_insert)(self.sys_mut(), at, val.owned_to_variant().sys())
+    }
+}
+
+/// Operations allowed on Dictionaries that may only be shared on the current thread.
+impl VariantArray<ThreadLocal> {
+    /// Create a new thread-local array.
+    #[inline]
+    pub fn new_thread_local() -> Self {
+        VariantArray::<Unique>::new().into_thread_local()
     }
 }
 
@@ -337,7 +420,14 @@ impl Default for VariantArray<Shared> {
     }
 }
 
-impl NewRef for VariantArray<Shared> {
+impl Default for VariantArray<ThreadLocal> {
+    #[inline]
+    fn default() -> Self {
+        VariantArray::new_thread_local()
+    }
+}
+
+impl<Access: NonUniqueThreadAccess> NewRef for VariantArray<Access> {
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {
@@ -355,14 +445,7 @@ impl<Access: ThreadAccess> Drop for VariantArray<Access> {
     }
 }
 
-impl fmt::Debug for VariantArray<Unique> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.iter()).finish()
-    }
-}
-
-impl fmt::Debug for VariantArray<Shared> {
+impl<Access: ThreadAccess> fmt::Debug for VariantArray<Access> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
@@ -370,12 +453,12 @@ impl fmt::Debug for VariantArray<Shared> {
 }
 
 // #[derive(Debug)]
-pub struct IterShared {
-    arr: VariantArray<Shared>,
+pub struct Iter<'a, Access: ThreadAccess> {
+    arr: &'a VariantArray<Access>,
     range: std::ops::Range<i32>,
 }
 
-impl Iterator for IterShared {
+impl<'a, Access: ThreadAccess> Iterator for Iter<'a, Access> {
     type Item = Variant;
 
     #[inline]
@@ -410,65 +493,12 @@ impl Iterator for IterShared {
     }
 }
 
-impl<'a> IntoIterator for &'a VariantArray<Shared> {
+impl<'a, Access: ThreadAccess> IntoIterator for &'a VariantArray<Access> {
     type Item = Variant;
-    type IntoIter = IterShared;
+    type IntoIter = Iter<'a, Access>;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IterShared {
-            arr: self.new_ref(),
-            range: 0..self.len(),
-        }
-    }
-}
-
-// #[derive(Debug)]
-pub struct IterUnique<'a> {
-    arr: &'a VariantArray<Unique>,
-    range: std::ops::Range<i32>,
-}
-
-impl<'a> Iterator for IterUnique<'a> {
-    type Item = Variant;
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        self.range.next().map(|idx| self.arr.get(idx))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.range.size_hint()
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        if !self.arr.is_empty() {
-            Some(self.arr.get(self.arr.len() - 1))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        use std::convert::TryFrom;
-        let n = i32::try_from(n).ok()?;
-
-        if self.arr.len() > n {
-            Some(self.arr.get(n))
-        } else {
-            None
-        }
-    }
-}
-
-impl<'a> IntoIterator for &'a VariantArray<Unique> {
-    type Item = Variant;
-    type IntoIter = IterUnique<'a>;
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        IterUnique {
+        Iter {
             range: 0..self.len(),
             arr: self,
         }
@@ -476,12 +506,12 @@ impl<'a> IntoIterator for &'a VariantArray<Unique> {
 }
 
 // #[derive(Debug)]
-pub struct IntoIterUnique {
+pub struct IntoIter {
     arr: VariantArray<Unique>,
     range: std::ops::Range<i32>,
 }
 
-impl Iterator for IntoIterUnique {
+impl Iterator for IntoIter {
     type Item = Variant;
 
     #[inline]
@@ -518,10 +548,10 @@ impl Iterator for IntoIterUnique {
 
 impl IntoIterator for VariantArray<Unique> {
     type Item = Variant;
-    type IntoIter = IntoIterUnique;
+    type IntoIter = IntoIter;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIterUnique {
+        IntoIter {
             range: 0..self.len(),
             arr: self,
         }
@@ -537,7 +567,7 @@ impl<T: ToVariant> FromIterator<T> for VariantArray<Unique> {
     }
 }
 
-impl<T: ToVariant> Extend<T> for VariantArray<Unique> {
+impl<T: ToVariant, Access: LocalThreadAccess> Extend<T> for VariantArray<Access> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for elem in iter {

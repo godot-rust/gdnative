@@ -1,6 +1,8 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
+use gdnative_impl_proc_macros::doc_variant_collection_safety;
+
 use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
@@ -26,7 +28,7 @@ use crate::thread_access::*;
 /// This is a reference-counted collection with "interior mutability" in Rust parlance.
 /// To enforce that the official [thread-safety guidelines][thread-safety] are
 /// followed this type uses the *typestate* pattern. The typestate `Access` tracks
-/// whether there is "unique" access (where pretty much all operations are safe)
+/// whether there is thread-local or unique access (where pretty much all operations are safe)
 /// or whether the value might be "shared", in which case not all operations are
 /// safe.
 ///
@@ -171,6 +173,29 @@ impl<Access: ThreadAccess> Dictionary<Access> {
         unsafe { (get_api().godot_dictionary_hash)(self.sys()) }
     }
 
+    /// Returns an iterator through all key-value pairs in the `Dictionary`.
+    ///
+    /// `Dictionary` is reference-counted and have interior mutability in Rust parlance.
+    /// Modifying the same underlying collection while observing the safety assumptions will
+    /// not violate memory safely, but may lead to surprising behavior in the iterator.
+    #[inline]
+    pub fn iter(&self) -> Iter<Access> {
+        Iter::new(self)
+    }
+
+    /// Create a copy of the dictionary.
+    ///
+    /// This creates a new dictionary and is **not** a cheap reference count
+    /// increment.
+    #[inline]
+    pub fn duplicate(&self) -> Dictionary<Unique> {
+        let d = Dictionary::new();
+        for (k, v) in self {
+            d.insert(&k, &v);
+        }
+        d
+    }
+
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_dictionary {
@@ -191,9 +216,15 @@ impl<Access: ThreadAccess> Dictionary<Access> {
             _marker: PhantomData,
         }
     }
+
+    unsafe fn cast_access<A: ThreadAccess>(self) -> Dictionary<A> {
+        let sys = self.sys;
+        std::mem::forget(self);
+        Dictionary::from_sys(sys)
+    }
 }
 
-/// Operations allowed on Dictionaries that might be shared.
+/// Operations allowed on Dictionaries that might be shared between different threads.
 impl Dictionary<Shared> {
     /// Create a new shared dictionary.
     #[inline]
@@ -201,6 +232,53 @@ impl Dictionary<Shared> {
         Dictionary::<Unique>::new().into_shared()
     }
 
+    /// Inserts or updates the value of the element corresponding to the key.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn insert<K, V>(&self, key: K, val: V)
+    where
+        K: OwnedToVariant + ToVariantEq,
+        V: OwnedToVariant,
+    {
+        (get_api().godot_dictionary_set)(
+            self.sys_mut(),
+            key.owned_to_variant().sys(),
+            val.owned_to_variant().sys(),
+        )
+    }
+
+    /// Erase a key-value pair in the `Dictionary` by the specified key.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn erase<K>(&self, key: K)
+    where
+        K: ToVariant + ToVariantEq,
+    {
+        (get_api().godot_dictionary_erase)(self.sys_mut(), key.to_variant().sys())
+    }
+
+    /// Clears the `Dictionary`, removing all key-value pairs.
+    ///
+    #[doc_variant_collection_safety]
+    #[inline]
+    pub unsafe fn clear(&self) {
+        (get_api().godot_dictionary_clear)(self.sys_mut())
+    }
+}
+
+/// Operations allowed on Dictionaries that may only be shared on the current thread.
+impl Dictionary<ThreadLocal> {
+    /// Create a new thread-local dictionary.
+    #[inline]
+    pub fn new_thread_local() -> Self {
+        Dictionary::<Unique>::new().into_thread_local()
+    }
+}
+
+/// Operations allowed on Dictionaries that are not unique.
+impl<Access: NonUniqueThreadAccess> Dictionary<Access> {
     /// Assume that this is the only reference to this dictionary, on which
     /// operations that change the container size can be safely performed.
     ///
@@ -213,86 +291,12 @@ impl Dictionary<Shared> {
     /// undefined behavior.
     #[inline]
     pub unsafe fn assume_unique(self) -> Dictionary<Unique> {
-        let sys = self.sys;
-        std::mem::forget(self);
-
-        Dictionary::<Unique> {
-            sys,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Returns an iterator through all key-value pairs in the `Dictionary`.
-    ///
-    /// `Dictionary` is reference-counted and have interior mutability in Rust parlance.
-    /// Modifying the same underlying collection while observing the safety assumptions will
-    /// not violate memory safely, but may lead to surprising behavior in the iterator.
-    #[inline]
-    pub fn iter(&self) -> IterShared {
-        IterShared::new(self)
-    }
-
-    /// Create a copy of the dictionary.
-    ///
-    /// This creates a new dictionary and is **not** a cheap reference count
-    /// increment.
-    #[inline]
-    pub fn duplicate(&self) -> Dictionary<Unique> {
-        let d = Dictionary::new();
-        for (k, v) in self {
-            d.insert(&k, &v);
-        }
-        d
+        self.cast_access()
     }
 }
 
-/// Operations allowed on non-shared Dictionaries.
-impl Dictionary<Unique> {
-    /// Creates an empty `Dictionary`.
-    #[inline]
-    pub fn new() -> Self {
-        unsafe {
-            let mut sys = sys::godot_dictionary::default();
-            (get_api().godot_dictionary_new)(&mut sys);
-            Self::from_sys(sys)
-        }
-    }
-
-    /// Put this dictionary under the "shared" access type.
-    #[inline]
-    pub fn into_shared(self) -> Dictionary<Shared> {
-        let sys = self.sys;
-        std::mem::forget(self);
-
-        Dictionary::<Shared> {
-            sys,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Returns an iterator through all key-value pairs in the `Dictionary`.
-    ///
-    /// `Dictionary` is reference-counted and have interior mutability in Rust parlance.
-    /// Modifying the same underlying collection while observing the safety assumptions will
-    /// not violate memory safely, but may lead to surprising behavior in the iterator.
-    #[inline]
-    pub fn iter(&self) -> IterUnique {
-        IterUnique::new(self)
-    }
-
-    /// Create a copy of the dictionary.
-    ///
-    /// This creates a new dictionary and is **not** a cheap reference count
-    /// increment.
-    #[inline]
-    pub fn duplicate(&self) -> Dictionary<Unique> {
-        let d = Dictionary::new();
-        for (k, v) in self {
-            d.insert(&k, &v);
-        }
-        d
-    }
-
+/// Operations allowed on Dictionaries that can only be referenced to from the current thread.
+impl<Access: LocalThreadAccess> Dictionary<Access> {
     #[inline]
     /// Inserts or updates the value of the element corresponding to the key.
     pub fn insert<K, V>(&self, key: K, val: V)
@@ -325,6 +329,31 @@ impl Dictionary<Unique> {
     }
 }
 
+/// Operations allowed on unique Dictionaries.
+impl Dictionary<Unique> {
+    /// Creates an empty `Dictionary`.
+    #[inline]
+    pub fn new() -> Self {
+        unsafe {
+            let mut sys = sys::godot_dictionary::default();
+            (get_api().godot_dictionary_new)(&mut sys);
+            Self::from_sys(sys)
+        }
+    }
+
+    /// Put this dictionary under the "shared" access type.
+    #[inline]
+    pub fn into_shared(self) -> Dictionary<Shared> {
+        unsafe { self.cast_access() }
+    }
+
+    /// Put this dictionary under the "thread-local" access type.
+    #[inline]
+    pub fn into_thread_local(self) -> Dictionary<ThreadLocal> {
+        unsafe { self.cast_access() }
+    }
+}
+
 impl<Access: ThreadAccess> Drop for Dictionary<Access> {
     #[inline]
     fn drop(&mut self) {
@@ -346,7 +375,14 @@ impl Default for Dictionary<Shared> {
     }
 }
 
-impl NewRef for Dictionary<Shared> {
+impl Default for Dictionary<ThreadLocal> {
+    #[inline]
+    fn default() -> Self {
+        Dictionary::<Unique>::default().into_thread_local()
+    }
+}
+
+impl<Access: NonUniqueThreadAccess> NewRef for Dictionary<Access> {
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {
@@ -361,6 +397,13 @@ impl From<Dictionary<Unique>> for Dictionary<Shared> {
     #[inline]
     fn from(dict: Dictionary<Unique>) -> Self {
         dict.into_shared()
+    }
+}
+
+impl From<Dictionary<Unique>> for Dictionary<ThreadLocal> {
+    #[inline]
+    fn from(dict: Dictionary<Unique>) -> Self {
+        dict.into_thread_local()
     }
 }
 
@@ -388,31 +431,31 @@ unsafe fn iter_next<Access: ThreadAccess>(
     }
 }
 
-/// Iterator through all key-value pairs in a shared `Dictionary`.
+/// Iterator through all key-value pairs in a unique `Dictionary`.
 ///
-/// This struct is created by the `iter` method on `Dictionary<Shared>`.
+/// This struct is created by the `iter` method on `Dictionary<Unique>`.
 #[derive(Debug)]
-pub struct IterShared {
-    dic: Dictionary<Shared>,
+pub struct Iter<'a, Access: ThreadAccess> {
+    dic: &'a Dictionary<Access>,
     last_key: Option<Variant>,
 }
 
-impl IterShared {
-    /// Create an Iterator from a shared Dictionary.
-    fn new(dic: &Dictionary<Shared>) -> Self {
-        IterShared {
-            dic: dic.new_ref(),
+impl<'a, Access: ThreadAccess> Iter<'a, Access> {
+    /// Create an Iterator from a unique Dictionary.
+    fn new(dic: &'a Dictionary<Access>) -> Self {
+        Iter {
+            dic,
             last_key: None,
         }
     }
 }
 
-impl Iterator for IterShared {
+impl<'a, Access: ThreadAccess> Iterator for Iter<'a, Access> {
     type Item = (Variant, Variant);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe { iter_next(&self.dic, &mut self.last_key) }
+        unsafe { iter_next(self.dic, &mut self.last_key) }
     }
 
     #[inline]
@@ -422,9 +465,9 @@ impl Iterator for IterShared {
     }
 }
 
-impl<'a> IntoIterator for &'a Dictionary<Shared> {
+impl<'a, Access: ThreadAccess> IntoIterator for &'a Dictionary<Access> {
     type Item = (Variant, Variant);
-    type IntoIter = IterShared;
+    type IntoIter = Iter<'a, Access>;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -436,22 +479,22 @@ impl<'a> IntoIterator for &'a Dictionary<Shared> {
 /// This struct is created by the `into_iter` method on `Dictionary<Unique>`.
 /// This iterator consumes the unique dictionary.
 #[derive(Debug)]
-pub struct IntoIterUnique {
+pub struct IntoIter {
     dic: Dictionary<Unique>,
     last_key: Option<Variant>,
 }
 
-impl IntoIterUnique {
+impl IntoIter {
     /// Create an Iterator by consuming a unique Dictionary.
     fn new(dic: Dictionary<Unique>) -> Self {
-        IntoIterUnique {
+        IntoIter {
             dic,
             last_key: None,
         }
     }
 }
 
-impl Iterator for IntoIterUnique {
+impl Iterator for IntoIter {
     type Item = (Variant, Variant);
 
     #[inline]
@@ -468,53 +511,10 @@ impl Iterator for IntoIterUnique {
 
 impl IntoIterator for Dictionary<Unique> {
     type Item = (Variant, Variant);
-    type IntoIter = IntoIterUnique;
+    type IntoIter = IntoIter;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIterUnique::new(self)
-    }
-}
-
-/// Iterator through all key-value pairs in a unique `Dictionary`.
-///
-/// This struct is created by the `iter` method on `Dictionary<Unique>`.
-#[derive(Debug)]
-pub struct IterUnique<'a> {
-    dic: &'a Dictionary<Unique>,
-    last_key: Option<Variant>,
-}
-
-impl<'a> IterUnique<'a> {
-    /// Create an Iterator from a unique Dictionary.
-    fn new(dic: &'a Dictionary<Unique>) -> Self {
-        IterUnique {
-            dic,
-            last_key: None,
-        }
-    }
-}
-
-impl<'a> Iterator for IterUnique<'a> {
-    type Item = (Variant, Variant);
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        unsafe { iter_next(self.dic, &mut self.last_key) }
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        use std::convert::TryFrom;
-        (0, usize::try_from(self.dic.len()).ok())
-    }
-}
-
-impl<'a> IntoIterator for &'a Dictionary<Unique> {
-    type Item = (Variant, Variant);
-    type IntoIter = IterUnique<'a>;
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
+        IntoIter::new(self)
     }
 }
 
@@ -531,7 +531,7 @@ where
     }
 }
 
-impl<K, V> Extend<(K, V)> for Dictionary<Unique>
+impl<K, V, Access: LocalThreadAccess> Extend<(K, V)> for Dictionary<Access>
 where
     K: ToVariantEq + OwnedToVariant,
     V: OwnedToVariant,

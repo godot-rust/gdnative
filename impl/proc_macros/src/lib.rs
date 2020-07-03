@@ -7,6 +7,7 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 
+mod doc;
 mod typed_array_element;
 
 #[proc_macro]
@@ -19,6 +20,13 @@ pub fn impl_typed_array_element(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn decl_typed_array_element(input: TokenStream) -> TokenStream {
     self::typed_array_element::decl_element(input)
+        .unwrap_or_else(to_compile_errors)
+        .into()
+}
+
+#[proc_macro_attribute]
+pub fn doc_variant_collection_safety(attr: TokenStream, item: TokenStream) -> TokenStream {
+    self::doc::variant_collection_safety(attr, item)
         .unwrap_or_else(to_compile_errors)
         .into()
 }
