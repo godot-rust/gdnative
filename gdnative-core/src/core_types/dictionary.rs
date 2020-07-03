@@ -1,6 +1,8 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
+use gdnative_impl_proc_macros::doc_variant_collection_safety;
+
 use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
@@ -222,7 +224,7 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     }
 }
 
-/// Operations allowed on Dictionaries that might be shared.
+/// Operations allowed on Dictionaries that might be shared between different threads.
 impl Dictionary<Shared> {
     /// Create a new shared dictionary.
     #[inline]
@@ -230,16 +232,10 @@ impl Dictionary<Shared> {
         Dictionary::<Unique>::new().into_shared()
     }
 
-    #[inline]
     /// Inserts or updates the value of the element corresponding to the key.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared dictionary when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
+    #[doc_variant_collection_safety]
+    #[inline]
     pub unsafe fn insert<K, V>(&self, key: K, val: V)
     where
         K: OwnedToVariant + ToVariantEq,
@@ -254,14 +250,8 @@ impl Dictionary<Shared> {
 
     /// Erase a key-value pair in the `Dictionary` by the specified key.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared dictionary when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn erase<K>(&self, key: K)
     where
         K: ToVariant + ToVariantEq,
@@ -271,19 +261,14 @@ impl Dictionary<Shared> {
 
     /// Clears the `Dictionary`, removing all key-value pairs.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared dictionary when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn clear(&self) {
         (get_api().godot_dictionary_clear)(self.sys_mut())
     }
 }
 
+/// Operations allowed on Dictionaries that may only be shared on the current thread.
 impl Dictionary<ThreadLocal> {
     /// Create a new thread-local dictionary.
     #[inline]
@@ -292,6 +277,7 @@ impl Dictionary<ThreadLocal> {
     }
 }
 
+/// Operations allowed on Dictionaries that are not unique.
 impl<Access: NonUniqueThreadAccess> Dictionary<Access> {
     /// Assume that this is the only reference to this dictionary, on which
     /// operations that change the container size can be safely performed.
@@ -309,6 +295,7 @@ impl<Access: NonUniqueThreadAccess> Dictionary<Access> {
     }
 }
 
+/// Operations allowed on Dictionaries that can only be referenced to from the current thread.
 impl<Access: LocalThreadAccess> Dictionary<Access> {
     #[inline]
     /// Inserts or updates the value of the element corresponding to the key.
@@ -342,7 +329,7 @@ impl<Access: LocalThreadAccess> Dictionary<Access> {
     }
 }
 
-/// Operations allowed on non-shared Dictionaries.
+/// Operations allowed on unique Dictionaries.
 impl Dictionary<Unique> {
     /// Creates an empty `Dictionary`.
     #[inline]

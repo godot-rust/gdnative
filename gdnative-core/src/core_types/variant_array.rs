@@ -1,6 +1,8 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
+use gdnative_impl_proc_macros::doc_variant_collection_safety;
+
 use crate::private::get_api;
 use crate::sys;
 
@@ -37,6 +39,7 @@ pub struct VariantArray<Access: ThreadAccess = Shared> {
     _marker: PhantomData<Access>,
 }
 
+/// Operations allowed on all arrays at any point in time.
 impl<Access: ThreadAccess> VariantArray<Access> {
     /// Sets the value of the element at the given offset.
     #[inline]
@@ -207,6 +210,7 @@ impl<Access: ThreadAccess> VariantArray<Access> {
     }
 }
 
+/// Operations allowed on Dictionaries that can only be referenced to from the current thread.
 impl<Access: LocalThreadAccess> VariantArray<Access> {
     /// Clears the array, resizing to 0.
     #[inline]
@@ -218,7 +222,6 @@ impl<Access: LocalThreadAccess> VariantArray<Access> {
 
     /// Removes the element at `idx`.
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub fn remove(&self, idx: i32) {
         unsafe { (get_api().godot_array_remove)(self.sys_mut(), idx) }
     }
@@ -270,6 +273,7 @@ impl<Access: LocalThreadAccess> VariantArray<Access> {
     }
 }
 
+/// Operations allowed on non-unique arrays.
 impl<Access: NonUniqueThreadAccess> VariantArray<Access> {
     /// Assume that this is the only reference to this array, on which
     /// operations that change the container size can be safely performed.
@@ -287,6 +291,7 @@ impl<Access: NonUniqueThreadAccess> VariantArray<Access> {
     }
 }
 
+/// Operations allowed on unique arrays.
 impl VariantArray<Unique> {
     /// Creates an empty `VariantArray`.
     #[inline]
@@ -311,6 +316,7 @@ impl VariantArray<Unique> {
     }
 }
 
+/// Operations allowed on arrays that might be shared between different threads.
 impl VariantArray<Shared> {
     /// Create a new shared array.
     #[inline]
@@ -320,131 +326,78 @@ impl VariantArray<Shared> {
 
     /// Clears the array, resizing to 0.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn clear(&self) {
-            (get_api().godot_array_clear)(self.sys_mut());
+        (get_api().godot_array_clear)(self.sys_mut());
     }
 
     /// Removes the element at `idx`.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn remove(&self, idx: i32) {
         (get_api().godot_array_remove)(self.sys_mut(), idx)
     }
 
     /// Removed the first occurrence of `val`.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn erase<T: ToVariant>(&self, val: T) {
         (get_api().godot_array_erase)(self.sys_mut(), val.to_variant().sys())
     }
 
     /// Resizes the array, filling with `Nil` if necessary.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn resize(&self, size: i32) {
         (get_api().godot_array_resize)(self.sys_mut(), size)
     }
 
     /// Appends an element at the end of the array.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn push<T: OwnedToVariant>(&self, val: T) {
-            (get_api().godot_array_push_back)(self.sys_mut(), val.owned_to_variant().sys());
+        (get_api().godot_array_push_back)(self.sys_mut(), val.owned_to_variant().sys());
     }
 
     /// Removes an element at the end of the array.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn pop(&self) -> Variant {
         Variant((get_api().godot_array_pop_back)(self.sys_mut()))
     }
 
     /// Appends an element to the front of the array.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn push_front<T: OwnedToVariant>(&self, val: T) {
-            (get_api().godot_array_push_front)(self.sys_mut(), val.owned_to_variant().sys());
+        (get_api().godot_array_push_front)(self.sys_mut(), val.owned_to_variant().sys());
     }
 
     /// Removes an element at the front of the array.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn pop_front(&self) -> Variant {
         Variant((get_api().godot_array_pop_front)(self.sys_mut()))
     }
 
     /// Insert a new int at a given position in the array.
     ///
-    /// # Safety
-    ///
-    /// It is only safe to call this on a shared array when no other thread may
-    /// access the underlying collection during the call. Generally, it's not recommended to
-    /// mutate variant collections that may be shared. Prefer using `ThreadLocal` or `Unique`
-    /// collections unless you're absolutely sure that you want this.
+    #[doc_variant_collection_safety]
     #[inline]
-    #[deprecated = "Care should be used when mutating shared variant collections. Prefer ThreadLocal or Unique collections unless you're absolutely sure that you want this."]
     pub unsafe fn insert<T: OwnedToVariant>(&self, at: i32, val: T) {
         (get_api().godot_array_insert)(self.sys_mut(), at, val.owned_to_variant().sys())
     }
 }
 
+/// Operations allowed on Dictionaries that may only be shared on the current thread.
 impl VariantArray<ThreadLocal> {
     /// Create a new thread-local array.
     #[inline]
