@@ -686,6 +686,12 @@ pub fn module_name_from_class_name(class_name: &str) -> String {
     if let Some(range) = result.find("gd_script").map(|i| i..i + 9) {
         result.replace_range(range, "gdscript")
     }
+
+    // To prevent clobbering `gdnative` during a glob import we rename it to `gdnative_`
+    if result == "gdnative" {
+        return "gdnative_".into();
+    }
+
     result
 }
 
@@ -732,7 +738,7 @@ mod tests {
             ("AbcdefG", "abcdef_g"), // PosX => pos_x
             // text changes
             ("FooVec3Uni", "foo_vec3_uni"),
-            ("GDNative", "gdnative"),
+            ("GDNative", "gdnative_"),
             ("GDScript", "gdscript"),
         ];
         tests.iter().for_each(|(class_name, expected)| {
