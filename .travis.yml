@@ -75,22 +75,30 @@ matrix:
     - name: cargo test (stable, windows)
       os: windows
       rust: stable
-      env: CI_STAGE_CARGO_TEST=yes
+      env: CI_STAGE_CARGO_TEST=yes CI_MSVC_TEST=yes
+      before_script:
+        - rustup target add x86_64-pc-windows-msvc
 
     - name: cargo build --release (stable, windows)
       os: windows
       rust: stable
-      env: CI_STAGE_BUILD_RELEASE=yes
+      env: CI_STAGE_BUILD_RELEASE=yes CI_MSVC_TEST=yes
+      before_script:
+        - rustup target add x86_64-pc-windows-msvc
 
     - name: cargo test (nightly, windows)
       os: windows
       rust: nightly
-      env: CI_STAGE_CARGO_TEST=yes
+      env: CI_STAGE_CARGO_TEST=yes CI_MSVC_TEST=yes
+      before_script:
+        - rustup target add x86_64-pc-windows-msvc
 
     - name: cargo build --release (nightly, windows)
       os: windows
       rust: nightly
-      env: CI_STAGE_BUILD_RELEASE=yes
+      env: CI_STAGE_BUILD_RELEASE=yes CI_MSVC_TEST=yes
+      before_script:
+        - rustup target add x86_64-pc-windows-msvc
 
     - name: cargo test ios-simulator
       os: osx
@@ -127,10 +135,16 @@ script:
 
   - if [[ "$CI_STAGE_CARGO_TEST" == "yes" ]]; then
       cargo test --all --all-features;
+      if [[ "$CI_MSVC_TEST" == "yes" ]]; then
+        cargo test --target x86_64-pc-windows-msvc --all --all-features;
+      fi
     fi
 
   - if [[ "$CI_STAGE_BUILD_RELEASE" == "yes" ]]; then
       cargo build --release;
+      if [[ "$CI_MSVC_TEST" == "yes" ]]; then
+        cargo build --target x86_64-pc-windows-msvc --release;
+      fi
     fi
 
   - if [[ "$CI_STAGE_GODOT_TEST" == "yes" ]]; then
