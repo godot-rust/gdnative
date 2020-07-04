@@ -1,4 +1,4 @@
-use heck::{CamelCase as _, SnakeCase as _};
+use heck::CamelCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
@@ -28,6 +28,7 @@ impl Api {
         };
 
         api.strip_leading_underscores();
+        api.generate_module_names();
 
         api.classes
             .iter_mut()
@@ -77,6 +78,12 @@ impl Api {
             }
         }
     }
+
+    fn generate_module_names(&mut self) {
+        self.classes
+            .iter_mut()
+            .for_each(|class| class.generate_module_name());
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -93,9 +100,32 @@ pub struct GodotClass {
     pub methods: Vec<GodotMethod>,
     pub enums: Vec<Enum>,
     pub constants: HashMap<ConstantName, ConstantValue>,
+
+    module_name: Option<String>,
+    base_class_module_name: Option<String>,
 }
 
 impl GodotClass {
+    pub fn generate_module_name(&mut self) {
+        let module_name = module_name_from_class_name(&self.name);
+        self.module_name.replace(module_name);
+
+        let base_class_module_name = module_name_from_class_name(&self.base_class);
+        self.base_class_module_name.replace(base_class_module_name);
+    }
+
+    pub fn module(&self) -> &str {
+        self.module_name
+            .as_ref()
+            .expect("Module Names should have been generated.")
+    }
+
+    pub fn base_class_module(&self) -> &str {
+        self.base_class_module_name
+            .as_ref()
+            .expect("Module Names should have been generated.")
+    }
+
     /// Returns the name of the base class if `base_class` is not empty. Returns `None` otherwise.
     pub fn base_class_name(&self) -> Option<&str> {
         if self.base_class.is_empty() {
@@ -365,7 +395,7 @@ impl Ty {
                 let mut split = ty[5..].split("::");
                 let class_name = split.next().unwrap();
                 let name = format_ident!("{}", split.next().unwrap().to_camel_case());
-                let module = format_ident!("{}", class_name.to_snake_case());
+                let module = format_ident!("{}", module_name_from_class_name(&class_name));
                 // Is it a known type?
                 match Ty::from_src(&class_name) {
                     Ty::Enum(_) | Ty::Object(_) => {
@@ -375,7 +405,7 @@ impl Ty {
                 }
             }
             ty => {
-                let module = format_ident!("{}", ty.to_snake_case());
+                let module = format_ident!("{}", module_name_from_class_name(&ty));
                 let ty = format_ident!("{}", ty);
                 Ty::Object(syn::parse_quote! { crate::generated::#module::#ty })
             }
@@ -581,5 +611,133 @@ impl Ty {
                 }
             }
         }
+    }
+}
+
+pub fn module_name_from_class_name(class_name: &str) -> String {
+    // Remove underscores and make peekable
+    let mut class_chars = class_name.bytes().filter(|&ch| ch != b'_').peekable();
+
+    // 2-lookbehind
+    let mut previous: [Option<u8>; 2] = [None, None]; // previous-previous, previous
+
+    // None is not upper or number
+    #[inline(always)]
+    fn up_or_num<T>(ch: T) -> bool
+    where
+        T: Into<Option<u8>>,
+    {
+        let ch = ch.into();
+        match ch {
+            Some(ch) => ch.is_ascii_digit() || ch.is_ascii_uppercase(),
+            None => false,
+        }
+    }
+
+    // None is lowercase
+    #[inline(always)]
+    fn is_lowercase_or<'a, T>(ch: T, default: bool) -> bool
+    where
+        T: Into<Option<&'a u8>>,
+    {
+        let ch = ch.into();
+        match ch {
+            Some(ch) => ch.is_ascii_lowercase(),
+            None => default,
+        }
+    }
+
+    let mut result = Vec::with_capacity(class_name.len());
+    while let Some(current) = class_chars.next() {
+        let next = class_chars.peek();
+
+        let [two_prev, one_prev] = previous;
+
+        // See tests for cases covered
+        let caps_to_lowercase = up_or_num(one_prev)
+            && up_or_num(current)
+            && is_lowercase_or(next, false)
+            && !is_lowercase_or(&two_prev, true);
+
+        // Add an underscore for Lowercase folowed by Uppercase|Num
+        // Node2D => node_2d (numbers are considered uppercase)
+        let lower_to_uppercase = is_lowercase_or(&one_prev, false) && up_or_num(current);
+
+        if caps_to_lowercase || lower_to_uppercase {
+            result.push(b'_');
+        }
+        result.push(current.to_ascii_lowercase());
+
+        // Update the look-behind
+        previous = [previous[1], Some(current)];
+    }
+
+    let mut result = String::from_utf8(result).unwrap();
+
+    // There are a few cases where the conversions do not work:
+    // * VisualShaderNodeVec3Uniform => visual_shader_node_vec_3_uniform
+    // * VisualShaderNodeVec3Constant => visual_shader_node_vec_3_constant
+    if let Some(range) = result.find("_vec_3").map(|i| i..i + 6) {
+        result.replace_range(range, "_vec3_")
+    }
+    if let Some(range) = result.find("gd_native").map(|i| i..i + 9) {
+        result.replace_range(range, "gdnative")
+    }
+    if let Some(range) = result.find("gd_script").map(|i| i..i + 9) {
+        result.replace_range(range, "gdscript")
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn module_name_generator() {
+        let tests = vec![
+            // A number of test cases to cover some possibilities:
+            // * Underscores are removed
+            // * First character is always lowercased
+            // * lowercase to an uppercase inserts an underscore
+            //   - FooBar => foo_bar
+            // * two capital letter words does not separate the capital letters:
+            //   - FooBBaz => foo_bbaz (lower, cap, cap, lower)
+            // * many-capital letters to lowercase inserts an underscore before the last uppercase letter:
+            //   - FOOBar => boo_bar
+            // underscores
+            ("Ab_Cdefg", "ab_cdefg"),
+            ("_Abcd", "abcd"),
+            ("Abcd_", "abcd"),
+            // first and last
+            ("Abcdefg", "abcdefg"),
+            ("abcdefG", "abcdef_g"),
+            // more than 2 caps
+            ("ABCDefg", "abc_defg"),
+            ("AbcDEFg", "abc_de_fg"),
+            ("AbcdEF10", "abcd_ef10"),
+            ("AbcDEFG", "abc_defg"),
+            ("ABCDEFG", "abcdefg"),
+            ("ABC", "abc"),
+            // Lowercase to an uppercase
+            ("AbcDefg", "abc_defg"),
+            // Only 2 caps
+            ("ABcdefg", "abcdefg"),
+            ("ABcde2G", "abcde_2g"),
+            ("AbcDEfg", "abc_defg"),
+            ("ABcDe2G", "abc_de_2g"),
+            ("abcdeFG", "abcde_fg"),
+            ("AB", "ab"),
+            // Lowercase to an uppercase
+            ("AbcdefG", "abcdef_g"), // PosX => pos_x
+            // text changes
+            ("FooVec3Uni", "foo_vec3_uni"),
+            ("GDNative", "gdnative"),
+            ("GDScript", "gdscript"),
+        ];
+        tests.iter().for_each(|(class_name, expected)| {
+            let actual = module_name_from_class_name(class_name);
+            assert_eq!(*expected, actual, "Input: {}", class_name);
+        });
     }
 }

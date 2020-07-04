@@ -48,8 +48,6 @@ fn generate(
     generated_file: &mut BufWriter<File>,
     binding_res: &BindingResult,
 ) {
-    use heck::SnakeCase as _;
-
     for (class_name, code) in &binding_res.class_bindings {
         write!(
             generated_file,
@@ -60,7 +58,7 @@ fn generate(
             }}
             pub use crate::generated::{mod_name}::{class_name};
             "#,
-            mod_name = class_name.to_snake_case(),
+            mod_name = module_name_from_class_name(&class_name),
             class_name = class_name,
             content = code,
         )
@@ -76,10 +74,8 @@ fn generate(
     generated_file: &mut BufWriter<File>,
     binding_res: &BindingResult,
 ) {
-    use heck::SnakeCase as _;
-
     for (class_name, code) in &binding_res.class_bindings {
-        let mod_name = class_name.to_snake_case();
+        let mod_name = module_name_from_class_name(&class_name);
 
         let mod_path = out_path.join(format!("{}.rs", mod_name));
         let mut mod_output = BufWriter::new(File::create(&mod_path).unwrap());

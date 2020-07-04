@@ -1,4 +1,4 @@
-use gdnative::api::*;
+use gdnative::api;
 use gdnative::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::Arc;
@@ -24,14 +24,14 @@ struct Probe {
 }
 
 impl NativeClass for Probe {
-    type Base = AnimationNodeAdd2;
+    type Base = api::AnimationNodeAdd2;
     type UserData = user_data::RwLockData<Probe>;
 
     fn class_name() -> &'static str {
         "ReturnLeakProbe"
     }
 
-    fn init(_owner: &AnimationNodeAdd2) -> Probe {
+    fn init(_owner: &api::AnimationNodeAdd2) -> Probe {
         Probe { drop_count: None }
     }
 
@@ -61,7 +61,7 @@ fn test_return_leak() -> bool {
         let drop_counter = Arc::new(AtomicUsize::new(0));
 
         // The object used for its ptrcall getter
-        let animation_tree = AnimationTree::new();
+        let animation_tree = api::AnimationTree::new();
 
         // Create an instance of the probe, and drop the reference after setting the property
         // to it. After this block, the only reference should be the one in `animation_tree`.
