@@ -53,7 +53,7 @@ unsafe fn check_api_compatibility(
         } = *api;
 
         // Godot 4 is not yet supported
-        if type_ == crate::sys::GDNATIVE_API_TYPES_GDNATIVE_CORE
+        if type_ as crate::sys::GDNATIVE_API_TYPES == crate::sys::GDNATIVE_API_TYPES_GDNATIVE_CORE
             && version.major == 1
             && version.minor == 3
         {
