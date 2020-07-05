@@ -64,7 +64,7 @@ pub unsafe trait GodotObject: Sized + crate::private::godot_object::Sealed {
     /// supertype, use `upcast` instead.
     ///
     /// This method is only for conversion between engine types. To downcast to a `NativeScript`
-    //// type from its base type, see `Ref::cast_instance` and `TRef::cast_instance`.
+    /// type from its base type, see `Ref::cast_instance` and `TRef::cast_instance`.
     #[inline]
     fn cast<T>(&self) -> Option<&T>
     where
