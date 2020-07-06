@@ -64,14 +64,14 @@ macro_rules! godot_gdnative_init {
 #[macro_export]
 macro_rules! godot_gdnative_terminate {
     () => {
-        fn godot_gdnative_terminate_empty(_term_info: $crate::TerminateInfo) {}
+        fn godot_gdnative_terminate_empty(_term_info: &$crate::TerminateInfo) {}
         $crate::godot_gdnative_terminate!(godot_gdnative_terminate_empty);
     };
     ($callback:ident) => {
         $crate::godot_gdnative_terminate!($callback as godot_gdnative_terminate);
     };
     (_ as $fn_name:ident) => {
-        fn godot_gdnative_terminate_empty(_term_info: $crate::TerminateInfo) {}
+        fn godot_gdnative_terminate_empty(_term_info: &$crate::TerminateInfo) {}
         $crate::godot_gdnative_terminate!(godot_gdnative_terminate_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
@@ -87,7 +87,7 @@ macro_rules! godot_gdnative_terminate {
 
             let __result = ::std::panic::catch_unwind(|| {
                 let term_info = $crate::TerminateInfo::new(options);
-                $callback(term_info)
+                $callback(&term_info)
             });
             if __result.is_err() {
                 $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
