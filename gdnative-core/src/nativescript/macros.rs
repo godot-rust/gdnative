@@ -46,6 +46,29 @@ macro_rules! godot_nativescript_init {
     };
 }
 
+/// Declare all the API endpoints necessary to initialize a NativeScript library.
+///
+/// `godot_init!(init)` is a shorthand for:
+///
+/// ```ignore
+/// godot_gdnative_init!();
+/// godot_nativescript_init!(init);
+/// godot_gdnative_terminate!();
+/// ```
+///
+/// This declares three extern functions, named `godot_gdnative_init`,
+/// `godot_nativescript_init`, and `godot_gdnative_terminate`. If you need different prefixes
+/// to avoid name clashes when multiple GDNative libraries are linked statically, please use
+/// the respective macros directly.
+#[macro_export]
+macro_rules! godot_init {
+    ($callback:ident) => {
+        $crate::godot_gdnative_init!();
+        $crate::godot_nativescript_init!($callback);
+        $crate::godot_gdnative_terminate!();
+    };
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! godot_wrap_method_parameter_count {

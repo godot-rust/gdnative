@@ -137,10 +137,8 @@ fn init(handle: InitHandle) {
     handle.add_class::<HelloWorld>();
 }
 
-// macros that create the entry-points of the dynamic library.
-godot_gdnative_init!();
-godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+// macro that creates the entry-points of the dynamic library.
+godot_init!(init);
 ```
 
 ### Creating the NativeScript instance.

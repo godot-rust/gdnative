@@ -154,6 +154,4 @@ fn update_panel(owner: &Spatial, num_children: i64) {
     }
 }
 
-godot_gdnative_init!();
-godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+godot_init!(init);

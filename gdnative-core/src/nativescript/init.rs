@@ -8,12 +8,13 @@
 //! - [`godot_nativescript_init`](macro.godot_nativescript_init.html),
 //! - [`godot_gdnative_terminate`](macro.godot_gdnative_terminate.html),
 //!
-//! All three must be present.
+//! All three must be present. To quickly define all three endpoints using the default names,
+//! use [`godot_init`](macro.godot_init.html).
 //!
 //! ## Registering script classes
 //!
 //! To register script classes, call `InitHandle::add_class` or `InitHandle::add_tool_class`
-//! in your `godot_nativescript_init` callback:
+//! in your `godot_nativescript_init` or `godot_init` callback:
 //!
 //! ```ignore
 //! // - snip -
@@ -22,7 +23,7 @@
 //!     handle.add_class::<HelloWorld>();
 //! }
 //!
-//! godot_nativescript_init!(init);
+//! godot_init!(init);
 //!
 //! // - snip -
 //! ```
@@ -48,7 +49,8 @@ pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyU
 
 /// A handle that can register new classes to the engine during initialization.
 ///
-/// See [`godot_nativescript_init`](macro.godot_nativescript_init.html).
+/// See [`godot_nativescript_init`](macro.godot_nativescript_init.html) and
+/// [`godot_init`](macro.godot_init.html).
 #[derive(Copy, Clone)]
 pub struct InitHandle {
     #[doc(hidden)]

@@ -228,6 +228,4 @@ fn init(handle: InitHandle) {
     test_vararray_return::register(handle);
 }
 
-gdnative::godot_gdnative_init!();
-gdnative::godot_nativescript_init!(init);
-gdnative::godot_gdnative_terminate!();
+gdnative::godot_init!(init);
