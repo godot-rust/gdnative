@@ -108,6 +108,4 @@ fn init(handle: InitHandle) {
     handle.add_class::<SignalSubscriber>();
 }
 
-gdnative::godot_gdnative_init!();
-gdnative::godot_nativescript_init!(init);
-gdnative::godot_gdnative_terminate!();
+godot_init!(init);
