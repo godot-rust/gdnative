@@ -62,7 +62,7 @@
 //! - Your `NativeClass` type is a zero-sized type (ZST) that is `Copy + Default`.
 //! - You don't need to do anything special in `Drop`.
 
-use parking_lot::{Mutex, RwLock};
+use parking_lot::{Mutex, MutexGuard, RwLock};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::mem;
@@ -214,6 +214,21 @@ pub struct MutexData<T, OPT = DefaultLockPolicy> {
     _marker: PhantomData<OPT>,
 }
 
+impl<T, OPT> MutexData<T, OPT> {
+    /// Attempts to aquire a lock on the mutex according to the locking policy.
+    #[inline]
+    pub fn lock(&self) -> Result<MutexGuard<'_, T>, LockFailed>
+    where
+        OPT: LockOptions,
+    {
+        match OPT::DEADLOCK_POLICY {
+            DeadlockPolicy::Allow => Ok(self.lock.lock()),
+            DeadlockPolicy::Pessimistic => Ok(self.lock.try_lock().ok_or(LockFailed)?),
+            DeadlockPolicy::Timeout(dur) => Ok(self.lock.try_lock_for(dur).ok_or(LockFailed)?),
+        }
+    }
+}
+
 unsafe impl<T, OPT> UserData for MutexData<T, OPT>
 where
     T: NativeClass + Send,
@@ -282,12 +297,7 @@ where
     where
         F: FnOnce(&mut T) -> U,
     {
-        let mut guard = match OPT::DEADLOCK_POLICY {
-            DeadlockPolicy::Allow => self.lock.lock(),
-            DeadlockPolicy::Pessimistic => self.lock.try_lock().ok_or(LockFailed)?,
-            DeadlockPolicy::Timeout(dur) => self.lock.try_lock_for(dur).ok_or(LockFailed)?,
-        };
-
+        let mut guard = self.lock()?;
         Ok(op(&mut *guard))
     }
 }
