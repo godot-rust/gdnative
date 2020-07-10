@@ -1,3 +1,19 @@
+//! Internal API bindings generator for the godot-rust bindings.
+//!
+//! # Creating custom binding crates
+//!
+//! It's possible to create custom binding crates without forking the repository by passing
+//! custom `api.json` data to `Api::new()`. The JSON data can be generated from Godot using
+//! the following command:
+//!
+//! `/path/to/godot --gdnative-generate-json-api /path/to/api.json`
+//!
+//! *Please note that The generator is an internal dependency.* As such, it is not covered
+//! by semver guarantees of the main `gdnative` crate. When using custom binding crates, care
+//! must be taken to ensure that the version of the generator matches the one specified in
+//! the `Cargo.toml` of the `gdnative` crate exactly, even for updates that are considered
+//! non-breaking in the `gdnative` crate.
+
 use proc_macro2::TokenStream;
 
 use quote::{format_ident, quote};
