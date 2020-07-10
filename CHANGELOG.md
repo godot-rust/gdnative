@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - TBD
+
+### Added
+
+- All public functions now have the `#[inline]` attribute, improving cross-crate inlining in builds without LTO.
+
+- A curated `prelude` module is added in `gdnative` crate, containing common types and traits.
+
+- Added the `SubClass` trait, which allows for static up-casts and static validation of downcasts.
+
+- Added the `OwnedToVariant` trait and derive macro which enabled `Variant` conversion for more types.
+
+- The `NativeScript` and `#[methods]` proc-macros now report errors more accurately.
+
+- Added the `godot_init` convenience macro that declares all three endpoints for common use cases.
+
+### Changed
+
+- **The default API version is now Godot 3.2.2-stable.**
+
+- The object reference system is revamped using the typestate pattern, with semantics that model Godot behavior more accurately, allowing for clearer boundaries between safe and unsafe code.
+
+- API methods are now generic over types that can be converted to `Variant`, `GodotString`, or generated API types, removing the need for boilerplate code like `&thing.into()`.
+
+- Enums in the API are now represented more accurately as newtypes around `i64`. They are available in the same modules where their associated objects are defined.
+
+- `Dictionary` and `VariantArray` now use the typestate pattern as well.
+
+- The typed arrays are unified into a generic `TypedArray` type. The old names remain as type aliases.
+
+- Moved generated bindings into the `gdnative::api` module, making the top-level namespace easier to navigate.
+
+- It's now possible to crate custom binding crates without forking the repository using the generator, since `gdnative_bindings_generator::Api::new` now takes JSON input as an argument.
+
+- Separated core wrappers and NativeScript support into the `core_types` and `nativescript` modules.
+
+- Cleaned up the public interface with regards to intended usage. The public API no longer uses `gdnative-sys` types.
+
+- The `new_ref` method is now in a `NewRef` trait.
+
+- High-level wrappers are added for `godot_gdnative_init` and `godot_gdnative_terminate` callback arguments.
+
+- Improved source links on docs.rs.
+
+- `bindgen` is updated to 0.54.0.
+
+- `euclid` is updated to 0.20.13.
+
+- Improved build time performance.
+
+### Removed
+
+- Removed deprecated items from the public interface in 0.8.1.
+
+- Removed `gdnative-sys` types from the public interface. `gdnative-sys` is considered an internal dependency starting from 0.9.
+
+- Removed the `Object` and `Reference` wrappers from `gdnative-core`. The same types are available in `gdnative-bindings`.
+
+- Removed generated bindings for virtual methods, since they cannot actually be called.
+
+### Fixed
+
+- Fixed typos in variant names of `VariantOperator` and `GodotError`.
+
+- `StringName::from_str` now returns `Self` correctly.
+
+- Fixed a case of undefined behavior that may manifest as crashes when some specific methods that return `VariantArray` are called.
+
+- Fixed an issue with platform headers when building on Windows with the `gnu` toolchain that prevented compilation.
+
+- Macros can now be used with qualified imports, removing the need for `#[macro_use]`.
+
 ## [0.8.1] - 2020-05-31
 
 ### Added
