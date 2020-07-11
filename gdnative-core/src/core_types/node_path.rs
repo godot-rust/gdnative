@@ -92,7 +92,9 @@ impl NodePath {
         }
     }
 
-    /// Returns the `NodePath` as a `GodotString`
+    /// Returns the `NodePath` as a [`GodotString`]
+    ///
+    /// [`GodotString`]: ../struct.GodotString.html
     #[inline]
     pub fn to_godot_string(&self) -> GodotString {
         unsafe { GodotString((get_api().godot_node_path_as_string)(&self.0)) }

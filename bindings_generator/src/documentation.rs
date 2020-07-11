@@ -72,8 +72,12 @@ only exist in the unsafe `Ref<{name}>` form.
 
 In the cases where Rust code owns an object of this type, for example if the object was just
 created on the Rust side and not passed to the engine yet, ownership should be either given
-to the engine or the object must be manually destroyed using `Ptr::free`, or `Ptr::queue_free`
-if it is a `Node`."#,
+to the engine or the object must be manually destroyed using [`Ref::free`], or [`Ref::queue_free`] 
+if it is a [`Node`].
+
+[`Node`]: struct.Node.html
+[`Ref::free`]: ../prelude/struct.Ref.html#method.free
+[`Ref::queue_free`]: ../prelude/struct.Ref.html#method.queue_free"#,
             name = class.name
         )
     } else {
@@ -114,11 +118,14 @@ This class is used to interact with Godot's editor."#
 
 All types in the Godot API have "interior mutability" in Rust parlance.
 To enforce that the official [thread-safety guidelines][thread-safety] are
-followed, the typestate pattern is used in the `Ref` and `TRef` smart pointers,
-and the `Instance` API. The typestate `Access` in these types tracks whether the
+followed, the typestate pattern is used in the [`Ref`] and [`TRef`] smart pointers,
+and the [`Instance`] API. The typestate `Access` in these types tracks whether the
 access is unique, shared, or exclusive to the current thread. For more information,
-see the type-level documentation on `Ref`.
+see the type-level documentation on [`Ref`].
 
+[`Ref`]: ../prelude/struct.Ref.html
+[`TRef`]: ../prelude/struct.TRef.html
+[`Instance`]: ../prelude/struct.Instance.html
 [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html"#;
 
     quote! {

@@ -233,70 +233,112 @@ type Bool = bool;
 
 impl Variant {
     variant_constructors!(
-        /// Creates a `Variant` wrapping a `Vector2`.
+        /// Creates a `Variant` wrapping a [`Vector2`].
+        ///
+        /// [`Vector2`]: ../type.Vector2.html
         #[inline]
         pub fn from_vector2(&Vector2) -> Self;
-        /// Creates a `Variant` wrapping a `Vector3`.
+        /// Creates a `Variant` wrapping a [`Vector3`].
+        ///
+        /// [`Vector3`]: ../type.Vector3.html
         #[inline]
         pub fn from_vector3(&Vector3) -> Self;
-        /// Creates a `Variant` wrapping a `Quat`.
+        /// Creates a `Variant` wrapping a [`Quat`].
+        ///
+        /// [`Quat`]: ../type.Quat.html
         #[inline]
         pub fn from_quat(&Quat) -> Self;
-        /// Creates a `Variant` wrapping a `Plane`.
+        /// Creates a `Variant` wrapping a [`Plane`].
+        ///
+        /// [`Plane`]: ../../prelude/struct.Plane.html
         #[inline]
         pub fn from_plane(&Plane) -> Self;
-        /// Creates a `Variant` wrapping a `Rect2`.
+        /// Creates a `Variant` wrapping a [`Rect2`].
+        ///
+        /// [`Rect2`]: ../type.Rect2.html
         #[inline]
         pub fn from_rect2(&Rect2) -> Self;
-        /// Creates a `Variant` wrapping a `Transform`.
+        /// Creates a `Variant` wrapping a [`Transform`].
+        ///
+        /// [`Transform`]: ../../prelude/struct.Transform.html
         #[inline]
         pub fn from_transform(&Transform) -> Self;
-        /// Creates a `Variant` wrapping a `Transform2D`.
+        /// Creates a `Variant` wrapping a [`Transform2D`].
+        ///
+        /// [`Transform2D`]: ../type.Transform2D.html
         #[inline]
         pub fn from_transform2d(&Transform2D) -> Self;
-        /// Creates a `Variant` wrapping a `Basis`.
+        /// Creates a `Variant` wrapping a [`Basis`].
+        ///
+        /// [`Basis`]: ../../prelude/struct.Basis.html
         #[inline]
         pub fn from_basis(&Basis) -> Self;
-        /// Creates a `Variant` wrapping a `Color`.
+        /// Creates a `Variant` wrapping a [`Color`].
+        ///
+        /// [`Color`]: ../../prelude/struct.Color.html
         #[inline]
         pub fn from_color(&Color) -> Self;
-        /// Creates a `Variant` wrapping an `Aabb`.
+        /// Creates a `Variant` wrapping an [`Aabb`].
+        ///
+        /// [`Aabb`]: ../../prelude/struct.Aabb.html
         #[inline]
         pub fn from_aabb(&Aabb) -> Self;
-        /// Creates a `Variant` wrapping an `Rid`.
+        /// Creates a `Variant` wrapping an [`Rid`].
+        ///
+        /// [`Rid`]: ../../prelude/struct.Rid.html
         #[inline]
         pub fn from_rid(&Rid) -> Self;
-        /// Creates a `Variant` wrapping a `NodePath`.
+        /// Creates a `Variant` wrapping a [`NodePath`].
+        ///
+        /// [`NodePath`]: ../../prelude/struct.NodePath.html
         #[inline]
         pub fn from_node_path(&NodePath) -> Self;
-        /// Creates a `Variant` wrapping a `GodotString`.
+        /// Creates a `Variant` wrapping a [`GodotString`].
+        ///
+        /// [`GodotString`]: ../../prelude/struct.GodotString.html
         #[inline]
         pub fn from_godot_string(&GodotString) -> Self;
         /// Creates an `Variant` wrapping an array of variants.
         #[inline]
         pub fn from_array(&VariantArray<Shared>) -> Self;
-        /// Creates a `Variant` wrapping a byte array.
+        /// Creates a `Variant` wrapping a byte array ([`ByteArray`]).
+        ///
+        /// [`ByteArray`]: ../type.ByteArray.html
         #[inline]
         pub fn from_byte_array(&ByteArray) -> Self;
-        /// Creates a `Variant` wrapping an array of 32bit signed integers.
+        /// Creates a `Variant` wrapping an array of 32bit signed integers ([`Int32Array`]).
+        ///
+        /// [`Int32Array`]: ../type.Int32Array.html
         #[inline]
         pub fn from_int32_array(&Int32Array) -> Self;
-        /// Creates a `Variant` wrapping an array of 32bit floats.
+        /// Creates a `Variant` wrapping an array of 32bit floats ([`Float32Array`]).
+        ///
+        /// [`Float32Array`]: ../type.Float32Array.html
         #[inline]
         pub fn from_float32_array(&Float32Array) -> Self;
-        /// Creates a `Variant` wrapping an array of godot strings.
+        /// Creates a `Variant` wrapping an array of godot strings ([`StringArray`]).
+        ///
+        /// [`StringArray`]: ../type.StringArray.html
         #[inline]
         pub fn from_string_array(&StringArray) -> Self;
-        /// Creates a `Variant` wrapping an array of 2d vectors.
+        /// Creates a `Variant` wrapping an array of 2d vectors ([`Vector2Array`]).
+        ///
+        /// [`Vector2Array`]: ../type.Vector2Array.html
         #[inline]
         pub fn from_vector2_array(&Vector2Array) -> Self;
-        /// Creates a `Variant` wrapping an array of 3d vectors.
+        /// Creates a `Variant` wrapping an array of 3d vectors ([`Vector3Array`]).
+        ///
+        /// [`Vector3Array`]: ../type.Vector3Array.html
         #[inline]
         pub fn from_vector3_array(&Vector3Array) -> Self;
-        /// Creates a `Variant` wrapping an array of colors.
+        /// Creates a `Variant` wrapping an array of colors ([`ColorArray`]).
+        ///
+        /// [`ColorArray`]: ../type.ColorArray.html
         #[inline]
         pub fn from_color_array(&ColorArray) -> Self;
         /// Creates a `Variant` wrapping a dictionary.
+        ///
+        /// [`Dictionary`]: ../../prelude/struct.Dictionary.html
         #[inline]
         pub fn from_dictionary(&Dictionary<Shared>) -> Self;
     );
@@ -331,7 +373,9 @@ impl Variant {
         }
     }
 
-    /// Creates a `Variant` wrapping a Godot object.
+    /// Creates a `Variant` wrapping a [`GodotObject`].
+    ///
+    /// [`GodotObject`]: ../../trait.GodotObject.html
     #[inline]
     pub fn from_object<R>(val: R) -> Variant
     where
@@ -1658,7 +1702,9 @@ impl<T: FromVariant> FromVariant for Option<T> {
     }
 }
 
-/// Wrapper type around a `FromVariant` result that may not be a success
+/// Wrapper type around a [`FromVariant`] result that may not be a success
+///
+/// [`FromVariant`]: ../../prelude/trait.FromVariant.html
 #[derive(Clone, Debug)]
 pub struct MaybeNot<T>(Result<T, Variant>);
 

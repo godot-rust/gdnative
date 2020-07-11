@@ -17,10 +17,10 @@ use std::fmt;
 
 use crate::thread_access::*;
 
-/// A reference-counted `Dictionary` of `Variant` key-value pairs.
+/// A reference-counted `Dictionary` of [`Variant`] key-value pairs.
 ///
-/// Generic methods on this type performs `Variant` conversion every time. This could
-/// be significant for complex structures. Users may convert arguments to `Variant`s before
+/// Generic methods on this type performs [`Variant`] conversion every time. This could
+/// be significant for complex structures. Users may convert arguments to [`Variant`]s before
 /// calling to avoid this behavior if necessary.
 ///
 /// # Safety
@@ -33,6 +33,7 @@ use crate::thread_access::*;
 /// safe.
 ///
 /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
+/// [`Variant`]: ../struct.Variant.html
 pub struct Dictionary<Access: ThreadAccess = Shared> {
     sys: sys::godot_dictionary,
 
@@ -113,7 +114,9 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     /// The returned reference is invalidated if the same container is mutated through another
     /// reference.
     ///
-    /// `Variant` is reference-counted and thus cheaply cloned. Consider using `get` instead.
+    /// `Variant` is reference-counted and thus cheaply cloned. Consider using [`get`] instead.
+    ///
+    /// [`get`]: #method.get
     #[inline]
     pub unsafe fn get_ref<K>(&self, key: K) -> &Variant
     where
@@ -286,9 +289,11 @@ impl<Access: NonUniqueThreadAccess> Dictionary<Access> {
     ///
     /// It isn't thread-safe to perform operations that change the container
     /// size from multiple threads at the same time.
-    /// Creating multiple `Unique` references to the same collections, or
+    /// Creating multiple [`Unique`] references to the same collections, or
     /// violating the thread-safety guidelines in non-Rust code will cause
     /// undefined behavior.
+    ///
+    /// [`Unique`]: ../../prelude/struct.Unique.html
     #[inline]
     pub unsafe fn assume_unique(self) -> Dictionary<Unique> {
         self.cast_access()

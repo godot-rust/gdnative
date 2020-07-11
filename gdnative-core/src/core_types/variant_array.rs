@@ -282,9 +282,11 @@ impl<Access: NonUniqueThreadAccess> VariantArray<Access> {
     ///
     /// It isn't thread-safe to perform operations that change the container
     /// size from multiple threads at the same time.
-    /// Creating multiple `Unique` references to the same collections, or
+    /// Creating multiple [`Unique`] references to the same collections, or
     /// violating the thread-safety guidelines in non-Rust code will cause
     /// undefined behavior.
+    ///
+    /// [`Unique`]: ../../prelude/struct.Unique.html
     #[inline]
     pub unsafe fn assume_unique(self) -> VariantArray<Unique> {
         self.cast_access()
