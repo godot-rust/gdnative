@@ -72,7 +72,7 @@ only exist in the unsafe `Ref<{name}>` form.
 
 In the cases where Rust code owns an object of this type, for example if the object was just
 created on the Rust side and not passed to the engine yet, ownership should be either given
-to the engine or the object must be manually destroyed using `Ptr::free`, or `Ptr::queue_free`
+to the engine or the object must be manually destroyed using `Ref::free`, or `Ref::queue_free`
 if it is a `Node`."#,
             name = class.name
         )
