@@ -19,8 +19,8 @@ is *not* automatically managed.
 
 Immediately after creation, the object is owned by the caller, and can be
 passed to the engine (in which case the engine will be responsible for
-destroying the object) or destroyed manually using `Ptr::free`, or preferably
-`Ptr::queue_free` if it is a `Node`."#
+destroying the object) or destroyed manually using `Ref::free`, or preferably
+`Ref::queue_free` if it is a `Node`."#
     };
 
     quote! {
