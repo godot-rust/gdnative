@@ -5,7 +5,8 @@ pub use gdnative_core::core_types::{
     VariantOperator, VariantType, Vector2, Vector2Array, Vector3, Vector3Array,
 };
 pub use gdnative_core::core_types::{
-    FromVariant, OwnedToVariant, ToVariant, Vector2Godot, Vector3Godot,
+    FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq, Vector2Godot,
+    Vector3Godot,
 };
 
 pub use gdnative_core::object::{
