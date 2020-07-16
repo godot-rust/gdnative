@@ -4,16 +4,19 @@
 /// single unique reference.
 ///
 /// Using this marker causes the type to be `!Sync`.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Unique(std::marker::PhantomData<*const ()>);
 unsafe impl Send for Unique {}
 
 /// Marker that indicates that a value currently might be shared in the same or
 /// over multiple threads.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Shared;
 
 /// Marker that indicates that a value can currently only be shared in the same thread.
 ///
 /// Using this marker causes the type to be `!Send + !Sync`.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ThreadLocal(std::marker::PhantomData<*const ()>);
 
 /// Trait to parametrise over the access markers [`Unique`](struct.Unique.html),
