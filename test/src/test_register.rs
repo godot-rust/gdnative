@@ -67,12 +67,12 @@ impl NativeClass for RegisterProperty {
 #[methods]
 impl RegisterProperty {
     #[export]
-    fn set_value(&mut self, _owner: &Reference, value: i64) {
+    fn set_value(&mut self, _owner: TRef<Reference>, value: i64) {
         self.value = value;
     }
 
     #[export]
-    fn get_value(&self, _owner: &Reference) -> i64 {
+    fn get_value(&self, _owner: TRef<Reference>) -> i64 {
         self.value
     }
 }
