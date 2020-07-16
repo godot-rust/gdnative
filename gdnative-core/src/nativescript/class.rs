@@ -63,7 +63,7 @@ pub trait NativeClass: Sized + 'static {
     ///
     /// This function has a reference to the owner object as a parameter, which can be used to
     /// set state on the owner upon creation or to query values
-    fn init(owner: &Self::Base) -> Self;
+    fn init(owner: TRef<'_, Self::Base, Shared>) -> Self;
 
     /// Register any exported properties to Godot.
     #[inline]

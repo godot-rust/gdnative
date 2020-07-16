@@ -20,7 +20,7 @@ impl NativeClass for VariantCallArgs {
     fn class_name() -> &'static str {
         "VariantCallArgs"
     }
-    fn init(_owner: &Reference) -> VariantCallArgs {
+    fn init(_owner: TRef<Reference>) -> VariantCallArgs {
         VariantCallArgs
     }
     fn register_properties(_builder: &ClassBuilder<Self>) {}

@@ -123,7 +123,7 @@ impl InitHandle {
                     };
 
                     let val = match panic::catch_unwind(AssertUnwindSafe(|| {
-                        C::init(C::Base::cast_ref(owner))
+                        C::init(TRef::new(C::Base::cast_ref(owner)))
                     })) {
                         Ok(val) => val,
                         Err(_) => {

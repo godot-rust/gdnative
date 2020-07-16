@@ -22,7 +22,7 @@ impl NativeClass for RegisterSignal {
     fn class_name() -> &'static str {
         "RegisterSignal"
     }
-    fn init(_owner: &Reference) -> RegisterSignal {
+    fn init(_owner: TRef<Reference>) -> RegisterSignal {
         RegisterSignal
     }
     fn register_properties(builder: &ClassBuilder<Self>) {
@@ -51,7 +51,7 @@ impl NativeClass for RegisterProperty {
     fn class_name() -> &'static str {
         "RegisterProperty"
     }
-    fn init(_owner: &Reference) -> RegisterProperty {
+    fn init(_owner: TRef<Reference>) -> RegisterProperty {
         RegisterProperty { value: 42 }
     }
     fn register_properties(builder: &ClassBuilder<Self>) {
