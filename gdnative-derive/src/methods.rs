@@ -28,6 +28,8 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
     let output = {
         let class_name = export.class_ty;
 
+        let builder = syn::Ident::new("builder", proc_macro2::Span::call_site());
+
         let methods = export
             .methods
             .into_iter()
@@ -83,7 +85,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                             fn #name ( #( #args )* ) -> #ret_ty
                         );
 
-                        builder.add_method(#name_string, method);
+                        #builder.add_method(#name_string, method);
                     }
                 )
             })
@@ -95,7 +97,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
 
             impl gdnative::nativescript::NativeClassMethods for #class_name {
 
-                fn register(builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
+                fn register(#builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
                     use gdnative::nativescript::init::*;
 
                     #(#methods)*
