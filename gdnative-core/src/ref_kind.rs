@@ -3,9 +3,11 @@
 use crate::object::RefKindSpec;
 
 /// Marker that indicates that a type is manually managed.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ManuallyManaged;
 
 /// Marker that indicates that a type is reference-counted.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct RefCounted;
 
 /// Trait to parameterize over the memory management markers
