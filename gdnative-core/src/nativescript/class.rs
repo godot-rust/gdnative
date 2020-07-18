@@ -358,6 +358,23 @@ impl<T: NativeClass> Instance<T, Shared> {
     }
 }
 
+impl<T: NativeClass> Instance<T, Shared>
+where
+    T::Base: GodotObject<RefKind = ManuallyManaged>,
+{
+    /// Returns `true` if the pointer currently points to a valid object of the correct type.
+    /// **This does NOT guarantee that it's safe to use this pointer.**
+    ///
+    /// # Safety
+    ///
+    /// This thread must have exclusive access to the object during the call.
+    #[inline]
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    pub unsafe fn is_instance_sane(&self) -> bool {
+        self.owner.is_instance_sane()
+    }
+}
+
 impl<T: NativeClass> Instance<T, Unique>
 where
     T::Base: GodotObject<RefKind = ManuallyManaged>,
