@@ -58,8 +58,8 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                     #name_str
                 }
 
-                fn init(owner: &Self::Base) -> Self {
-                    Self::new(owner)
+                fn init(owner: ::gdnative::TRef<Self::Base>) -> Self {
+                    Self::new(::gdnative::nativescript::OwnerArg::from_safe_ref(owner))
                 }
 
                 fn register_properties(builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {

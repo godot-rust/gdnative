@@ -14,21 +14,15 @@ pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<Bar>();
 }
 
+#[derive(NativeClass)]
+#[inherit(Node)]
 struct Bar(i64, Option<Arc<AtomicUsize>>);
 
-impl NativeClass for Bar {
-    type Base = Node;
-    type UserData = user_data::RwLockData<Bar>;
-    fn class_name() -> &'static str {
-        "Bar"
-    }
-    fn init(_owner: &Node) -> Bar {
+impl Bar {
+    fn new(_owner: TRef<Node>) -> Self {
         Bar(42, None)
     }
-    fn register_properties(_builder: &ClassBuilder<Self>) {}
-}
 
-impl Bar {
     fn set_drop_counter(&mut self, counter: Arc<AtomicUsize>) {
         self.1 = Some(counter);
     }

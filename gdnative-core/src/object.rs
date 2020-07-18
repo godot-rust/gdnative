@@ -830,7 +830,7 @@ impl<'a, T: GodotObject, Access: ThreadAccess> Borrow<T> for TRef<'a, T, Access>
 }
 
 impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
-    fn new(obj: &'a T) -> Self {
+    pub(crate) fn new(obj: &'a T) -> Self {
         TRef {
             obj,
             _marker: PhantomData,

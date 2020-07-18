@@ -101,32 +101,24 @@ fn test_underscore_method_binding() -> bool {
     ok
 }
 
+#[derive(NativeClass)]
+#[inherit(Reference)]
 struct Foo(i64);
 
-impl NativeClass for Foo {
-    type Base = Reference;
-    type UserData = user_data::ArcData<Foo>;
-    fn class_name() -> &'static str {
-        "Foo"
-    }
-    fn init(_owner: &Reference) -> Foo {
+impl Foo {
+    fn new(_owner: TRef<Reference>) -> Foo {
         Foo(42)
     }
-    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
+#[derive(NativeClass)]
+#[inherit(Reference)]
 struct NotFoo;
 
-impl NativeClass for NotFoo {
-    type Base = Reference;
-    type UserData = user_data::ArcData<NotFoo>;
-    fn class_name() -> &'static str {
-        "NotFoo"
-    }
-    fn init(_owner: &Reference) -> NotFoo {
+impl NotFoo {
+    fn new(_owner: &Reference) -> NotFoo {
         NotFoo
     }
-    fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 #[methods]

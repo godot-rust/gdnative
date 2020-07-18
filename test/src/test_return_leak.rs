@@ -31,7 +31,7 @@ impl NativeClass for Probe {
         "ReturnLeakProbe"
     }
 
-    fn init(_owner: &api::AnimationNodeAdd2) -> Probe {
+    fn init(_owner: TRef<api::AnimationNodeAdd2>) -> Probe {
         Probe { drop_count: None }
     }
 
