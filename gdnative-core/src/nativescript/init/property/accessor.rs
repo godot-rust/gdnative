@@ -71,8 +71,12 @@ pub struct Mut;
 /// Helper trait for setters, generic over `self` argument mutability.
 pub trait MapSet<C: NativeClass, F, T> {
     type Err: Debug;
-    fn map_set(user_data: &C::UserData, op: &F, owner: TRef<C::Base>, value: T)
-        -> Result<(), Self::Err>;
+    fn map_set(
+        user_data: &C::UserData,
+        op: &F,
+        owner: TRef<C::Base>,
+        value: T,
+    ) -> Result<(), Self::Err>;
 }
 
 impl<C, F, T> MapSet<C, F, T> for Shr
@@ -119,7 +123,8 @@ pub struct Ref;
 /// Helper trait for setters, generic over `self` argument mutability and return kind.
 pub trait MapGet<C: NativeClass, F, T> {
     type Err: Debug;
-    fn map_get(user_data: &C::UserData, op: &F, owner: TRef<C::Base>) -> Result<Variant, Self::Err>;
+    fn map_get(user_data: &C::UserData, op: &F, owner: TRef<C::Base>)
+        -> Result<Variant, Self::Err>;
 }
 
 impl<C, F, T> MapGet<C, F, T> for (Shr, Owned)
@@ -131,7 +136,11 @@ where
 {
     type Err = <C::UserData as Map>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: TRef<C::Base>) -> Result<Variant, Self::Err> {
+    fn map_get(
+        user_data: &C::UserData,
+        op: &F,
+        owner: TRef<C::Base>,
+    ) -> Result<Variant, Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -145,7 +154,11 @@ where
 {
     type Err = <C::UserData as Map>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: TRef<C::Base>) -> Result<Variant, Self::Err> {
+    fn map_get(
+        user_data: &C::UserData,
+        op: &F,
+        owner: TRef<C::Base>,
+    ) -> Result<Variant, Self::Err> {
         user_data.map(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -159,7 +172,11 @@ where
 {
     type Err = <C::UserData as MapMut>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: TRef<C::Base>) -> Result<Variant, Self::Err> {
+    fn map_get(
+        user_data: &C::UserData,
+        op: &F,
+        owner: TRef<C::Base>,
+    ) -> Result<Variant, Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
@@ -173,7 +190,11 @@ where
 {
     type Err = <C::UserData as MapMut>::Err;
     #[inline]
-    fn map_get(user_data: &C::UserData, op: &F, owner: TRef<C::Base>) -> Result<Variant, Self::Err> {
+    fn map_get(
+        user_data: &C::UserData,
+        op: &F,
+        owner: TRef<C::Base>,
+    ) -> Result<Variant, Self::Err> {
         user_data.map_mut(|rust_ty| op(rust_ty, owner).to_variant())
     }
 }
