@@ -91,6 +91,10 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 
 ## Third-party resources
 
+### Open-source projects
+
+- Pong - https://github.com/you-win/godot-pong-rust
+
 Several third-party resources have been created for the bindings. However, most of them are not updated for 0.9. If you have updated yours, open a PR to let us know!
 
 <details><summary>Outdated resources for godot-rust 0.8</summary>
@@ -105,7 +109,6 @@ Several third-party resources have been created for the bindings. However, most 
 
 ### Open-source projects
 
-- Pong - https://github.com/you-win/godot-pong-rust
 - Air Combat - https://github.com/paytonrules/AirCombat - The end result of the porting tutorial by @paytonrules.
 
 ### Utilities
