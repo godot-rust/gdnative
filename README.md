@@ -94,6 +94,7 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 ### Open-source projects
 
 - Pong - https://github.com/you-win/godot-pong-rust
+- Air Combat - https://github.com/paytonrules/AirCombat - This [Godot Tutorial](https://devga.me/tutorials/godot2d/) ported to Rust.
 
 Several third-party resources have been created for the bindings. However, most of them are not updated for 0.9. If you have updated yours, open a PR to let us know!
 
@@ -106,10 +107,6 @@ Several third-party resources have been created for the bindings. However, most 
 - Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
 - Writup/Tutorial on how to port GDScript to Rust - [Porting Godot Games to Rust](https://paytonrules.com/post/games-in-rust-with-godot-part-one/)
 - Guide and sample CI powered multi-platform Rust/GDNative based boilerplate project - https://github.com/tommywalkie/sample-godot-rust-app
-
-### Open-source projects
-
-- Air Combat - https://github.com/paytonrules/AirCombat - The end result of the porting tutorial by @paytonrules.
 
 ### Utilities
 
