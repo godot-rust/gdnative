@@ -14,7 +14,7 @@ use crate::object::{
 use crate::object::{GodotObject, Instanciable};
 use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted};
-use crate::thread_access::{Shared, ThreadAccess, ThreadLocal, Unique};
+use crate::thread_access::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 
 /// Trait used for describing and initializing a Godot script class.
 ///
@@ -498,6 +498,20 @@ impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access> {
     ) -> Self {
         let script = T::UserData::clone_from_user_data_unchecked(user_data);
         RefInstance { owner, script }
+    }
+}
+
+impl<'a, T: NativeClass, Access: NonUniqueThreadAccess> RefInstance<'a, T, Access> {
+    /// Persists this into a persistent `Instance` with the same thread access, without cloning
+    /// the userdata wrapper.
+    ///
+    /// This is only available for non-`Unique` accesses.
+    #[inline]
+    pub fn claim(self) -> Instance<T, Access> {
+        Instance {
+            owner: self.owner.claim(),
+            script: self.script,
+        }
     }
 }
 
