@@ -201,8 +201,22 @@ impl LockOptions for DefaultLockPolicy {
 }
 
 /// Error indicating that a lock wasn't obtained.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct LockFailed;
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum LockFailed {
+    Pessimistic,
+    Timeout(Duration),
+}
+
+impl std::fmt::Display for LockFailed {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LockFailed::Timeout(wait) => write!(f, "Failed to acquire lock within {:?}", wait),
+            LockFailed::Pessimistic => write!(f, "Failed to acquire lock, it was already held."),
+        }
+    }
+}
+impl std::error::Error for LockFailed {}
 
 /// User-data wrapper encapsulating a `Arc<Mutex<T>>`.
 ///
@@ -284,8 +298,11 @@ where
     {
         let mut guard = match OPT::DEADLOCK_POLICY {
             DeadlockPolicy::Allow => self.lock.lock(),
-            DeadlockPolicy::Pessimistic => self.lock.try_lock().ok_or(LockFailed)?,
-            DeadlockPolicy::Timeout(dur) => self.lock.try_lock_for(dur).ok_or(LockFailed)?,
+            DeadlockPolicy::Pessimistic => self.lock.try_lock().ok_or(LockFailed::Pessimistic)?,
+            DeadlockPolicy::Timeout(dur) => self
+                .lock
+                .try_lock_for(dur)
+                .ok_or(LockFailed::Timeout(dur))?,
         };
 
         Ok(op(&mut *guard))
@@ -366,8 +383,11 @@ where
     {
         let guard = match OPT::DEADLOCK_POLICY {
             DeadlockPolicy::Allow => self.lock.read(),
-            DeadlockPolicy::Pessimistic => self.lock.try_read().ok_or(LockFailed)?,
-            DeadlockPolicy::Timeout(dur) => self.lock.try_read_for(dur).ok_or(LockFailed)?,
+            DeadlockPolicy::Pessimistic => self.lock.try_read().ok_or(LockFailed::Pessimistic)?,
+            DeadlockPolicy::Timeout(dur) => self
+                .lock
+                .try_read_for(dur)
+                .ok_or(LockFailed::Timeout(dur))?,
         };
 
         Ok(op(&*guard))
@@ -388,8 +408,11 @@ where
     {
         let mut guard = match OPT::DEADLOCK_POLICY {
             DeadlockPolicy::Allow => self.lock.write(),
-            DeadlockPolicy::Pessimistic => self.lock.try_write().ok_or(LockFailed)?,
-            DeadlockPolicy::Timeout(dur) => self.lock.try_write_for(dur).ok_or(LockFailed)?,
+            DeadlockPolicy::Pessimistic => self.lock.try_write().ok_or(LockFailed::Pessimistic)?,
+            DeadlockPolicy::Timeout(dur) => self
+                .lock
+                .try_write_for(dur)
+                .ok_or(LockFailed::Timeout(dur))?,
         };
 
         Ok(op(&mut *guard))
@@ -493,6 +516,22 @@ mod local_cell {
         },
         BorrowFailed,
     }
+
+    impl std::fmt::Display for LocalCellError {
+        #[inline]
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                LocalCellError::DifferentThread { original, current } => write!(
+                    f,
+                    "Accessing from the wrong thread, expected {:?} found {:?}",
+                    original, current
+                ),
+                LocalCellError::BorrowFailed => write!(f, "Borrow Failed"),
+            }
+        }
+    }
+
+    impl std::error::Error for LocalCellError {}
 
     impl<T> LocalCell<T> {
         #[inline]
