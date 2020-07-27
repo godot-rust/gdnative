@@ -174,7 +174,7 @@ fn parse_derive_input(input: TokenStream) -> Result<DeriveData, TokenStream> {
 
             if let Some(builder) = property_args {
                 let ident = field.ident.clone().ok_or_else(|| {
-                    syn::Error::new(field.ident.span(), "Fileds should be named").to_compile_error()
+                    syn::Error::new(field.ident.span(), "Fields should be named").to_compile_error()
                 })?;
                 properties.insert(ident, builder.done());
             }
