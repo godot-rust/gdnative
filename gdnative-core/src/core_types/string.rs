@@ -432,7 +432,7 @@ where
 }
 
 godot_test!(test_string {
-    use crate::core_types::{GodotString, Variant, VariantType};
+    use crate::core_types::{GodotString, Variant, VariantType, ToVariant};
 
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
@@ -444,7 +444,7 @@ godot_test!(test_string {
     let variant = Variant::from_godot_string(&foo);
     assert!(variant.get_type() == VariantType::GodotString);
 
-    let variant2: Variant = "foo".into();
+    let variant2: Variant = "foo".to_variant();
     assert!(variant == variant2);
 
     if let Some(foo_variant) = variant.try_to_godot_string() {
