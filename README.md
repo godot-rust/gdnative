@@ -42,7 +42,7 @@ crate-type = ["cdylib"]
 
 ### Other versions or custom builds
 
-The bindings are currently generated from the API description of Godot 3.2.2-stable by default. To use the bindings with another version or a custom build, see [Using custom builds of Godot](advanced-guides/custom-bindings.html) in the user guide.
+The bindings are currently generated from the API description of Godot 3.2.2-stable by default. To use the bindings with another version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-bindings.html) in the user guide.
 
 ## Example
 
