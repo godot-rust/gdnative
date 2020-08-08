@@ -21,6 +21,8 @@ pub trait Vector2Godot {
     fn tangent(self) -> Self;
     /// Returns `self` moved towards `to` by the distance `delta`, clamped by `to`.
     fn move_towards(self, to: Vector2, delta: f32) -> Self;
+    /// Returns the vector scaled to unit length.
+    fn normalized(self) -> Self;
     /// Returns the normalized vector pointing from this vector to `other`.
     fn direction_to(self, other: Vector2) -> Vector2;
     /// Returns the distance to `other`.
@@ -107,6 +109,15 @@ impl Vector2Godot for Vector2 {
             to
         } else {
             Vector2::lerp(self, to, delta / len)
+        }
+    }
+
+    #[inline]
+    fn normalized(self) -> Self {
+        let option = Vector2::try_normalize(self);
+        match option {
+            None => Vector2::zero(),
+            Some(vector2) => vector2,
         }
     }
 
