@@ -12,6 +12,7 @@ members = [
     "examples/scene_create",
     "examples/signals",
     "examples/dodge_the_creeps",
+    "examples/resource",
     "impl/proc_macros"
 ]
 
