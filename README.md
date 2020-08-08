@@ -88,6 +88,7 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - [/examples/spinning_cube/](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
 - [/examples/scene_create](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
 - [/examples/signals](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
+- [/examples/resource](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Shows you how to create and use resources.
 
 ## Third-party resources
 
