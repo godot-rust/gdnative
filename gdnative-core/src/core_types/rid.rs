@@ -43,7 +43,10 @@ impl Rid {
 
     #[doc(hidden)]
     #[inline]
-    pub fn sys(self) -> *const sys::godot_rid {
+    // Passing `self` by value will create a temporary copy, changing the value of the resulting
+    // pointer. See https://github.com/godot-rust/godot-rust/issues/562.
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    pub fn sys(&self) -> *const sys::godot_rid {
         &self.0
     }
 
