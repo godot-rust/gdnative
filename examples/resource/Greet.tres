@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=3 format=2]
+
+[ext_resource path="res://resource_library.gdnlib" type="GDNativeLibrary" id=1]
+
+[sub_resource type="NativeScript" id=1]
+class_name = "GreetingResource"
+library = ExtResource( 1 )
+
+[resource]
+script = SubResource( 1 )
+name = null

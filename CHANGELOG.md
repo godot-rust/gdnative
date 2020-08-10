@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the `godot_init` convenience macro that declares all three endpoints for common use cases.
 
+- Added resource example.
+
 ### Changed
 
 - **The default API version is now Godot 3.2.2-stable.**
@@ -205,7 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allow the `methods` procedural macro to generate a description of exported
   methods.
 
-- The generated class bindings are stored in a single crate again and use the 
+- The generated class bindings are stored in a single crate again and use the
   `Deref` trait to implement inheritance.
 
 ### Removed
