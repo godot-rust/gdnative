@@ -96,6 +96,8 @@ impl GodotString {
         pub fn to_uppercase(&self) -> Self : godot_string_to_upper;
         pub fn get_file(&self) -> Self : godot_string_get_file;
         pub fn get_base_dir(&self) -> Self : godot_string_get_base_dir;
+        pub fn get_basename(&self) -> Self : godot_string_get_basename;
+        pub fn get_extension(&self) -> Self : godot_string_get_extension;
         pub fn simplify_path(&self) -> Self : godot_string_simplify_path;
         pub fn sha256_text(&self) -> Self : godot_string_sha256_text;
         pub fn md5_text(&self) -> Self : godot_string_md5_text;
