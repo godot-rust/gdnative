@@ -17,6 +17,8 @@ formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_fil
 gd_test = ["gdnative-core/gd_test"]
 bindings = ["gdnative-bindings"]
 
+no_profiling = []
+
 [dependencies]
 gdnative-derive = { path = "../gdnative-derive", version = "=0.9.0-preview.0" }
 gdnative-core = { path = "../gdnative-core", version = "=0.9.0-preview.0" }
