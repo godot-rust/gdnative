@@ -40,7 +40,7 @@ impl Profiler {
 
     #[cfg(feature = "no_profiling")]
     #[inline]
-    pub fn new(name: &'static str) -> Self {
+    pub fn new(_name: &'static str) -> Self {
         Profiler
     }
 }
