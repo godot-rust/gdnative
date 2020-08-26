@@ -21,6 +21,15 @@ pub trait Vector2Godot {
     fn tangent(self) -> Self;
     /// Returns `self` moved towards `to` by the distance `delta`, clamped by `to`.
     fn move_towards(self, to: Vector2, delta: f32) -> Self;
+    /// Returns the normalized vector pointing from this vector to `other`.
+    fn direction_to(self, other: Vector2) -> Vector2;
+    /// Returns the distance to `other`.
+    fn distance_to(self, other: Vector2) -> f32;
+    /// Returns the squared distance to `other`.
+    ///
+    /// This method runs faster than distance_to, so prefer it if you need to compare vectors or
+    /// need the squared distance for some formula.
+    fn distance_squared_to(self, other: Vector2) -> f32;
     /// Internal API for converting to `sys` representation. Makes it possible to remove
     /// `transmute`s elsewhere.
     #[doc(hidden)]
@@ -99,6 +108,21 @@ impl Vector2Godot for Vector2 {
         } else {
             Vector2::lerp(&self, to, delta / len)
         }
+    }
+
+    #[inline]
+    fn direction_to(self, other: Vector2) -> Vector2 {
+        (other - self).normalize()
+    }
+
+    #[inline]
+    fn distance_to(self, other: Vector2) -> f32 {
+        (other - self).length()
+    }
+
+    #[inline]
+    fn distance_squared_to(self, other: Vector2) -> f32 {
+        (other - self).square_length()
     }
 
     #[inline]
