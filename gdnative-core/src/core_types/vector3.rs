@@ -15,6 +15,17 @@ pub enum Axis {
 pub trait Vector3Godot {
     /// Internal API for converting to `sys` representation. Makes it possible to remove
     /// `transmute`s elsewhere.
+
+    /// Returns the normalized vector pointing from this vector to `other`.
+    fn direction_to(self, other: Vector3) -> Vector3;
+    /// Returns the distance to `other`.
+    fn distance_to(self, other: Vector3) -> f32;
+    /// Returns the squared distance to `other`.
+    ///
+    /// This method runs faster than distance_to, so prefer it if you need to compare vectors or
+    /// need the squared distance for some formula.
+    fn distance_squared_to(self, other: Vector3) -> f32;
+
     #[doc(hidden)]
     fn to_sys(self) -> sys::godot_vector3;
     /// Internal API for converting to `sys` representation. Makes it possible to remove
@@ -28,6 +39,21 @@ pub trait Vector3Godot {
 }
 
 impl Vector3Godot for Vector3 {
+    #[inline]
+    fn direction_to(self, other: Vector3) -> Vector3 {
+        (other - self).normalize()
+    }
+
+    #[inline]
+    fn distance_to(self, other: Vector3) -> f32 {
+        (other - self).length()
+    }
+
+    #[inline]
+    fn distance_squared_to(self, other: Vector3) -> f32 {
+        (other - self).square_length()
+    }
+
     #[inline]
     fn to_sys(self) -> sys::godot_vector3 {
         unsafe { std::mem::transmute(self) }

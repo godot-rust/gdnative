@@ -38,6 +38,16 @@ impl Color {
         unsafe { (get_api().godot_color_get_v)(self.sys()) }
     }
 
+    #[inline]
+    pub fn lerp(&self, other: Color, weight: f32) -> Color {
+        Color {
+            r: self.r + (weight * (other.r - self.r)),
+            g: self.g + (weight * (other.g - self.g)),
+            b: self.b + (weight * (other.b - self.b)),
+            a: self.a + (weight * (other.a - self.a)),
+        }
+    }
+
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> &sys::godot_color {
