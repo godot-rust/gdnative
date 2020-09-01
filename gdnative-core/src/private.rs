@@ -79,6 +79,12 @@ pub fn get_api() -> &'static sys::GodotApi {
     unsafe { GODOT_API.as_ref().unwrap_or_else(|| std::process::abort()) }
 }
 
+/// Returns a reference to the current API struct if it is bounds, or `None` otherwise.
+#[inline]
+pub(crate) fn try_get_api() -> Option<&'static sys::GodotApi> {
+    unsafe { GODOT_API.as_ref() }
+}
+
 /// Returns whether the API is bound.
 ///
 /// This is intended to be an internal interface.

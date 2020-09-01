@@ -9,11 +9,47 @@ use proc_macro::TokenStream;
 
 mod methods;
 mod native_script;
+mod profiled;
 mod variant;
 
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     methods::derive_methods(meta, input)
+}
+
+/// Makes a function profiled in Godot's built-in profiler. This macro automatically
+/// creates a tag using the name of the current module and the function by default.
+///
+/// This attribute may also be used on non-exported functions. If the GDNative API isn't
+/// initialized when the function is called, the data will be ignored silently.
+///
+/// A custom tag can also be provided using the `tag` option.
+///
+/// See the `gdnative::nativescript::profiling` for a lower-level API to the profiler with
+/// more control.
+///
+/// # Examples
+///
+/// ```ignore
+/// mod foo {
+///     // This function will show up as `foo/bar` under Script Functions.
+///     #[gdnative::profiled]
+///     fn bar() {
+///         std::thread::sleep(std::time::Duration::from_millis(1));
+///     }
+/// }
+/// ```
+///
+/// ```ignore
+/// // This function will show up as `my_custom_tag` under Script Functions.
+/// #[gdnative::profiled(tag = "my_custom_tag")]
+/// fn baz() {
+///     std::thread::sleep(std::time::Duration::from_millis(1));
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
+    profiled::derive_profiled(meta, input)
 }
 
 #[proc_macro_derive(
