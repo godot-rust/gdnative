@@ -1161,6 +1161,8 @@ impl fmt::Display for FromVariantError {
     }
 }
 
+impl std::error::Error for FromVariantError {}
+
 impl<T: ToVariant> OwnedToVariant for T {
     #[inline]
     fn owned_to_variant(self) -> Variant {
