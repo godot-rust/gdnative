@@ -36,12 +36,22 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                 None
             };
 
+            let update_config_warning_on_set_snippet = match config.update_config_warning_on_set {
+                true => quote!(
+                    _owner.upcast::<Node>().update_configuration_warning();
+                ),
+                false => quote!(),
+            };
+
             let label = config.path.unwrap_or_else(|| format!("{}", ident));
             quote!({
                 builder.add_property(#label)
                     #with_default
                     .with_ref_getter(|this: &#name, _| &this.#ident)
-                    .with_setter(|this: &mut #name, _, v| this.#ident = v)
+                    .with_setter(|this: &mut #name, _owner: ::gdnative::TRef<Self::Base>, v| {
+                        this.#ident = v;
+                        #update_config_warning_on_set_snippet
+                    })
                     .done();
             })
         });
@@ -154,6 +164,8 @@ fn parse_derive_input(input: TokenStream) -> Result<DeriveData, TokenStream> {
                         for arg in &nested {
                             if let NestedMeta::Meta(Meta::NameValue(ref pair)) = arg {
                                 attr_args_builder.extend(std::iter::once(pair));
+                            } else if let NestedMeta::Meta(Meta::Path(ref path)) = arg {
+                                attr_args_builder.extend(std::iter::once(path));
                             } else {
                                 let msg = format!("Unexpected argument: {:?}", arg);
                                 return Err(syn::Error::new(arg.span(), msg)

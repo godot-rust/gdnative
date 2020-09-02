@@ -1,12 +1,15 @@
+#[derive(Debug)]
 pub struct PropertyAttrArgs {
     pub path: Option<String>,
     pub default: Option<syn::Lit>,
+    pub update_config_warning_on_set: bool,
 }
 
 #[derive(Default)]
 pub struct PropertyAttrArgsBuilder {
     path: Option<String>,
     default: Option<syn::Lit>,
+    update_config_warning_on_set: bool,
 }
 
 impl<'a> Extend<&'a syn::MetaNameValue> for PropertyAttrArgsBuilder {
@@ -37,7 +40,33 @@ impl<'a> Extend<&'a syn::MetaNameValue> for PropertyAttrArgsBuilder {
                         panic!("there is already a path set: {:?}", old);
                     }
                 }
+                "update_config_warning_on_set" => {
+                    panic!("Found it.");
+                }
                 _ => panic!("unexpected argument: {}", &name),
+            }
+        }
+    }
+}
+
+impl<'a> Extend<&'a syn::Path> for PropertyAttrArgsBuilder {
+    fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = &'a syn::Path>,
+    {
+        for path in iter.into_iter() {
+            let name = path
+                .get_ident()
+                .expect("should be single identifier")
+                .to_string();
+            match name.as_str() {
+                "update_config_warning_on_set" => {
+                    if self.update_config_warning_on_set {
+                        panic!("The \"update_config_warning_on_set\" property modifier was used more than once.");
+                    }
+                    self.update_config_warning_on_set = true;
+                }
+                _ => panic!("Unexpected argument: {}", &name),
             }
         }
     }
@@ -48,6 +77,7 @@ impl PropertyAttrArgsBuilder {
         PropertyAttrArgs {
             path: self.path,
             default: self.default,
+            update_config_warning_on_set: self.update_config_warning_on_set,
         }
     }
 }
