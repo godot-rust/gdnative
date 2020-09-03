@@ -155,6 +155,22 @@ impl CallError {
     }
 }
 
+impl std::fmt::Display for CallError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use CallError::*;
+        match self {
+            InvalidMethod => write!(f, "invalid method"),
+            InvalidArgument => write!(f, "invalid argument"),
+            TooManyArguments => write!(f, "too many arguments"),
+            TooFewArguments => write!(f, "too few arguments"),
+            InstanceIsNull => write!(f, "instance is null"),
+        }
+    }
+}
+
+impl std::error::Error for CallError {}
+
 /// Godot variant operator kind.
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
