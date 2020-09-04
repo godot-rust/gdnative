@@ -1,4 +1,4 @@
-// use gdnative::*;
+use gdnative::api::Object;
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
@@ -6,11 +6,18 @@ pub(crate) fn run_tests() -> bool {
 
     status &= test_derive_to_variant();
     status &= test_derive_owned_to_variant();
+    status &= test_derive_nativeclass_with_property();
+    status &= test_derive_nativeclass_with_property_before_get();
+    status &= test_derive_nativeclass_with_property_after_get();
+    status &= test_derive_nativeclass_with_property_before_set();
+    status &= test_derive_nativeclass_with_property_after_set();
 
     status
 }
 
-pub(crate) fn register(_handle: InitHandle) {}
+pub(crate) fn register(handle: InitHandle) {
+    handle.add_class::<PropertyHooks>();
+}
 
 fn test_derive_to_variant() -> bool {
     println!(" -- test_derive_to_variant");
@@ -156,6 +163,184 @@ fn test_derive_owned_to_variant() -> bool {
 
     if !ok {
         gdnative::godot_error!("   !! Test test_derive_owned_to_variant failed");
+    }
+
+    ok
+}
+
+#[derive(gdnative::NativeClass)]
+#[inherit(Node)]
+struct PropertyHooks {
+    #[property(before_set = "Self::before_get")]
+    before_get_bool: bool,
+    #[property(after_set = "Self::after_get")]
+    after_get_bool: bool,
+    #[property(before_set = "Self::before_set")]
+    before_set_bool: bool,
+    #[property(after_set = "Self::after_set")]
+    after_set_bool: bool,
+
+    pub before_get_calls: u32,
+    pub after_get_calls: u32,
+    pub before_set_calls: u32,
+    pub after_set_calls: u32,
+}
+
+#[gdnative_derive::methods]
+impl PropertyHooks {
+    fn new(_owner: &Node) -> Self {
+        Self {
+            before_get_bool: false,
+            after_get_bool: false,
+            before_set_bool: false,
+            after_set_bool: false,
+            before_get_calls: 0,
+            after_get_calls: 0,
+            before_set_calls: 0,
+            after_set_calls: 0,
+        }
+    }
+
+    fn before_get(&mut self, _owner: TRef<Node, Shared>) {
+        self.before_get_calls += 1;
+    }
+
+    fn after_get(&mut self, _owner: TRef<Node, Shared>) {
+        self.after_get_calls += 1;
+    }
+
+    fn before_set(&mut self, _owner: TRef<Node, Shared>) {
+        self.before_set_calls += 1;
+    }
+
+    fn after_set(&mut self, _owner: TRef<Node, Shared>) {
+        self.after_set_calls += 1;
+    }
+}
+
+fn test_derive_nativeclass_with_property() -> bool {
+    println!(" -- test_derive_nativeclass_with_property");
+
+    #[derive(gdnative::NativeClass)]
+    #[inherit(Node)]
+    struct PropertyHooks {
+        #[property]
+        pub simple_bool: bool,
+    }
+    impl PropertyHooks {
+        fn new(_owner: &Node) -> Self {
+            Self { simple_bool: false }
+        }
+    }
+
+    let ok = std::panic::catch_unwind(|| {
+        let owner = Node::new();
+        let class = PropertyHooks::new(&owner);
+        assert_eq!(class.simple_bool, false);
+    })
+    .is_ok();
+
+    if !ok {
+        gdnative::godot_error!("   !! Test test_derive_nativeclass_with_property failed");
+    }
+
+    ok
+}
+
+fn test_derive_nativeclass_with_property_hooks(
+    set_function: fn(Ref<Object, Unique>) -> Ref<Object, Unique>,
+    expected_counts: &[u32; 4],
+) -> bool {
+    std::panic::catch_unwind(|| {
+        use gdnative::nativescript::user_data::Map;
+
+        let thing = Instance::<PropertyHooks, _>::new();
+        let (owner, script) = thing.decouple();
+        let owner = set_function(owner.upcast::<Object>());
+        script
+            .map(|script| {
+                assert_eq!(script.before_get_calls, expected_counts[0]);
+                assert_eq!(script.after_get_calls, expected_counts[1]);
+                assert_eq!(script.before_set_calls, expected_counts[2]);
+                assert_eq!(script.after_set_calls, expected_counts[3]);
+            })
+            .unwrap();
+        owner.free();
+    })
+    .is_ok()
+}
+
+fn test_derive_nativeclass_with_property_before_get() -> bool {
+    println!(" -- test_derive_nativeclass_with_property_before_get");
+
+    let ok = test_derive_nativeclass_with_property_hooks(
+        |owner| {
+            owner.set("before_get_bool", true);
+            owner
+        },
+        &[1, 0, 0, 0],
+    );
+
+    if !ok {
+        gdnative::godot_error!(
+            "   !! Test test_derive_nativeclass_with_property_before_get failed"
+        );
+    }
+
+    ok
+}
+
+fn test_derive_nativeclass_with_property_after_get() -> bool {
+    println!(" -- test_derive_nativeclass_with_property_after_get");
+
+    let ok = test_derive_nativeclass_with_property_hooks(
+        |owner| {
+            owner.set("after_get_bool", true);
+            owner
+        },
+        &[0, 1, 0, 0],
+    );
+
+    if !ok {
+        gdnative::godot_error!("   !! Test test_derive_nativeclass_with_property_after_get failed");
+    }
+
+    ok
+}
+
+fn test_derive_nativeclass_with_property_before_set() -> bool {
+    println!(" -- test_derive_nativeclass_with_property_before_set");
+
+    let ok = test_derive_nativeclass_with_property_hooks(
+        |owner| {
+            owner.set("before_set_bool", true);
+            owner
+        },
+        &[0, 0, 1, 0],
+    );
+
+    if !ok {
+        gdnative::godot_error!(
+            "   !! Test test_derive_nativeclass_with_property_before_set failed"
+        );
+    }
+
+    ok
+}
+
+fn test_derive_nativeclass_with_property_after_set() -> bool {
+    println!(" -- test_derive_nativeclass_with_property_after_set");
+
+    let ok = test_derive_nativeclass_with_property_hooks(
+        |owner| {
+            owner.set("after_set_bool", true);
+            owner
+        },
+        &[0, 0, 0, 1],
+    );
+
+    if !ok {
+        gdnative::godot_error!("   !! Test test_derive_nativeclass_with_property_after_set failed");
     }
 
     ok
