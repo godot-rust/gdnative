@@ -24,8 +24,8 @@
 //!
 //! ```ignore
 //! #[derive(NativeClass)]
-//! #[inherit(gdnative::Node)]
-//! #[user_data(gdnative::user_data::MutexData<HelloWorld>)]
+//! #[inherit(gdnative::api::Node)]
+//! #[user_data(gdnative::nativescript::user_data::MutexData<HelloWorld>)]
 //! struct HelloWorld;
 //! ```
 //!
