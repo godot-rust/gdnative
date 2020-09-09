@@ -106,7 +106,7 @@ impl Vector2Godot for Vector2 {
         if len <= delta || approx::abs_diff_eq!(0.0, len) {
             to
         } else {
-            Vector2::lerp(&self, to, delta / len)
+            Vector2::lerp(self, to, delta / len)
         }
     }
 
