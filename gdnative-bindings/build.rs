@@ -15,7 +15,8 @@ fn main() {
     let icalls_rs = out_path.join("icalls.rs");
 
     let api = Api::new(&api_data);
-    let binding_res = generate_bindings(&api);
+    let docs = GodotXMLDocs::new("docs");
+    let binding_res = generate_bindings(&api, Some(&docs));
 
     {
         let mut output = BufWriter::new(File::create(&generated_rs).unwrap());
