@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ImageTexture" inherits="Texture2D" version="4.0">
+	<brief_description>
+		A [Texture2D] based on an [Image].
+	</brief_description>
+	<description>
+		A [Texture2D] based on an [Image]. Can be created from an [Image] with [method create_from_image].
+		[b]Note:[/b] The maximum image size is 16384×16384 pixels due to graphics hardware limitations. Larger images will fail to import.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="create_from_image">
+			<return type="void">
+			</return>
+			<argument index="0" name="image" type="Image">
+			</argument>
+			<description>
+				Create a new [ImageTexture] from an [Image].
+			</description>
+		</method>
+		<method name="get_format" qualifiers="const">
+			<return type="int" enum="Image.Format">
+			</return>
+			<description>
+				Returns the format of the [ImageTexture], one of [enum Image.Format].
+			</description>
+		</method>
+		<method name="set_size_override">
+			<return type="void">
+			</return>
+			<argument index="0" name="size" type="Vector2">
+			</argument>
+			<description>
+				Resizes the [ImageTexture] to the specified dimensions.
+			</description>
+		</method>
+		<method name="update">
+			<return type="void">
+			</return>
+			<argument index="0" name="image" type="Image">
+			</argument>
+			<argument index="1" name="immediate" type="bool" default="false">
+			</argument>
+			<description>
+				Replaces the texture's data with a new [code]image[/code]. If [code]immediate[/code] is [code]true[/code], it will take effect immediately after the call.
+			</description>
+		</method>
+	</methods>
+	<constants>
+	</constants>
+</class>

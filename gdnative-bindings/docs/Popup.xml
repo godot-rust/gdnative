@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Popup" inherits="Window" version="4.0">
+	<brief_description>
+		Base container control for popups and dialogs.
+	</brief_description>
+	<description>
+		Popup is a base [Control] used to show dialogs and popups. It's a subwindow and modal by default (see [Control]) and has helpers for custom popup behavior.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+	</methods>
+	<members>
+		<member name="borderless" type="bool" setter="set_flag" getter="get_flag" override="true" default="true" />
+		<member name="transient" type="bool" setter="set_transient" getter="is_transient" override="true" default="true" />
+		<member name="unresizable" type="bool" setter="set_flag" getter="get_flag" override="true" default="true" />
+		<member name="visible" type="bool" setter="set_visible" getter="is_visible" override="true" default="false" />
+		<member name="wrap_controls" type="bool" setter="set_wrap_controls" getter="is_wrapping_controls" override="true" default="true" />
+	</members>
+	<signals>
+		<signal name="popup_hide">
+			<description>
+				Emitted when a popup is hidden.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+	</constants>
+</class>
