@@ -42,15 +42,15 @@ impl GodotXMLDocs {
             .find(|node| node.tag_name().name() == "class")
         {
             if let Some(class_name) = class.attribute("name") {
-                let members_node = class
-                    .descendants()
-                    .find(|node| node.tag_name().name() == "members");
-                self.parse_members(class_name, members_node);
-
                 let methods_node = class
                     .descendants()
                     .find(|node| node.tag_name().name() == "methods");
                 self.parse_methods(class_name, methods_node);
+
+                let members_node = class
+                    .descendants()
+                    .find(|node| node.tag_name().name() == "members");
+                self.parse_members(class_name, members_node);
             }
         }
     }
@@ -61,10 +61,10 @@ impl GodotXMLDocs {
                 if node.tag_name().name() == "member" {
                     if let Some(desc) = node.text() {
                         if let Some(func) = node.attribute("setter") {
-                            self.add_fn(class, func, desc);
+                            self.add_fn(class, func, desc, &[]);
                         }
                         if let Some(func) = node.attribute("getter") {
-                            self.add_fn(class, func, desc);
+                            self.add_fn(class, func, desc, &[]);
                         }
                     }
                 }
@@ -84,19 +84,53 @@ impl GodotXMLDocs {
 
     fn parse_method(&mut self, class: &str, method: Node) {
         if let Some(method_name) = method.attribute("name") {
+            let default_args = method
+                .descendants()
+                .filter_map(|node| {
+                    if node.tag_name().name() == "argument" {
+                        let key = node
+                            .attribute("name")
+                            .expect("expecting argument tags to have name attribute");
+                        node.attribute("default").map(|val| (key, val))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<(&str, &str)>>();
+
             if let Some(desc_node) = method
                 .descendants()
                 .find(|node| node.tag_name().name() == "description")
             {
                 if let Some(desc) = desc_node.text() {
-                    self.add_fn(class, method_name, desc);
+                    self.add_fn(class, method_name, desc, default_args.as_slice());
                 }
             }
         }
     }
 
-    fn add_fn(&mut self, class: &str, method: &str, desc: &str) {
+    fn add_fn(&mut self, class: &str, method: &str, desc: &str, default_args: &[(&str, &str)]) {
+        let doc = desc.trim();
+
+        if doc.is_empty() && default_args.is_empty() {
+            return;
+        }
+
+        let mut doc = if !doc.is_empty() {
+            format!("```text\n{}\n```\n", doc)
+        } else {
+            String::new()
+        };
+
+        if !default_args.is_empty() {
+            doc.push_str("\n# Default Arguments");
+
+            for arg in default_args {
+                doc.push_str(format!("\n* `{}` - `{}`", arg.0, arg.1).as_str());
+            }
+        }
+
         self.class_fn_desc
-            .insert((class.into(), method.into()), desc.trim().into());
+            .insert((class.into(), method.into()), doc);
     }
 }
