@@ -220,9 +220,9 @@ pub type ScriptMethodFn = unsafe extern "C" fn(
 pub enum RpcMode {
     Disabled,
     Remote,
-    Sync,
-    Mater,
-    Slave,
+    RemoteSync,
+    Master,
+    Puppet,
 }
 
 pub struct ScriptMethodAttributes {
@@ -249,9 +249,16 @@ impl<C: NativeClass> ClassBuilder<C> {
     #[inline]
     pub fn add_method_advanced(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
-        let attr = sys::godot_method_attributes {
-            rpc_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
+
+        let rpc = match method.attributes.rpc_mode {
+            RpcMode::Master => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTER,
+            RpcMode::Remote => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTE,
+            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_SLAVE,
+            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_SYNC,
+            RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
         };
+
+        let attr = sys::godot_method_attributes { rpc_type: rpc };
 
         let method_desc = sys::godot_instance_method {
             method: method.method_ptr,
@@ -271,13 +278,19 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     #[inline]
-    pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
+    pub fn add_method(&self, name: &str, method: ScriptMethodFn, rpc: &str) {
+        let rpc_mode = match rpc {
+            "remote" => RpcMode::Remote,
+            "remotesync" => RpcMode::RemoteSync,
+            "master" => RpcMode::Master,
+            "puppet" => RpcMode::Puppet,
+            _ => RpcMode::Disabled,
+        };
+
         self.add_method_advanced(ScriptMethod {
             name,
             method_ptr: Some(method),
-            attributes: ScriptMethodAttributes {
-                rpc_mode: RpcMode::Disabled,
-            },
+            attributes: ScriptMethodAttributes { rpc_mode: rpc_mode },
             method_data: ptr::null_mut(),
             free_func: None,
         });

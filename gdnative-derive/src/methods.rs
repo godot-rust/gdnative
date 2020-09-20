@@ -12,6 +12,7 @@ pub(crate) struct ClassMethodExport {
 pub(crate) struct ExportMethod {
     pub(crate) sig: Signature,
     pub(crate) args: ExportArgs,
+    pub(crate) rpc: String,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -33,7 +34,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
         let methods = export
             .methods
             .into_iter()
-            .map(|ExportMethod { sig, args }| {
+            .map(|ExportMethod { sig, args, rpc }| {
                 let sig_span = sig.ident.span();
 
                 let name = sig.ident;
@@ -85,7 +86,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                             fn #name ( #( #args )* ) -> #ret_ty
                         );
 
-                        #builder.add_method(#name_string, method);
+                        #builder.add_method(#name_string, method, #rpc);
                     }
                 )
             })
@@ -153,6 +154,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
+                let mut rpc = "disabled";
 
                 let mut errors = vec![];
 
@@ -218,7 +220,12 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     }
                                 };
 
-                                for MetaNameValue { path, .. } in pairs {
+                                for MetaNameValue {
+                                    path,
+                                    eq_token: _,
+                                    lit,
+                                } in pairs
+                                {
                                     let last = match path.segments.last() {
                                         Some(val) => val,
                                         None => {
@@ -229,9 +236,58 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             return false;
                                         }
                                     };
-                                    let unexpected = last.ident.to_string();
-                                    let msg =
-                                        format!("unknown option for export: `{}`", unexpected);
+                                    let path = last.ident.to_string();
+
+                                    // Match rpc mode
+                                    match path.as_str() {
+                                        "rpc" => {
+                                            let value = if let syn::Lit::Str(lit_str) = lit {
+                                                lit_str.value()
+                                            } else {
+                                                errors.push(syn::Error::new(
+                                                    last.span(),
+                                                    "unexpected type for rpc value, expected Str",
+                                                ));
+                                                return false;
+                                            };
+
+                                            match value.as_str() {
+                                                "remote" => {
+                                                    rpc = "remote";
+                                                    return false;
+                                                }
+                                                "remotesync" => {
+                                                    rpc = "remotesync";
+                                                    return false;
+                                                }
+                                                "master" => {
+                                                    rpc = "master";
+                                                    return false;
+                                                }
+                                                "puppet" => {
+                                                    rpc = "puppet";
+                                                    return false;
+                                                }
+                                                "disabled" => {
+                                                    rpc = "disabled";
+                                                    return false;
+                                                }
+                                                _ => {
+                                                    errors.push(syn::Error::new(
+                                                        last.span(),
+                                                        format!(
+                                                            "unexpected value for rpc: {}",
+                                                            value
+                                                        ),
+                                                    ));
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                        _ => (),
+                                    }
+
+                                    let msg = format!("unknown option for export: `{}`", path);
                                     errors.push(syn::Error::new(last.span(), msg));
                                 }
                             }
@@ -287,6 +343,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
                         args: export_args,
+                        rpc: rpc.to_string(),
                     });
                 }
 
