@@ -223,6 +223,8 @@ pub enum RpcMode {
     RemoteSync,
     Master,
     Puppet,
+    MasterSync,
+    PuppetSync,
 }
 
 pub struct ScriptMethodAttributes {
@@ -256,6 +258,8 @@ impl<C: NativeClass> ClassBuilder<C> {
             RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_SLAVE,
             RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_SYNC,
             RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
+            RpcMode::MasterSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTERSYNC,
+            RpcMode::PuppetSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPETSYNC,
         };
 
         let attr = sys::godot_method_attributes { rpc_type: rpc };
@@ -284,6 +288,8 @@ impl<C: NativeClass> ClassBuilder<C> {
             "remotesync" => RpcMode::RemoteSync,
             "master" => RpcMode::Master,
             "puppet" => RpcMode::Puppet,
+            "puppetsync" => RpcMode::PuppetSync,
+            "mastersync" => RpcMode::MasterSync,
             _ => RpcMode::Disabled,
         };
 

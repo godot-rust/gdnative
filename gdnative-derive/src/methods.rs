@@ -272,6 +272,14 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                                     rpc = "disabled";
                                                     return false;
                                                 }
+                                                "mastersync" => {
+                                                    rpc = "mastersync";
+                                                    return false;
+                                                }
+                                                "puppetsync" => {
+                                                    rpc = "puppetsync";
+                                                    return false;
+                                                }
                                                 _ => {
                                                     errors.push(syn::Error::new(
                                                         last.span(),
