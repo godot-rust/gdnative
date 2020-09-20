@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AudioServer" inherits="Object" version="4.0">
+<class name="AudioServer" inherits="Object" version="3.2">
 	<brief_description>
 		Server interface for low-level audio access.
 	</brief_description>
@@ -7,7 +7,7 @@
 		[AudioServer] is a low-level server interface for audio access. It is in charge of creating sample data (playable audio) as well as its playback via a voice interface.
 	</description>
 	<tutorials>
-		<link title="Audio buses">https://docs.godotengine.org/en/latest/tutorials/audio/audio_buses.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/audio/audio_buses.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_bus">
@@ -107,7 +107,7 @@
 		<method name="get_bus_index" qualifiers="const">
 			<return type="int">
 			</return>
-			<argument index="0" name="bus_name" type="StringName">
+			<argument index="0" name="bus_name" type="String">
 			</argument>
 			<description>
 				Returns the index of the bus with the name [code]bus_name[/code].
@@ -145,7 +145,7 @@
 			</description>
 		</method>
 		<method name="get_bus_send" qualifiers="const">
-			<return type="StringName">
+			<return type="String">
 			</return>
 			<argument index="0" name="bus_idx" type="int">
 			</argument>
@@ -341,7 +341,7 @@
 			</return>
 			<argument index="0" name="bus_idx" type="int">
 			</argument>
-			<argument index="1" name="send" type="StringName">
+			<argument index="1" name="send" type="String">
 			</argument>
 			<description>
 				Connects the output of the bus at [code]bus_idx[/code] to the bus named [code]send[/code].

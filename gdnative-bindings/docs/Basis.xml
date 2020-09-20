@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Basis" version="4.0">
+<class name="Basis" version="3.2">
 	<brief_description>
 		3×3 matrix datatype.
 	</brief_description>
@@ -10,8 +10,8 @@
 		For more information, read the "Matrices and transforms" documentation article.
 	</description>
 	<tutorials>
-		<link title="Matrices and transforms">https://docs.godotengine.org/en/latest/tutorials/math/matrices_and_transforms.html</link>
-		<link title="Using 3D transforms">https://docs.godotengine.org/en/latest/tutorials/3d/using_transforms.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/matrices_and_transforms.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/3d/using_transforms.html</link>
 	</tutorials>
 	<methods>
 		<method name="Basis">

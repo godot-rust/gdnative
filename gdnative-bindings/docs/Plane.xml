@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Plane" version="4.0">
+<class name="Plane" version="3.2">
 	<brief_description>
 		Plane in hessian form.
 	</brief_description>
@@ -7,7 +7,7 @@
 		Plane represents a normalized plane equation. Basically, "normal" is the normal of the plane (a,b,c normalized), and "d" is the distance from the origin to the plane (in the direction of "normal"). "Over" or "Above" the plane is considered the side of the plane towards where the normal is pointing.
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
 	</tutorials>
 	<methods>
 		<method name="Plane">
@@ -63,6 +63,14 @@
 			</argument>
 			<description>
 				Returns the shortest distance from the plane to the position [code]point[/code].
+			</description>
+		</method>
+		<method name="get_any_point">
+			<return type="Vector3">
+			</return>
+			<description>
+				Returns the center of the plane.
+				This method is deprecated, please use [method center] instead.
 			</description>
 		</method>
 		<method name="has_point">

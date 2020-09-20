@@ -1,49 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Texture3D" inherits="Texture" version="4.0">
+<class name="Texture3D" inherits="TextureLayered" version="3.2">
 	<brief_description>
+		Texture with 3 dimensions.
 	</brief_description>
 	<description>
+		Texture3D is a 3-dimensional texture that has a width, height, and depth.
 	</description>
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_data" qualifiers="const">
-			<return type="Image[]">
-			</return>
-			<description>
-			</description>
-		</method>
-		<method name="get_depth" qualifiers="const">
-			<return type="int">
-			</return>
-			<description>
-			</description>
-		</method>
-		<method name="get_format" qualifiers="const">
-			<return type="int" enum="Image.Format">
-			</return>
-			<description>
-			</description>
-		</method>
-		<method name="get_height" qualifiers="const">
-			<return type="int">
-			</return>
-			<description>
-			</description>
-		</method>
-		<method name="get_width" qualifiers="const">
-			<return type="int">
-			</return>
-			<description>
-			</description>
-		</method>
-		<method name="has_mipmaps" qualifiers="const">
-			<return type="bool">
-			</return>
-			<description>
-			</description>
-		</method>
 	</methods>
+	<members>
+		<member name="data" type="Dictionary" setter="_set_data" getter="_get_data" override="true" default="{&quot;depth&quot;: 0,&quot;flags&quot;: 4,&quot;format&quot;: 37,&quot;height&quot;: 0,&quot;layers&quot;: [  ],&quot;width&quot;: 0}" />
+	</members>
 	<constants>
 	</constants>
 </class>

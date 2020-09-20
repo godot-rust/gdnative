@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ConfigFile" inherits="Reference" version="4.0">
+<class name="ConfigFile" inherits="Reference" version="3.2">
 	<brief_description>
 		Helper class to handle INI-style files.
 	</brief_description>
@@ -8,7 +8,7 @@
 		[codeblock]
 		[section]
 		some_key=42
-		string_example="Hello World3D!"
+		string_example="Hello World!"
 		a_vector=Vector3( 1, 0, 2 )
 		[/codeblock]
 		The stored data can be saved to or parsed from a file, though ConfigFile objects can also be used directly without accessing the filesystem.
@@ -52,7 +52,7 @@
 			</description>
 		</method>
 		<method name="get_section_keys" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<argument index="0" name="section" type="String">
 			</argument>
@@ -61,7 +61,7 @@
 			</description>
 		</method>
 		<method name="get_sections" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns an array of all defined section identifiers.
@@ -115,7 +115,7 @@
 			</return>
 			<argument index="0" name="path" type="String">
 			</argument>
-			<argument index="1" name="key" type="PackedByteArray">
+			<argument index="1" name="key" type="PoolByteArray">
 			</argument>
 			<description>
 				Loads the encrypted config file specified as a parameter, using the provided [code]key[/code] to decrypt it. The file's contents are parsed and loaded in the [ConfigFile] object which the method was called on.
@@ -159,7 +159,7 @@
 			</return>
 			<argument index="0" name="path" type="String">
 			</argument>
-			<argument index="1" name="key" type="PackedByteArray">
+			<argument index="1" name="key" type="PoolByteArray">
 			</argument>
 			<description>
 				Saves the contents of the [ConfigFile] object to the AES-256 encrypted file specified as a parameter, using the provided [code]key[/code] to encrypt it. The output file uses an INI-style structure.

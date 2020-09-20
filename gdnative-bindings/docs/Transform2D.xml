@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Transform2D" version="4.0">
+<class name="Transform2D" version="3.2">
 	<brief_description>
 		2D transformation (2×3 matrix).
 	</brief_description>
@@ -8,7 +8,7 @@
 		For more information, read the "Matrices and transforms" documentation article.
 	</description>
 	<tutorials>
-		<link title="Matrices and transforms">https://docs.godotengine.org/en/latest/tutorials/math/matrices_and_transforms.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/matrices_and_transforms.html</link>
 	</tutorials>
 	<methods>
 		<method name="Transform2D">
@@ -160,7 +160,7 @@
 			<argument index="0" name="v" type="Variant">
 			</argument>
 			<description>
-				Transforms the given [Vector2], [Rect2], or [PackedVector2Array] by this transform.
+				Transforms the given [Vector2], [Rect2], or [PoolVector2Array] by this transform.
 			</description>
 		</method>
 		<method name="xform_inv">
@@ -169,7 +169,7 @@
 			<argument index="0" name="v" type="Variant">
 			</argument>
 			<description>
-				Inverse-transforms the given [Vector2], [Rect2], or [PackedVector2Array] by this transform.
+				Inverse-transforms the given [Vector2], [Rect2], or [PoolVector2Array] by this transform.
 			</description>
 		</method>
 	</methods>

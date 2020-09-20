@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="String" version="4.0">
+<class name="String" version="3.2">
 	<brief_description>
 		Built-in string class.
 	</brief_description>
@@ -7,7 +7,7 @@
 		This is the built-in string class (and the one used by GDScript). It supports Unicode and provides all necessary means for string handling. Strings are reference-counted and use a copy-on-write approach, so passing them around is cheap in resources.
 	</description>
 	<tutorials>
-		<link title="GDScript format strings">https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/gdscript_format_string.html</link>
+		<link>https://docs.godotengine.org/en/latest/getting_started/scripting/gdscript/gdscript_format_string.html</link>
 	</tutorials>
 	<methods>
 		<method name="String">
@@ -49,15 +49,6 @@
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="Vector2i">
-			</argument>
-			<description>
-				Constructs a new String from the given [Vector2i].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
 			<argument index="0" name="from" type="Rect2">
 			</argument>
 			<description>
@@ -67,28 +58,10 @@
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="Rect2i">
-			</argument>
-			<description>
-				Constructs a new String from the given [Rect2i].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
 			<argument index="0" name="from" type="Vector3">
 			</argument>
 			<description>
 				Constructs a new String from the given [Vector3].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
-			<argument index="0" name="from" type="Vector3i">
-			</argument>
-			<description>
-				Constructs a new String from the given [Vector3i].
 			</description>
 		</method>
 		<method name="String">
@@ -157,15 +130,6 @@
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="StringName">
-			</argument>
-			<description>
-				Constructs a new String from the given [StringName].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
 			<argument index="0" name="from" type="NodePath">
 			</argument>
 			<description>
@@ -179,24 +143,6 @@
 			</argument>
 			<description>
 				Constructs a new String from the given [RID].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
-			<argument index="0" name="from" type="Callable">
-			</argument>
-			<description>
-				Constructs a new String from the given [Callable].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
-			<argument index="0" name="from" type="Signal">
-			</argument>
-			<description>
-				Constructs a new String from the given [Signal].
 			</description>
 		</method>
 		<method name="String">
@@ -220,82 +166,64 @@
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedByteArray">
+			<argument index="0" name="from" type="PoolByteArray">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedByteArray].
+				Constructs a new String from the given [PoolByteArray].
 			</description>
 		</method>
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedInt32Array">
+			<argument index="0" name="from" type="PoolIntArray">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedInt32Array].
+				Constructs a new String from the given [PoolIntArray].
 			</description>
 		</method>
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedInt64Array">
+			<argument index="0" name="from" type="PoolRealArray">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedInt64Array].
+				Constructs a new String from the given [PoolRealArray].
 			</description>
 		</method>
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedFloat32Array">
+			<argument index="0" name="from" type="PoolStringArray">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedFloat32Array].
+				Constructs a new String from the given [PoolStringArray].
 			</description>
 		</method>
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedFloat64Array">
+			<argument index="0" name="from" type="PoolVector2Array">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedFloat64Array].
+				Constructs a new String from the given [PoolVector2Array].
 			</description>
 		</method>
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedStringArray">
+			<argument index="0" name="from" type="PoolVector3Array">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedStringArray].
+				Constructs a new String from the given [PoolVector3Array].
 			</description>
 		</method>
 		<method name="String">
 			<return type="String">
 			</return>
-			<argument index="0" name="from" type="PackedVector2Array">
+			<argument index="0" name="from" type="PoolColorArray">
 			</argument>
 			<description>
-				Constructs a new String from the given [PackedVector2Array].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
-			<argument index="0" name="from" type="PackedVector3Array">
-			</argument>
-			<description>
-				Constructs a new String from the given [PackedVector3Array].
-			</description>
-		</method>
-		<method name="String">
-			<return type="String">
-			</return>
-			<argument index="0" name="from" type="PackedColorArray">
-			</argument>
-			<description>
-				Constructs a new String from the given [PackedColorArray].
+				Constructs a new String from the given [PoolColorArray].
 			</description>
 		</method>
 		<method name="begins_with">
@@ -308,7 +236,7 @@
 			</description>
 		</method>
 		<method name="bigrams">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns the bigrams (pairs of consecutive letters) of this string.
@@ -395,8 +323,6 @@
 			</description>
 		</method>
 		<method name="erase">
-			<return type="void">
-			</return>
 			<argument index="0" name="position" type="int">
 			</argument>
 			<argument index="1" name="chars" type="int">
@@ -413,13 +339,22 @@
 			<argument index="1" name="from" type="int" default="0">
 			</argument>
 			<description>
-				Returns the index of the [b]first[/b] case-sensitive occurrence of the specified string in this instance, or [code]-1[/code]. Optionally, the starting search index can be specified, continuing to the end of the string.
+				Finds the first occurrence of a substring. Returns the starting position of the substring or [code]-1[/code] if not found. Optionally, the initial search index can be passed.
 				[b]Note:[/b] If you just want to know whether a string contains a substring, use the [code]in[/code] operator as follows:
 				[codeblock]
 				# Will evaluate to `false`.
 				if "i" in "team":
 				    pass
 				[/codeblock]
+			</description>
+		</method>
+		<method name="find_last">
+			<return type="int">
+			</return>
+			<argument index="0" name="what" type="String">
+			</argument>
+			<description>
+				Finds the last occurrence of a substring. Returns the starting position of the substring or [code]-1[/code] if not found.
 			</description>
 		</method>
 		<method name="findn">
@@ -430,7 +365,7 @@
 			<argument index="1" name="from" type="int" default="0">
 			</argument>
 			<description>
-				Returns the index of the [b]first[/b] case-insensitive occurrence of the specified string in this instance, or [code]-1[/code]. Optionally, the starting search index can be specified, continuing to the end of the string.
+				Finds the first occurrence of a substring, ignoring case. Returns the starting position of the substring or [code]-1[/code] if not found. Optionally, the initial search index can be passed.
 			</description>
 		</method>
 		<method name="format">
@@ -618,19 +553,6 @@
 				Returns [code]true[/code] if this string contains a valid IP address.
 			</description>
 		</method>
-		<method name="join">
-			<return type="String">
-			</return>
-			<argument index="0" name="parts" type="PackedStringArray">
-			</argument>
-			<description>
-				Return a [String] which is the concatenation of the [code]parts[/code]. The separator between elements is the string providing this method.
-				Example:
-				[codeblock]
-				print(", ".join(["One", "Two", "Three", "Four"]))
-				[/codeblock]
-			</description>
-		</method>
 		<method name="json_escape">
 			<return type="String">
 			</return>
@@ -652,17 +574,6 @@
 			</return>
 			<description>
 				Returns the string's amount of characters.
-			</description>
-		</method>
-		<method name="lpad">
-			<return type="String">
-			</return>
-			<argument index="0" name="min_length" type="int">
-			</argument>
-			<argument index="1" name="character" type="String" default="&quot; &quot;">
-			</argument>
-			<description>
-				Formats a string to be at least [code]min_length[/code] long by adding [code]character[/code]s to the left of the string.
 			</description>
 		</method>
 		<method name="lstrip">
@@ -693,7 +604,7 @@
 			</description>
 		</method>
 		<method name="md5_buffer">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<description>
 				Returns the MD5 hash of the string as an array of bytes.
@@ -704,15 +615,6 @@
 			</return>
 			<description>
 				Returns the MD5 hash of the string as a string.
-			</description>
-		</method>
-		<method name="naturalnocasecmp_to">
-			<return type="int">
-			</return>
-			<argument index="0" name="to" type="String">
-			</argument>
-			<description>
-				Performs a case-insensitive natural order comparison to another string. Returns [code]-1[/code] if less than, [code]+1[/code] if greater than, or [code]0[/code] if equal.
 			</description>
 		</method>
 		<method name="nocasecmp_to">
@@ -813,7 +715,7 @@
 			<argument index="1" name="from" type="int" default="-1">
 			</argument>
 			<description>
-				Returns the index of the [b]last[/b] case-sensitive occurrence of the specified string in this instance, or [code]-1[/code]. Optionally, the starting search index can be specified, continuing to the beginning of the string.
+				Performs a case-sensitive search for a substring, but starts from the end of the string instead of the beginning.
 			</description>
 		</method>
 		<method name="rfindn">
@@ -824,7 +726,7 @@
 			<argument index="1" name="from" type="int" default="-1">
 			</argument>
 			<description>
-				Returns the index of the [b]last[/b] case-insensitive occurrence of the specified string in this instance, or [code]-1[/code]. Optionally, the starting search index can be specified, continuing to the beginning of the string.
+				Performs a case-insensitive search for a substring, but starts from the end of the string instead of the beginning.
 			</description>
 		</method>
 		<method name="right">
@@ -836,19 +738,8 @@
 				Returns the right side of the string from a given position.
 			</description>
 		</method>
-		<method name="rpad">
-			<return type="String">
-			</return>
-			<argument index="0" name="min_length" type="int">
-			</argument>
-			<argument index="1" name="character" type="String" default="&quot; &quot;">
-			</argument>
-			<description>
-				Formats a string to be at least [code]min_length[/code] long by adding [code]character[/code]s to the right of the string.
-			</description>
-		</method>
 		<method name="rsplit">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<argument index="0" name="delimiter" type="String">
 			</argument>
@@ -880,7 +771,7 @@
 			</description>
 		</method>
 		<method name="sha1_buffer">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<description>
 				Returns the SHA-1 hash of the string as an array of bytes.
@@ -894,7 +785,7 @@
 			</description>
 		</method>
 		<method name="sha256_buffer">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<description>
 				Returns the SHA-256 hash of the string as an array of bytes.
@@ -917,7 +808,7 @@
 			</description>
 		</method>
 		<method name="split">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<argument index="0" name="delimiter" type="String">
 			</argument>
@@ -940,7 +831,7 @@
 			</description>
 		</method>
 		<method name="split_floats">
-			<return type="PackedFloat32Array">
+			<return type="PoolRealArray">
 			</return>
 			<argument index="0" name="delimiter" type="String">
 			</argument>
@@ -981,10 +872,10 @@
 			</description>
 		</method>
 		<method name="to_ascii">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<description>
-				Converts the String (which is a character array) to ASCII/Latin-1 encoded [PackedByteArray] (which is an array of bytes). The conversion is faster compared to [method to_utf8], as this method assumes that all the characters in the String are ASCII/Latin-1 characters, unsupported characters are replaced with spaces.
+				Converts the String (which is a character array) to [PoolByteArray] (which is an array of bytes). The conversion is faster compared to [method to_utf8], as this method assumes that all the characters in the String are ASCII characters.
 			</description>
 		</method>
 		<method name="to_float">
@@ -1015,25 +906,11 @@
 				Returns the string converted to uppercase.
 			</description>
 		</method>
-		<method name="to_utf16">
-			<return type="PackedByteArray">
-			</return>
-			<description>
-				Converts the String (which is an array of characters) to UTF-16 encoded [PackedByteArray] (which is an array of bytes).
-			</description>
-		</method>
-		<method name="to_utf32">
-			<return type="PackedByteArray">
-			</return>
-			<description>
-				Converts the String (which is an array of characters) to UTF-32 encoded [PackedByteArray] (which is an array of bytes).
-			</description>
-		</method>
 		<method name="to_utf8">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<description>
-				Converts the String (which is an array of characters) to UTF-8 encode [PackedByteArray] (which is an array of bytes). The conversion is a bit slower than [method to_ascii], but supports all UTF-8 characters. Therefore, you should prefer this function over [method to_ascii].
+				Converts the String (which is an array of characters) to [PoolByteArray] (which is an array of bytes). The conversion is a bit slower than [method to_ascii], but supports all UTF-8 characters. Therefore, you should prefer this function over [method to_ascii].
 			</description>
 		</method>
 		<method name="trim_prefix">

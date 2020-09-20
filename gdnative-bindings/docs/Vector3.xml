@@ -1,26 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Vector3" version="4.0">
+<class name="Vector3" version="3.2">
 	<brief_description>
-		Vector used for 3D math using floating point coordinates.
+		Vector used for 3D math.
 	</brief_description>
 	<description>
 		3-element structure that can be used to represent positions in 3D space or any other pair of numeric values.
-		It uses floating-point coordinates. See [Vector3i] for its integer counterpart.
 		[b]Note:[/b] In a boolean context, a Vector3 will evaluate to [code]false[/code] if it's equal to [code]Vector3(0, 0, 0)[/code]. Otherwise, a Vector3 will always evaluate to [code]true[/code].
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
 	</tutorials>
 	<methods>
-		<method name="Vector3">
-			<return type="Vector3">
-			</return>
-			<argument index="0" name="from" type="Vector3i">
-			</argument>
-			<description>
-				Constructs a new [Vector3] from [Vector3i].
-			</description>
-		</method>
 		<method name="Vector3">
 			<return type="Vector3">
 			</return>
@@ -31,7 +21,7 @@
 			<argument index="2" name="z" type="float">
 			</argument>
 			<description>
-				Returns a [Vector3] with the given components.
+				Returns a Vector3 with the given components.
 			</description>
 		</method>
 		<method name="abs">
@@ -175,7 +165,7 @@
 				This method runs faster than [method length], so prefer it if you need to compare vectors or need the squared distance for some formula.
 			</description>
 		</method>
-		<method name="lerp">
+		<method name="linear_interpolate">
 			<return type="Vector3">
 			</return>
 			<argument index="0" name="b" type="Vector3">

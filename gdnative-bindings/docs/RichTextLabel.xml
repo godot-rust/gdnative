@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="RichTextLabel" inherits="Control" version="4.0">
+<class name="RichTextLabel" inherits="Control" version="3.2">
 	<brief_description>
 		Label that displays rich text.
 	</brief_description>
@@ -9,22 +9,20 @@
 		[b]Note:[/b] Unlike [Label], RichTextLabel doesn't have a [i]property[/i] to horizontally align text to the center. Instead, enable [member bbcode_enabled] and surround the text in a [code][center][/code] tag as follows: [code][center]Example[/center][/code]. There is currently no built-in way to vertically align text either, but this can be emulated by relying on anchors/containers and the [member fit_content_height] property.
 	</description>
 	<tutorials>
-		<link title="BBCode in RichTextLabel">https://docs.godotengine.org/en/latest/tutorials/gui/bbcode_in_richtextlabel.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/gui/bbcode_in_richtextlabel.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_image">
 			<return type="void">
 			</return>
-			<argument index="0" name="image" type="Texture2D">
+			<argument index="0" name="image" type="Texture">
 			</argument>
 			<argument index="1" name="width" type="int" default="0">
 			</argument>
 			<argument index="2" name="height" type="int" default="0">
 			</argument>
-			<argument index="3" name="color" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
 			<description>
-				Adds an image's opening and closing tags to the tag stack, optionally providing a [code]width[/code] and [code]height[/code] to resize the image and a [code]color[/code] to tint the image.
+				Adds an image's opening and closing tags to the tag stack, optionally providing a [code]width[/code] and [code]height[/code] to resize the image.
 				If [code]width[/code] or [code]height[/code] is set to 0, the image size will be adjusted in order to keep the original aspect ratio.
 			</description>
 		</method>
@@ -116,7 +114,7 @@
 		<method name="parse_expressions_for_values">
 			<return type="Dictionary">
 			</return>
-			<argument index="0" name="expressions" type="PackedStringArray">
+			<argument index="0" name="expressions" type="PoolStringArray">
 			</argument>
 			<description>
 				Parses BBCode parameter [code]expressions[/code] into a dictionary.
