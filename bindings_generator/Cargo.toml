@@ -4,8 +4,9 @@ authors = ["The godot-rust developers"]
 description = "Generates bindings for the Godot engine's gdnative classes from a json api description file."
 documentation = "https://docs.rs/crate/gdnative_bindings_generator"
 repository = "https://github.com/godot-rust/godot-rust"
+homepage = "https://godot-rust.github.io/"
 license = "MIT"
-version = "0.9.0-preview.0"
+version = "0.9.0"
 workspace = ".."
 edition = "2018"
 

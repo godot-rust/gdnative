@@ -1,26 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Vector2" version="4.0">
+<class name="Vector2" version="3.2">
 	<brief_description>
-		Vector used for 2D math using floating point coordinates.
+		Vector used for 2D math.
 	</brief_description>
 	<description>
 		2-element structure that can be used to represent positions in 2D space or any other pair of numeric values.
-		It uses floating-point coordinates. See [Vector2i] for its integer counterpart.
 		[b]Note:[/b] In a boolean context, a Vector2 will evaluate to [code]false[/code] if it's equal to [code]Vector2(0, 0)[/code]. Otherwise, a Vector2 will always evaluate to [code]true[/code].
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
 	</tutorials>
 	<methods>
-		<method name="Vector2">
-			<return type="Vector2">
-			</return>
-			<argument index="0" name="from" type="Vector2i">
-			</argument>
-			<description>
-				Constructs a new [Vector2] from [Vector2i].
-			</description>
-		</method>
 		<method name="Vector2">
 			<return type="Vector2">
 			</return>
@@ -29,7 +19,7 @@
 			<argument index="1" name="y" type="float">
 			</argument>
 			<description>
-				Constructs a new [Vector2] from the given [code]x[/code] and [code]y[/code].
+				Constructs a new Vector2 from the given [code]x[/code] and [code]y[/code].
 			</description>
 		</method>
 		<method name="abs">
@@ -200,7 +190,7 @@
 				This method runs faster than [method length], so prefer it if you need to compare vectors or need the squared distance for some formula.
 			</description>
 		</method>
-		<method name="lerp">
+		<method name="linear_interpolate">
 			<return type="Vector2">
 			</return>
 			<argument index="0" name="b" type="Vector2">

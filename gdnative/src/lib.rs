@@ -22,7 +22,7 @@
 //!
 //! The `api` module contains high-level wrappers for all the API types generated from a
 //! JSON description of the API. The generated types are tied to a specific version, which
-//! is currently `3.2.2-stable` for the crates.io version. If you want to use the bindings
+//! is currently `3.2.3-stable` for the crates.io version. If you want to use the bindings
 //! with another version of the engine, see the instructions [here][custom-version] on
 //! generating custom bindings.
 //!

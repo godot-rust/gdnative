@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Object" version="4.0">
+<class name="Object" version="3.2">
 	<brief_description>
 		Base class for all non built-in types.
 	</brief_description>
@@ -26,7 +26,7 @@
 		<method name="_get" qualifiers="virtual">
 			<return type="Variant">
 			</return>
-			<argument index="0" name="property" type="StringName">
+			<argument index="0" name="property" type="String">
 			</argument>
 			<description>
 				Virtual method which can be overridden to customize the return value of [method get].
@@ -61,7 +61,7 @@
 		<method name="_set" qualifiers="virtual">
 			<return type="bool">
 			</return>
-			<argument index="0" name="property" type="StringName">
+			<argument index="0" name="property" type="String">
 			</argument>
 			<argument index="1" name="value" type="Variant">
 			</argument>
@@ -92,7 +92,7 @@
 		<method name="call" qualifiers="vararg">
 			<return type="Variant">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<description>
 				Calls the [code]method[/code] on the object and returns the result. This method supports a variable number of arguments, so parameters are passed as a comma separated list. Example:
@@ -105,7 +105,7 @@
 		<method name="call_deferred" qualifiers="vararg">
 			<return type="void">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<description>
 				Calls the [code]method[/code] on the object during idle time. This method supports a variable number of arguments, so parameters are passed as a comma separated list. Example:
@@ -118,7 +118,7 @@
 		<method name="callv">
 			<return type="Variant">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<argument index="1" name="arg_array" type="Array">
 			</argument>
@@ -139,16 +139,17 @@
 		<method name="connect">
 			<return type="int" enum="Error">
 			</return>
-			<argument index="0" name="signal" type="StringName">
+			<argument index="0" name="signal" type="String">
 			</argument>
-			<argument index="1" name="callable" type="Callable">
+			<argument index="1" name="target" type="Object">
 			</argument>
-			<argument index="2" name="binds" type="Array" default="[  ]">
+			<argument index="2" name="method" type="String">
 			</argument>
-			<argument index="3" name="flags" type="int" default="0">
+			<argument index="3" name="binds" type="Array" default="[  ]">
+			</argument>
+			<argument index="4" name="flags" type="int" default="0">
 			</argument>
 			<description>
-				[b]FIXME:[/b] The syntax changed with the addition of [Callable], this should be updated.
 				Connects a [code]signal[/code] to a [code]method[/code] on a [code]target[/code] object. Pass optional [code]binds[/code] to the call as an [Array] of parameters. These parameters will be passed to the method after any parameter used in the call to [method emit_signal]. Use [code]flags[/code] to set deferred or one-shot connections. See [enum ConnectFlags] constants.
 				A [code]signal[/code] can only be connected once to a [code]method[/code]. It will throw an error if already connected, unless the signal was connected with [constant CONNECT_REFERENCE_COUNTED]. To avoid this, first, use [method is_connected] to check for existing connections.
 				If the [code]target[/code] is destroyed in the game's lifecycle, the connection will be lost.
@@ -170,12 +171,13 @@
 		<method name="disconnect">
 			<return type="void">
 			</return>
-			<argument index="0" name="signal" type="StringName">
+			<argument index="0" name="signal" type="String">
 			</argument>
-			<argument index="1" name="callable" type="Callable">
+			<argument index="1" name="target" type="Object">
+			</argument>
+			<argument index="2" name="method" type="String">
 			</argument>
 			<description>
-				[b]FIXME:[/b] The syntax changed with the addition of [Callable], this should be updated.
 				Disconnects a [code]signal[/code] from a [code]method[/code] on the given [code]target[/code].
 				If you try to disconnect a connection that does not exist, the method will throw an error. Use [method is_connected] to ensure that the connection exists.
 			</description>
@@ -183,7 +185,7 @@
 		<method name="emit_signal" qualifiers="vararg">
 			<return type="void">
 			</return>
-			<argument index="0" name="signal" type="StringName">
+			<argument index="0" name="signal" type="String">
 			</argument>
 			<description>
 				Emits the given [code]signal[/code]. The signal must exist, so it should be a built-in signal of this class or one of its parent classes, or a user-defined signal. This method supports a variable number of arguments, so parameters are passed as a comma separated list. Example:
@@ -255,10 +257,10 @@
 			</description>
 		</method>
 		<method name="get_meta_list" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
-				Returns the object's metadata as a [PackedStringArray].
+				Returns the object's metadata as a [PoolStringArray].
 			</description>
 		</method>
 		<method name="get_method_list" qualifiers="const">
@@ -277,7 +279,7 @@
 			</description>
 		</method>
 		<method name="get_script" qualifiers="const">
-			<return type="Variant">
+			<return type="Reference">
 			</return>
 			<description>
 				Returns the object's [Script] instance, or [code]null[/code] if none is assigned.
@@ -311,7 +313,7 @@
 		<method name="has_method" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<description>
 				Returns [code]true[/code] if the object contains the given [code]method[/code].
@@ -320,7 +322,7 @@
 		<method name="has_signal" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="signal" type="StringName">
+			<argument index="0" name="signal" type="String">
 			</argument>
 			<description>
 				Returns [code]true[/code] if the given [code]signal[/code] exists.
@@ -329,7 +331,7 @@
 		<method name="has_user_signal" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="signal" type="StringName">
+			<argument index="0" name="signal" type="String">
 			</argument>
 			<description>
 				Returns [code]true[/code] if the given user-defined [code]signal[/code] exists. Only signals added using [method add_user_signal] are taken into account.
@@ -354,12 +356,13 @@
 		<method name="is_connected" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="signal" type="StringName">
+			<argument index="0" name="signal" type="String">
 			</argument>
-			<argument index="1" name="callable" type="Callable">
+			<argument index="1" name="target" type="Object">
+			</argument>
+			<argument index="2" name="method" type="String">
 			</argument>
 			<description>
-				[b]FIXME:[/b] The syntax changed with the addition of [Callable], this should be updated.
 				Returns [code]true[/code] if a connection exists for a given [code]signal[/code], [code]target[/code], and [code]method[/code].
 			</description>
 		</method>
@@ -395,7 +398,7 @@
 			<argument index="0" name="name" type="String">
 			</argument>
 			<description>
-				Removes a given entry from the object's metadata.
+				Removes a given entry from the object's metadata. See also [method set_meta].
 			</description>
 		</method>
 		<method name="set">
@@ -422,7 +425,7 @@
 		<method name="set_deferred">
 			<return type="void">
 			</return>
-			<argument index="0" name="property" type="StringName">
+			<argument index="0" name="property" type="String">
 			</argument>
 			<argument index="1" name="value" type="Variant">
 			</argument>
@@ -464,13 +467,14 @@
 			<argument index="1" name="value" type="Variant">
 			</argument>
 			<description>
-				Adds or changes a given entry in the object's metadata. Metadata are serialized, and can take any [Variant] value.
+				Adds, changes or removes a given entry in the object's metadata. Metadata are serialized and can take any [Variant] value.
+				To remove a given entry from the object's metadata, use [method remove_meta]. Metadata is also removed if its value is set to [code]null[/code]. This means you can also use [code]set_meta("name", null)[/code] to remove metadata for [code]"name"[/code].
 			</description>
 		</method>
 		<method name="set_script">
 			<return type="void">
 			</return>
-			<argument index="0" name="script" type="Variant">
+			<argument index="0" name="script" type="Reference">
 			</argument>
 			<description>
 				Assigns a script to the object. Each object can have a single script assigned to it, which are used to extend its functionality.
@@ -488,33 +492,11 @@
 		<method name="tr" qualifiers="const">
 			<return type="String">
 			</return>
-			<argument index="0" name="message" type="StringName">
-			</argument>
-			<argument index="1" name="context" type="StringName" default="&quot;&quot;">
+			<argument index="0" name="message" type="String">
 			</argument>
 			<description>
-				Translates a message using translation catalogs configured in the Project Settings. An additional context could be used to specify the translation context.
+				Translates a message using translation catalogs configured in the Project Settings.
 				Only works if message translation is enabled (which it is by default), otherwise it returns the [code]message[/code] unchanged. See [method set_message_translation].
-				See [url=https://docs.godotengine.org/en/latest/tutorials/i18n/internationalizing_games.html]Internationalizing games[/url] for examples of the usage of this method.
-			</description>
-		</method>
-		<method name="tr_n" qualifiers="const">
-			<return type="String">
-			</return>
-			<argument index="0" name="message" type="StringName">
-			</argument>
-			<argument index="1" name="plural_message" type="StringName">
-			</argument>
-			<argument index="2" name="n" type="int">
-			</argument>
-			<argument index="3" name="context" type="StringName" default="&quot;&quot;">
-			</argument>
-			<description>
-				Translates a message involving plurals using translation catalogs configured in the Project Settings. An additional context could be used to specify the translation context.
-				Only works if message translation is enabled (which it is by default), otherwise it returns the [code]message[/code] or [code]plural_message[/code] unchanged. See [method set_message_translation].
-				The number [code]n[/code] is the number or quantity of the plural object. It will be used to guide the translation system to fetch the correct plural form for the selected language.
-				[b]Note:[/b] Negative and floating-point values usually represent physical entities for which singular and plural don't clearly apply. In such cases, use [method tr].
-				See [url=https://docs.godotengine.org/en/latest/tutorials/i18n/localization_using_gettext.html]Localization using gettext[/url] for examples of the usage of this method.
 			</description>
 		</method>
 	</methods>

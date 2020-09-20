@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="EditorFileSystem" inherits="Node" version="4.0">
+<class name="EditorFileSystem" inherits="Node" version="3.2">
 	<brief_description>
 		Resource filesystem, as the editor sees it.
 	</brief_description>
@@ -87,14 +87,14 @@
 			</description>
 		</signal>
 		<signal name="resources_reimported">
-			<argument index="0" name="resources" type="PackedStringArray">
+			<argument index="0" name="resources" type="PoolStringArray">
 			</argument>
 			<description>
 				Remitted if a resource is reimported.
 			</description>
 		</signal>
 		<signal name="resources_reload">
-			<argument index="0" name="resources" type="PackedStringArray">
+			<argument index="0" name="resources" type="PoolStringArray">
 			</argument>
 			<description>
 				Emitted if at least one resource is reloaded when the filesystem is scanned.

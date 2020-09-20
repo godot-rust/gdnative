@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Node" inherits="Object" version="4.0">
+<class name="Node" inherits="Object" version="3.2">
 	<brief_description>
 		Base class for all [i]scene[/i] objects.
 	</brief_description>
@@ -17,7 +17,7 @@
 		[b]Networking with nodes:[/b] After connecting to a server (or making one, see [NetworkedMultiplayerENet]), it is possible to use the built-in RPC (remote procedure call) system to communicate over the network. By calling [method rpc] with a method name, it will be called locally and in all connected peers (peers = clients and the server that accepts connections). To identify which node receives the RPC call, Godot will use its [NodePath] (make sure node names are the same on all peers). Also, take a look at the high-level networking tutorial and corresponding demos.
 	</description>
 	<tutorials>
-		<link title="Scenes and nodes">https://docs.godotengine.org/en/latest/getting_started/step_by_step/scenes_and_nodes.html</link>
+		<link>https://docs.godotengine.org/en/latest/getting_started/step_by_step/scenes_and_nodes.html</link>
 	</tutorials>
 	<methods>
 		<method name="_enter_tree" qualifiers="virtual">
@@ -53,7 +53,7 @@
 			<description>
 				Called when there is an input event. The input event propagates up through the node tree until a node consumes it.
 				It is only called if input processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process_input].
-				To consume the input event and stop it propagating further to other nodes, [method Viewport.set_input_as_handled] can be called.
+				To consume the input event and stop it propagating further to other nodes, [method SceneTree.set_input_as_handled] can be called.
 				For gameplay input, [method _unhandled_input] and [method _unhandled_key_input] are usually a better fit as they allow the GUI to intercept the events first.
 				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
 			</description>
@@ -100,7 +100,7 @@
 			<description>
 				Called when an [InputEvent] hasn't been consumed by [method _input] or any GUI. The input event propagates up through the node tree until a node consumes it.
 				It is only called if unhandled input processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process_unhandled_input].
-				To consume the input event and stop it propagating further to other nodes, [method Viewport.set_input_as_handled] can be called.
+				To consume the input event and stop it propagating further to other nodes, [method SceneTree.set_input_as_handled] can be called.
 				For gameplay input, this and [method _unhandled_key_input] are usually a better fit than [method _input] as they allow the GUI to intercept the events first.
 				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
 			</description>
@@ -113,7 +113,7 @@
 			<description>
 				Called when an [InputEventKey] hasn't been consumed by [method _input] or any GUI. The input event propagates up through the node tree until a node consumes it.
 				It is only called if unhandled key input processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process_unhandled_key_input].
-				To consume the input event and stop it propagating further to other nodes, [method Viewport.set_input_as_handled] can be called.
+				To consume the input event and stop it propagating further to other nodes, [method SceneTree.set_input_as_handled] can be called.
 				For gameplay input, this and [method _unhandled_input] are usually a better fit than [method _input] as they allow the GUI to intercept the events first.
 				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
 			</description>
@@ -134,27 +134,27 @@
 				    child_node.get_parent().remove_child(child_node)
 				add_child(child_node)
 				[/codeblock]
-				If you need the child node to be added below a specific node in the list of children, use [method add_sibling] instead of this method.
 				[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=https://godot.readthedocs.io/en/latest/tutorials/misc/running_code_in_the_editor.html]tool scripts[/url] and [url=https://godot.readthedocs.io/en/latest/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
 			</description>
 		</method>
-		<method name="add_sibling">
+		<method name="add_child_below_node">
 			<return type="void">
 			</return>
-			<argument index="0" name="sibling" type="Node">
+			<argument index="0" name="node" type="Node">
 			</argument>
-			<argument index="1" name="legible_unique_name" type="bool" default="false">
+			<argument index="1" name="child_node" type="Node">
+			</argument>
+			<argument index="2" name="legible_unique_name" type="bool" default="false">
 			</argument>
 			<description>
-				Adds a [code]sibling[/code] node to current's node parent, at the the same level as that node, right below it.
+				Adds [code]child_node[/code] as a child. The child is placed below the given [code]node[/code] in the list of children.
 				If [code]legible_unique_name[/code] is [code]true[/code], the child node will have an human-readable name based on the name of the node being instanced instead of its type.
-				Use [method add_child] instead of this method if you don't need the child node to be added below a specific node in the list of children.
 			</description>
 		</method>
 		<method name="add_to_group">
 			<return type="void">
 			</return>
-			<argument index="0" name="group" type="StringName">
+			<argument index="0" name="group" type="String">
 			</argument>
 			<argument index="1" name="persistent" type="bool" default="false">
 			</argument>
@@ -215,7 +215,6 @@
 			</argument>
 			<description>
 				Returns a child node by its index (see [method get_child_count]). This method is often used for iterating all children of a node.
-				Negative indices access the children from the last one.
 				To access a child node via its name, use [method get_node].
 			</description>
 		</method>
@@ -227,7 +226,7 @@
 			</description>
 		</method>
 		<method name="get_children" qualifiers="const">
-			<return type="Node[]">
+			<return type="Array">
 			</return>
 			<description>
 				Returns an array of references to node's children.
@@ -244,7 +243,7 @@
 			<return type="int">
 			</return>
 			<description>
-				Returns the node's order in the scene tree branch. For example, if called on the first child node the position is [code]0[/code].
+				Returns the node's index, i.e. its position among the siblings of its parent.
 			</description>
 		</method>
 		<method name="get_network_master" qualifiers="const">
@@ -337,6 +336,13 @@
 				Returns the time elapsed since the last physics-bound frame (see [method _physics_process]). This is always a constant value in physics processing unless the frames per second is changed via [member Engine.iterations_per_second].
 			</description>
 		</method>
+		<method name="get_position_in_parent" qualifiers="const">
+			<return type="int">
+			</return>
+			<description>
+				Returns the node's order in the scene tree branch. For example, if called on the first child node the position is [code]0[/code].
+			</description>
+		</method>
 		<method name="get_process_delta_time" qualifiers="const">
 			<return type="float">
 			</return>
@@ -411,7 +417,7 @@
 		<method name="is_in_group" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="group" type="StringName">
+			<argument index="0" name="group" type="String">
 			</argument>
 			<description>
 				Returns [code]true[/code] if this node is in the specified group. See notes in the description, and the group methods in [SceneTree].
@@ -525,7 +531,7 @@
 				    ┠╴Menu
 				    ┃  ┠╴Label
 				    ┃  ┖╴Camera2D
-				    ┖-SplashScreen
+				    ┖╴SplashScreen
 				       ┖╴Camera2D
 				[/codeblock]
 			</description>
@@ -533,7 +539,7 @@
 		<method name="propagate_call">
 			<return type="void">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<argument index="1" name="args" type="Array" default="[  ]">
 			</argument>
@@ -585,7 +591,7 @@
 		<method name="remove_from_group">
 			<return type="void">
 			</return>
-			<argument index="0" name="group" type="StringName">
+			<argument index="0" name="group" type="String">
 			</argument>
 			<description>
 				Removes a node from a group. See notes in the description, and the group methods in [SceneTree].
@@ -612,7 +618,7 @@
 		<method name="rpc" qualifiers="vararg">
 			<return type="Variant">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<description>
 				Sends a remote procedure call request for the given [code]method[/code] to peers on the network (and locally), optionally sending all additional arguments as arguments to the method called by the RPC. The call request will only be received by nodes with the same [NodePath], including the exact same node name. Behaviour depends on the RPC configuration for the given method, see [method rpc_config]. Methods are not exposed to RPCs by default. See also [method rset] and [method rset_config] for properties. Returns an empty [Variant].
@@ -620,9 +626,9 @@
 			</description>
 		</method>
 		<method name="rpc_config">
-			<return type="int">
+			<return type="void">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<argument index="1" name="mode" type="int" enum="MultiplayerAPI.RPCMode">
 			</argument>
@@ -635,7 +641,7 @@
 			</return>
 			<argument index="0" name="peer_id" type="int">
 			</argument>
-			<argument index="1" name="method" type="StringName">
+			<argument index="1" name="method" type="String">
 			</argument>
 			<description>
 				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns an empty [Variant].
@@ -644,7 +650,7 @@
 		<method name="rpc_unreliable" qualifiers="vararg">
 			<return type="Variant">
 			</return>
-			<argument index="0" name="method" type="StringName">
+			<argument index="0" name="method" type="String">
 			</argument>
 			<description>
 				Sends a [method rpc] using an unreliable protocol. Returns an empty [Variant].
@@ -655,7 +661,7 @@
 			</return>
 			<argument index="0" name="peer_id" type="int">
 			</argument>
-			<argument index="1" name="method" type="StringName">
+			<argument index="1" name="method" type="String">
 			</argument>
 			<description>
 				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] using an unreliable protocol (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns an empty [Variant].
@@ -664,7 +670,7 @@
 		<method name="rset">
 			<return type="void">
 			</return>
-			<argument index="0" name="property" type="StringName">
+			<argument index="0" name="property" type="String">
 			</argument>
 			<argument index="1" name="value" type="Variant">
 			</argument>
@@ -673,9 +679,9 @@
 			</description>
 		</method>
 		<method name="rset_config">
-			<return type="int">
+			<return type="void">
 			</return>
-			<argument index="0" name="property" type="StringName">
+			<argument index="0" name="property" type="String">
 			</argument>
 			<argument index="1" name="mode" type="int" enum="MultiplayerAPI.RPCMode">
 			</argument>
@@ -688,7 +694,7 @@
 			</return>
 			<argument index="0" name="peer_id" type="int">
 			</argument>
-			<argument index="1" name="property" type="StringName">
+			<argument index="1" name="property" type="String">
 			</argument>
 			<argument index="2" name="value" type="Variant">
 			</argument>
@@ -699,7 +705,7 @@
 		<method name="rset_unreliable">
 			<return type="void">
 			</return>
-			<argument index="0" name="property" type="StringName">
+			<argument index="0" name="property" type="String">
 			</argument>
 			<argument index="1" name="value" type="Variant">
 			</argument>
@@ -712,7 +718,7 @@
 			</return>
 			<argument index="0" name="peer_id" type="int">
 			</argument>
-			<argument index="1" name="property" type="StringName">
+			<argument index="1" name="property" type="String">
 			</argument>
 			<argument index="2" name="value" type="Variant">
 			</argument>
@@ -831,7 +837,7 @@
 		<member name="multiplayer" type="MultiplayerAPI" setter="" getter="get_multiplayer">
 			The [MultiplayerAPI] instance associated with this node. Either the [member custom_multiplayer], or the default SceneTree one (if inside tree).
 		</member>
-		<member name="name" type="StringName" setter="set_name" getter="get_name">
+		<member name="name" type="String" setter="set_name" getter="get_name">
 			The name of the node. This name is unique among the siblings (other child nodes from the same parent). When set to an existing name, the node will be automatically renamed.
 		</member>
 		<member name="owner" type="Node" setter="set_owner" getter="get_owner">
@@ -932,56 +938,52 @@
 			Notification received from the OS when the mouse leaves the game window.
 			Implemented on desktop and web platforms.
 		</constant>
-		<constant name="NOTIFICATION_WM_WINDOW_FOCUS_IN" value="1004">
-			Notification received from the OS when the node's parent [Window] is focused. This may be a change of focus between two windows of the same engine instance, or from the OS desktop or a third-party application to a window of the game (in which case [constant NOTIFICATION_APPLICATION_FOCUS_IN] is also emitted).
+		<constant name="NOTIFICATION_WM_FOCUS_IN" value="1004">
+			Notification received from the OS when the game window is focused.
+			Implemented on all platforms.
 		</constant>
-		<constant name="NOTIFICATION_WM_WINDOW_FOCUS_OUT" value="1005">
-			Notification received from the OS when the node's parent [Window] is defocused. This may be a change of focus between two windows of the same engine instance, or from a window of the game to the OS desktop or a third-party application (in which case [constant NOTIFICATION_APPLICATION_FOCUS_OUT] is also emitted).
+		<constant name="NOTIFICATION_WM_FOCUS_OUT" value="1005">
+			Notification received from the OS when the game window is unfocused.
+			Implemented on all platforms.
 		</constant>
-		<constant name="NOTIFICATION_WM_CLOSE_REQUEST" value="1006">
-			Notification received from the OS when a close request is sent (e.g. closing the window with a "Close" button or [kbd]Alt + F4[/kbd]).
+		<constant name="NOTIFICATION_WM_QUIT_REQUEST" value="1006">
+			Notification received from the OS when a quit request is sent (e.g. closing the window with a "Close" button or Alt+F4).
 			Implemented on desktop platforms.
 		</constant>
 		<constant name="NOTIFICATION_WM_GO_BACK_REQUEST" value="1007">
 			Notification received from the OS when a go back request is sent (e.g. pressing the "Back" button on Android).
 			Specific to the Android platform.
 		</constant>
-		<constant name="NOTIFICATION_WM_SIZE_CHANGED" value="1008">
+		<constant name="NOTIFICATION_WM_UNFOCUS_REQUEST" value="1008">
+			Notification received from the OS when an unfocus request is sent (e.g. another OS window wants to take the focus).
+			No supported platforms currently send this notification.
 		</constant>
-		<constant name="NOTIFICATION_OS_MEMORY_WARNING" value="2009">
+		<constant name="NOTIFICATION_OS_MEMORY_WARNING" value="1009">
 			Notification received from the OS when the application is exceeding its allocated memory.
 			Specific to the iOS platform.
 		</constant>
-		<constant name="NOTIFICATION_TRANSLATION_CHANGED" value="2010">
+		<constant name="NOTIFICATION_TRANSLATION_CHANGED" value="1010">
 			Notification received when translations may have changed. Can be triggered by the user changing the locale. Can be used to respond to language changes, for example to change the UI strings on the fly. Useful when working with the built-in translation support, like [method Object.tr].
 		</constant>
-		<constant name="NOTIFICATION_WM_ABOUT" value="2011">
+		<constant name="NOTIFICATION_WM_ABOUT" value="1011">
 			Notification received from the OS when a request for "About" information is sent.
 			Specific to the macOS platform.
 		</constant>
-		<constant name="NOTIFICATION_CRASH" value="2012">
+		<constant name="NOTIFICATION_CRASH" value="1012">
 			Notification received from Godot's crash handler when the engine is about to crash.
 			Implemented on desktop platforms if the crash handler is enabled.
 		</constant>
-		<constant name="NOTIFICATION_OS_IME_UPDATE" value="2013">
+		<constant name="NOTIFICATION_OS_IME_UPDATE" value="1013">
 			Notification received from the OS when an update of the Input Method Engine occurs (e.g. change of IME cursor position or composition string).
 			Specific to the macOS platform.
 		</constant>
-		<constant name="NOTIFICATION_APPLICATION_RESUMED" value="2014">
-			Notification received from the OS when the application is resumed.
+		<constant name="NOTIFICATION_APP_RESUMED" value="1014">
+			Notification received from the OS when the app is resumed.
 			Specific to the Android platform.
 		</constant>
-		<constant name="NOTIFICATION_APPLICATION_PAUSED" value="2015">
-			Notification received from the OS when the application is paused.
+		<constant name="NOTIFICATION_APP_PAUSED" value="1015">
+			Notification received from the OS when the app is paused.
 			Specific to the Android platform.
-		</constant>
-		<constant name="NOTIFICATION_APPLICATION_FOCUS_IN" value="2016">
-			Notification received from the OS when the application is focused, i.e. when changing the focus from the OS desktop or a thirdparty application to any open window of the Godot instance.
-			Implemented on desktop platforms.
-		</constant>
-		<constant name="NOTIFICATION_APPLICATION_FOCUS_OUT" value="2017">
-			Notification received from the OS when the application is defocused, i.e. when changing the focus from any open window of the Godot instance to the OS desktop or a thirdparty application.
-			Implemented on desktop platforms.
 		</constant>
 		<constant name="PAUSE_MODE_INHERIT" value="0" enum="PauseMode">
 			Inherits pause mode from the node's parent. For the root node, it is equivalent to [constant PAUSE_MODE_STOP]. Default.

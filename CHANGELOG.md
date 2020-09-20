@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.0] - TBD
+## [0.9.0] - 2020-09-20
 
 ### Added
 
@@ -23,11 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the `godot_init` convenience macro that declares all three endpoints for common use cases.
 
-- Added resource example.
+- Added more extension methods for `Vector2`, `Vector3` and `Color`.
+
+- Added wrappers for `GodotString::get_basename` and `get_extensions`.
+
+- Added a high-level interface to the Godot script profiler in the `gdnative::nativescript::profiling` module, and in the `#[gdnative::profiled]` attribute.
+
+- Added before/after hooks for the `#[property]` attribute.
+
+- API methods now have generated documentation according to Godot documentation XMLs. The Godot docs contain custom markup which isn't currently parsed. We expect to improve the generated docs in the following releases.
+
+- Added custom resource example.
 
 ### Changed
 
-- **The default API version is now Godot 3.2.2-stable.**
+- **The default API version is now Godot 3.2.3-stable.**
 
 - The object reference system is revamped using the typestate pattern, with semantics that model Godot behavior more accurately, allowing for clearer boundaries between safe and unsafe code.
 
@@ -53,9 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improved source links on docs.rs.
 
-- `bindgen` is updated to 0.54.0.
+- `bindgen` is updated to 0.55.1.
 
-- `euclid` is updated to 0.20.13.
+- `euclid` is updated to 0.22.1.
 
 - Improved build time performance.
 
@@ -69,6 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed generated bindings for virtual methods, since they cannot actually be called.
 
+- Removed `From` implementations for `Variant` since `ToVariant` is much more comprehensive.
+
 ### Fixed
 
 - Fixed typos in variant names of `VariantOperator` and `GodotError`.
@@ -80,6 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed an issue with platform headers when building on Windows with the `gnu` toolchain that prevented compilation.
 
 - Macros can now be used with qualified imports, removing the need for `#[macro_use]`.
+
+- Fixed an issue where `Rid` arguments passed to API methods are incorrect due to use-after-free.
 
 ## [0.8.1] - 2020-05-31
 

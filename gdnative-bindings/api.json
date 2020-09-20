@@ -120,6 +120,7 @@
 			"JOY_DS_B": 0,
 			"JOY_DS_X": 3,
 			"JOY_DS_Y": 2,
+			"JOY_INVALID_OPTION": -1,
 			"JOY_L": 4,
 			"JOY_L2": 6,
 			"JOY_L3": 8,
@@ -550,6 +551,7 @@
 					{
 						"name": "mesh",
 						"type": "Mesh",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -709,6 +711,7 @@
 					{
 						"name": "button",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -719,6 +722,7 @@
 					{
 						"name": "button",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -729,6 +733,7 @@
 					{
 						"name": "mesh",
 						"type": "Mesh",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -1638,6 +1643,7 @@
 					{
 						"name": "interface_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -1648,6 +1654,7 @@
 					{
 						"name": "interface_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -1658,16 +1665,19 @@
 					{
 						"name": "tracker_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "type",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -1678,16 +1688,19 @@
 					{
 						"name": "tracker_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "type",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -3120,6 +3133,7 @@
 					{
 						"name": "action",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -15540,11 +15554,13 @@
 					{
 						"name": "old_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "new_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -15555,6 +15571,7 @@
 					{
 						"name": "anim_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -15565,6 +15582,7 @@
 					{
 						"name": "anim_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18401,6 +18419,7 @@
 					{
 						"name": "area",
 						"type": "Area",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18411,6 +18430,7 @@
 					{
 						"name": "area",
 						"type": "Area",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18421,21 +18441,25 @@
 					{
 						"name": "area_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area",
 						"type": "Area",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "self_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18446,21 +18470,25 @@
 					{
 						"name": "area_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area",
 						"type": "Area",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "self_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18471,6 +18499,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18481,6 +18510,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18491,21 +18521,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -18516,21 +18550,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19563,6 +19601,7 @@
 					{
 						"name": "area",
 						"type": "Area2D",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19573,6 +19612,7 @@
 					{
 						"name": "area",
 						"type": "Area2D",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19583,21 +19623,25 @@
 					{
 						"name": "area_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area",
 						"type": "Area2D",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "self_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19608,21 +19652,25 @@
 					{
 						"name": "area_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area",
 						"type": "Area2D",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "self_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19633,6 +19681,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19643,6 +19692,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19653,21 +19703,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -19678,21 +19732,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "area_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -29484,6 +29542,7 @@
 					{
 						"name": "button_pressed",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -38754,6 +38813,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -38764,6 +38824,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -42825,26 +42886,31 @@
 					{
 						"name": "camera",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "event",
 						"type": "InputEvent",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "click_position",
 						"type": "Vector3",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "click_normal",
 						"type": "Vector3",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "shape_idx",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -43326,16 +43392,19 @@
 					{
 						"name": "viewport",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "event",
 						"type": "InputEvent",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "shape_idx",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -44618,6 +44687,7 @@
 					{
 						"name": "color",
 						"type": "Color",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -44628,6 +44698,7 @@
 					{
 						"name": "color",
 						"type": "Color",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -44638,6 +44709,7 @@
 					{
 						"name": "color",
 						"type": "Color",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -45199,6 +45271,7 @@
 					{
 						"name": "color",
 						"type": "Color",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -46488,6 +46561,7 @@
 					{
 						"name": "event",
 						"type": "InputEvent",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -52078,6 +52152,19 @@
 				]
 			},
 			{
+				"name": "get_available_chars",
+				"return_type": "String",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "get_fallback",
 				"return_type": "DynamicFontData",
 				"is_editor": false,
@@ -52715,6 +52802,25 @@
 				]
 			},
 			{
+				"name": "add_ios_embedded_framework",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "path",
+						"type": "String",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
 				"name": "add_ios_framework",
 				"return_type": "void",
 				"is_editor": false,
@@ -53202,6 +53308,7 @@
 					{
 						"name": "dir",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -53212,6 +53319,7 @@
 					{
 						"name": "path",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -53222,6 +53330,7 @@
 					{
 						"name": "paths",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54123,6 +54232,7 @@
 					{
 						"name": "resources",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54133,6 +54243,7 @@
 					{
 						"name": "resources",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54143,6 +54254,7 @@
 					{
 						"name": "exist",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54791,6 +54903,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54801,6 +54914,7 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54811,6 +54925,7 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54821,6 +54936,7 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54831,11 +54947,13 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "checked",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -54846,11 +54964,13 @@
 					{
 						"name": "res",
 						"type": "Object",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "prop",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -55594,6 +55714,19 @@
 				]
 			},
 			{
+				"name": "get_playing_scene",
+				"return_type": "String",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "get_resource_filesystem",
 				"return_type": "EditorFileSystem",
 				"is_editor": false,
@@ -55697,6 +55830,19 @@
 				]
 			},
 			{
+				"name": "is_playing_scene",
+				"return_type": "bool",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "is_plugin_enabled",
 				"return_type": "bool",
 				"is_editor": false,
@@ -55757,6 +55903,51 @@
 						"has_default_value": false,
 						"default_value": ""
 					}
+				]
+			},
+			{
+				"name": "play_current_scene",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
+				"name": "play_custom_scene",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "scene_filepath",
+						"type": "String",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
+				"name": "play_main_scene",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
 				]
 			},
 			{
@@ -55897,6 +56088,19 @@
 						"default_value": ""
 					}
 				]
+			},
+			{
+				"name": "stop_playing_scene",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
 			}
 		],
 		"enums": [
@@ -56005,6 +56209,7 @@
 					{
 						"name": "screen_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -56015,6 +56220,7 @@
 					{
 						"name": "resource",
 						"type": "Resource",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -56025,6 +56231,7 @@
 					{
 						"name": "scene_root",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -56035,6 +56242,7 @@
 					{
 						"name": "filepath",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57108,11 +57316,13 @@
 					{
 						"name": "properties",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "value",
 						"type": "Array",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57123,11 +57333,13 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57138,11 +57350,13 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "value",
 						"type": "Variant",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57153,11 +57367,13 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "bool",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57168,6 +57384,7 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57178,11 +57395,13 @@
 					{
 						"name": "property",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "value",
 						"type": "Variant",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57193,11 +57412,13 @@
 					{
 						"name": "path",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "resource",
 						"type": "Resource",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57208,11 +57429,13 @@
 					{
 						"name": "path",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "focusable_idx",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -57650,6 +57873,7 @@
 					{
 						"name": "path",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -63707,6 +63931,7 @@
 					{
 						"name": "dir",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -63717,6 +63942,7 @@
 					{
 						"name": "path",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -63727,6 +63953,7 @@
 					{
 						"name": "paths",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -64388,6 +64615,7 @@
 					{
 						"name": "file",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -64398,11 +64626,13 @@
 					{
 						"name": "old_file",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "new_file",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -64413,11 +64643,13 @@
 					{
 						"name": "old_folder",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "new_file",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -64428,6 +64660,7 @@
 					{
 						"name": "folder",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -64438,6 +64671,7 @@
 					{
 						"name": "file",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -64448,6 +64682,7 @@
 					{
 						"name": "files",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -66064,6 +66299,7 @@
 					{
 						"name": "result",
 						"type": "Variant",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69015,16 +69251,19 @@
 					{
 						"name": "to",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "to_slot",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "release_position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69035,21 +69274,25 @@
 					{
 						"name": "from",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "from_slot",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "to",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "to_slot",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69060,16 +69303,19 @@
 					{
 						"name": "from",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "from_slot",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "release_position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69090,21 +69336,25 @@
 					{
 						"name": "from",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "from_slot",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "to",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "to_slot",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69120,6 +69370,7 @@
 					{
 						"name": "node",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69130,6 +69381,7 @@
 					{
 						"name": "node",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69145,6 +69397,7 @@
 					{
 						"name": "position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69155,6 +69408,7 @@
 					{
 						"name": "ofs",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69969,11 +70223,13 @@
 					{
 						"name": "from",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "to",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -69994,6 +70250,7 @@
 					{
 						"name": "new_minsize",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -70749,6 +71006,7 @@
 					{
 						"name": "cell_size",
 						"type": "Vector3",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -72307,21 +72565,25 @@
 					{
 						"name": "result",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "response_code",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "headers",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "PoolByteArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -74254,6 +74516,25 @@
 				]
 			},
 			{
+				"name": "load_tga_from_buffer",
+				"return_type": "enum.Error",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "buffer",
+						"type": "PoolByteArray",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
 				"name": "load_webp_from_buffer",
 				"return_type": "enum.Error",
 				"is_editor": false,
@@ -75129,11 +75410,13 @@
 					{
 						"name": "device",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "connected",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -78850,6 +79133,7 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -78860,11 +79144,13 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "at_position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -78875,6 +79161,7 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -78885,11 +79172,13 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "selected",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -78905,6 +79194,7 @@
 					{
 						"name": "at_position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -85265,6 +85555,13 @@
 				"getter": "get_text",
 				"setter": "set_text",
 				"index": -1
+			},
+			{
+				"name": "virtual_keyboard_enabled",
+				"type": "bool",
+				"getter": "is_virtual_keyboard_enabled",
+				"setter": "set_virtual_keyboard_enabled",
+				"index": -1
 			}
 		],
 		"signals": [
@@ -85279,6 +85576,7 @@
 					{
 						"name": "new_text",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -85289,6 +85587,7 @@
 					{
 						"name": "new_text",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -85709,6 +86008,19 @@
 				]
 			},
 			{
+				"name": "is_virtual_keyboard_enabled",
+				"return_type": "bool",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "menu_option",
 				"return_type": "void",
 				"is_editor": false,
@@ -86049,6 +86361,25 @@
 						"default_value": ""
 					}
 				]
+			},
+			{
+				"name": "set_virtual_keyboard_enabled",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "enable",
+						"type": "bool",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
 			}
 		],
 		"enums": [
@@ -86385,11 +86716,13 @@
 					{
 						"name": "permission",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "granted",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -90158,6 +90491,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -90168,6 +90502,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -90178,11 +90513,13 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "packet",
 						"type": "PoolByteArray",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -93423,6 +93760,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -93433,6 +93771,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -93931,6 +94270,7 @@
 			"NOTIFICATION_PATH_CHANGED": 23,
 			"NOTIFICATION_PAUSED": 14,
 			"NOTIFICATION_PHYSICS_PROCESS": 16,
+			"NOTIFICATION_POST_ENTER_TREE": 27,
 			"NOTIFICATION_PROCESS": 17,
 			"NOTIFICATION_READY": 13,
 			"NOTIFICATION_TRANSLATION_CHANGED": 1010,
@@ -98428,6 +98768,7 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -98438,6 +98779,7 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -115857,6 +116199,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -115867,6 +116210,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -115877,6 +116221,7 @@
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -118992,11 +119337,13 @@
 					{
 						"name": "group_name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "parameters",
 						"type": "Array",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -119542,6 +119889,7 @@
 					{
 						"name": "value",
 						"type": "float",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -121091,7 +121439,7 @@
 		"singleton": false,
 		"singleton_name": "",
 		"instanciable": true,
-		"is_reference": false,
+		"is_reference": true,
 		"constants": {
 		},
 		"properties": [
@@ -123465,6 +123813,7 @@
 					{
 						"name": "meta",
 						"type": "Variant",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -123475,6 +123824,7 @@
 					{
 						"name": "meta",
 						"type": "Variant",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -123485,6 +123835,7 @@
 					{
 						"name": "meta",
 						"type": "Variant",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -124710,6 +125061,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -124720,6 +125072,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -124730,21 +125083,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "local_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -124755,21 +125112,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "local_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -125086,6 +125447,19 @@
 				"is_editor": false,
 				"is_noscript": false,
 				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
+				"name": "get_inverse_inertia_tensor",
+				"return_type": "Basis",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
 				"is_reverse": false,
 				"is_virtual": false,
 				"has_varargs": false,
@@ -125795,6 +126169,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -125805,6 +126180,7 @@
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -125815,21 +126191,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "local_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -125840,21 +126220,25 @@
 					{
 						"name": "body_id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "body_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "local_shape",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127399,11 +127783,13 @@
 					{
 						"name": "files",
 						"type": "PoolStringArray",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "screen",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127414,11 +127800,13 @@
 					{
 						"name": "id",
 						"type": "void",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "meta",
 						"type": "void",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127434,6 +127822,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127444,6 +127833,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127454,6 +127844,7 @@
 					{
 						"name": "node",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127464,6 +127855,7 @@
 					{
 						"name": "node",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127474,6 +127866,7 @@
 					{
 						"name": "node",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -127484,6 +127877,7 @@
 					{
 						"name": "node",
 						"type": "Node",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -128827,6 +129221,7 @@
 					{
 						"name": "script",
 						"type": "Script",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -129103,6 +129498,7 @@
 					{
 						"name": "script",
 						"type": "Script",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -129113,6 +129509,7 @@
 					{
 						"name": "script",
 						"type": "Script",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -130905,7 +131302,7 @@
 				"return_type": "String",
 				"is_editor": false,
 				"is_noscript": false,
-				"is_const": false,
+				"is_const": true,
 				"is_reverse": false,
 				"is_virtual": false,
 				"has_varargs": false,
@@ -138782,6 +139179,7 @@
 					{
 						"name": "offset",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145050,6 +145448,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145060,6 +145459,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145625,6 +146025,7 @@
 					{
 						"name": "idx_to",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145635,6 +146036,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145645,6 +146047,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145655,6 +146058,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145665,6 +146069,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -145675,6 +146080,7 @@
 					{
 						"name": "tab",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -146450,6 +146856,13 @@
 				"index": -1
 			},
 			{
+				"name": "virtual_keyboard_enabled",
+				"type": "bool",
+				"getter": "is_virtual_keyboard_enabled",
+				"setter": "set_virtual_keyboard_enabled",
+				"index": -1
+			},
+			{
 				"name": "wrap_enabled",
 				"type": "bool",
 				"getter": "is_wrap_enabled",
@@ -146464,6 +146877,7 @@
 					{
 						"name": "row",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -146479,11 +146893,13 @@
 					{
 						"name": "row",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "info",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -146499,16 +146915,19 @@
 					{
 						"name": "symbol",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "row",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "column",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -147574,6 +147993,19 @@
 				]
 			},
 			{
+				"name": "is_virtual_keyboard_enabled",
+				"return_type": "bool",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "is_wrap_enabled",
 				"return_type": "bool",
 				"is_editor": false,
@@ -148175,6 +148607,25 @@
 					{
 						"name": "speed",
 						"type": "float",
+						"has_default_value": false,
+						"default_value": ""
+					}
+				]
+			},
+			{
+				"name": "set_virtual_keyboard_enabled",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "enable",
+						"type": "bool",
 						"has_default_value": false,
 						"default_value": ""
 					}
@@ -155062,16 +155513,19 @@
 					{
 						"name": "item",
 						"type": "TreeItem",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "column",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155087,6 +155541,7 @@
 					{
 						"name": "column",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155097,6 +155552,7 @@
 					{
 						"name": "arrow_clicked",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155107,6 +155563,7 @@
 					{
 						"name": "position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155117,6 +155574,7 @@
 					{
 						"name": "position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155132,6 +155590,7 @@
 					{
 						"name": "item",
 						"type": "TreeItem",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155162,6 +155621,7 @@
 					{
 						"name": "position",
 						"type": "Vector2",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -155177,16 +155637,19 @@
 					{
 						"name": "item",
 						"type": "TreeItem",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "column",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "selected",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -157571,11 +158034,13 @@
 					{
 						"name": "object",
 						"type": "Object",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "key",
 						"type": "NodePath",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -157586,11 +158051,13 @@
 					{
 						"name": "object",
 						"type": "Object",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "key",
 						"type": "NodePath",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -157601,21 +158068,25 @@
 					{
 						"name": "object",
 						"type": "Object",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "key",
 						"type": "NodePath",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "elapsed",
 						"type": "float",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "value",
 						"type": "Object",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -158538,10 +159009,30 @@
 		"constants": {
 		},
 		"properties": [
+			{
+				"name": "max_pending_connections",
+				"type": "int",
+				"getter": "get_max_pending_connections",
+				"setter": "set_max_pending_connections",
+				"index": -1
+			}
 		],
 		"signals": [
 		],
 		"methods": [
+			{
+				"name": "get_max_pending_connections",
+				"return_type": "int",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
 			{
 				"name": "is_connection_available",
 				"return_type": "bool",
@@ -158590,6 +159081,38 @@
 						"type": "String",
 						"has_default_value": true,
 						"default_value": "*"
+					}
+				]
+			},
+			{
+				"name": "poll",
+				"return_type": "enum.Error",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
+				"name": "set_max_pending_connections",
+				"return_type": "void",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": false,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "max_pending_connections",
+						"type": "int",
+						"has_default_value": false,
+						"default_value": ""
 					}
 				]
 			},
@@ -161533,6 +162056,7 @@
 					{
 						"name": "node",
 						"type": "Control",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -163434,6 +163958,7 @@
 					{
 						"name": "camera",
 						"type": "Camera",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -163444,6 +163969,7 @@
 					{
 						"name": "camera",
 						"type": "Camera",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -163545,6 +164071,7 @@
 					{
 						"name": "viewport",
 						"type": "Viewport",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -163555,6 +164082,7 @@
 					{
 						"name": "viewport",
 						"type": "Viewport",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -163822,11 +164350,13 @@
 					{
 						"name": "function",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184395,6 +184925,7 @@
 					{
 						"name": "channel",
 						"type": "Object",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184405,16 +184936,19 @@
 					{
 						"name": "media",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "index",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "name",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184425,11 +184959,13 @@
 					{
 						"name": "type",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "sdp",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184680,6 +185216,7 @@
 					{
 						"name": "was_clean_close",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184695,6 +185232,7 @@
 					{
 						"name": "protocol",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184710,11 +185248,13 @@
 					{
 						"name": "code",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "reason",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -184896,6 +185436,7 @@
 					{
 						"name": "peer_source",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -185165,16 +185706,19 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "code",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "reason",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -185185,11 +185729,13 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "protocol",
 						"type": "String",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -185200,11 +185746,13 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					},
 					{
 						"name": "was_clean_close",
 						"type": "bool",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -185215,6 +185763,7 @@
 					{
 						"name": "id",
 						"type": "int",
+						"has_default_value": false,
 						"default_value": ""
 					}
 				]
@@ -190745,6 +191294,19 @@
 				]
 			},
 			{
+				"name": "get_screen_max_scale",
+				"return_type": "float",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+				]
+			},
+			{
 				"name": "get_screen_orientation",
 				"return_type": "enum._OS::ScreenOrientation",
 				"is_editor": false,
@@ -190760,6 +191322,25 @@
 			{
 				"name": "get_screen_position",
 				"return_type": "Vector2",
+				"is_editor": false,
+				"is_noscript": false,
+				"is_const": true,
+				"is_reverse": false,
+				"is_virtual": false,
+				"has_varargs": false,
+				"is_from_script": false,
+				"arguments": [
+					{
+						"name": "screen",
+						"type": "int",
+						"has_default_value": true,
+						"default_value": "-1"
+					}
+				]
+			},
+			{
+				"name": "get_screen_scale",
+				"return_type": "float",
 				"is_editor": false,
 				"is_noscript": false,
 				"is_const": true,
@@ -192401,6 +192982,12 @@
 						"type": "String",
 						"has_default_value": true,
 						"default_value": ""
+					},
+					{
+						"name": "multiline",
+						"type": "bool",
+						"has_default_value": true,
+						"default_value": "False"
 					}
 				]
 			}

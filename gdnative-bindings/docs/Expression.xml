@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Expression" inherits="Reference" version="4.0">
+<class name="Expression" inherits="Reference" version="3.2">
 	<brief_description>
 		A class that stores an expression you can execute.
 	</brief_description>
 	<description>
 		An expression can be made of any arithmetic operation, built-in math function call, method call of a passed instance, or built-in type construction call.
-		An example expression text using the built-in math functions could be [code]sqrt(pow(3, 2) + pow(4, 2))[/code].
+		An example expression text using the built-in math functions could be [code]sqrt(pow(3,2) + pow(4,2))[/code].
 		In the following example we use a [LineEdit] node to write our expression and show the result.
 		[codeblock]
 		onready var expression = Expression.new()
@@ -59,7 +59,7 @@
 			</return>
 			<argument index="0" name="expression" type="String">
 			</argument>
-			<argument index="1" name="input_names" type="PackedStringArray" default="PackedStringArray(  )">
+			<argument index="1" name="input_names" type="PoolStringArray" default="PoolStringArray(  )">
 			</argument>
 			<description>
 				Parses the expression and returns an [enum Error] code.

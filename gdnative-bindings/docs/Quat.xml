@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Quat" version="4.0">
+<class name="Quat" version="3.2">
 	<brief_description>
 		Quaternion.
 	</brief_description>
@@ -9,7 +9,7 @@
 		Due to its compactness and the way it is stored in memory, certain operations (obtaining axis-angle and performing SLERP, in particular) are more efficient and robust against floating-point errors.
 	</description>
 	<tutorials>
-		<link title="Using 3D transforms">https://docs.godotengine.org/en/latest/tutorials/3d/using_transforms.html#interpolating-with-quaternions</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/3d/using_transforms.html#interpolating-with-quaternions</link>
 	</tutorials>
 	<methods>
 		<method name="Quat">
@@ -132,8 +132,6 @@
 			</description>
 		</method>
 		<method name="set_axis_angle">
-			<return type="void">
-			</return>
 			<argument index="0" name="axis" type="Vector3">
 			</argument>
 			<argument index="1" name="angle" type="float">
@@ -143,8 +141,6 @@
 			</description>
 		</method>
 		<method name="set_euler">
-			<return type="void">
-			</return>
 			<argument index="0" name="euler" type="Vector3">
 			</argument>
 			<description>

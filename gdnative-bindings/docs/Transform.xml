@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Transform" version="4.0">
+<class name="Transform" version="3.2">
 	<brief_description>
 		3D transformation (3×4 matrix).
 	</brief_description>
@@ -8,9 +8,9 @@
 		For more information, read the "Matrices and transforms" documentation article.
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
-		<link title="Matrices and transforms">https://docs.godotengine.org/en/latest/tutorials/math/matrices_and_transforms.html</link>
-		<link title="Using 3D transforms">https://docs.godotengine.org/en/latest/tutorials/3d/using_transforms.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/matrices_and_transforms.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/3d/using_transforms.html</link>
 	</tutorials>
 	<methods>
 		<method name="Transform">
@@ -156,7 +156,7 @@
 			<argument index="0" name="v" type="Variant">
 			</argument>
 			<description>
-				Transforms the given [Vector3], [Plane], [AABB], or [PackedVector3Array] by this transform.
+				Transforms the given [Vector3], [Plane], [AABB], or [PoolVector3Array] by this transform.
 			</description>
 		</method>
 		<method name="xform_inv">
@@ -165,7 +165,7 @@
 			<argument index="0" name="v" type="Variant">
 			</argument>
 			<description>
-				Inverse-transforms the given [Vector3], [Plane], [AABB], or [PackedVector3Array] by this transform.
+				Inverse-transforms the given [Vector3], [Plane], [AABB], or [PoolVector3Array] by this transform.
 			</description>
 		</method>
 	</methods>

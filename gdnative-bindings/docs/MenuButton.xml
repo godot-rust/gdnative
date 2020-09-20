@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="MenuButton" inherits="Button" version="4.0">
+<class name="MenuButton" inherits="Button" version="3.2">
 	<brief_description>
 		Special button that brings up a [PopupMenu] when clicked.
 	</brief_description>
@@ -38,9 +38,9 @@
 		<member name="toggle_mode" type="bool" setter="set_toggle_mode" getter="is_toggle_mode" override="true" default="true" />
 	</members>
 	<signals>
-		<signal name="about_to_popup">
+		<signal name="about_to_show">
 			<description>
-				Emitted when the [PopupMenu] of this MenuButton is about to show.
+				Emitted when [PopupMenu] of this MenuButton is about to show.
 			</description>
 		</signal>
 	</signals>

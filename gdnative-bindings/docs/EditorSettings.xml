@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="EditorSettings" inherits="Resource" version="4.0">
+<class name="EditorSettings" inherits="Resource" version="3.2">
 	<brief_description>
 		Object that holds the project-independent editor settings.
 	</brief_description>
@@ -56,7 +56,7 @@
 			</description>
 		</method>
 		<method name="get_favorites" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns the list of favorite files and directories for this project.
@@ -83,7 +83,7 @@
 			</description>
 		</method>
 		<method name="get_recent_dirs" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns the list of recently visited folders in the file dialog for this project.
@@ -137,7 +137,7 @@
 		<method name="set_favorites">
 			<return type="void">
 			</return>
-			<argument index="0" name="dirs" type="PackedStringArray">
+			<argument index="0" name="dirs" type="PoolStringArray">
 			</argument>
 			<description>
 				Sets the list of favorite files and directories for this project.
@@ -146,7 +146,7 @@
 		<method name="set_initial_value">
 			<return type="void">
 			</return>
-			<argument index="0" name="name" type="StringName">
+			<argument index="0" name="name" type="String">
 			</argument>
 			<argument index="1" name="value" type="Variant">
 			</argument>
@@ -172,7 +172,7 @@
 		<method name="set_recent_dirs">
 			<return type="void">
 			</return>
-			<argument index="0" name="dirs" type="PackedStringArray">
+			<argument index="0" name="dirs" type="PoolStringArray">
 			</argument>
 			<description>
 				Sets the list of recently visited folders in the file dialog for this project.

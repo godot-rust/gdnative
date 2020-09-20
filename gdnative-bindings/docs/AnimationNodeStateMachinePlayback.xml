@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AnimationNodeStateMachinePlayback" inherits="Resource" version="4.0">
+<class name="AnimationNodeStateMachinePlayback" inherits="Resource" version="3.2">
 	<brief_description>
 		Playback control for [AnimationNodeStateMachine].
 	</brief_description>
@@ -12,18 +12,18 @@
 		[/codeblock]
 	</description>
 	<tutorials>
-		<link title="AnimationTree">https://docs.godotengine.org/en/latest/tutorials/animation/animation_tree.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/animation/animation_tree.html</link>
 	</tutorials>
 	<methods>
 		<method name="get_current_node" qualifiers="const">
-			<return type="StringName">
+			<return type="String">
 			</return>
 			<description>
 				Returns the currently playing animation state.
 			</description>
 		</method>
 		<method name="get_travel_path" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns the current travel path as computed internally by the A* algorithm.
@@ -39,7 +39,7 @@
 		<method name="start">
 			<return type="void">
 			</return>
-			<argument index="0" name="node" type="StringName">
+			<argument index="0" name="node" type="String">
 			</argument>
 			<description>
 				Starts playing the given animation.
@@ -55,7 +55,7 @@
 		<method name="travel">
 			<return type="void">
 			</return>
-			<argument index="0" name="to_node" type="StringName">
+			<argument index="0" name="to_node" type="String">
 			</argument>
 			<description>
 				Transitions from the current state to another one, following the shortest path.

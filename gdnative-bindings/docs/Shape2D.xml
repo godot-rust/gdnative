@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Shape2D" inherits="Resource" version="4.0">
+<class name="Shape2D" inherits="Resource" version="3.2">
 	<brief_description>
 		Base class for all 2D shapes.
 	</brief_description>
@@ -7,7 +7,7 @@
 		Base class for all 2D shapes. All 2D shape types inherit from this.
 	</description>
 	<tutorials>
-		<link title="Physics introduction">https://docs.godotengine.org/en/latest/tutorials/physics/physics_introduction.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/physics/physics_introduction.html</link>
 	</tutorials>
 	<methods>
 		<method name="collide">
@@ -82,7 +82,7 @@
 			<argument index="1" name="color" type="Color">
 			</argument>
 			<description>
-				Draws a solid shape onto a [CanvasItem] with the [RenderingServer] API filled with the specified [code]color[/code]. The exact drawing method is specific for each shape and cannot be configured.
+				Draws a solid shape onto a [CanvasItem] with the [VisualServer] API filled with the specified [code]color[/code]. The exact drawing method is specific for each shape and cannot be configured.
 			</description>
 		</method>
 	</methods>
