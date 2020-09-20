@@ -38,6 +38,7 @@ fn main() {
     // build.rs will automatically be recompiled and run if it's dependencies are updated.
     // Ignoring all but build.rs will keep from needless rebuilds.
     // Manually rebuilding the crate will ignore this.
+    println!("cargo:rerun-if-changed=docs/");
     println!("cargo:rerun-if-changed=api.json");
     println!("cargo:rerun-if-changed=build.rs");
 }
