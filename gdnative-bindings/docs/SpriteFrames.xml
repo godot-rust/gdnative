@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="SpriteFrames" inherits="Resource" version="4.0">
+<class name="SpriteFrames" inherits="Resource" version="3.2">
 	<brief_description>
-		Sprite frame library for AnimatedSprite2D.
+		Sprite frame library for AnimatedSprite.
 	</brief_description>
 	<description>
-		Sprite frame library for [AnimatedSprite2D]. Contains frames and animation data for playback.
-		[b]Note:[/b] You can associate a set of normal or specular maps by creating additional [SpriteFrames] resources with a [code]_normal[/code] or [code]_specular[/code] suffix. For example, having 3 [SpriteFrames] resources [code]run[/code], [code]run_normal[/code], and [code]run_specular[/code] will make it so the [code]run[/code] animation uses normal and specular maps.
+		Sprite frame library for [AnimatedSprite]. Contains frames and animation data for playback.
+		[b]Note:[/b] You can associate a set of normal maps by creating additional [SpriteFrames] resources with a [code]_normal[/code] suffix. For example, having 2 [SpriteFrames] resources [code]run[/code] and [code]run_normal[/code] will make it so the [code]run[/code] animation uses the normal map.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -13,7 +13,7 @@
 		<method name="add_animation">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
 				Adds a new animation to the library.
@@ -22,9 +22,9 @@
 		<method name="add_frame">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
-			<argument index="1" name="frame" type="Texture2D">
+			<argument index="1" name="frame" type="Texture">
 			</argument>
 			<argument index="2" name="at_position" type="int" default="-1">
 			</argument>
@@ -35,7 +35,7 @@
 		<method name="clear">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
 				Removes all frames from the given animation.
@@ -51,14 +51,14 @@
 		<method name="get_animation_loop" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
-				Returns [code]true[/code] if the given animation is configured to loop when it finishes playing. Otherwise, returns [code]false[/code].
+				If [code]true[/code], the given animation will loop.
 			</description>
 		</method>
 		<method name="get_animation_names" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns an array containing the names associated to each animation. Values are placed in alphabetical order.
@@ -67,16 +67,16 @@
 		<method name="get_animation_speed" qualifiers="const">
 			<return type="float">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
 				The animation's speed in frames per second.
 			</description>
 		</method>
 		<method name="get_frame" qualifiers="const">
-			<return type="Texture2D">
+			<return type="Texture">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<argument index="1" name="idx" type="int">
 			</argument>
@@ -87,7 +87,7 @@
 		<method name="get_frame_count" qualifiers="const">
 			<return type="int">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
 				Returns the number of frames in the animation.
@@ -96,7 +96,7 @@
 		<method name="has_animation" qualifiers="const">
 			<return type="bool">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
 				If [code]true[/code], the named animation exists.
@@ -105,7 +105,7 @@
 		<method name="remove_animation">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<description>
 				Removes the given animation.
@@ -114,7 +114,7 @@
 		<method name="remove_frame">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<argument index="1" name="idx" type="int">
 			</argument>
@@ -125,9 +125,9 @@
 		<method name="rename_animation">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
-			<argument index="1" name="newname" type="StringName">
+			<argument index="1" name="newname" type="String">
 			</argument>
 			<description>
 				Changes the animation's name to [code]newname[/code].
@@ -136,7 +136,7 @@
 		<method name="set_animation_loop">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<argument index="1" name="loop" type="bool">
 			</argument>
@@ -147,7 +147,7 @@
 		<method name="set_animation_speed">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<argument index="1" name="speed" type="float">
 			</argument>
@@ -158,11 +158,11 @@
 		<method name="set_frame">
 			<return type="void">
 			</return>
-			<argument index="0" name="anim" type="StringName">
+			<argument index="0" name="anim" type="String">
 			</argument>
 			<argument index="1" name="idx" type="int">
 			</argument>
-			<argument index="2" name="txt" type="Texture2D">
+			<argument index="2" name="txt" type="Texture">
 			</argument>
 			<description>
 				Sets the texture of the given frame.

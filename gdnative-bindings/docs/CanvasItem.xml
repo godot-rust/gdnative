@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="CanvasItem" inherits="Node" version="4.0">
+<class name="CanvasItem" inherits="Node" version="3.2">
 	<brief_description>
 		Base class of anything 2D.
 	</brief_description>
@@ -12,8 +12,8 @@
 		[b]Note:[/b] Unless otherwise specified, all methods that have angle parameters must have angles specified as [i]radians[/i]. To convert degrees to radians, use [method @GDScript.deg2rad].
 	</description>
 	<tutorials>
-		<link title="Viewport and canvas transforms">https://docs.godotengine.org/en/latest/tutorials/2d/2d_transforms.html</link>
-		<link title="Custom drawing in 2D">https://docs.godotengine.org/en/latest/tutorials/2d/custom_drawing_in_2d.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/2d/2d_transforms.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/2d/custom_drawing_in_2d.html</link>
 	</tutorials>
 	<methods>
 		<method name="_draw" qualifiers="virtual">
@@ -39,6 +39,8 @@
 			<argument index="5" name="color" type="Color">
 			</argument>
 			<argument index="6" name="width" type="float" default="1.0">
+			</argument>
+			<argument index="7" name="antialiased" type="bool" default="false">
 			</argument>
 			<description>
 				Draws an arc between the given angles. The larger the value of [code]point_count[/code], the smoother the curve.
@@ -77,23 +79,17 @@
 		<method name="draw_colored_polygon">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
 			<argument index="1" name="color" type="Color">
 			</argument>
-			<argument index="2" name="uvs" type="PackedVector2Array" default="PackedVector2Array(  )">
+			<argument index="2" name="uvs" type="PoolVector2Array" default="PoolVector2Array(  )">
 			</argument>
-			<argument index="3" name="texture" type="Texture2D" default="null">
+			<argument index="3" name="texture" type="Texture" default="null">
 			</argument>
-			<argument index="4" name="normal_map" type="Texture2D" default="null">
+			<argument index="4" name="normal_map" type="Texture" default="null">
 			</argument>
-			<argument index="5" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="6" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="7" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="8" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="5" name="antialiased" type="bool" default="false">
 			</argument>
 			<description>
 				Draws a colored polygon of any amount of points, convex or concave.
@@ -110,8 +106,10 @@
 			</argument>
 			<argument index="3" name="width" type="float" default="1.0">
 			</argument>
+			<argument index="4" name="antialiased" type="bool" default="false">
+			</argument>
 			<description>
-				Draws a line from a 2D point to another, with a given color and width.
+				Draws a line from a 2D point to another, with a given color and width. It can be optionally antialiased.
 			</description>
 		</method>
 		<method name="draw_mesh">
@@ -119,21 +117,13 @@
 			</return>
 			<argument index="0" name="mesh" type="Mesh">
 			</argument>
-			<argument index="1" name="texture" type="Texture2D">
+			<argument index="1" name="texture" type="Texture">
 			</argument>
-			<argument index="2" name="normal_map" type="Texture2D" default="null">
+			<argument index="2" name="normal_map" type="Texture" default="null">
 			</argument>
-			<argument index="3" name="specular_map" type="Texture2D" default="null">
+			<argument index="3" name="transform" type="Transform2D" default="Transform2D( 1, 0, 0, 1, 0, 0 )">
 			</argument>
-			<argument index="4" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="5" name="transform" type="Transform2D" default="Transform2D( 1, 0, 0, 1, 0, 0 )">
-			</argument>
-			<argument index="6" name="modulate" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="7" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="8" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="4" name="modulate" type="Color" default="Color( 1, 1, 1, 1 )">
 			</argument>
 			<description>
 				Draws a [Mesh] in 2D, using the provided texture. See [MeshInstance2D] for related documentation.
@@ -142,27 +132,33 @@
 		<method name="draw_multiline">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
 			<argument index="1" name="color" type="Color">
 			</argument>
 			<argument index="2" name="width" type="float" default="1.0">
 			</argument>
+			<argument index="3" name="antialiased" type="bool" default="false">
+			</argument>
 			<description>
 				Draws multiple, parallel lines with a uniform [code]color[/code].
+				[b]Note:[/b] [code]width[/code] and [code]antialiased[/code] are currently not implemented and have no effect.
 			</description>
 		</method>
 		<method name="draw_multiline_colors">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
-			<argument index="1" name="colors" type="PackedColorArray">
+			<argument index="1" name="colors" type="PoolColorArray">
 			</argument>
 			<argument index="2" name="width" type="float" default="1.0">
 			</argument>
+			<argument index="3" name="antialiased" type="bool" default="false">
+			</argument>
 			<description>
 				Draws multiple, parallel lines with a uniform [code]width[/code] and segment-by-segment coloring. Colors assigned to line segments match by index between [code]points[/code] and [code]colors[/code].
+				[b]Note:[/b] [code]width[/code] and [code]antialiased[/code] are currently not implemented and have no effect.
 			</description>
 		</method>
 		<method name="draw_multimesh">
@@ -170,17 +166,9 @@
 			</return>
 			<argument index="0" name="multimesh" type="MultiMesh">
 			</argument>
-			<argument index="1" name="texture" type="Texture2D">
+			<argument index="1" name="texture" type="Texture">
 			</argument>
-			<argument index="2" name="normal_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="3" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="4" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="5" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="6" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="2" name="normal_map" type="Texture" default="null">
 			</argument>
 			<description>
 				Draws a [MultiMesh] in 2D with the provided texture. See [MultiMeshInstance2D] for related documentation.
@@ -189,23 +177,17 @@
 		<method name="draw_polygon">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
-			<argument index="1" name="colors" type="PackedColorArray">
+			<argument index="1" name="colors" type="PoolColorArray">
 			</argument>
-			<argument index="2" name="uvs" type="PackedVector2Array" default="PackedVector2Array(  )">
+			<argument index="2" name="uvs" type="PoolVector2Array" default="PoolVector2Array(  )">
 			</argument>
-			<argument index="3" name="texture" type="Texture2D" default="null">
+			<argument index="3" name="texture" type="Texture" default="null">
 			</argument>
-			<argument index="4" name="normal_map" type="Texture2D" default="null">
+			<argument index="4" name="normal_map" type="Texture" default="null">
 			</argument>
-			<argument index="5" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="6" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="7" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="8" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="5" name="antialiased" type="bool" default="false">
 			</argument>
 			<description>
 				Draws a polygon of any amount of points, convex or concave.
@@ -214,54 +196,50 @@
 		<method name="draw_polyline">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
 			<argument index="1" name="color" type="Color">
 			</argument>
 			<argument index="2" name="width" type="float" default="1.0">
 			</argument>
+			<argument index="3" name="antialiased" type="bool" default="false">
+			</argument>
 			<description>
-				Draws interconnected line segments with a uniform [code]color[/code] and [code]width[/code].
+				Draws interconnected line segments with a uniform [code]color[/code] and [code]width[/code] and optional antialiasing.
 			</description>
 		</method>
 		<method name="draw_polyline_colors">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
-			<argument index="1" name="colors" type="PackedColorArray">
+			<argument index="1" name="colors" type="PoolColorArray">
 			</argument>
 			<argument index="2" name="width" type="float" default="1.0">
 			</argument>
+			<argument index="3" name="antialiased" type="bool" default="false">
+			</argument>
 			<description>
-				Draws interconnected line segments with a uniform [code]width[/code] and segment-by-segment coloring. Colors assigned to line segments match by index between [code]points[/code] and [code]colors[/code].
+				Draws interconnected line segments with a uniform [code]width[/code], segment-by-segment coloring, and optional antialiasing. Colors assigned to line segments match by index between [code]points[/code] and [code]colors[/code].
 			</description>
 		</method>
 		<method name="draw_primitive">
 			<return type="void">
 			</return>
-			<argument index="0" name="points" type="PackedVector2Array">
+			<argument index="0" name="points" type="PoolVector2Array">
 			</argument>
-			<argument index="1" name="colors" type="PackedColorArray">
+			<argument index="1" name="colors" type="PoolColorArray">
 			</argument>
-			<argument index="2" name="uvs" type="PackedVector2Array">
+			<argument index="2" name="uvs" type="PoolVector2Array">
 			</argument>
-			<argument index="3" name="texture" type="Texture2D" default="null">
+			<argument index="3" name="texture" type="Texture" default="null">
 			</argument>
 			<argument index="4" name="width" type="float" default="1.0">
 			</argument>
-			<argument index="5" name="normal_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="6" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="7" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="8" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="9" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="5" name="normal_map" type="Texture" default="null">
 			</argument>
 			<description>
-				Draws a custom primitive. 1 point for a point, 2 points for a line, 3 points for a triangle, and 4 points for a quad.
+				Draws a custom primitive. 1 point for a point, 2 points for a line, 3 points for a triangle and 4 points for a quad.
 			</description>
 		</method>
 		<method name="draw_rect">
@@ -275,9 +253,11 @@
 			</argument>
 			<argument index="3" name="width" type="float" default="1.0">
 			</argument>
+			<argument index="4" name="antialiased" type="bool" default="false">
+			</argument>
 			<description>
-				Draws a rectangle. If [code]filled[/code] is [code]true[/code], the rectangle will be filled with the [code]color[/code] specified. If [code]filled[/code] is [code]false[/code], the rectangle will be drawn as a stroke with the [code]color[/code] and [code]width[/code] specified.
-				[b]Note:[/b] [code]width[/code] is only effective if [code]filled[/code] is [code]false[/code].
+				Draws a rectangle. If [code]filled[/code] is [code]true[/code], the rectangle will be filled with the [code]color[/code] specified. If [code]filled[/code] is [code]false[/code], the rectangle will be drawn as a stroke with the [code]color[/code] and [code]width[/code] specified. If [code]antialiased[/code] is [code]true[/code], the lines will be antialiased.
+				[b]Note:[/b] [code]width[/code] and [code]antialiased[/code] are only effective if [code]filled[/code] is [code]false[/code].
 			</description>
 		</method>
 		<method name="draw_set_transform">
@@ -285,9 +265,9 @@
 			</return>
 			<argument index="0" name="position" type="Vector2">
 			</argument>
-			<argument index="1" name="rotation" type="float" default="0.0">
+			<argument index="1" name="rotation" type="float">
 			</argument>
-			<argument index="2" name="scale" type="Vector2" default="Vector2( 1, 1 )">
+			<argument index="2" name="scale" type="Vector2">
 			</argument>
 			<description>
 				Sets a custom transform for drawing via components. Anything drawn afterwards will be transformed by this.
@@ -342,21 +322,13 @@
 		<method name="draw_texture">
 			<return type="void">
 			</return>
-			<argument index="0" name="texture" type="Texture2D">
+			<argument index="0" name="texture" type="Texture">
 			</argument>
 			<argument index="1" name="position" type="Vector2">
 			</argument>
 			<argument index="2" name="modulate" type="Color" default="Color( 1, 1, 1, 1 )">
 			</argument>
-			<argument index="3" name="normal_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="4" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="5" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="6" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="7" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="3" name="normal_map" type="Texture" default="null">
 			</argument>
 			<description>
 				Draws a texture at a given position.
@@ -365,7 +337,7 @@
 		<method name="draw_texture_rect">
 			<return type="void">
 			</return>
-			<argument index="0" name="texture" type="Texture2D">
+			<argument index="0" name="texture" type="Texture">
 			</argument>
 			<argument index="1" name="rect" type="Rect2">
 			</argument>
@@ -375,15 +347,7 @@
 			</argument>
 			<argument index="4" name="transpose" type="bool" default="false">
 			</argument>
-			<argument index="5" name="normal_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="6" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="7" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="8" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="9" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="5" name="normal_map" type="Texture" default="null">
 			</argument>
 			<description>
 				Draws a textured rectangle at a given position, optionally modulated by a color. If [code]transpose[/code] is [code]true[/code], the texture will have its X and Y coordinates swapped.
@@ -392,7 +356,7 @@
 		<method name="draw_texture_rect_region">
 			<return type="void">
 			</return>
-			<argument index="0" name="texture" type="Texture2D">
+			<argument index="0" name="texture" type="Texture">
 			</argument>
 			<argument index="1" name="rect" type="Rect2">
 			</argument>
@@ -402,17 +366,9 @@
 			</argument>
 			<argument index="4" name="transpose" type="bool" default="false">
 			</argument>
-			<argument index="5" name="normal_map" type="Texture2D" default="null">
+			<argument index="5" name="normal_map" type="Texture" default="null">
 			</argument>
-			<argument index="6" name="specular_map" type="Texture2D" default="null">
-			</argument>
-			<argument index="7" name="specular_shininess" type="Color" default="Color( 1, 1, 1, 1 )">
-			</argument>
-			<argument index="8" name="clip_uv" type="bool" default="true">
-			</argument>
-			<argument index="9" name="texture_filter" type="int" enum="CanvasItem.TextureFilter" default="0">
-			</argument>
-			<argument index="10" name="texture_repeat" type="int" enum="CanvasItem.TextureRepeat" default="0">
+			<argument index="6" name="clip_uv" type="bool" default="true">
 			</argument>
 			<description>
 				Draws a textured rectangle region at a given position, optionally modulated by a color. If [code]transpose[/code] is [code]true[/code], the texture will have its X and Y coordinates swapped.
@@ -436,7 +392,7 @@
 			<return type="RID">
 			</return>
 			<description>
-				Returns the canvas item RID used by [RenderingServer] for this item.
+				Returns the canvas item RID used by [VisualServer] for this item.
 			</description>
 		</method>
 		<method name="get_canvas_transform" qualifiers="const">
@@ -616,12 +572,6 @@
 		<member name="show_on_top" type="bool" setter="_set_on_top" getter="_is_on_top">
 			If [code]true[/code], the object draws on top of its parent.
 		</member>
-		<member name="texture_filter" type="int" setter="set_texture_filter" getter="get_texture_filter" enum="CanvasItem.TextureFilter" default="0">
-			The texture filtering mode to use on this [CanvasItem].
-		</member>
-		<member name="texture_repeat" type="int" setter="set_texture_repeat" getter="get_texture_repeat" enum="CanvasItem.TextureRepeat" default="0">
-			The texture repeating mode to use on this [CanvasItem].
-		</member>
 		<member name="use_parent_material" type="bool" setter="set_use_parent_material" getter="get_use_parent_material" default="false">
 			If [code]true[/code], the parent [CanvasItem]'s [member material] property is used as this one's material.
 		</member>
@@ -653,6 +603,24 @@
 		</signal>
 	</signals>
 	<constants>
+		<constant name="BLEND_MODE_MIX" value="0" enum="BlendMode">
+			Mix blending mode. Colors are assumed to be independent of the alpha (opacity) value.
+		</constant>
+		<constant name="BLEND_MODE_ADD" value="1" enum="BlendMode">
+			Additive blending mode.
+		</constant>
+		<constant name="BLEND_MODE_SUB" value="2" enum="BlendMode">
+			Subtractive blending mode.
+		</constant>
+		<constant name="BLEND_MODE_MUL" value="3" enum="BlendMode">
+			Multiplicative blending mode.
+		</constant>
+		<constant name="BLEND_MODE_PREMULT_ALPHA" value="4" enum="BlendMode">
+			Mix blending mode. Colors are assumed to be premultiplied by the alpha (opacity) value.
+		</constant>
+		<constant name="BLEND_MODE_DISABLED" value="5" enum="BlendMode">
+			Disables blending mode. Colors including alpha are written as-is. Only applicable for render targets with a transparent background. No lighting will be applied.
+		</constant>
 		<constant name="NOTIFICATION_TRANSFORM_CHANGED" value="2000">
 			The [CanvasItem]'s transform has changed. This notification is only received if enabled by [method set_notify_transform] or [method set_notify_local_transform].
 		</constant>
@@ -667,47 +635,6 @@
 		</constant>
 		<constant name="NOTIFICATION_EXIT_CANVAS" value="33">
 			The [CanvasItem] has exited the canvas.
-		</constant>
-		<constant name="TEXTURE_FILTER_PARENT_NODE" value="0" enum="TextureFilter">
-			The [CanvasItem] will inherit the filter from its parent.
-		</constant>
-		<constant name="TEXTURE_FILTER_NEAREST" value="1" enum="TextureFilter">
-			The texture filter reads from the nearest pixel only. The simplest and fastest method of filtering. Useful for pixel art.
-		</constant>
-		<constant name="TEXTURE_FILTER_LINEAR" value="2" enum="TextureFilter">
-			The texture filter blends between the nearest four pixels. Use this for most cases where you want to avoid a pixelated style.
-		</constant>
-		<constant name="TEXTURE_FILTER_NEAREST_WITH_MIPMAPS" value="3" enum="TextureFilter">
-			The texture filter reads from the nearest pixel in the nearest mipmap. This is the fastest way to read from textures with mipmaps.
-		</constant>
-		<constant name="TEXTURE_FILTER_LINEAR_WITH_MIPMAPS" value="4" enum="TextureFilter">
-			The texture filter blends between the nearest 4 pixels and between the nearest 2 mipmaps. Use this for non-pixel art textures that may be viewed at a low scale (e.g. due to [Camera2D] zoom), as mipmaps are important to smooth out pixels that are smaller than on-screen pixels.
-		</constant>
-		<constant name="TEXTURE_FILTER_NEAREST_WITH_MIPMAPS_ANISOTROPIC" value="5" enum="TextureFilter">
-			The texture filter reads from the nearest pixel, but selects a mipmap based on the angle between the surface and the camera view. This reduces artifacts on surfaces that are almost in line with the camera.
-			[b]Note:[/b] This texture filter is rarely useful in 2D projects. [constant TEXTURE_FILTER_NEAREST_WITH_MIPMAPS] is usually more appropriate.
-		</constant>
-		<constant name="TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC" value="6" enum="TextureFilter">
-			The texture filter blends between the nearest 4 pixels and selects a mipmap based on the angle between the surface and the camera view. This reduces artifacts on surfaces that are almost in line with the camera. This is the slowest of the filtering options, but results in the highest quality texturing.
-			[b]Note:[/b] This texture filter is rarely useful in 2D projects. [constant TEXTURE_FILTER_LINEAR_WITH_MIPMAPS] is usually more appropriate.
-		</constant>
-		<constant name="TEXTURE_FILTER_MAX" value="7" enum="TextureFilter">
-			Represents the size of the [enum TextureFilter] enum.
-		</constant>
-		<constant name="TEXTURE_REPEAT_PARENT_NODE" value="0" enum="TextureRepeat">
-			The [CanvasItem] will inherit the filter from its parent.
-		</constant>
-		<constant name="TEXTURE_REPEAT_DISABLED" value="1" enum="TextureRepeat">
-			Texture will not repeat.
-		</constant>
-		<constant name="TEXTURE_REPEAT_ENABLED" value="2" enum="TextureRepeat">
-			Texture will repeat normally.
-		</constant>
-		<constant name="TEXTURE_REPEAT_MIRROR" value="3" enum="TextureRepeat">
-			Texture will repeat in a 2x2 tiled mode, where elements at even positions are mirrored.
-		</constant>
-		<constant name="TEXTURE_REPEAT_MAX" value="4" enum="TextureRepeat">
-			Represents the size of the [enum TextureRepeat] enum.
 		</constant>
 	</constants>
 </class>

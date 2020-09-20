@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Animation" inherits="Resource" version="4.0">
+<class name="Animation" inherits="Resource" version="3.2">
 	<brief_description>
 		Contains data used to animate everything in the engine.
 	</brief_description>
@@ -14,10 +14,10 @@
 		animation.track_insert_key(track_index, 0.0, 0)
 		animation.track_insert_key(track_index, 0.5, 100)
 		[/codeblock]
-		Animations are just data containers, and must be added to nodes such as an [AnimationPlayer] to be played back. Animation tracks have different types, each with its own set of dedicated methods. Check [enum TrackType] to see available types.
+		Animations are just data containers, and must be added to nodes such as an [AnimationPlayer] or [AnimationTreePlayer] to be played back. Animation tracks have different types, each with its own set of dedicated methods. Check [enum TrackType] to see available types.
 	</description>
 	<tutorials>
-		<link title="Animation tutorial index">https://docs.godotengine.org/en/latest/tutorials/animation/index.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/animation/index.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_track">
@@ -32,7 +32,7 @@
 			</description>
 		</method>
 		<method name="animation_track_get_key_animation" qualifiers="const">
-			<return type="StringName">
+			<return type="String">
 			</return>
 			<argument index="0" name="track_idx" type="int">
 			</argument>
@@ -49,7 +49,7 @@
 			</argument>
 			<argument index="1" name="time" type="float">
 			</argument>
-			<argument index="2" name="animation" type="StringName">
+			<argument index="2" name="animation" type="String">
 			</argument>
 			<description>
 				Inserts a key with value [code]animation[/code] at the given [code]time[/code] (in seconds). The [code]track_idx[/code] must be the index of an Animation Track.
@@ -62,7 +62,7 @@
 			</argument>
 			<argument index="1" name="key_idx" type="int">
 			</argument>
-			<argument index="2" name="animation" type="StringName">
+			<argument index="2" name="animation" type="String">
 			</argument>
 			<description>
 				Sets the key identified by [code]key_idx[/code] to value [code]animation[/code]. The [code]track_idx[/code] must be the index of an Animation Track.
@@ -296,7 +296,7 @@
 			</description>
 		</method>
 		<method name="method_track_get_key_indices" qualifiers="const">
-			<return type="PackedInt32Array">
+			<return type="PoolIntArray">
 			</return>
 			<argument index="0" name="track_idx" type="int">
 			</argument>
@@ -309,7 +309,7 @@
 			</description>
 		</method>
 		<method name="method_track_get_name" qualifiers="const">
-			<return type="StringName">
+			<return type="String">
 			</return>
 			<argument index="0" name="track_idx" type="int">
 			</argument>
@@ -649,7 +649,7 @@
 			</description>
 		</method>
 		<method name="value_track_get_key_indices" qualifiers="const">
-			<return type="PackedInt32Array">
+			<return type="PoolIntArray">
 			</return>
 			<argument index="0" name="track_idx" type="int">
 			</argument>

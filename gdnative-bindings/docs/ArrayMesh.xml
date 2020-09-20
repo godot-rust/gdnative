@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ArrayMesh" inherits="Mesh" version="4.0">
+<class name="ArrayMesh" inherits="Mesh" version="3.2">
 	<brief_description>
 		[Mesh] type that provides utility for constructing a surface from arrays.
 	</brief_description>
@@ -7,7 +7,7 @@
 		The [ArrayMesh] is used to construct a [Mesh] by specifying the attributes as arrays.
 		The most basic example is the creation of a single triangle:
 		[codeblock]
-		var vertices = PackedVector3Array()
+		var vertices = PoolVector3Array()
 		vertices.push_back(Vector3(0, 1, 0))
 		vertices.push_back(Vector3(1, 0, 0))
 		vertices.push_back(Vector3(0, 0, 1))
@@ -18,21 +18,21 @@
 		arrays[ArrayMesh.ARRAY_VERTEX] = vertices
 		# Create the Mesh.
 		arr_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-		var m = MeshInstance3D.new()
+		var m = MeshInstance.new()
 		m.mesh = arr_mesh
 		[/codeblock]
-		The [MeshInstance3D] is ready to be added to the [SceneTree] to be shown.
-		See also [ImmediateGeometry3D], [MeshDataTool] and [SurfaceTool] for procedural geometry generation.
+		The [MeshInstance] is ready to be added to the [SceneTree] to be shown.
+		See also [ImmediateGeometry], [MeshDataTool] and [SurfaceTool] for procedural geometry generation.
 		[b]Note:[/b] Godot uses clockwise [url=https://learnopengl.com/Advanced-OpenGL/Face-culling]winding order[/url] for front faces of triangle primitive modes.
 	</description>
 	<tutorials>
-		<link title="Procedural geometry using the ArrayMesh">https://docs.godotengine.org/en/latest/tutorials/content/procedural_geometry/arraymesh.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/content/procedural_geometry/arraymesh.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_blend_shape">
 			<return type="void">
 			</return>
-			<argument index="0" name="name" type="StringName">
+			<argument index="0" name="name" type="String">
 			</argument>
 			<description>
 				Adds name for a blend shape that will be added with [method add_surface_from_arrays]. Must be called before surface is added.
@@ -47,11 +47,7 @@
 			</argument>
 			<argument index="2" name="blend_shapes" type="Array" default="[  ]">
 			</argument>
-			<argument index="3" name="lods" type="Dictionary" default="{
-
-}">
-			</argument>
-			<argument index="4" name="compress_flags" type="int" default="31744">
+			<argument index="3" name="compress_flags" type="int" default="97280">
 			</argument>
 			<description>
 				Creates a new surface.
@@ -67,13 +63,6 @@
 				Removes all blend shapes from this [ArrayMesh].
 			</description>
 		</method>
-		<method name="clear_surfaces">
-			<return type="void">
-			</return>
-			<description>
-				Removes all surfaces from this [ArrayMesh].
-			</description>
-		</method>
 		<method name="get_blend_shape_count" qualifiers="const">
 			<return type="int">
 			</return>
@@ -82,7 +71,7 @@
 			</description>
 		</method>
 		<method name="get_blend_shape_name" qualifiers="const">
-			<return type="StringName">
+			<return type="String">
 			</return>
 			<argument index="0" name="index" type="int">
 			</argument>
@@ -162,6 +151,15 @@
 				Returns the primitive type of the requested surface (see [method add_surface_from_arrays]).
 			</description>
 		</method>
+		<method name="surface_remove">
+			<return type="void">
+			</return>
+			<argument index="0" name="surf_idx" type="int">
+			</argument>
+			<description>
+				Removes a surface at position [code]surf_idx[/code], shifting greater surfaces one [code]surf_idx[/code] slot down.
+			</description>
+		</method>
 		<method name="surface_set_name">
 			<return type="void">
 			</return>
@@ -180,7 +178,7 @@
 			</argument>
 			<argument index="1" name="offset" type="int">
 			</argument>
-			<argument index="2" name="data" type="PackedByteArray">
+			<argument index="2" name="data" type="PoolByteArray">
 			</argument>
 			<description>
 				Updates a specified region of mesh arrays on the GPU.
@@ -204,31 +202,31 @@
 			Amount of weights/bone indices per vertex (always 4).
 		</constant>
 		<constant name="ARRAY_VERTEX" value="0" enum="ArrayType">
-			[PackedVector3Array], [PackedVector2Array], or [Array] of vertex positions.
+			[PoolVector3Array], [PoolVector2Array], or [Array] of vertex positions.
 		</constant>
 		<constant name="ARRAY_NORMAL" value="1" enum="ArrayType">
-			[PackedVector3Array] of vertex normals.
+			[PoolVector3Array] of vertex normals.
 		</constant>
 		<constant name="ARRAY_TANGENT" value="2" enum="ArrayType">
-			[PackedFloat32Array] of vertex tangents. Each element in groups of 4 floats, first 3 floats determine the tangent, and the last the binormal direction as -1 or 1.
+			[PoolRealArray] of vertex tangents. Each element in groups of 4 floats, first 3 floats determine the tangent, and the last the binormal direction as -1 or 1.
 		</constant>
 		<constant name="ARRAY_COLOR" value="3" enum="ArrayType">
-			[PackedColorArray] of vertex colors.
+			[PoolColorArray] of vertex colors.
 		</constant>
 		<constant name="ARRAY_TEX_UV" value="4" enum="ArrayType">
-			[PackedVector2Array] for UV coordinates.
+			[PoolVector2Array] for UV coordinates.
 		</constant>
 		<constant name="ARRAY_TEX_UV2" value="5" enum="ArrayType">
-			[PackedVector2Array] for second UV coordinates.
+			[PoolVector2Array] for second UV coordinates.
 		</constant>
 		<constant name="ARRAY_BONES" value="6" enum="ArrayType">
-			[PackedFloat32Array] or [PackedInt32Array] of bone indices. Each element in groups of 4 floats.
+			[PoolRealArray] or [PoolIntArray] of bone indices. Each element in groups of 4 floats.
 		</constant>
 		<constant name="ARRAY_WEIGHTS" value="7" enum="ArrayType">
-			[PackedFloat32Array] of bone weights. Each element in groups of 4 floats.
+			[PoolRealArray] of bone weights. Each element in groups of 4 floats.
 		</constant>
 		<constant name="ARRAY_INDEX" value="8" enum="ArrayType">
-			[PackedInt32Array] of integers used as indices referencing vertices, colors, normals, tangents, and textures. All of those arrays must have the same number of elements as the vertex array. No index can be beyond the vertex array size. When this index array is present, it puts the function into "index mode," where the index selects the *i*'th vertex, normal, tangent, color, UV, etc. This means if you want to have different normals or colors along an edge, you have to duplicate the vertices.
+			[PoolIntArray] of integers used as indices referencing vertices, colors, normals, tangents, and textures. All of those arrays must have the same number of elements as the vertex array. No index can be beyond the vertex array size. When this index array is present, it puts the function into "index mode," where the index selects the *i*'th vertex, normal, tangent, color, UV, etc. This means if you want to have different normals or colors along an edge, you have to duplicate the vertices.
 			For triangles, the index array is interpreted as triples, referring to the vertices of each triangle. For lines, the index array is in pairs indicating the start and end of each line.
 		</constant>
 		<constant name="ARRAY_MAX" value="9" enum="ArrayType">

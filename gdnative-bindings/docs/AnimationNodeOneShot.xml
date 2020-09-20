@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AnimationNodeOneShot" inherits="AnimationNode" version="4.0">
+<class name="AnimationNodeOneShot" inherits="AnimationNode" version="3.2">
 	<brief_description>
 		Plays an animation once in [AnimationNodeBlendTree].
 	</brief_description>
@@ -7,7 +7,7 @@
 		A resource to add to an [AnimationNodeBlendTree]. This node will execute a sub-animation and return once it finishes. Blend times for fading in and out can be customized, as well as filters.
 	</description>
 	<tutorials>
-		<link title="AnimationTree">https://docs.godotengine.org/en/latest/tutorials/animation/animation_tree.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/animation/animation_tree.html</link>
 	</tutorials>
 	<methods>
 		<method name="get_mix_mode" qualifiers="const">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="File" inherits="Reference" version="4.0">
+<class name="File" inherits="Reference" version="3.2">
 	<brief_description>
 		Type to handle file reading and writing operations.
 	</brief_description>
@@ -23,7 +23,7 @@
 		In the example above, the file will be saved in the user data folder as specified in the [url=https://docs.godotengine.org/en/latest/tutorials/io/data_paths.html]Data paths[/url] documentation.
 	</description>
 	<tutorials>
-		<link title="File system">https://docs.godotengine.org/en/latest/getting_started/step_by_step/filesystem.html</link>
+		<link>https://docs.godotengine.org/en/latest/getting_started/step_by_step/filesystem.html</link>
 	</tutorials>
 	<methods>
 		<method name="close">
@@ -88,16 +88,16 @@
 			</description>
 		</method>
 		<method name="get_buffer" qualifiers="const">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<argument index="0" name="len" type="int">
 			</argument>
 			<description>
-				Returns next [code]len[/code] bytes of the file as a [PackedByteArray].
+				Returns next [code]len[/code] bytes of the file as a [PoolByteArray].
 			</description>
 		</method>
 		<method name="get_csv_line" qualifiers="const">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<argument index="0" name="delim" type="String" default="&quot;,&quot;">
 			</argument>
@@ -253,7 +253,7 @@
 			</argument>
 			<argument index="1" name="mode_flags" type="int" enum="File.ModeFlags">
 			</argument>
-			<argument index="2" name="key" type="PackedByteArray">
+			<argument index="2" name="key" type="PoolByteArray">
 			</argument>
 			<description>
 				Opens an encrypted file in write or read mode. You need to pass a binary key to encrypt/decrypt it.
@@ -356,7 +356,7 @@
 		<method name="store_buffer">
 			<return type="void">
 			</return>
-			<argument index="0" name="buffer" type="PackedByteArray">
+			<argument index="0" name="buffer" type="PoolByteArray">
 			</argument>
 			<description>
 				Stores the given array of bytes in the file.
@@ -365,12 +365,12 @@
 		<method name="store_csv_line">
 			<return type="void">
 			</return>
-			<argument index="0" name="values" type="PackedStringArray">
+			<argument index="0" name="values" type="PoolStringArray">
 			</argument>
 			<argument index="1" name="delim" type="String" default="&quot;,&quot;">
 			</argument>
 			<description>
-				Store the given [PackedStringArray] in the file as a line formatted in the CSV (Comma-Separated Values) format. You can pass a different delimiter [code]delim[/code] to use other than the default [code]","[/code] (comma). This delimiter must be one-character long.
+				Store the given [PoolStringArray] in the file as a line formatted in the CSV (Comma-Separated Values) format. You can pass a different delimiter [code]delim[/code] to use other than the default [code]","[/code] (comma). This delimiter must be one-character long.
 				Text will be encoded as UTF-8.
 			</description>
 		</method>

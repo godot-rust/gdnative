@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VisibilityEnabler2D" inherits="VisibilityNotifier2D" version="4.0">
+<class name="VisibilityEnabler2D" inherits="VisibilityNotifier2D" version="3.2">
 	<brief_description>
 		Enables certain nodes only when approximately visible.
 	</brief_description>
@@ -38,13 +38,13 @@
 			If [code]true[/code], [RigidBody2D] nodes will be paused.
 		</member>
 		<member name="pause_animated_sprites" type="bool" setter="set_enabler" getter="is_enabler_enabled" default="true">
-			If [code]true[/code], [AnimatedSprite2D] nodes will be paused.
+			If [code]true[/code], [AnimatedSprite] nodes will be paused.
 		</member>
 		<member name="pause_animations" type="bool" setter="set_enabler" getter="is_enabler_enabled" default="true">
 			If [code]true[/code], [AnimationPlayer] nodes will be paused.
 		</member>
 		<member name="pause_particles" type="bool" setter="set_enabler" getter="is_enabler_enabled" default="true">
-			If [code]true[/code], [GPUParticles2D] nodes will be paused.
+			If [code]true[/code], [Particles2D] nodes will be paused.
 		</member>
 		<member name="physics_process_parent" type="bool" setter="set_enabler" getter="is_enabler_enabled" default="false">
 			If [code]true[/code], the parent's [method Node._physics_process] will be stopped.
@@ -61,7 +61,7 @@
 			This enabler will freeze [RigidBody2D] nodes.
 		</constant>
 		<constant name="ENABLER_PAUSE_PARTICLES" value="2" enum="Enabler">
-			This enabler will stop [GPUParticles2D] nodes.
+			This enabler will stop [Particles2D] nodes.
 		</constant>
 		<constant name="ENABLER_PARENT_PROCESS" value="3" enum="Enabler">
 			This enabler will stop the parent's _process function.
@@ -70,7 +70,7 @@
 			This enabler will stop the parent's _physics_process function.
 		</constant>
 		<constant name="ENABLER_PAUSE_ANIMATED_SPRITES" value="5" enum="Enabler">
-			This enabler will stop [AnimatedSprite2D] nodes animations.
+			This enabler will stop [AnimatedSprite] nodes animations.
 		</constant>
 		<constant name="ENABLER_MAX" value="6" enum="Enabler">
 			Represents the size of the [enum Enabler] enum.

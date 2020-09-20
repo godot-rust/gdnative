@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AABB" version="4.0">
+<class name="AABB" version="3.2">
 	<brief_description>
 		Axis-Aligned Bounding Box.
 	</brief_description>
@@ -7,7 +7,7 @@
 		AABB consists of a position, a size, and several utility functions. It is typically used for fast overlap tests.
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/math/index.html</link>
 	</tutorials>
 	<methods>
 		<method name="AABB">

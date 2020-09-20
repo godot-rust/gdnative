@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="CameraServer" inherits="Object" version="4.0">
+<class name="CameraServer" inherits="Object" version="3.2">
 	<brief_description>
 		Server keeping track of different cameras accessible in Godot.
 	</brief_description>
 	<description>
 		The [CameraServer] keeps track of different cameras accessible in Godot. These are external cameras such as webcams or the cameras on your phone.
 		It is notably used to provide AR modules with a video feed from the camera.
-		[b]Note:[/b] This class is currently only implemented on macOS and iOS. On other platforms, no [CameraFeed]s will be available.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -17,7 +16,7 @@
 			<argument index="0" name="feed" type="CameraFeed">
 			</argument>
 			<description>
-				Adds the camera [code]feed[/code] to the camera server.
+				Adds a camera feed to the camera server.
 			</description>
 		</method>
 		<method name="feeds">
@@ -33,7 +32,7 @@
 			<argument index="0" name="index" type="int">
 			</argument>
 			<description>
-				Returns the [CameraFeed] corresponding to the camera with the given [code]index[/code].
+				Returns the [CameraFeed] with this id.
 			</description>
 		</method>
 		<method name="get_feed_count">
@@ -49,7 +48,7 @@
 			<argument index="0" name="feed" type="CameraFeed">
 			</argument>
 			<description>
-				Removes the specified camera [code]feed[/code].
+				Removes a [CameraFeed].
 			</description>
 		</method>
 	</methods>
@@ -58,14 +57,14 @@
 			<argument index="0" name="id" type="int">
 			</argument>
 			<description>
-				Emitted when a [CameraFeed] is added (e.g. a webcam is plugged in).
+				Emitted when a [CameraFeed] is added (e.g. webcam is plugged in).
 			</description>
 		</signal>
 		<signal name="camera_feed_removed">
 			<argument index="0" name="id" type="int">
 			</argument>
 			<description>
-				Emitted when a [CameraFeed] is removed (e.g. a webcam is unplugged).
+				Emitted when a [CameraFeed] is removed (e.g. webcam is unplugged).
 			</description>
 		</signal>
 	</signals>
@@ -74,7 +73,7 @@
 			The RGBA camera image.
 		</constant>
 		<constant name="FEED_YCBCR_IMAGE" value="0" enum="FeedImage">
-			The [url=https://en.wikipedia.org/wiki/YCbCr]YCbCr[/url] camera image.
+			The YCbCr camera image.
 		</constant>
 		<constant name="FEED_Y_IMAGE" value="0" enum="FeedImage">
 			The Y component camera image.

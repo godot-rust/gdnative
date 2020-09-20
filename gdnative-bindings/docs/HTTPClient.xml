@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="HTTPClient" inherits="Reference" version="4.0">
+<class name="HTTPClient" inherits="Reference" version="3.2">
 	<brief_description>
 		Low-level hyper-text transfer protocol client.
 	</brief_description>
@@ -11,8 +11,8 @@
 		[b]Note:[/b] When performing HTTP requests from a project exported to HTML5, keep in mind the remote server may not allow requests from foreign origins due to [url=https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS]CORS[/url]. If you host the server in question, you should modify its backend to allow requests from foreign origins by adding the [code]Access-Control-Allow-Origin: *[/code] HTTP header.
 	</description>
 	<tutorials>
-		<link title="HTTP client class">https://docs.godotengine.org/en/latest/tutorials/networking/http_client_class.html</link>
-		<link title="SSL certificates">https://docs.godotengine.org/en/latest/tutorials/networking/ssl_certificates.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/networking/http_client_class.html</link>
+		<link>https://docs.godotengine.org/en/latest/tutorials/networking/ssl_certificates.html</link>
 	</tutorials>
 	<methods>
 		<method name="close">
@@ -56,7 +56,7 @@
 			</description>
 		</method>
 		<method name="get_response_headers">
-			<return type="PackedStringArray">
+			<return type="PoolStringArray">
 			</return>
 			<description>
 				Returns the response headers.
@@ -125,7 +125,7 @@
 			</description>
 		</method>
 		<method name="read_response_body_chunk">
-			<return type="PackedByteArray">
+			<return type="PoolByteArray">
 			</return>
 			<description>
 				Reads one chunk from the response.
@@ -138,7 +138,7 @@
 			</argument>
 			<argument index="1" name="url" type="String">
 			</argument>
-			<argument index="2" name="headers" type="PackedStringArray">
+			<argument index="2" name="headers" type="PoolStringArray">
 			</argument>
 			<argument index="3" name="body" type="String" default="&quot;&quot;">
 			</argument>
@@ -162,9 +162,9 @@
 			</argument>
 			<argument index="1" name="url" type="String">
 			</argument>
-			<argument index="2" name="headers" type="PackedStringArray">
+			<argument index="2" name="headers" type="PoolStringArray">
 			</argument>
-			<argument index="3" name="body" type="PackedByteArray">
+			<argument index="3" name="body" type="PoolByteArray">
 			</argument>
 			<description>
 				Sends a raw request to the connected host. The URL parameter is just the part after the host, so for [code]http://somehost.com/index.php[/code], it is [code]index.php[/code].
