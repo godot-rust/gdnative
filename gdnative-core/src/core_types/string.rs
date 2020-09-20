@@ -3,10 +3,11 @@ use crate::sys;
 use crate::NewRef;
 
 use std::cmp::Ordering;
+use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem::forget;
-use std::ops::Range;
+use std::ops::{Add, AddAssign, Index, Range};
 use std::slice;
 use std::str;
 
@@ -242,7 +243,7 @@ impl GodotString {
         GodotString(sys)
     }
 
-    /// Clones `sys` into a `GodotString` without droping `sys`
+    /// Clones `sys` into a `GodotString` without dropping `sys`
     #[doc(hidden)]
     #[inline]
     pub fn clone_from_sys(sys: sys::godot_string) -> Self {
@@ -290,6 +291,151 @@ impl std::hash::Hash for GodotString {
     #[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         state.write_u64(self.u64_hash());
+    }
+}
+
+impl Add<GodotString> for GodotString {
+    type Output = GodotString;
+    #[inline]
+    fn add(self, other: GodotString) -> GodotString {
+        &self + &other
+    }
+}
+
+impl Add<&GodotString> for &GodotString {
+    type Output = GodotString;
+    #[inline]
+    fn add(self, other: &GodotString) -> GodotString {
+        GodotString::from_sys(unsafe { (get_api().godot_string_operator_plus)(&self.0, &other.0) })
+    }
+}
+
+impl<S> Add<S> for &GodotString
+where
+    S: AsRef<str>,
+{
+    type Output = GodotString;
+    #[inline]
+    fn add(self, other: S) -> GodotString {
+        self.add(&GodotString::from_str(other))
+    }
+}
+
+/// `AddAssign` implementations copy the strings' contents since `GodotString` is immutable.
+impl AddAssign<&GodotString> for GodotString {
+    #[inline]
+    fn add_assign(&mut self, other: &Self) {
+        *self = &*self + other;
+    }
+}
+
+/// `AddAssign` implementations copy the strings' contents since `GodotString` is immutable.
+impl AddAssign<GodotString> for GodotString {
+    #[inline]
+    fn add_assign(&mut self, other: Self) {
+        *self += &other;
+    }
+}
+
+/// `AddAssign` implementations copy the strings' contents since `GodotString` is immutable.
+impl<S> AddAssign<S> for GodotString
+where
+    S: AsRef<str>,
+{
+    #[inline]
+    fn add_assign(&mut self, other: S) {
+        self.add_assign(&GodotString::from_str(other))
+    }
+}
+
+impl PartialOrd for GodotString {
+    #[inline]
+    fn partial_cmp(&self, other: &GodotString) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for GodotString {
+    #[inline]
+    fn cmp(&self, other: &GodotString) -> Ordering {
+        if self == other {
+            Ordering::Equal
+        } else if unsafe { (get_api().godot_string_operator_less)(&self.0, &other.0) } {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    }
+}
+
+/// Type representing a character in Godot's native encoding. Can be converted to and
+/// from `char`. Depending on the platform, this might not always be able to represent
+/// a full code point.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[repr(transparent)]
+pub struct GodotChar(libc::wchar_t);
+
+/// Error indicating that a `GodotChar` cannot be converted to a `char`.
+#[derive(Debug)]
+pub enum GodotCharError {
+    /// The character cannot be represented as a Unicode code point.
+    InvalidCodePoint,
+    /// The character's encoding cannot be determined on this platform (`wchar_t` is
+    /// not 8, 16, or 32-bits wide).
+    UnknownEncoding,
+    /// The character is part of an incomplete encoding sequence.
+    IncompleteSequence,
+}
+
+impl TryFrom<GodotChar> for char {
+    type Error = GodotCharError;
+
+    #[inline]
+    fn try_from(c: GodotChar) -> Result<Self, GodotCharError> {
+        match std::mem::size_of::<libc::wchar_t>() {
+            1 => std::char::from_u32(c.0 as u32).ok_or(GodotCharError::IncompleteSequence),
+            4 => std::char::from_u32(c.0 as u32).ok_or(GodotCharError::InvalidCodePoint),
+            2 => {
+                let mut iter = std::char::decode_utf16(std::iter::once(c.0 as u16));
+                let c = iter
+                    .next()
+                    .ok_or(GodotCharError::InvalidCodePoint)?
+                    .map_err(|_| GodotCharError::IncompleteSequence)?;
+
+                assert!(
+                    iter.next().is_none(),
+                    "it should be impossible to decode more than one code point from one u16"
+                );
+
+                Ok(c)
+            }
+            _ => Err(GodotCharError::UnknownEncoding),
+        }
+    }
+}
+
+/// Does a best-effort conversion from `GodotChar` to char. If that is not possible,
+/// the implementation returns `false`.
+impl PartialEq<char> for GodotChar {
+    #[inline]
+    fn eq(&self, other: &char) -> bool {
+        char::try_from(*self).map_or(false, |this| this == *other)
+    }
+}
+
+/// The index operator provides a low-level view of characters in Godot's native encoding
+/// that doesn't always correspond to Unicode code points one-to-one. This operation goes
+/// through FFI. For intensive string operations, consider converting to a Rust `String`
+/// first to avoid this cost.
+impl Index<usize> for GodotString {
+    type Output = GodotChar;
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        unsafe {
+            let c: *const libc::wchar_t =
+                (get_api().godot_string_operator_index)(self.sys() as *mut _, index as i32);
+            &*(c as *const GodotChar)
+        }
     }
 }
 
@@ -475,6 +621,30 @@ godot_test!(test_string {
 
     let foo2 = foo.new_ref();
     assert!(foo == foo2);
+
+    let bar: GodotString = "bar".into();
+    let qux: GodotString = "qux".into();
+    assert_eq!(&bar + &qux, "barqux".into());
+
+    let baz: GodotString = "baz".into();
+    assert_eq!(&baz + "corge", "bazcorge".into());
+
+    let mut bar2 = bar.new_ref();
+    bar2 += &qux;
+    assert_eq!(bar2, "barqux".into());
+
+    let cmp1: GodotString = "foo".into();
+    let cmp2: GodotString = "foo".into();
+    let cmp3: GodotString = "bar".into();
+    assert_eq!(cmp1 < cmp2, false, "equal should not be less than");
+    assert_eq!(cmp1 > cmp2, false, "equal should not be greater than");
+    assert_eq!(cmp1 < cmp3, false, "foo should be less than bar");
+    assert_eq!(cmp3 > cmp1, false, "bar should be greater than foo");
+
+    let index_string: GodotString = "bar".into();
+    assert_eq!(index_string[0], 'b');
+    assert_eq!(index_string[1], 'a');
+    assert_eq!(index_string[2], 'r');
 
     let variant = Variant::from_godot_string(&foo);
     assert!(variant.get_type() == VariantType::GodotString);
