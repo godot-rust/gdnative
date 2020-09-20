@@ -6,7 +6,7 @@
 
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
-**[User Guide](https://godot-rust.github.io/book/)** | **[API Documentation](https://docs.rs/gdnative/0.9.0-preview.0/gdnative/)**
+**[User Guide](https://godot-rust.github.io/book/)** | **[API Documentation](https://docs.rs/gdnative/0.9.0/gdnative/)**
 
 ## Stability
 
@@ -28,13 +28,13 @@ The generator makes use of `bindgen`, which depends on Clang. Instructions for i
 
 ## Usage
 
-### Godot 3.2.2-stable
+### Godot 3.2.3-stable
 
 After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
 
 ```toml
 [dependencies]
-gdnative = "0.9.0-preview.0"
+gdnative = "0.9.0"
 
 [lib]
 crate-type = ["cdylib"]
@@ -42,7 +42,7 @@ crate-type = ["cdylib"]
 
 ### Other versions or custom builds
 
-The bindings are currently generated from the API description of Godot 3.2.2-stable by default. To use the bindings with another version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-bindings.html) in the user guide.
+The bindings are currently generated from the API description of Godot 3.2.3-stable by default. To use the bindings with another version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-bindings.html) in the user guide.
 
 ## Example
 
@@ -92,29 +92,14 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 
 ## Third-party resources
 
+### Tutorials
+
+- Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
+
 ### Open-source projects
 
 - Pong - https://github.com/you-win/godot-pong-rust
 - Air Combat - https://github.com/paytonrules/AirCombat - This [Godot Tutorial](https://devga.me/tutorials/godot2d/) ported to Rust.
-
-Several third-party resources have been created for the bindings. However, most of them are not updated for 0.9. If you have updated yours, open a PR to let us know!
-
-<details><summary>Outdated resources for godot-rust 0.8</summary>
-<p>
-
-### Tutorials
-
-- In depth Hello World tutorial - [Gorgeous Godot games in Rust](https://medium.com/@recallsingularity/gorgeous-godot-games-in-rust-1867c56045e6?source=friends_link&sk=c2fd85689b4638eae4d91b743439c75f)
-- Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
-- Writup/Tutorial on how to port GDScript to Rust - [Porting Godot Games to Rust](https://paytonrules.com/post/games-in-rust-with-godot-part-one/)
-- Guide and sample CI powered multi-platform Rust/GDNative based boilerplate project - https://github.com/tommywalkie/sample-godot-rust-app
-
-### Utilities
-
-- Auto Setup Script (as git dependency) - https://gitlab.com/ardawan-opensource/gdnative-rust-setup
-
-</p>
-</details>
 
 ## Contributing
 
