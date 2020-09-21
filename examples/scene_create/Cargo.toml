@@ -10,4 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gdnative = { path = "../../gdnative" }
-euclid = "0.20.13"
+euclid = "0.22.1"

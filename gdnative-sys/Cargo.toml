@@ -4,7 +4,8 @@ authors = ["The godot-rust developers"]
 description = "Generated bindings to the Godot game engine's gdnative core types (See the gdnative crate)."
 documentation = "https://docs.rs/crate/gdnative-sys"
 repository = "https://github.com/godot-rust/godot-rust"
-version = "0.9.0-preview.0"
+homepage = "https://godot-rust.github.io/"
+version = "0.9.0"
 build = "build.rs"
 license = "MIT"
 workspace = ".."
@@ -14,7 +15,7 @@ edition = "2018"
 libc = "0.2"
 
 [build-dependencies]
-bindgen = { version = "0.54.0", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.55.1", default-features = false, features = ["runtime"] }
 proc-macro2 = "1.0.6"
 quote = "1.0.2"
 miniserde = "=0.1.13"

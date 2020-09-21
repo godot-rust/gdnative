@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="AnimationNodeOutput" inherits="AnimationNode" version="3.2">
+	<brief_description>
+		Generic output node to be added to [AnimationNodeBlendTree].
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+		<link>https://docs.godotengine.org/en/latest/tutorials/animation/animation_tree.html</link>
+	</tutorials>
+	<methods>
+	</methods>
+	<constants>
+	</constants>
+</class>

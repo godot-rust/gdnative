@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use std::collections::HashMap;
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Fields, Ident, Meta, MetaList, NestedMeta, Path, Type};
+use syn::{Data, DeriveInput, Fields, Ident, Meta, MetaList, NestedMeta, Path, Stmt, Type};
 
 mod property_args;
 use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder};
@@ -36,12 +36,37 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                 None
             };
 
+            let before_get: Option<Stmt> = config
+                .before_get
+                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+
+            let after_get: Option<Stmt> = config
+                .after_get
+                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+
+            let before_set: Option<Stmt> = config
+                .before_set
+                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+
+            let after_set: Option<Stmt> = config
+                .after_set
+                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+
             let label = config.path.unwrap_or_else(|| format!("{}", ident));
             quote!({
                 builder.add_property(#label)
                     #with_default
-                    .with_ref_getter(|this: &#name, _| &this.#ident)
-                    .with_setter(|this: &mut #name, _, v| this.#ident = v)
+                    .with_ref_getter(|this: &#name, _owner: ::gdnative::TRef<Self::Base>| {
+                        #before_get
+                        let res = &this.#ident;
+                        #after_get
+                        res
+                    })
+                    .with_setter(|this: &mut #name, _owner: ::gdnative::TRef<Self::Base>, v| {
+                        #before_set
+                        this.#ident = v;
+                        #after_set
+                    })
                     .done();
             })
         });

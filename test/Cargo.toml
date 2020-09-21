@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gdnative = { path = "../gdnative", features = ["gd_test"] }
+gdnative-derive = { path = "../gdnative-derive" }

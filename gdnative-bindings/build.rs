@@ -15,7 +15,8 @@ fn main() {
     let icalls_rs = out_path.join("icalls.rs");
 
     let api = Api::new(&api_data);
-    let binding_res = generate_bindings(&api);
+    let docs = GodotXMLDocs::new("docs");
+    let binding_res = generate_bindings(&api, Some(&docs));
 
     {
         let mut output = BufWriter::new(File::create(&generated_rs).unwrap());
@@ -37,6 +38,7 @@ fn main() {
     // build.rs will automatically be recompiled and run if it's dependencies are updated.
     // Ignoring all but build.rs will keep from needless rebuilds.
     // Manually rebuilding the crate will ignore this.
+    println!("cargo:rerun-if-changed=docs/");
     println!("cargo:rerun-if-changed=api.json");
     println!("cargo:rerun-if-changed=build.rs");
 }
