@@ -294,15 +294,7 @@ impl<C: NativeClass> ClassBuilder<C> {
 
     #[inline]
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
-        self.add_method_advanced(ScriptMethod {
-            name,
-            method_ptr: Some(method),
-            attributes: ScriptMethodAttributes {
-                rpc_mode: RpcMode::Disabled,
-            },
-            method_data: ptr::null_mut(),
-            free_func: None,
-        });
+        self.add_method_with_rpc_mode(name, method, RpcMode::Disabled);
     }
 
     /// Returns a `PropertyBuilder` which can be used to add a property to the class being

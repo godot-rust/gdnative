@@ -15,6 +15,21 @@ pub enum RpcMode {
     PuppetSync,
 }
 
+impl RpcMode {
+    fn parse(s: &str) -> Option<Self> {
+        match s {
+            "remote" => Some(RpcMode::Remote),
+            "remote_sync" => Some(RpcMode::RemoteSync),
+            "master" => Some(RpcMode::Master),
+            "puppet" => Some(RpcMode::Puppet),
+            "disabled" => Some(RpcMode::Disabled),
+            "master_sync" => Some(RpcMode::MasterSync),
+            "puppet_sync" => Some(RpcMode::PuppetSync),
+            _ => None,
+        }
+    }
+}
+
 impl Default for RpcMode {
     fn default() -> Self {
         RpcMode::Disabled
@@ -188,7 +203,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
-                let mut rpc = RpcMode::Disabled;
+                let mut rpc = None;
 
                 let mut errors = vec![];
 
@@ -253,12 +268,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     }
                                 };
 
-                                for MetaNameValue {
-                                    path,
-                                    eq_token: _,
-                                    lit,
-                                } in pairs
-                                {
+                                for MetaNameValue { path, lit, .. } in pairs {
                                     let last = match path.segments.last() {
                                         Some(val) => val,
                                         None => {
@@ -284,46 +294,23 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                                 return false;
                                             };
 
-                                            match value.as_str() {
-                                                "remote" => {
-                                                    rpc = RpcMode::Remote;
-                                                    return false;
-                                                }
-                                                "remote_sync" => {
-                                                    rpc = RpcMode::RemoteSync;
-                                                    return false;
-                                                }
-                                                "master" => {
-                                                    rpc = RpcMode::Master;
-                                                    return false;
-                                                }
-                                                "puppet" => {
-                                                    rpc = RpcMode::Puppet;
-                                                    return false;
-                                                }
-                                                "disabled" => {
-                                                    rpc = RpcMode::Disabled;
-                                                    return false;
-                                                }
-                                                "master_sync" => {
-                                                    rpc = RpcMode::MasterSync;
-                                                    return false;
-                                                }
-                                                "puppet_sync" => {
-                                                    rpc = RpcMode::PuppetSync;
-                                                    return false;
-                                                }
-                                                _ => {
+                                            if let Some(mode) = RpcMode::parse(value.as_str()) {
+                                                if rpc.replace(mode).is_some() {
                                                     errors.push(syn::Error::new(
                                                         last.span(),
-                                                        format!(
-                                                            "unexpected value for rpc: {}",
-                                                            value
-                                                        ),
+                                                        "rpc mode was set more than once",
                                                     ));
                                                     return false;
                                                 }
+                                            } else {
+                                                errors.push(syn::Error::new(
+                                                    last.span(),
+                                                    format!("unexpected value for rpc: {}", value),
+                                                ));
+                                                return false;
                                             }
+
+                                            return false;
                                         }
                                         _ => (),
                                     }
@@ -380,7 +367,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     }
 
                     export_args.optional_args = optional_args;
-                    export_args.rpc_mode = rpc;
+                    export_args.rpc_mode = rpc.unwrap_or(RpcMode::Disabled);
 
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
