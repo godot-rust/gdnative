@@ -255,8 +255,8 @@ impl<C: NativeClass> ClassBuilder<C> {
         let rpc = match method.attributes.rpc_mode {
             RpcMode::Master => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTER,
             RpcMode::Remote => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTE,
-            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_SLAVE,
-            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_SYNC,
+            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPET,
+            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTESYNC,
             RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
             RpcMode::MasterSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTERSYNC,
             RpcMode::PuppetSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPETSYNC,
@@ -282,21 +282,24 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     #[inline]
-    pub fn add_method(&self, name: &str, method: ScriptMethodFn, rpc: &str) {
-        let rpc_mode = match rpc {
-            "remote" => RpcMode::Remote,
-            "remotesync" => RpcMode::RemoteSync,
-            "master" => RpcMode::Master,
-            "puppet" => RpcMode::Puppet,
-            "puppetsync" => RpcMode::PuppetSync,
-            "mastersync" => RpcMode::MasterSync,
-            _ => RpcMode::Disabled,
-        };
-
+    pub fn add_method_with_rpc_mode(&self, name: &str, method: ScriptMethodFn, rpc_mode: RpcMode) {
         self.add_method_advanced(ScriptMethod {
             name,
             method_ptr: Some(method),
-            attributes: ScriptMethodAttributes { rpc_mode: rpc_mode },
+            attributes: ScriptMethodAttributes { rpc_mode },
+            method_data: ptr::null_mut(),
+            free_func: None,
+        });
+    }
+
+    #[inline]
+    pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
+        self.add_method_advanced(ScriptMethod {
+            name,
+            method_ptr: Some(method),
+            attributes: ScriptMethodAttributes {
+                rpc_mode: RpcMode::Disabled,
+            },
             method_data: ptr::null_mut(),
             free_func: None,
         });

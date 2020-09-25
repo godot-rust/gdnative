@@ -1,7 +1,39 @@
 use syn::{spanned::Spanned, FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
 
 use proc_macro::TokenStream;
+use quote::{quote, ToTokens};
 use std::boxed::Box;
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum RpcMode {
+    Disabled,
+    Remote,
+    RemoteSync,
+    Master,
+    Puppet,
+    MasterSync,
+    PuppetSync,
+}
+
+impl Default for RpcMode {
+    fn default() -> Self {
+        RpcMode::Disabled
+    }
+}
+
+impl ToTokens for RpcMode {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        match self {
+            RpcMode::Disabled => tokens.extend(quote!(RpcMode::Disabled)),
+            RpcMode::Remote => tokens.extend(quote!(RpcMode::Remote)),
+            RpcMode::RemoteSync => tokens.extend(quote!(RpcMode::RemoteSync)),
+            RpcMode::Master => tokens.extend(quote!(RpcMode::Master)),
+            RpcMode::Puppet => tokens.extend(quote!(RpcMode::Puppet)),
+            RpcMode::MasterSync => tokens.extend(quote!(RpcMode::MasterSync)),
+            RpcMode::PuppetSync => tokens.extend(quote!(RpcMode::PuppetSync)),
+        }
+    }
+}
 
 pub(crate) struct ClassMethodExport {
     pub(crate) class_ty: Box<Type>,
@@ -12,12 +44,12 @@ pub(crate) struct ClassMethodExport {
 pub(crate) struct ExportMethod {
     pub(crate) sig: Signature,
     pub(crate) args: ExportArgs,
-    pub(crate) rpc: String,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(crate) struct ExportArgs {
     pub(crate) optional_args: Option<usize>,
+    pub(crate) rpc_mode: RpcMode,
 }
 
 pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
@@ -34,7 +66,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
         let methods = export
             .methods
             .into_iter()
-            .map(|ExportMethod { sig, args, rpc }| {
+            .map(|ExportMethod { sig, args }| {
                 let sig_span = sig.ident.span();
 
                 let name = sig.ident;
@@ -70,6 +102,8 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                     None => 0,
                 };
 
+                let rpc = args.rpc_mode;
+
                 let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
                     let span = arg.span();
                     if n < arg_count - optional_args {
@@ -86,7 +120,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                             fn #name ( #( #args )* ) -> #ret_ty
                         );
 
-                        #builder.add_method(#name_string, method, #rpc);
+                        #builder.add_method_with_rpc_mode(#name_string, method, #rpc);
                     }
                 )
             })
@@ -154,7 +188,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
-                let mut rpc = "disabled";
+                let mut rpc = RpcMode::Disabled;
 
                 let mut errors = vec![];
 
@@ -176,7 +210,6 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         if let Some("export") = last_seg.as_deref() {
                             let _export_args = export_args.get_or_insert_with(ExportArgs::default);
                             if !attr.tokens.is_empty() {
-                                use quote::ToTokens;
                                 use syn::{Meta, MetaNameValue, NestedMeta};
 
                                 let meta = match attr.parse_meta() {
@@ -253,31 +286,31 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                                             match value.as_str() {
                                                 "remote" => {
-                                                    rpc = "remote";
+                                                    rpc = RpcMode::Remote;
                                                     return false;
                                                 }
-                                                "remotesync" => {
-                                                    rpc = "remotesync";
+                                                "remote_sync" => {
+                                                    rpc = RpcMode::RemoteSync;
                                                     return false;
                                                 }
                                                 "master" => {
-                                                    rpc = "master";
+                                                    rpc = RpcMode::Master;
                                                     return false;
                                                 }
                                                 "puppet" => {
-                                                    rpc = "puppet";
+                                                    rpc = RpcMode::Puppet;
                                                     return false;
                                                 }
                                                 "disabled" => {
-                                                    rpc = "disabled";
+                                                    rpc = RpcMode::Disabled;
                                                     return false;
                                                 }
-                                                "mastersync" => {
-                                                    rpc = "mastersync";
+                                                "master_sync" => {
+                                                    rpc = RpcMode::MasterSync;
                                                     return false;
                                                 }
-                                                "puppetsync" => {
-                                                    rpc = "puppetsync";
+                                                "puppet_sync" => {
+                                                    rpc = RpcMode::PuppetSync;
                                                     return false;
                                                 }
                                                 _ => {
@@ -347,11 +380,11 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     }
 
                     export_args.optional_args = optional_args;
+                    export_args.rpc_mode = rpc;
 
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
                         args: export_args,
-                        rpc: rpc.to_string(),
                     });
                 }
 
