@@ -1,7 +1,54 @@
 use syn::{spanned::Spanned, FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
 
 use proc_macro::TokenStream;
+use quote::{quote, ToTokens};
 use std::boxed::Box;
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum RpcMode {
+    Disabled,
+    Remote,
+    RemoteSync,
+    Master,
+    Puppet,
+    MasterSync,
+    PuppetSync,
+}
+
+impl RpcMode {
+    fn parse(s: &str) -> Option<Self> {
+        match s {
+            "remote" => Some(RpcMode::Remote),
+            "remote_sync" => Some(RpcMode::RemoteSync),
+            "master" => Some(RpcMode::Master),
+            "puppet" => Some(RpcMode::Puppet),
+            "disabled" => Some(RpcMode::Disabled),
+            "master_sync" => Some(RpcMode::MasterSync),
+            "puppet_sync" => Some(RpcMode::PuppetSync),
+            _ => None,
+        }
+    }
+}
+
+impl Default for RpcMode {
+    fn default() -> Self {
+        RpcMode::Disabled
+    }
+}
+
+impl ToTokens for RpcMode {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        match self {
+            RpcMode::Disabled => tokens.extend(quote!(RpcMode::Disabled)),
+            RpcMode::Remote => tokens.extend(quote!(RpcMode::Remote)),
+            RpcMode::RemoteSync => tokens.extend(quote!(RpcMode::RemoteSync)),
+            RpcMode::Master => tokens.extend(quote!(RpcMode::Master)),
+            RpcMode::Puppet => tokens.extend(quote!(RpcMode::Puppet)),
+            RpcMode::MasterSync => tokens.extend(quote!(RpcMode::MasterSync)),
+            RpcMode::PuppetSync => tokens.extend(quote!(RpcMode::PuppetSync)),
+        }
+    }
+}
 
 pub(crate) struct ClassMethodExport {
     pub(crate) class_ty: Box<Type>,
@@ -17,6 +64,7 @@ pub(crate) struct ExportMethod {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(crate) struct ExportArgs {
     pub(crate) optional_args: Option<usize>,
+    pub(crate) rpc_mode: RpcMode,
 }
 
 pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
@@ -69,6 +117,8 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                     None => 0,
                 };
 
+                let rpc = args.rpc_mode;
+
                 let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
                     let span = arg.span();
                     if n < arg_count - optional_args {
@@ -85,7 +135,7 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
                             fn #name ( #( #args )* ) -> #ret_ty
                         );
 
-                        #builder.add_method(#name_string, method);
+                        #builder.add_method_with_rpc_mode(#name_string, method, #rpc);
                     }
                 )
             })
@@ -153,6 +203,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
+                let mut rpc = None;
 
                 let mut errors = vec![];
 
@@ -174,7 +225,6 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         if let Some("export") = last_seg.as_deref() {
                             let _export_args = export_args.get_or_insert_with(ExportArgs::default);
                             if !attr.tokens.is_empty() {
-                                use quote::ToTokens;
                                 use syn::{Meta, MetaNameValue, NestedMeta};
 
                                 let meta = match attr.parse_meta() {
@@ -218,7 +268,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     }
                                 };
 
-                                for MetaNameValue { path, .. } in pairs {
+                                for MetaNameValue { path, lit, .. } in pairs {
                                     let last = match path.segments.last() {
                                         Some(val) => val,
                                         None => {
@@ -229,9 +279,43 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             return false;
                                         }
                                     };
-                                    let unexpected = last.ident.to_string();
-                                    let msg =
-                                        format!("unknown option for export: `{}`", unexpected);
+                                    let path = last.ident.to_string();
+
+                                    // Match rpc mode
+                                    match path.as_str() {
+                                        "rpc" => {
+                                            let value = if let syn::Lit::Str(lit_str) = lit {
+                                                lit_str.value()
+                                            } else {
+                                                errors.push(syn::Error::new(
+                                                    last.span(),
+                                                    "unexpected type for rpc value, expected Str",
+                                                ));
+                                                return false;
+                                            };
+
+                                            if let Some(mode) = RpcMode::parse(value.as_str()) {
+                                                if rpc.replace(mode).is_some() {
+                                                    errors.push(syn::Error::new(
+                                                        last.span(),
+                                                        "rpc mode was set more than once",
+                                                    ));
+                                                    return false;
+                                                }
+                                            } else {
+                                                errors.push(syn::Error::new(
+                                                    last.span(),
+                                                    format!("unexpected value for rpc: {}", value),
+                                                ));
+                                                return false;
+                                            }
+
+                                            return false;
+                                        }
+                                        _ => (),
+                                    }
+
+                                    let msg = format!("unknown option for export: `{}`", path);
                                     errors.push(syn::Error::new(last.span(), msg));
                                 }
                             }
@@ -283,6 +367,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     }
 
                     export_args.optional_args = optional_args;
+                    export_args.rpc_mode = rpc.unwrap_or(RpcMode::Disabled);
 
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
