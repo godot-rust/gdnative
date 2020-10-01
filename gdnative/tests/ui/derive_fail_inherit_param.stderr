@@ -1,0 +1,5 @@
+error: expected attribute arguments in parentheses: #[inherit(...)]
+ --> $DIR/derive_fail_inherit_param.rs:4:1
+  |
+4 | #[inherit]
+  | ^^^^^^^^^^

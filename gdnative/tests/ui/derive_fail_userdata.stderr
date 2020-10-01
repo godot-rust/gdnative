@@ -1,0 +1,5 @@
+error: expected attribute arguments in parentheses: #[user_data(...)]
+ --> $DIR/derive_fail_userdata.rs:5:1
+  |
+5 | #[user_data]
+  | ^^^^^^^^^^^^

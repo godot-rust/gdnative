@@ -68,9 +68,18 @@ pub(crate) struct ExportArgs {
 }
 
 pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    let (impl_block, export) = match parse_method_export(meta, input) {
+    let (impl_block, export) = match parse_method_export(meta, input.clone()) {
         Ok(val) => val,
-        Err(toks) => return toks,
+        Err(err) => {
+            let input = proc_macro2::TokenStream::from(input);
+            let err = proc_macro2::TokenStream::from(err);
+
+            let tokens = quote! {
+                #input
+                #err
+            };
+            return tokens.into();
+        }
     };
 
     let output = {
@@ -165,9 +174,12 @@ pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStre
 ///
 /// Returns the TokenStream of the impl block together with a description of methods to export.
 fn parse_method_export(
-    _meta: TokenStream,
+    meta: TokenStream,
     input: TokenStream,
 ) -> Result<(ItemImpl, ClassMethodExport), TokenStream> {
+    syn::parse_macro_input::parse::<syn::parse::Nothing>(meta)
+        .map_err(|err| err.to_compile_error())?;
+
     let ast = match syn::parse_macro_input::parse::<ItemImpl>(input) {
         Ok(impl_block) => impl_block,
         Err(err) => {

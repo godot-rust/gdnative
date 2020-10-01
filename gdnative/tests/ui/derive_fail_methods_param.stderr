@@ -1,0 +1,5 @@
+error: unexpected token
+ --> $DIR/derive_fail_methods_param.rs:7:11
+  |
+7 | #[methods(foo=bar)]
+  |           ^^^
