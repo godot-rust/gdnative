@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use syn::{Data, DeriveInput, Generics, Ident};
+use syn::{spanned::Spanned, Data, DeriveInput, Generics, Ident};
 
 mod attr;
 mod bounds;
@@ -55,11 +55,11 @@ pub(crate) fn parse_derive_input(
     input: TokenStream,
     bound: &syn::Path,
     dir: Direction,
-) -> DeriveData {
+) -> Result<DeriveData, syn::Error> {
     let input = match syn::parse_macro_input::parse::<DeriveInput>(input) {
         Ok(val) => val,
         Err(err) => {
-            panic!("{}", err);
+            return Err(err);
         }
     };
 
@@ -77,26 +77,36 @@ pub(crate) fn parse_derive_input(
                 })
                 .collect(),
         ),
-        Data::Union(_) => panic!("Variant conversion derive macro does not work on unions."),
+        Data::Union(_) => {
+            return Err(syn::Error::new(
+                input.span(),
+                "Variant conversion derive macro does not work on unions.",
+            ))
+        }
     };
 
     let generics = extend_bounds(input.generics, &repr, bound, dir);
 
-    DeriveData {
+    Ok(DeriveData {
         ident: input.ident,
         repr,
         generics,
-    }
+    })
 }
 
-pub(crate) fn derive_to_variant(trait_kind: ToVariantTrait, input: TokenStream) -> TokenStream {
-    to::expand_to_variant(
+pub(crate) fn derive_to_variant(
+    trait_kind: ToVariantTrait,
+    input: TokenStream,
+) -> Result<TokenStream, syn::Error> {
+    let variant = to::expand_to_variant(
         trait_kind,
-        parse_derive_input(input, &trait_kind.trait_path(), Direction::To),
-    )
+        parse_derive_input(input, &trait_kind.trait_path(), Direction::To)?,
+    );
+    Ok(variant)
 }
 
-pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
-    let bound: syn::Path = syn::parse2(quote! { ::gdnative::core_types::FromVariant }).unwrap();
-    from::expand_from_variant(parse_derive_input(input, &bound, Direction::From))
+pub(crate) fn derive_from_variant(input: TokenStream) -> Result<TokenStream, syn::Error> {
+    let bound: syn::Path = syn::parse2(quote! { ::gdnative::core_types::FromVariant })?;
+    let variant = from::expand_from_variant(parse_derive_input(input, &bound, Direction::From)?);
+    Ok(variant)
 }

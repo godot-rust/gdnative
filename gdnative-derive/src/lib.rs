@@ -62,15 +62,24 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(ToVariant, attributes(variant))]
 pub fn derive_to_variant(input: TokenStream) -> TokenStream {
-    variant::derive_to_variant(variant::ToVariantTrait::ToVariant, input)
+    match variant::derive_to_variant(variant::ToVariantTrait::ToVariant, input) {
+        Ok(stream) => stream,
+        Err(err) => err.to_compile_error().into(),
+    }
 }
 
 #[proc_macro_derive(OwnedToVariant, attributes(variant))]
 pub fn derive_owned_to_variant(input: TokenStream) -> TokenStream {
-    variant::derive_to_variant(variant::ToVariantTrait::OwnedToVariant, input)
+    match variant::derive_to_variant(variant::ToVariantTrait::OwnedToVariant, input) {
+        Ok(stream) => stream,
+        Err(err) => err.to_compile_error().into(),
+    }
 }
 
 #[proc_macro_derive(FromVariant, attributes(variant))]
 pub fn derive_from_variant(input: TokenStream) -> TokenStream {
-    variant::derive_from_variant(input)
+    match variant::derive_from_variant(input) {
+        Ok(stream) => stream,
+        Err(err) => err.to_compile_error().into(),
+    }
 }
