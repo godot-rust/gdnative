@@ -3,6 +3,7 @@ use syn::spanned::Spanned;
 pub struct PropertyAttrArgs {
     pub path: Option<String>,
     pub default: Option<syn::Lit>,
+    pub with_hint: Option<syn::Path>,
     pub before_get: Option<syn::Path>,
     pub after_get: Option<syn::Path>,
     pub before_set: Option<syn::Path>,
@@ -13,7 +14,7 @@ pub struct PropertyAttrArgs {
 pub struct PropertyAttrArgsBuilder {
     path: Option<String>,
     default: Option<syn::Lit>,
-    //   with_hint: Option<syn::>,
+    with_hint: Option<syn::Path>,
     before_get: Option<syn::Path>,
     after_get: Option<syn::Path>,
     before_set: Option<syn::Path>,
@@ -50,6 +51,25 @@ impl PropertyAttrArgsBuilder {
                     return Err(syn::Error::new(
                         pair.span(),
                         format!("there is already a path set: {:?}", old),
+                    ));
+                }
+            }
+            "with_hint" => {
+                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
+                    lit_str.value()
+                } else {
+                    return Err(syn::Error::new(
+                        pair.span(),
+                        format!("with_hint value is not a string literal"),
+                    ));
+                };
+
+                let path =
+                    syn::parse_str::<syn::Path>(string.as_str()).expect("Invalid path expression.");
+                if let Some(old) = self.with_hint.replace(path) {
+                    return Err(syn::Error::new(
+                        pair.span(),
+                        format!("there is already a with_hint value set: {:?}", old),
                     ));
                 }
             }
@@ -146,6 +166,7 @@ impl PropertyAttrArgsBuilder {
         PropertyAttrArgs {
             path: self.path,
             default: self.default,
+            with_hint: self.with_hint,
             before_get: self.before_get,
             after_get: self.after_get,
             before_set: self.before_set,

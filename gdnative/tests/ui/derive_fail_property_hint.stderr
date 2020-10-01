@@ -1,0 +1,7 @@
+error[E0271]: type mismatch resolving `<std::string::String as gdnative::nativescript::Export>::Hint == ()`
+ --> $DIR/derive_fail_property_hint.rs:5:19
+  |
+5 | #[derive(Default, NativeClass)]
+  |                   ^^^^^^^^^^^ expected enum `gdnative::nativescript::property::StringHint`, found `()`
+  |
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
