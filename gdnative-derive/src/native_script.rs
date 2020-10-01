@@ -73,8 +73,6 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                 None
             };
 
-            // FIXME: let with_hint: Option<Stmt> = config.with_hint
-
             let before_get: Option<Stmt> = config
                 .before_get
                 .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
@@ -95,7 +93,6 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
             quote!({
                 builder.add_property(#label)
                     #with_default
-                    // FIXME #with_hint
                     .with_ref_getter(|this: &#name, _owner: ::gdnative::TRef<Self::Base>| {
                         #before_get
                         let res = &this.#ident;
