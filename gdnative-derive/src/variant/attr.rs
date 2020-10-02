@@ -1,5 +1,6 @@
 use std::iter::FromIterator;
 
+use proc_macro2::Span;
 use syn::spanned::Spanned;
 
 use super::Direction;
@@ -30,6 +31,17 @@ pub struct AttrBuilder {
     errors: Vec<syn::Error>,
 }
 
+// variant(skip), variant(with = "...")
+fn generate_error(span: Span, message: &str) -> syn::Error {
+    syn::Error::new(
+        span,
+        format!(
+            "{}\n\texpected one of: #[variant(skip)], #[variant(with = \"path::to::function\")]",
+            message
+        ),
+    )
+}
+
 impl AttrBuilder {
     fn extend_meta(&mut self, meta: &syn::Meta) {
         match meta {
@@ -57,7 +69,7 @@ impl AttrBuilder {
     fn try_set_flag(&mut self, flag: &syn::Path) -> Result<(), syn::Error> {
         let name = flag
             .get_ident()
-            .ok_or_else(|| syn::Error::new(flag.span(), "key should be single ident"))?
+            .ok_or_else(|| generate_error(flag.span(), "Invalid syntax"))?
             .to_string();
 
         macro_rules! impl_options {
@@ -95,7 +107,7 @@ impl AttrBuilder {
             _ => {}
         }
 
-        Err(syn::Error::new(flag.span(), "unknown flag"))
+        Err(generate_error(flag.span(), "Missing macro arguments"))
     }
 
     fn set_pair(&mut self, pair: &syn::MetaNameValue) {
@@ -109,7 +121,22 @@ impl AttrBuilder {
 
         let name = path
             .get_ident()
-            .ok_or_else(|| syn::Error::new(path.span(), "key should be single ident"))?
+            .ok_or_else(|| {
+                let path_token = path.segments.iter().enumerate().fold(
+                    String::new(),
+                    |mut paths, (index, segment)| {
+                        if index > 0 {
+                            paths.push_str("::");
+                        }
+                        paths.push_str(&segment.ident.to_string());
+                        paths
+                    },
+                );
+                generate_error(
+                    path.span(),
+                    &format!("Expected token 'with' found {}", path_token),
+                )
+            })?
             .to_string();
 
         macro_rules! impl_options {
@@ -152,7 +179,12 @@ impl AttrBuilder {
             "with" => {
                 let path = match lit {
                     syn::Lit::Str(lit_str) => lit_str.parse::<syn::Path>()?,
-                    _ => return Err(syn::Error::new(lit.span(), "expected string literal")),
+                    _ => {
+                        return Err(generate_error(
+                            lit.span(),
+                            "expecting a path to a function in double quotes",
+                        ))
+                    }
                 };
 
                 if self
@@ -200,7 +232,7 @@ impl FromIterator<syn::Meta> for AttrBuilder {
 }
 
 impl AttrBuilder {
-    pub fn done(self) -> Result<Attr, Vec<syn::Error>> {
+    pub fn done(mut self) -> Result<Attr, syn::Error> {
         if self.errors.is_empty() {
             Ok(Attr {
                 skip_to_variant: self.skip_to_variant,
@@ -209,7 +241,16 @@ impl AttrBuilder {
                 from_variant_with: self.from_variant_with,
             })
         } else {
-            Err(self.errors)
+            let first_error = self.errors.remove(0);
+            let errors = self
+                .errors
+                .into_iter()
+                .fold(first_error, |mut errors, error| {
+                    errors.combine(error);
+                    errors
+                });
+
+            Err(errors)
         }
     }
 }

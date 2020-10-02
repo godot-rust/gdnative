@@ -6,6 +6,7 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
+use syn::{AttributeArgs, ItemFn};
 
 mod methods;
 mod native_script;
@@ -49,7 +50,13 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
-    profiled::derive_profiled(meta, input)
+    let args = parse_macro_input!(meta as AttributeArgs);
+    let item_fn = parse_macro_input!(input as ItemFn);
+
+    match profiled::derive_profiled(args, item_fn) {
+        Ok(tokens) => tokens.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
 }
 
 #[proc_macro_derive(
@@ -57,11 +64,22 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
     attributes(inherit, export, opt, user_data, property, register_with)
 )]
 pub fn derive_native_class(input: TokenStream) -> TokenStream {
-    match native_script::derive_native_class(input) {
+    // Converting the proc_macro::TokenStream into non proc_macro types so that tests
+    // can be written against the inner functions.
+    let derive_input = match syn::parse_macro_input::parse::<syn::DeriveInput>(input) {
+        Ok(derive_input) => derive_input,
+        Err(err) => {
+            return err.to_compile_error().into();
+        }
+    };
+
+    // Implement NativeClass for the input
+    match native_script::derive_native_class(&derive_input) {
         Ok(stream) => stream,
         Err(err) => {
             // Silence the other errors that happen because NativeClass is not implemented
             let empty_nativeclass = native_script::impl_empty_nativeclass(&derive_input);
+            let err = err.to_compile_error();
 
             let error = quote! {
                 #empty_nativeclass
@@ -76,7 +94,7 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(ToVariant, attributes(variant))]
 pub fn derive_to_variant(input: TokenStream) -> TokenStream {
     match variant::derive_to_variant(variant::ToVariantTrait::ToVariant, input) {
-        Ok(stream) => stream,
+        Ok(stream) => stream.into(),
         Err(err) => err.to_compile_error().into(),
     }
 }
@@ -84,15 +102,16 @@ pub fn derive_to_variant(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(OwnedToVariant, attributes(variant))]
 pub fn derive_owned_to_variant(input: TokenStream) -> TokenStream {
     match variant::derive_to_variant(variant::ToVariantTrait::OwnedToVariant, input) {
-        Ok(stream) => stream,
+        Ok(stream) => stream.into(),
         Err(err) => err.to_compile_error().into(),
     }
 }
 
 #[proc_macro_derive(FromVariant, attributes(variant))]
 pub fn derive_from_variant(input: TokenStream) -> TokenStream {
-    match variant::derive_from_variant(input) {
-        Ok(stream) => stream,
+    let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
+    match variant::derive_from_variant(derive_input) {
+        Ok(stream) => stream.into(),
         Err(err) => err.to_compile_error().into(),
     }
 }
