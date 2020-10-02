@@ -57,7 +57,20 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
     attributes(inherit, export, opt, user_data, property, register_with)
 )]
 pub fn derive_native_class(input: TokenStream) -> TokenStream {
-    native_script::derive_native_class(input)
+    match native_script::derive_native_class(input) {
+        Ok(stream) => stream,
+        Err(err) => {
+            // Silence the other errors that happen because NativeClass is not implemented
+            let empty_nativeclass = native_script::impl_empty_nativeclass(&derive_input);
+
+            let error = quote! {
+                #empty_nativeclass
+                #err
+            };
+
+            error.into()
+        }
+    }
 }
 
 #[proc_macro_derive(ToVariant, attributes(variant))]
