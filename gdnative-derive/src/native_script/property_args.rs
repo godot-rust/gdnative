@@ -23,6 +23,14 @@ pub struct PropertyAttrArgsBuilder {
 
 impl PropertyAttrArgsBuilder {
     pub fn add_pair(&mut self, pair: &syn::MetaNameValue) -> Result<(), syn::Error> {
+        let path_span = pair.lit.span();
+        let invalid_value_path = |_| {
+            syn::Error::new(
+                path_span,
+                "Unexpected input, expected a double quoted string: \"path::to::something\"",
+            )
+        };
+
         let name = pair
             .path
             .get_ident()
@@ -65,7 +73,7 @@ impl PropertyAttrArgsBuilder {
                 };
 
                 let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).expect("Invalid path expression.");
+                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
                 if let Some(old) = self.with_hint.replace(path) {
                     return Err(syn::Error::new(
                         pair.span(),
@@ -84,7 +92,7 @@ impl PropertyAttrArgsBuilder {
                 };
 
                 let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).expect("Invalid path expression.");
+                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
                 if let Some(old) = self.before_get.replace(path) {
                     return Err(syn::Error::new(
                         pair.span(),
@@ -103,7 +111,7 @@ impl PropertyAttrArgsBuilder {
                 };
 
                 let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).expect("Invalid path expression.");
+                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
                 if let Some(old) = self.after_get.replace(path) {
                     return Err(syn::Error::new(
                         pair.span(),
@@ -122,7 +130,7 @@ impl PropertyAttrArgsBuilder {
                 };
 
                 let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).expect("Invalid path expression.");
+                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
                 if let Some(old) = self.before_set.replace(path) {
                     return Err(syn::Error::new(
                         pair.span(),
@@ -141,7 +149,7 @@ impl PropertyAttrArgsBuilder {
                 };
 
                 let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).expect("Invalid path expression.");
+                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
                 if let Some(old) = self.after_set.replace(path) {
                     return Err(syn::Error::new(
                         pair.span(),
