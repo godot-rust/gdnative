@@ -20,6 +20,8 @@ fn ui_tests() {
     t.compile_fail("tests/ui/to_variant_fail_02.rs");
     t.compile_fail("tests/ui/to_variant_fail_03.rs");
     t.compile_fail("tests/ui/to_variant_fail_04.rs");
+    t.compile_fail("tests/ui/to_variant_fail_05.rs");
+    t.compile_fail("tests/ui/to_variant_fail_06.rs");
 
     // FromVariant
 }

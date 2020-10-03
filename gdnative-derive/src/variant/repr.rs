@@ -24,6 +24,19 @@ pub(crate) struct Field {
     pub attr: Attr,
 }
 
+fn improve_meta_error(err: syn::Error) -> syn::Error {
+    let error = err.to_string();
+    match error.as_str() {
+        "expected literal" => {
+            syn::Error::new(err.span(), "String expected, wrap with double quotes.")
+        }
+        other => syn::Error::new(
+            err.span(),
+            format!("{}, ie: #[variant(with = \"...\")]", other),
+        ),
+    }
+}
+
 fn parse_attrs<'a, I>(attrs: I) -> Result<Attr, syn::Error>
 where
     I: IntoIterator<Item = &'a syn::Attribute>,
@@ -31,14 +44,7 @@ where
     attrs
         .into_iter()
         .filter(|attr| attr.path.is_ident("variant"))
-        .map(|attr| {
-            attr.parse_meta().map_err(|err| {
-                syn::Error::new(
-                    err.span(),
-                    format!("{}, ie: #[variant(with = \"...\")]", err),
-                )
-            })
-        })
+        .map(|attr| attr.parse_meta().map_err(improve_meta_error))
         .collect::<Result<AttrBuilder, syn::Error>>()?
         .done()
 }

@@ -31,12 +31,11 @@ pub struct AttrBuilder {
     errors: Vec<syn::Error>,
 }
 
-// variant(skip), variant(with = "...")
-fn generate_error(span: Span, message: &str) -> syn::Error {
+fn generate_error_with_docs(span: Span, message: &str) -> syn::Error {
     syn::Error::new(
         span,
         format!(
-            "{}\n\texpected one of: #[variant(skip)], #[variant(with = \"path::to::function\")]",
+            "{}\n\texpecting #[variant(...)]. See documentation:\n\thttps://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes",
             message
         ),
     )
@@ -69,7 +68,7 @@ impl AttrBuilder {
     fn try_set_flag(&mut self, flag: &syn::Path) -> Result<(), syn::Error> {
         let name = flag
             .get_ident()
-            .ok_or_else(|| generate_error(flag.span(), "Invalid syntax"))?
+            .ok_or_else(|| generate_error_with_docs(flag.span(), "Invalid syntax"))?
             .to_string();
 
         macro_rules! impl_options {
@@ -107,7 +106,10 @@ impl AttrBuilder {
             _ => {}
         }
 
-        Err(generate_error(flag.span(), "Missing macro arguments"))
+        Err(generate_error_with_docs(
+            flag.span(),
+            "Missing macro arguments",
+        ))
     }
 
     fn set_pair(&mut self, pair: &syn::MetaNameValue) {
@@ -132,10 +134,7 @@ impl AttrBuilder {
                         paths
                     },
                 );
-                generate_error(
-                    path.span(),
-                    &format!("Expected token 'with' found {}", path_token),
-                )
+                syn::Error::new(path.span(), &format!("Found {}, expected one of:\n\tto_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip", path_token))
             })?
             .to_string();
 
@@ -180,9 +179,9 @@ impl AttrBuilder {
                 let path = match lit {
                     syn::Lit::Str(lit_str) => lit_str.parse::<syn::Path>()?,
                     _ => {
-                        return Err(generate_error(
+                        return Err(syn::Error::new(
                             lit.span(),
-                            "expecting a path to a function in double quotes",
+                            "expecting a path to a module in double quotes: #[variant(with = \"path::to::mod\")]",
                         ))
                     }
                 };
