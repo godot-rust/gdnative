@@ -14,14 +14,24 @@ fn ui_tests() {
     t.compile_fail("tests/ui/derive_fail_methods_missing_new.rs");
     t.compile_fail("tests/ui/derive_fail_userdata.rs");
 
+    // Variants
+    t.pass("tests/ui/variant_pass.rs");
+
     // ToVariant
-    t.pass("tests/ui/to_variant_pass.rs");
     t.compile_fail("tests/ui/to_variant_fail_01.rs");
     t.compile_fail("tests/ui/to_variant_fail_02.rs");
     t.compile_fail("tests/ui/to_variant_fail_03.rs");
     t.compile_fail("tests/ui/to_variant_fail_04.rs");
     t.compile_fail("tests/ui/to_variant_fail_05.rs");
     t.compile_fail("tests/ui/to_variant_fail_06.rs");
+    t.compile_fail("tests/ui/to_variant_fail_07.rs");
 
     // FromVariant
+    t.compile_fail("tests/ui/from_variant_fail_01.rs");
+    t.compile_fail("tests/ui/from_variant_fail_02.rs");
+    t.compile_fail("tests/ui/from_variant_fail_03.rs");
+    t.compile_fail("tests/ui/from_variant_fail_04.rs");
+    t.compile_fail("tests/ui/from_variant_fail_05.rs");
+    t.compile_fail("tests/ui/from_variant_fail_06.rs");
+    t.compile_fail("tests/ui/from_variant_fail_07.rs");
 }

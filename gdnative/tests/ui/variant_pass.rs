@@ -25,6 +25,15 @@ pub struct Foo {
         from_variant_with = "path::To::from_variant"
     )]
     baz: String,
+
+    #[variant(skip)]
+    quux: String,
+
+    #[variant(skip_to_variant)]
+    skip_to: String,
+
+    #[variant(skip_from_variant)]
+    skip_from: String,
 }
 
 fn main() {}

@@ -1,0 +1,7 @@
+error: Invalid syntax
+    expecting #[variant(...)]. See documentation:
+    https://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes
+ --> $DIR/from_variant_fail_02.rs:6:15
+  |
+6 |     #[variant(baz::quux)]
+  |               ^^^

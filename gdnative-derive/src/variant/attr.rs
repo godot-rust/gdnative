@@ -121,6 +121,9 @@ impl AttrBuilder {
     fn try_set_pair(&mut self, pair: &syn::MetaNameValue) -> Result<(), syn::Error> {
         let syn::MetaNameValue { path, lit, .. } = pair;
 
+        const VALID_KEYS: &str =
+            "to_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip";
+
         let name = path
             .get_ident()
             .ok_or_else(|| {
@@ -134,7 +137,10 @@ impl AttrBuilder {
                         paths
                     },
                 );
-                syn::Error::new(path.span(), &format!("Found {}, expected one of:\n\tto_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip", path_token))
+                syn::Error::new(
+                    path.span(),
+                    &format!("Found {}, expected one of:\n\t{}", path_token, VALID_KEYS),
+                )
             })?
             .to_string();
 
@@ -213,7 +219,10 @@ impl AttrBuilder {
             _ => {}
         }
 
-        Err(syn::Error::new(path.span(), "unknown argument"))
+        Err(syn::Error::new(
+            path.span(),
+            format!("unknown argument, expected one of:\n\t{}", VALID_KEYS),
+        ))
     }
 }
 

@@ -1,5 +1,5 @@
 error: String expected, wrap with double quotes.
- --> $DIR/to_variant_fail_06.rs:6:35
+ --> $DIR/to_variant_fail_06.rs:6:33
   |
-6 |     #[variant(from_variant_with = path)]
-  |                                   ^^^^
+6 |     #[variant(to_variant_with = path)]
+  |                                 ^^^^
