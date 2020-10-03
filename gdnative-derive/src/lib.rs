@@ -6,6 +6,7 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use syn::{AttributeArgs, ItemFn, ItemImpl};
 
 mod methods;
@@ -15,9 +16,15 @@ mod variant;
 
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    match syn::parse_macro_input::parse::<syn::parse::Nothing>(meta) {
+    match syn::parse_macro_input::parse::<syn::parse::Nothing>(meta.clone()) {
         Ok(_) => {}
-        Err(err) => return error_with_input(input, err),
+        Err(_) => {
+            let err = syn::Error::new_spanned(
+                TokenStream2::from(meta),
+                "#[methods] does not take parameters.",
+            );
+            return error_with_input(input, err);
+        }
     };
 
     let impl_block = match syn::parse_macro_input::parse::<ItemImpl>(input.clone()) {

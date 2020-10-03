@@ -1,5 +1,5 @@
-error: unexpected token
+error: #[methods] does not take parameters.
  --> $DIR/derive_fail_methods_list.rs:7:11
   |
 7 | #[methods(foo, bar)]
-  |           ^^^
+  |           ^^^^^^^^
