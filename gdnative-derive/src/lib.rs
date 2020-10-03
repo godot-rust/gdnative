@@ -6,7 +6,7 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
-use syn::{AttributeArgs, ItemFn};
+use syn::{AttributeArgs, ItemFn, ItemImpl};
 
 mod methods;
 mod native_script;
@@ -15,7 +15,28 @@ mod variant;
 
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    methods::derive_methods(meta, input)
+    match syn::parse_macro_input::parse::<syn::parse::Nothing>(meta) {
+        Ok(_) => {}
+        Err(err) => return error_with_input(input, err),
+    };
+
+    let impl_block = match syn::parse_macro_input::parse::<ItemImpl>(input.clone()) {
+        Ok(impl_block) => impl_block,
+        Err(err) => return error_with_input(input, err),
+    };
+
+    fn error_with_input(input: TokenStream, err: syn::Error) -> TokenStream {
+        let input = proc_macro2::TokenStream::from(input);
+        let err = err.to_compile_error();
+
+        let tokens = quote! {
+            #input
+            #err
+        };
+        return tokens.into();
+    }
+
+    methods::derive_methods(impl_block).into()
 }
 
 /// Makes a function profiled in Godot's built-in profiler. This macro automatically
