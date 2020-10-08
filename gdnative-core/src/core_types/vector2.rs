@@ -30,6 +30,8 @@ pub trait Vector2Godot {
     /// This method runs faster than distance_to, so prefer it if you need to compare vectors or
     /// need the squared distance for some formula.
     fn distance_squared_to(self, other: Vector2) -> f32;
+    /// Returns the vector with a maximum length by limiting its length to `length`.
+    fn clamped(self, length: f32) -> Self;
     /// Internal API for converting to `sys` representation. Makes it possible to remove
     /// `transmute`s elsewhere.
     #[doc(hidden)]
@@ -123,6 +125,11 @@ impl Vector2Godot for Vector2 {
     #[inline]
     fn distance_squared_to(self, other: Vector2) -> f32 {
         (other - self).square_length()
+    }
+
+    #[inline]
+    fn clamped(self, length: f32) -> Self {
+        self.clamp_length(0.0, length)
     }
 
     #[inline]
