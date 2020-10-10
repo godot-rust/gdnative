@@ -178,14 +178,25 @@ impl<T: NativeClass> Instance<T, Unique> {
             let gd_api = get_api();
             let nativescript_methods = crate::private::NativeScriptMethodTable::get(gd_api);
 
+            assert_ne!(
+                std::ptr::null(),
+                nativescript_methods.set_class_name,
+                "NativeScript::set_class_name must be available"
+            );
+            assert_ne!(
+                std::ptr::null(),
+                nativescript_methods.set_library,
+                "NativeScript::set_library must be available"
+            );
+            assert_ne!(
+                std::ptr::null(),
+                nativescript_methods.new,
+                "NativeScript::new must be available"
+            );
+
             // The API functions take NUL-terminated C strings. &CStr is not used for its runtime cost.
             let class_name = b"NativeScript\0".as_ptr() as *const libc::c_char;
             let ctor = (gd_api.godot_get_class_constructor)(class_name).unwrap();
-
-            let set_class_name = nativescript_methods.set_class_name;
-            let set_library = nativescript_methods.set_library;
-
-            let object_set_script = crate::private::ObjectMethodTable::get(gd_api).set_script;
 
             let native_script =
                 NonNull::new(ctor()).expect("NativeScript constructor should not return null");
@@ -198,7 +209,7 @@ impl<T: NativeClass> Instance<T, Unique> {
             let script_class_name = GodotString::from(T::class_name());
             let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
             (gd_api.godot_method_bind_ptrcall)(
-                set_class_name,
+                nativescript_methods.set_class_name,
                 native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
@@ -206,27 +217,27 @@ impl<T: NativeClass> Instance<T, Unique> {
 
             let mut args: [*const libc::c_void; 1] = [crate::private::get_gdnative_library_sys()];
             (gd_api.godot_method_bind_ptrcall)(
-                set_library,
+                nativescript_methods.set_library,
                 native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
             );
 
-            let owner = T::Base::construct();
-
-            assert_ne!(
-                std::ptr::null_mut(),
-                owner.sys(),
-                "base object should not be null"
-            );
-
-            let mut args: [*const libc::c_void; 1] = [native_script.sys().as_ptr()];
-            (gd_api.godot_method_bind_ptrcall)(
-                object_set_script,
-                owner.sys(),
+            let mut args: [*const sys::godot_variant; 0] = [];
+            let variant = (gd_api.godot_method_bind_call)(
+                nativescript_methods.new,
+                native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
+                0,
                 std::ptr::null_mut(),
             );
+
+            let variant = Variant::from_sys(variant);
+
+            let owner = variant
+                .try_to_object::<T::Base>()
+                .expect("base object should be of the correct type (is the script registered?)")
+                .assume_unique();
 
             let script_ptr =
                 (gd_api.godot_nativescript_get_userdata)(owner.sys()) as *const libc::c_void;
@@ -234,7 +245,7 @@ impl<T: NativeClass> Instance<T, Unique> {
             assert_ne!(
                 std::ptr::null(),
                 script_ptr,
-                "script instance should not be null"
+                "script instance should not be null (did the constructor fail?)"
             );
 
             let script = T::UserData::clone_from_user_data_unchecked(script_ptr);
