@@ -14,12 +14,15 @@ edition = "2018"
 default = ["nativescript"]
 gd_test = []
 nativescript = ["bitflags", "parking_lot"]
+type_tag_fallback = []
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.9.0" }
 libc = "0.2"
 approx = "0.3.2"
 euclid = "0.22.1"
+indexmap = "1.6.0"
+ahash = "0.4.5"
 
 gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.0" }
 

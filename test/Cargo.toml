@@ -8,6 +8,10 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+type_tag_fallback = ["gdnative/type_tag_fallback"]
+
 [dependencies]
 gdnative = { path = "../gdnative", features = ["gd_test"] }
 gdnative-derive = { path = "../gdnative-derive" }
