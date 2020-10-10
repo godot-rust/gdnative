@@ -209,12 +209,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                 // only allow the "outer" style, aka #[thing] item.
                 method.attrs.retain(|attr| {
-                    let correct_style = match attr.style {
-                        syn::AttrStyle::Outer => true,
-                        _ => false,
-                    };
-
-                    if correct_style {
+                    if matches!(attr.style, syn::AttrStyle::Outer) {
                         let last_seg = attr
                             .path
                             .segments
