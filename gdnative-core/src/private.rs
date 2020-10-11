@@ -198,10 +198,10 @@ macro_rules! make_method_table {
 
             #[inline(never)]
             fn init(table: &mut Self, api: &sys::GodotApi) {
-                const CLASS_NAME: *const i8 = concat!(stringify!($class), "\0").as_ptr() as *const i8;
+                const CLASS_NAME: *const libc::c_char = concat!(stringify!($class), "\0").as_ptr() as *const libc::c_char;
 
                 unsafe {
-                    $(table.$methods = (api.godot_method_bind_get_method)(CLASS_NAME, concat!(stringify!($methods), "\0").as_ptr() as *const i8);)*
+                    $(table.$methods = (api.godot_method_bind_get_method)(CLASS_NAME, concat!(stringify!($methods), "\0").as_ptr() as *const libc::c_char);)*
                 }
             }
         }
