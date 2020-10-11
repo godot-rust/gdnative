@@ -209,7 +209,6 @@ macro_rules! make_method_table {
 }
 
 make_method_table!(struct ObjectMethodTable for Object {
-    set_script,
     get_class,
     is_class,
 });
@@ -226,4 +225,5 @@ make_method_table!(struct ReferenceMethodTable for Reference {
 make_method_table!(struct NativeScriptMethodTable for NativeScript {
     set_class_name,
     set_library,
+    new,
 });

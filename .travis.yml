@@ -153,4 +153,5 @@ script:
       mkdir ./project/lib;
       cp ../target/debug/libgdnative_test.so ./project/lib/;
       "Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/;
+      "Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" -e --path ./project/ --run-editor-tests;
     fi
