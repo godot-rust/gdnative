@@ -24,31 +24,29 @@ impl Plane {
 
     /// Creates a new `Plane` from the ['Vector3'](./type.Vector3.html) normal and the distance from the origin.
     #[inline]
-    pub fn new_with_normal(normal: Vector3, d: f32) -> Plane {
-        Plane {
-            normal: normal,
-            d: d,
-        }
+    pub fn new(normal: Vector3, d: f32) -> Plane {
+        Plane { normal, d }
     }
 
     /// Creates a new `Plane` from four floats.
     /// a, b, c are used for the normal ['Vector3'](./type.Vector3.html).
     /// d is the distance from the origin.
     #[inline]
-    pub fn new_with_reals(a: f32, b: f32, c: f32, d: f32) -> Plane {
+    pub fn from_coordinates(a: f32, b: f32, c: f32, d: f32) -> Plane {
         Plane {
             normal: Vector3::new(a, b, c),
-            d: d,
+            d,
         }
     }
 
     /// Creates a new `Plane` from three [`Vector3`](./type.Vector3.html), given in clockwise order.
+    /// If all three points are collinear, the resulting coordinates will be `(NaN, NaN, NaN, NaN)`.
     #[inline]
-    pub fn new_with_vectors(a: Vector3, b: Vector3, c: Vector3) -> Plane {
-        let normal = (a - c).cross(a - b);
+    pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Plane {
+        let normal = (a - c).cross(a - b).normalize();
 
         Plane {
-            normal: normal,
+            normal,
             d: normal.dot(a),
         }
     }
@@ -154,12 +152,12 @@ impl Plane {
         if l == 0.0 {
             self.normal = Vector3::new(0.0, 0.0, 0.0);
             self.d = 0.0;
-            return self;
         } else {
             self.normal /= l;
             self.d /= l;
-            return self;
         }
+
+        self
     }
 
     /// Returns the orthogonal projection of `point` into a point in the `Plane`.
@@ -175,9 +173,29 @@ mod test {
 
     fn test_inputs() -> (Plane, Vector3) {
         (
-            Plane::new_with_reals(0.01, 0.02, 0.04, 0.08),
+            Plane::from_coordinates(0.01, 0.02, 0.04, 0.08),
             Vector3::new(0.16, 0.32, 0.64),
         )
+    }
+
+    #[test]
+    fn from_points() {
+        let a = Vector3::new(-1.0, 1.0, 0.0);
+        let b = Vector3::new(-1.0, 0.0, 0.0);
+        let c = Vector3::new(1.0, 1.0, 1.0);
+        let d = Vector3::new(-1.0, -1.0, 0.0);
+
+        let test_collinear = Plane::from_points(a, b, d);
+
+        let expected_valid = Plane::from_coordinates(0.447214, 0.0, -0.894427, -0.447214);
+
+        assert!(Plane::from_points(a, b, c).approx_eq(expected_valid));
+        assert!(
+            test_collinear.normal.x.is_nan()
+                && test_collinear.normal.y.is_nan()
+                && test_collinear.normal.z.is_nan()
+                && test_collinear.d.is_nan()
+        );
     }
 
     #[test]
@@ -186,7 +204,7 @@ mod test {
 
         let expected = Vector3::new(0.0008, 0.0016, 0.0032);
 
-        assert_eq!(p.center(), expected);
+        assert!(p.center().approx_eq(&expected));
     }
 
     #[test]
@@ -195,12 +213,12 @@ mod test {
 
         let expected = -0.0464;
 
-        assert_eq!(p.distance_to(v), expected);
+        assert!(p.distance_to(v).approx_eq(&expected));
     }
 
     #[test]
     fn has_point() {
-        let p = Plane::new_with_normal(Vector3::new(1.0, 1.0, 1.0), 1.0);
+        let p = Plane::new(Vector3::new(1.0, 1.0, 1.0), 1.0);
 
         let outside = Vector3::new(0.0, 0.0, 0.0);
         let inside = Vector3::new(1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0);
@@ -213,13 +231,13 @@ mod test {
     fn intersect_3() {
         let (p, _v) = test_inputs();
 
-        let b = Plane::new_with_reals(0.08, 0.04, 0.03, 0.01);
-        let c = Plane::new_with_reals(0.05, 0.2, 0.1, 0.6);
+        let b = Plane::from_coordinates(0.08, 0.04, 0.03, 0.01);
+        let c = Plane::from_coordinates(0.05, 0.2, 0.1, 0.6);
 
         let expected = Vector3::new(-1.707317, 2.95122, 0.95122);
 
-        let d = Plane::new_with_reals(0.01, 0.02, 0.4, 0.16);
-        let e = Plane::new_with_reals(0.01, 0.02, 0.4, 0.32);
+        let d = Plane::from_coordinates(0.01, 0.02, 0.4, 0.16);
+        let e = Plane::from_coordinates(0.01, 0.02, 0.4, 0.32);
 
         assert!(p.intersect_3(b, c).unwrap().approx_eq(&expected));
         assert_eq!(p.intersect_3(d, e), None);
@@ -266,7 +284,7 @@ mod test {
     fn normalize() {
         let (p, _v) = test_inputs();
 
-        assert!(p.normalize().approx_eq(Plane::new_with_reals(
+        assert!(p.normalize().approx_eq(Plane::from_coordinates(
             0.218218, 0.436436, 0.872872, 1.745743
         )));
     }
