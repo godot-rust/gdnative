@@ -40,15 +40,19 @@ impl Plane {
     }
 
     /// Creates a new `Plane` from three [`Vector3`](./type.Vector3.html), given in clockwise order.
-    /// If all three points are collinear, the resulting coordinates will be `(NaN, NaN, NaN, NaN)`.
+    /// If all three points are collinear, returns `None`.
     #[inline]
-    pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Plane {
+    pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Option<Plane> {
         let normal = (a - c).cross(a - b).normalize();
 
-        Plane {
-            normal,
-            d: normal.dot(a),
-        }
+	if normal.x.is_nan() || normal.y.is_nan() || normal.z.is_nan() {
+	    None
+	} else {
+	    Some(Plane {
+		normal,
+		d: normal.dot(a),
+	    })
+	}
     }
 
     /// Returns the center of the `Plane`.
@@ -185,17 +189,10 @@ mod test {
         let c = Vector3::new(1.0, 1.0, 1.0);
         let d = Vector3::new(-1.0, -1.0, 0.0);
 
-        let test_collinear = Plane::from_points(a, b, d);
-
         let expected_valid = Plane::from_coordinates(0.447214, 0.0, -0.894427, -0.447214);
 
-        assert!(Plane::from_points(a, b, c).approx_eq(expected_valid));
-        assert!(
-            test_collinear.normal.x.is_nan()
-                && test_collinear.normal.y.is_nan()
-                && test_collinear.normal.z.is_nan()
-                && test_collinear.d.is_nan()
-        );
+        assert!(Plane::from_points(a, b, c).unwrap().approx_eq(expected_valid));
+        assert_eq!(Plane::from_points(a, b, d), None);
     }
 
     #[test]
