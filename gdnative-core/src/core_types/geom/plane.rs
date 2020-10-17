@@ -45,14 +45,14 @@ impl Plane {
     pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Option<Plane> {
         let normal = (a - c).cross(a - b).normalize();
 
-	if normal.x.is_nan() || normal.y.is_nan() || normal.z.is_nan() {
-	    None
-	} else {
-	    Some(Plane {
-		normal,
-		d: normal.dot(a),
-	    })
-	}
+        if normal.x.is_nan() || normal.y.is_nan() || normal.z.is_nan() {
+            None
+        } else {
+            Some(Plane {
+                normal,
+                d: normal.dot(a),
+            })
+        }
     }
 
     /// Returns the center of the `Plane`.
@@ -191,7 +191,9 @@ mod test {
 
         let expected_valid = Plane::from_coordinates(0.447214, 0.0, -0.894427, -0.447214);
 
-        assert!(Plane::from_points(a, b, c).unwrap().approx_eq(expected_valid));
+        assert!(Plane::from_points(a, b, c)
+            .unwrap()
+            .approx_eq(expected_valid));
         assert_eq!(Plane::from_points(a, b, d), None);
     }
 
