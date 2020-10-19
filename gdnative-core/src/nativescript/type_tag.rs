@@ -1,5 +1,9 @@
-use crate::nativescript::NativeClass;
 use std::any::TypeId;
+use std::mem::{align_of, size_of};
+
+use indexmap::IndexSet;
+
+use crate::nativescript::NativeClass;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct Tag {
@@ -18,94 +22,68 @@ impl Tag {
     }
 }
 
-#[cfg(target_pointer_width = "32")]
-pub(crate) use self::boxed_type_tag::*;
+/// Whether the type tag can be transmuted to `usize`. `true` if the layouts are compatible
+/// on the platform, and `type_tag_fallback` is not enabled.
+const USE_TRANSMUTE: bool = cfg!(not(feature = "type_tag_fallback"))
+    && size_of::<Tag>() == size_of::<usize>()
+    && align_of::<Tag>() == align_of::<usize>();
 
-#[cfg(target_pointer_width = "64")]
-pub(crate) use self::transmuted_type_tag::*;
+/// Keep track of allocated type tags so they can be freed on cleanup. This should only be
+/// accessed from one thread at a time.
+static mut TAGS: Option<IndexSet<Tag, ahash::RandomState>> = None;
 
-/// Type tags implemented as boxed pointers. This is required for 32-bit targets because `size_t`
-/// is only 32-bits wide there, while `TypeId` is always 64-bit.
-#[cfg(target_pointer_width = "32")]
-mod boxed_type_tag {
-    use super::Tag;
-    use crate::nativescript::NativeClass;
-    use std::boxed::Box;
+/// Top bit of `usize`. Used to prevent producing null type tags which might have special
+/// meaning assigned.
+const MAGIC: usize = 1usize.rotate_right(1);
+/// Rest of `usize`.
+const MAGIC_MASK: usize = !MAGIC;
 
-    /// Keep track of allocated type tags so they can be freed on cleanup
-    static mut TAGS: Option<Vec<*const Tag>> = None;
+/// Create a new type tag for type `T`. This should only be called from `InitHandle`.
+#[inline]
+pub(crate) unsafe fn create<T>() -> *const libc::c_void
+where
+    T: NativeClass,
+{
+    let tag = Tag::of::<T>();
 
-    /// Create a new type tag for type `T`. This should only be called from `InitHandle`.
-    #[inline]
-    pub(crate) unsafe fn create<T>() -> *const libc::c_void
-    where
-        T: NativeClass,
-    {
+    if USE_TRANSMUTE {
+        // Safety: USE_TRANSMUTE is only true if layouts match
+        *(&tag as *const Tag as *const *const libc::c_void)
+    } else {
         // Safety: InitHandle is not Send or Sync, so this will only be called from one thread
-        let tags = TAGS.get_or_insert_with(Vec::new);
-        let type_tag = Box::into_raw(Box::new(Tag::of::<T>()));
-        tags.push(type_tag);
-        type_tag as *const libc::c_void
-    }
-
-    /// Returns `true` if `tag` corresponds to type `T`. `tag` must be one returned by `create`.
-    #[inline]
-    pub(crate) unsafe fn check<T>(tag: *const libc::c_void) -> bool
-    where
-        T: NativeClass,
-    {
-        Tag::of::<T>() == *(tag as *const Tag)
-    }
-
-    /// Perform any cleanup actions if required. Should only be called from
-    /// `crate::cleanup_internal_state`. `create` and `check` shouldn't be called after this.
-    #[inline]
-    pub(crate) unsafe fn cleanup() {
-        // Safety: By the time cleanup is called, create shouldn't be called again
-        if let Some(tags) = TAGS.take() {
-            for ptr in tags.into_iter() {
-                std::mem::drop(Box::from_raw(ptr as *mut Tag))
-            }
-        }
+        let tags = TAGS.get_or_insert_with(IndexSet::default);
+        let (idx, _) = tags.insert_full(tag);
+        // So we don't produce nulls. We're just assuming that 2^31 types will be
+        // enough for everyone here.
+        (idx | MAGIC) as *const libc::c_void
     }
 }
 
-/// Type tags implemented as transmutes. This is faster on 64-bit targets, and require no
-/// allocation, as `TypeId` is `Copy`, and fits in a `size_t` there. This may break in the
-/// (probably very unlikely) event that:
-///
-/// - `TypeId`'s size changes (possible in Rust 1.x as `TypeId` is opaque).
-/// - `TypeId` loses `Copy` (only possible in Rust 2.0+).
-///
-/// Both will be compile errors: `transmute` should fail if the sizes mismatch, and the wrapper
-/// type `Tag` derives `Copy`.
-#[cfg(target_pointer_width = "64")]
-mod transmuted_type_tag {
-    use super::Tag;
-    use crate::nativescript::NativeClass;
-
-    /// Create a new type tag for type `T`. This should only be called from `InitHandle`.
-    #[inline]
-    pub(crate) unsafe fn create<T>() -> *const libc::c_void
-    where
-        T: NativeClass,
-    {
-        std::mem::transmute::<Tag, *const libc::c_void>(Tag::of::<T>())
+/// Returns `true` if `tag` corresponds to type `T`. `tag` must be one returned by `create`.
+#[inline]
+pub(crate) unsafe fn check<T>(tag: *const libc::c_void) -> bool
+where
+    T: NativeClass,
+{
+    if USE_TRANSMUTE {
+        // Safety: USE_TRANSMUTE is only true if layouts match
+        Tag::of::<T>() == *(&tag as *const *const libc::c_void as *const Tag)
+    } else {
+        let tags = TAGS.as_ref().expect("tag should be created by `create`");
+        let idx = tag as usize;
+        let tag = tags
+            .get_index(idx & MAGIC_MASK)
+            .expect("tag should be created by `create`");
+        Tag::of::<T>() == *tag
     }
+}
 
-    /// Returns `true` if `tag` corresponds to type `T`. `tag` must be one returned by `create`.
-    #[inline]
-    pub(crate) unsafe fn check<T>(tag: *const libc::c_void) -> bool
-    where
-        T: NativeClass,
-    {
-        Tag::of::<T>() == std::mem::transmute::<*const libc::c_void, Tag>(tag)
-    }
-
-    /// Perform any cleanup actions if required. Should only be called from
-    /// `crate::cleanup_internal_state`. `create` and `check` shouldn't be called after this.
-    #[inline]
-    pub(crate) unsafe fn cleanup() {
-        // do nothing
+/// Perform any cleanup actions if required. Should only be called from
+/// `crate::cleanup_internal_state`. `create` and `check` shouldn't be called after this.
+#[inline]
+pub(crate) unsafe fn cleanup() {
+    // Safety: By the time cleanup is called, create shouldn't be called again
+    if let Some(tags) = TAGS.take() {
+        drop(tags);
     }
 }
