@@ -7,7 +7,7 @@
 Rust bindings to the [Godot game engine](http://godotengine.org/).
 
 **[Website](https://godot-rust.github.io/)** |
-**[User Guide](https://godot-rust.github.io/book/)** | **[API Documentation](https://docs.rs/gdnative/0.9.0/gdnative/)**
+**[User Guide](https://godot-rust.github.io/book/)** | **[API Documentation](https://docs.rs/gdnative/0.9.1/gdnative/)**
 
 ## Stability
 
@@ -35,7 +35,7 @@ After `bindgen` dependencies are installed, add the `gdnative` crate as a depend
 
 ```toml
 [dependencies]
-gdnative = "0.9.0"
+gdnative = "0.9.1"
 
 [lib]
 crate-type = ["cdylib"]

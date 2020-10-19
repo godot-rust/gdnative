@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2020-10-19
+
+### Added
+
+- Support for RPC modes using the `export` attribute, e.g. `#[export(rpc = "remote_sync")]`.
+
+- Added the convenience method `Vector2Godot::clamped`.
+
+- Added Godot-equivalent methods for `Plane`.
+
+### Fixed
+
+- Fixed a problem where incorrect documentation may be generated when building from case-insensitive file systems.
+
+- Fixed a case of undefined behavior when `Instance::new` is called for non-tool scripts in the editor.
+
+- Fixed a type mismatch problem that may prevent compilation on some target platforms.
+
+- Fixed potential compilation error in case of `TypeId` widening.
+
 ## [0.9.0] - 2020-09-20
 
 ### Added
