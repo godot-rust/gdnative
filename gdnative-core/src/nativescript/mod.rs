@@ -1,5 +1,6 @@
 //! Types and functions related to the NativeScript extension of GDNative.
 
+mod emplace;
 mod macros;
 
 pub mod class;

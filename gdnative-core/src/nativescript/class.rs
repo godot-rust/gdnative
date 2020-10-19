@@ -16,11 +16,16 @@ use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted};
 use crate::thread_access::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 
+use super::emplace;
+
 /// Trait used for describing and initializing a Godot script class.
 ///
 /// This trait is used to provide data and functionality to the
 /// "data-part" of the class, such as name, initialization and information
 /// about exported properties.
+///
+/// A derive macro is available for this trait. See documentation on the
+/// `NativeClass` macro for detailed usage and examples.
 ///
 /// For exported methods, see the [`NativeClassMethods`] trait.
 ///
@@ -59,11 +64,22 @@ pub trait NativeClass: Sized + 'static {
     /// To identify which class has to be used, a library-unique name has to be given.
     fn class_name() -> &'static str;
 
-    /// Function that creates a value of `Self`, used for the script-instance.
+    /// Function that creates a value of `Self`, used for the script-instance. The default
+    /// implementation simply panics.
     ///
     /// This function has a reference to the owner object as a parameter, which can be used to
     /// set state on the owner upon creation or to query values
-    fn init(owner: TRef<'_, Self::Base, Shared>) -> Self;
+    ///
+    /// It is possible to declare script classes without zero-argument constructors. Instances
+    /// of such scripts can only be created from Rust using `Instance::emplace`. See
+    /// documentation on `Instance::emplace` for an example.
+    #[inline]
+    fn init(_owner: TRef<'_, Self::Base, Shared>) -> Self {
+        panic!(
+            "{} does not have a zero-argument constructor",
+            Self::class_name()
+        )
+    }
 
     /// Register any exported properties to Godot.
     #[inline]
@@ -83,6 +99,22 @@ pub trait NativeClass: Sized + 'static {
         Self::Base: Instanciable,
     {
         Instance::new()
+    }
+
+    /// Convenience method to emplace `self` into an `Instance<Self, Unique>`. This is a new
+    /// `Self::Base` with the script attached.
+    ///
+    /// If `Self::Base` is manually-managed, then the resulting `Instance` must be passed to
+    /// the engine or manually freed with `Instance::free`. Otherwise, the base object will be
+    /// leaked.
+    ///
+    /// Must be called after the library is initialized.
+    #[inline]
+    fn emplace(self) -> Instance<Self, Unique>
+    where
+        Self::Base: Instanciable,
+    {
+        Instance::emplace(self)
     }
 }
 
@@ -174,6 +206,61 @@ impl<T: NativeClass> Instance<T, Unique> {
     where
         T::Base: Instanciable,
     {
+        Self::maybe_emplace(None)
+    }
+
+    /// Creates a `T::Base` with a given instance of the script `T` attached. `T::Base` must
+    /// have a zero-argument constructor.
+    ///
+    /// This may be used to create instances of scripts that do not have zero-argument
+    /// constructors:
+    ///
+    /// ```ignore
+    /// // This type does not have a zero-argument constructor. As a result, `Instance::new`
+    /// // will panic and `Foo.new` from GDScript will result in errors when the object is used.
+    /// #[derive(NativeScript)]
+    /// #[inherit(Reference)]
+    /// #[no_constructor]
+    /// struct MyIntVector(i64, i64);
+    ///
+    /// #[methods]
+    /// impl MyIntVector {
+    ///     // - snip -
+    /// }
+    ///
+    /// // With `Instance::emplace`, however, we can expose "constructors" from a factory
+    /// // auto-load for our script type.
+    /// #[derive(NativeScript)]
+    /// #[inherit(Node)]
+    /// #[user_data(Aether<Self>)]
+    /// struct MyIntVectorFactory;
+    ///
+    /// #[methods]
+    /// impl MyIntVectorFactory {
+    ///     #[export]
+    ///     fn make(&self, _owner: &Node, x: i64, y: i64) -> Instance<MyIntVector, Unique> {
+    ///         Instance::emplace(MyIntVector(x, y))
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// If `T::Base` is manually-managed, then the resulting `Instance` must be passed to
+    /// the engine or manually freed with `Instance::free`. Otherwise, the base object will be
+    /// leaked.
+    ///
+    /// Must be called after the library is initialized.
+    #[inline]
+    pub fn emplace(script: T) -> Self
+    where
+        T::Base: Instanciable,
+    {
+        Self::maybe_emplace(Some(script))
+    }
+
+    fn maybe_emplace(script: Option<T>) -> Self
+    where
+        T::Base: Instanciable,
+    {
         unsafe {
             let gd_api = get_api();
             let nativescript_methods = crate::private::NativeScriptMethodTable::get(gd_api);
@@ -223,6 +310,10 @@ impl<T: NativeClass> Instance<T, Unique> {
                 std::ptr::null_mut(),
             );
 
+            if let Some(script) = script {
+                emplace::place(script);
+            }
+
             let mut args: [*const sys::godot_variant; 0] = [];
             let variant = (gd_api.godot_method_bind_call)(
                 nativescript_methods.new,
@@ -230,6 +321,11 @@ impl<T: NativeClass> Instance<T, Unique> {
                 args.as_mut_ptr(),
                 0,
                 std::ptr::null_mut(),
+            );
+
+            assert!(
+                emplace::take::<T>().is_none(),
+                "emplacement value should be taken by the constructor wrapper (this is a bug in the bindings)",
             );
 
             let variant = Variant::from_sys(variant);

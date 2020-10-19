@@ -8,12 +8,14 @@ pub(crate) fn run_tests() -> bool {
     status &= test_derive_to_variant();
     status &= test_derive_owned_to_variant();
     status &= test_derive_nativeclass_with_property_hooks();
+    status &= test_derive_nativeclass_without_constructor();
 
     status
 }
 
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<PropertyHooks>();
+    handle.add_class::<EmplacementOnly>();
 }
 
 fn test_derive_to_variant() -> bool {
@@ -271,6 +273,43 @@ fn test_derive_nativeclass_with_property_hooks() -> bool {
 
     if !ok {
         gdnative::godot_error!("   !! Test test_derive_owned_to_variant failed");
+    }
+
+    ok
+}
+
+#[derive(NativeClass)]
+#[inherit(Reference)]
+#[no_constructor]
+struct EmplacementOnly(i64);
+
+#[methods]
+impl EmplacementOnly {
+    #[export]
+    fn answer(&self, _owner: &Reference) -> i64 {
+        self.0
+    }
+}
+
+fn test_derive_nativeclass_without_constructor() -> bool {
+    println!(" -- test_derive_nativeclass_without_constructor");
+
+    let ok = std::panic::catch_unwind(|| {
+        let foo = Instance::emplace(EmplacementOnly(54));
+
+        assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
+
+        let base = foo.into_base();
+        assert_eq!(Some(54), unsafe { base.call("answer", &[]).try_to_i64() });
+
+        let foo = Instance::<EmplacementOnly, _>::try_from_base(base)
+            .expect("should be able to downcast");
+        assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
+    })
+    .is_ok();
+
+    if !ok {
+        gdnative::godot_error!("   !! Test test_derive_nativeclass_without_constructor failed");
     }
 
     ok

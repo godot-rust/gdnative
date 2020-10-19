@@ -20,7 +20,7 @@ pub(crate) fn register(handle: InitHandle) {
 /// accepted somewhere in the Godot API as a property. Here, the chosen type is
 /// `AnimationNodeAdd2`, of the property `AnimationTree::tree_root`.
 struct Probe {
-    drop_count: Option<Arc<AtomicUsize>>,
+    drop_count: Arc<AtomicUsize>,
 }
 
 impl NativeClass for Probe {
@@ -31,23 +31,12 @@ impl NativeClass for Probe {
         "ReturnLeakProbe"
     }
 
-    fn init(_owner: TRef<api::AnimationNodeAdd2>) -> Probe {
-        Probe { drop_count: None }
-    }
-
     fn register_properties(_builder: &ClassBuilder<Self>) {}
-}
-
-impl Probe {
-    fn set_drop_counter(&mut self, counter: Arc<AtomicUsize>) {
-        self.drop_count = Some(counter);
-    }
 }
 
 impl Drop for Probe {
     fn drop(&mut self) {
-        let counter = self.drop_count.take().expect("drop counter should be set");
-        counter.fetch_add(1, AtomicOrdering::AcqRel);
+        self.drop_count.fetch_add(1, AtomicOrdering::AcqRel);
     }
 }
 
@@ -66,11 +55,9 @@ fn test_return_leak() -> bool {
         // Create an instance of the probe, and drop the reference after setting the property
         // to it. After this block, the only reference should be the one in `animation_tree`.
         {
-            let probe = Probe::new_instance();
-            probe
-                .map_mut(|probe, _| probe.set_drop_counter(drop_counter.clone()))
-                .expect("lock should not fail");
-
+            let probe = Instance::emplace(Probe {
+                drop_count: Arc::clone(&drop_counter),
+            });
             let base = probe.into_base().into_shared();
             animation_tree.set_tree_root(base);
         }

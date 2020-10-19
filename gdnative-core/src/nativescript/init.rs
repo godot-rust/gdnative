@@ -43,6 +43,8 @@ use crate::nativescript::NativeClassMethods;
 use crate::nativescript::UserData;
 use crate::private::get_api;
 
+use super::emplace;
+
 pub mod property;
 
 pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
@@ -123,7 +125,8 @@ impl InitHandle {
                     };
 
                     let val = match panic::catch_unwind(AssertUnwindSafe(|| {
-                        C::init(TRef::new(C::Base::cast_ref(owner)))
+                        emplace::take()
+                            .unwrap_or_else(|| C::init(TRef::new(C::Base::cast_ref(owner))))
                     })) {
                         Ok(val) => val,
                         Err(_) => {

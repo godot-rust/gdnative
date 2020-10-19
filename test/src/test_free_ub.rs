@@ -16,17 +16,8 @@ pub(crate) fn register(handle: InitHandle) {
 
 #[derive(NativeClass)]
 #[inherit(Node)]
-struct Bar(i64, Option<Arc<AtomicUsize>>);
-
-impl Bar {
-    fn new(_owner: TRef<Node>) -> Self {
-        Bar(42, None)
-    }
-
-    fn set_drop_counter(&mut self, counter: Arc<AtomicUsize>) {
-        self.1 = Some(counter);
-    }
-}
+#[no_constructor]
+struct Bar(i64, Arc<AtomicUsize>);
 
 #[methods]
 impl Bar {
@@ -49,8 +40,7 @@ impl Bar {
 
 impl Drop for Bar {
     fn drop(&mut self) {
-        let counter = self.1.take().expect("drop counter should be set");
-        counter.fetch_add(1, AtomicOrdering::AcqRel);
+        self.1.fetch_add(1, AtomicOrdering::AcqRel);
         self.0 = 0;
     }
 }
@@ -62,10 +52,7 @@ fn test_owner_free_ub() -> bool {
         let drop_counter = Arc::new(AtomicUsize::new(0));
 
         {
-            let bar = Bar::new_instance();
-
-            bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
-                .expect("lock should not fail");
+            let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
 
             assert_eq!(Some(true), unsafe {
                 bar.base().call("set_script_is_not_ub", &[]).try_to_bool()
@@ -75,9 +62,7 @@ fn test_owner_free_ub() -> bool {
         }
 
         {
-            let bar = Bar::new_instance();
-            bar.map_mut(|bar, _| bar.set_drop_counter(drop_counter.clone()))
-                .expect("lock should not fail");
+            let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
 
             assert_eq!(Some(true), unsafe {
                 bar.base().call("free_is_not_ub", &[]).try_to_bool()
