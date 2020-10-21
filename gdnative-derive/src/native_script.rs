@@ -12,6 +12,7 @@ pub(crate) struct DeriveData {
     pub(crate) register_callback: Option<Path>,
     pub(crate) user_data: Type,
     pub(crate) properties: HashMap<Ident, PropertyAttrArgs>,
+    pub(crate) no_constructor: bool,
 }
 
 pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
@@ -74,6 +75,16 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
         // string variant needed for the `class_name` function.
         let name_str = quote!(#name).to_string();
 
+        let init = if data.no_constructor {
+            None
+        } else {
+            Some(quote! {
+                fn init(owner: ::gdnative::TRef<Self::Base>) -> Self {
+                    Self::new(::gdnative::nativescript::OwnerArg::from_safe_ref(owner))
+                }
+            })
+        };
+
         quote!(
             impl ::gdnative::nativescript::NativeClass for #name {
                 type Base = #base;
@@ -83,9 +94,7 @@ pub(crate) fn derive_native_class(input: TokenStream) -> TokenStream {
                     #name_str
                 }
 
-                fn init(owner: ::gdnative::TRef<Self::Base>) -> Self {
-                    Self::new(::gdnative::nativescript::OwnerArg::from_safe_ref(owner))
-                }
+                #init
 
                 fn register_properties(builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
                     #(#properties)*;
@@ -145,6 +154,11 @@ fn parse_derive_input(input: TokenStream) -> Result<DeriveData, TokenStream> {
             )
             .expect("quoted tokens for default userdata should be a valid type"))
         })?;
+
+    let no_constructor = input
+        .attrs
+        .iter()
+        .any(|a| a.path.is_ident("no_constructor"));
 
     // make sure it's a struct
     let struct_data = if let Data::Struct(data) = input.data {
@@ -212,5 +226,6 @@ fn parse_derive_input(input: TokenStream) -> Result<DeriveData, TokenStream> {
         register_callback,
         user_data,
         properties,
+        no_constructor,
     })
 }
