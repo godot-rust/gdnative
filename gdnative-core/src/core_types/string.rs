@@ -11,6 +11,39 @@ use std::slice;
 use std::str;
 
 /// Godot's reference-counted string type.
+///
+/// This is the Rust binding of GDScript's `String` type. It represents the native string class
+/// used within the Godot engine, and as such has different memory layout and characteristics than
+/// `std::string::String`.
+///
+/// `GodotString` is reference-counted like most types in godot-rust. Thus, its `clone()` method
+/// does not return a copy of the string, but simply another instance which shares the same backing
+/// string. Furthermore, `GodotString` is immutable and does not offer any write APIs. If you need
+/// to modify Godot strings, convert them to Rust strings, perform the modifications and convert back.
+/// In GDScript, strings have copy-on-write semantics, which guarantees that `GodotString` instances
+/// in Rust are independent of their GDScript counterparts. A modification of a string in GDScript
+/// (which was previously passed to Rust) will not be reflected in Rust.
+///
+/// When interfacing with the Godot engine API through godot-rust, you often have the choice between
+/// `std::string::String` and `gdnative::core_types::GodotString`. In user methods that are exposed to
+/// Godot through the `#[export]` macro, both types can be used as parameters and return types, and any
+/// conversions are done transparently.
+/// For auto-generated binding APIs in `gdnative::api`, return types are `GodotString`, but parameters
+/// are declared `impl Into<GodotString>`, allowing `String` or `&str` to be passed. In addition, the
+/// two types can always be explicitly converted using `GodotString::from_str()` and
+/// `GodotString::display/to_string()`.
+///
+/// As a general guideline, use `GodotString` if:
+/// * your strings are very large, so you can avoid copying them
+/// * you need specific operations only available in Godot (e.g. `sha256_text()`, `c_escape()`, ...)
+/// * you primarily pass them between different Godot APIs, without string processing in user code
+///
+/// Use Rust's `String` if:
+/// * you need to modify the string
+/// * you would like to decouple part of your code from Godot (e.g. independent game logic, standalone tests)
+/// * you want a standard type for interoperability with third-party code (e.g. `regex` crate)
+/// * you have a large number of method calls per string instance (which are more expensive due to indirectly calling into Godot)
+/// * you need UTF-8 encoding (`GodotString`'s encoding is platform-dependent and unspecified)
 pub struct GodotString(pub(crate) sys::godot_string);
 
 macro_rules! impl_methods {
