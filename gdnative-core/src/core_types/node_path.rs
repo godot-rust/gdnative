@@ -117,6 +117,13 @@ impl NodePath {
     }
 }
 
+impl Default for NodePath {
+    #[inline]
+    fn default() -> Self {
+        NodePath::new(&GodotString::default())
+    }
+}
+
 impl ToString for NodePath {
     #[inline]
     fn to_string(&self) -> String {
