@@ -101,6 +101,7 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 
 - Pong - https://github.com/you-win/godot-pong-rust
 - Air Combat - https://github.com/paytonrules/AirCombat - This [Godot Tutorial](https://devga.me/tutorials/godot2d/) ported to Rust.
+- Action RPG - https://github.com/MacKarp/Rust_Action_RPG_Tutorial - This [Godot Tutorial](https://www.youtube.com/playlist?list=PL9FzW-m48fn2SlrW0KoLT4n5egNdX-W9a) ported to Rust.
 
 ## Contributing
 
