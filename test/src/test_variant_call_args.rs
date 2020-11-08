@@ -29,22 +29,22 @@ impl NativeClass for VariantCallArgs {
 #[methods]
 impl VariantCallArgs {
     #[export]
-    fn zero(&mut self, _owner: &Reference) -> i32 {
+    fn zero(&mut self, _owner: _) -> i32 {
         42
     }
 
     #[export]
-    fn one(&mut self, _owner: &Reference, a: i32) -> i32 {
+    fn one(&mut self, _owner: _, a: i32) -> i32 {
         a * 42
     }
 
     #[export]
-    fn two(&mut self, _owner: &Reference, a: i32, b: i32) -> i32 {
+    fn two(&mut self, _owner: _, a: i32, b: i32) -> i32 {
         a * 42 + b
     }
 
     #[export]
-    fn three(&mut self, _owner: &Reference, a: i32, b: i32, c: i32) -> i32 {
+    fn three(&mut self, _owner: _, a: i32, b: i32, c: i32) -> i32 {
         a * 42 + b * c
     }
 }

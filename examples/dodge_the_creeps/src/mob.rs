@@ -34,7 +34,7 @@ const MOB_TYPES: [MobType; 3] = [MobType::Walk, MobType::Swim, MobType::Fly];
 
 #[methods]
 impl Mob {
-    fn new(_owner: &RigidBody2D) -> Self {
+    fn new(_owner: _) -> Self {
         Mob {
             min_speed: 150.0,
             max_speed: 250.0,
@@ -42,7 +42,7 @@ impl Mob {
     }
 
     #[export]
-    fn _ready(&mut self, owner: &RigidBody2D) {
+    fn _ready(&mut self, owner: _) {
         let mut rng = rand::thread_rng();
         let animated_sprite =
             unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
@@ -50,14 +50,14 @@ impl Mob {
     }
 
     #[export]
-    fn on_visibility_screen_exited(&self, owner: &RigidBody2D) {
+    fn on_visibility_screen_exited(&self, owner: _) {
         unsafe {
             owner.assume_unique().queue_free();
         }
     }
 
     #[export]
-    fn on_start_game(&self, owner: &RigidBody2D) {
+    fn on_start_game(&self, owner: _) {
         unsafe {
             owner.assume_unique().queue_free();
         }

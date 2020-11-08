@@ -38,7 +38,7 @@ fn register_properties(builder: &ClassBuilder<RustTest>) {
 
 #[gdnative::methods]
 impl RustTest {
-    fn new(_owner: &MeshInstance) -> Self {
+    fn new(_owner: _) -> Self {
         RustTest {
             start: Vector3::new(0.0, 0.0, 0.0),
             time: 0.0,
@@ -47,12 +47,12 @@ impl RustTest {
     }
 
     #[export]
-    fn _ready(&mut self, owner: &MeshInstance) {
+    fn _ready(&mut self, owner: _) {
         owner.set_physics_process(true);
     }
 
     #[export]
-    fn _physics_process(&mut self, owner: &MeshInstance, delta: f64) {
+    fn _physics_process(&mut self, owner: _, delta: f64) {
         use gdnative::api::SpatialMaterial;
 
         self.time += delta as f32;

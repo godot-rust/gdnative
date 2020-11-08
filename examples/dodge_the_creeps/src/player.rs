@@ -23,7 +23,7 @@ impl Player {
         });
     }
 
-    fn new(_owner: &Area2D) -> Self {
+    fn new(_owner: _) -> Self {
         Player {
             speed: 400.0,
             screen_size: Vector2::new(0.0, 0.0),
@@ -31,14 +31,14 @@ impl Player {
     }
 
     #[export]
-    fn _ready(&mut self, owner: &Area2D) {
+    fn _ready(&mut self, owner: _) {
         let viewport = unsafe { owner.get_viewport().unwrap().assume_safe() };
         self.screen_size = viewport.size();
         owner.hide();
     }
 
     #[export]
-    fn _process(&mut self, owner: &Area2D, delta: f32) {
+    fn _process(&mut self, owner: _, delta: f32) {
         let animated_sprite =
             unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
 
@@ -86,7 +86,7 @@ impl Player {
     }
 
     #[export]
-    fn on_player_body_entered(&self, owner: &Area2D, _body: Ref<PhysicsBody2D>) {
+    fn on_player_body_entered(&self, owner: _, _body: Ref<PhysicsBody2D>) {
         owner.hide();
         owner.emit_signal("hit", &[]);
 
@@ -97,7 +97,7 @@ impl Player {
     }
 
     #[export]
-    pub fn start(&self, owner: &Area2D, pos: Vector2) {
+    pub fn start(&self, owner: _, pos: Vector2) {
         owner.set_global_position(pos);
         owner.show();
 

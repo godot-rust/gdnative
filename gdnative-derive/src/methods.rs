@@ -370,6 +370,25 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     });
                 }
 
+                // Infer type of owner arguments
+                for arg in method.sig.inputs.iter_mut() {
+                    if let FnArg::Typed(ref mut cap) = arg {
+                        if let Pat::Ident(pat_ident) = &*cap.pat {
+                            if (pat_ident.ident == "owner" || pat_ident.ident == "_owner")
+                                && matches!(&*cap.ty, Type::Infer(_))
+                            {
+                                cap.ty = Box::new(parse_quote!(
+                                    ::gdnative::prelude::TRef<
+                                        '_,
+                                        <Self as ::gdnative::prelude::NativeClass>::Base,
+                                        ::gdnative::thread_access::Shared,
+                                    >
+                                ));
+                            }
+                        }
+                    }
+                }
+
                 errors
                     .into_iter()
                     .map(|err| ImplItem::Verbatim(err.to_compile_error()))

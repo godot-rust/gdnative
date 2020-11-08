@@ -10,11 +10,11 @@ struct GreetingResource {
 
 #[gdnative::methods]
 impl GreetingResource {
-    fn new(_owner: &Resource) -> Self {
+    fn new(_owner: _) -> Self {
         Self { name: "".into() }
     }
 
-    fn say_hello(&self, _owner: &Reference) {
+    fn say_hello(&self, _owner: _) {
         godot_print!("Hello {}!", self.name);
     }
 }
@@ -31,17 +31,17 @@ struct Greeter {
 
 #[gdnative::methods]
 impl Greeter {
-    fn new(_owner: &Node) -> Self {
+    fn new(_owner: _) -> Self {
         Greeter {
             greeting_resource: None,
         }
     }
 
     #[export]
-    fn _ready(&self, _owner: &Node) {
+    fn _ready(&self, _owner: _) {
         if let Some(greeting_resource) = self.greeting_resource.as_ref() {
             let greeting_resource = unsafe { greeting_resource.assume_safe() };
-            greeting_resource.map(|s, o| s.say_hello(&*o)).unwrap();
+            greeting_resource.map(|s, o| s.say_hello(o)).unwrap();
         }
     }
 }

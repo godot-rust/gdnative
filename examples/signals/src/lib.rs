@@ -29,7 +29,7 @@ impl SignalEmitter {
         });
     }
 
-    fn new(_owner: &Node) -> Self {
+    fn new(_owner: _) -> Self {
         SignalEmitter {
             timer: 0.0,
             data: 100,
@@ -37,7 +37,7 @@ impl SignalEmitter {
     }
 
     #[export]
-    fn _process(&mut self, owner: &Node, delta: f64) {
+    fn _process(&mut self, owner: _, delta: f64) {
         if self.timer < 1.0 {
             self.timer += delta;
             return;
@@ -61,12 +61,12 @@ struct SignalSubscriber {
 
 #[methods]
 impl SignalSubscriber {
-    fn new(_owner: &Label) -> Self {
+    fn new(_owner: _) -> Self {
         SignalSubscriber { times_received: 0 }
     }
 
     #[export]
-    fn _ready(&mut self, owner: TRef<Label>) {
+    fn _ready(&mut self, owner: _) {
         let emitter = &mut owner.get_node("../SignalEmitter").unwrap();
         let emitter = unsafe { emitter.assume_safe() };
 
@@ -85,7 +85,7 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn notify(&mut self, owner: &Label) {
+    fn notify(&mut self, owner: _) {
         self.times_received += 1;
         let msg = format!("Received signal \"tick\" {} times", self.times_received);
 
@@ -93,7 +93,7 @@ impl SignalSubscriber {
     }
 
     #[export]
-    fn notify_with_data(&mut self, owner: &Label, data: Variant) {
+    fn notify_with_data(&mut self, owner: _, data: Variant) {
         let msg = format!(
             "Received signal \"tick_with_data\" with data {}",
             data.try_to_u64().unwrap()

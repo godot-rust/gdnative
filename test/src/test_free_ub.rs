@@ -22,7 +22,7 @@ struct Bar(i64, Arc<AtomicUsize>);
 #[methods]
 impl Bar {
     #[export]
-    fn free_is_not_ub(&mut self, owner: &Node) -> bool {
+    fn free_is_not_ub(&mut self, owner: _) -> bool {
         unsafe {
             owner.assume_unique().free();
         }
@@ -31,7 +31,7 @@ impl Bar {
     }
 
     #[export]
-    fn set_script_is_not_ub(&mut self, owner: &Node) -> bool {
+    fn set_script_is_not_ub(&mut self, owner: _) -> bool {
         owner.set_script(Null::null());
         assert_eq!(42, self.0, "self should not point to garbage");
         true

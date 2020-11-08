@@ -12,6 +12,73 @@ mod native_script;
 mod profiled;
 mod variant;
 
+/// Marks an `impl` block as containing methods exported to Godot. Methods with the
+/// `#[export]` attribute will be exported.
+///
+/// Due to current technical limitations, every `NativeClass` type *must* have one and only
+/// one `impl` block with `#[methods]`.
+///
+/// ## `#[export]`
+///
+/// The `#[export]` attribute may take optional arguments that modify behavior:
+///
+/// - `rpc = "rpc_mode_name"`
+///
+/// Sets the RPC mode for the method. Valid values are `remote`, `remote_sync`, `master`,
+/// `puppet`, `disabled`, `master_sync`, and `puppet_sync`.
+///
+/// ### Optional arguments
+///
+/// Exported methods can have one or more optional positional arguments at the end of the
+/// argument list, if decorated with the `#[opt]` attribute. Arguments with `#[opt]` will
+/// hold default values produced by `Default::default`, if not provided by the caller.
+///
+/// Note that `Option<T>` may be used as the argument type for arbitrary default behavior.
+///
+/// ## Owner type inference
+///
+/// The `#[methods]` macro automatically infers the types of arguments named `owner` or
+/// `_owner` within the `impl` block it modifies, if they're declared as `_` in the function
+/// signature. The inferred type will be `TRef<'_, Self::Base, Shared>`.
+///
+/// ```ignore
+/// #[derive(NativeClass)]
+/// #[inherit(Node)]
+/// struct Foo;
+///
+/// #[methods]
+/// impl Foo {
+///     #[export]
+///     fn foo(&self, owner: _) {
+///         let owner: TRef<'_, Node, Shared> = owner;
+///         do_stuff_with(owner);
+///     }
+/// }
+/// ```
+///
+/// # Examples
+///
+/// ```ignore
+/// #[methods]
+/// impl OptionalArgs {
+///     fn new(_owner: _) -> Self {
+///         OptionalArgs
+///     }
+///
+///     #[export]
+///     fn opt_sum(
+///         &self,
+///         _owner: _,
+///         a: i64,
+///         b: i64,
+///         #[opt] c: i64,
+///         #[opt] d: i64,
+///         #[opt] e: i64,
+///     ) -> i64 {
+///         a + b + c + d + e
+///     }
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     methods::derive_methods(meta, input)

@@ -105,37 +105,30 @@ fn test_underscore_method_binding() -> bool {
 #[inherit(Reference)]
 struct Foo(i64);
 
-impl Foo {
-    fn new(_owner: TRef<Reference>) -> Foo {
-        Foo(42)
-    }
-}
-
 #[derive(NativeClass)]
 #[inherit(Reference)]
 struct NotFoo;
 
+#[methods]
 impl NotFoo {
-    fn new(_owner: &Reference) -> NotFoo {
+    fn new(_owner: _) -> NotFoo {
         NotFoo
     }
 }
 
 #[methods]
 impl Foo {
+    fn new(_owner: TRef<Reference>) -> Foo {
+        Foo(42)
+    }
+
     #[export]
     fn answer(&self, _owner: &Reference) -> i64 {
         self.0
     }
 
     #[export]
-    fn choose(
-        &self,
-        _owner: &Reference,
-        a: GodotString,
-        which: bool,
-        b: GodotString,
-    ) -> GodotString {
+    fn choose(&self, _owner: _, a: GodotString, which: bool, b: GodotString) -> GodotString {
         if which {
             a
         } else {
@@ -144,7 +137,7 @@ impl Foo {
     }
 
     #[export]
-    fn choose_variant(&self, _owner: &Reference, a: i32, what: Variant, b: f64) -> Variant {
+    fn choose_variant(&self, _owner: _, a: i32, what: Variant, b: f64) -> Variant {
         let what = what.try_to_string().expect("should be string");
         match what.as_str() {
             "int" => a.to_variant(),
@@ -184,19 +177,17 @@ fn test_rust_class_construction() -> bool {
 #[inherit(Reference)]
 struct OptionalArgs;
 
-impl OptionalArgs {
-    fn new(_owner: &Reference) -> Self {
-        OptionalArgs
-    }
-}
-
 #[methods]
 impl OptionalArgs {
+    fn new(_owner: _) -> Self {
+        OptionalArgs
+    }
+
     #[export]
     #[allow(clippy::many_single_char_names)]
     fn opt_sum(
         &self,
-        _owner: &Reference,
+        _owner: _,
         a: i64,
         b: i64,
         #[opt] c: i64,
