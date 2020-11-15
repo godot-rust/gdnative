@@ -57,6 +57,7 @@ pub extern "C" fn run_tests(
     status &= test_constructor();
     status &= test_underscore_method_binding();
     status &= test_rust_class_construction();
+    status &= test_from_instance_id();
 
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
@@ -205,6 +206,61 @@ impl OptionalArgs {
     ) -> i64 {
         a + b + c + d + e
     }
+}
+
+fn test_from_instance_id() -> bool {
+    println!(" -- test_from_instance_id");
+
+    let ok = std::panic::catch_unwind(|| {
+        assert!(unsafe { Node::try_from_instance_id(22).is_none() });
+        assert!(unsafe { Node::try_from_instance_id(42).is_none() });
+        assert!(unsafe { Node::try_from_instance_id(503).is_none() });
+
+        let instance_id;
+
+        {
+            let foo = unsafe { Node::new().into_shared().assume_safe() };
+            foo.set_name("foo");
+
+            instance_id = foo.get_instance_id();
+
+            assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
+
+            let reconstructed = unsafe { Node::from_instance_id(instance_id) };
+            assert_eq!("foo", reconstructed.name().to_string());
+
+            unsafe { foo.assume_unique().free() };
+        }
+
+        assert!(unsafe { Node::try_from_instance_id(instance_id).is_none() });
+
+        let instance_id;
+
+        {
+            let foo = Reference::new().into_shared();
+            let foo = unsafe { foo.assume_safe() };
+            foo.set_meta("foo", "bar");
+
+            instance_id = foo.get_instance_id();
+
+            assert!(unsafe { Node::try_from_instance_id(instance_id).is_none() });
+
+            let reconstructed = unsafe { Reference::from_instance_id(instance_id) };
+            assert_eq!(
+                "bar",
+                String::from_variant(&reconstructed.get_meta("foo")).unwrap()
+            );
+        }
+
+        assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
+    })
+    .is_ok();
+
+    if !ok {
+        gdnative::godot_error!("   !! Test test_from_instance_id failed");
+    }
+
+    ok
 }
 
 fn init(handle: InitHandle) {
