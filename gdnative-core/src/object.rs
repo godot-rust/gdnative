@@ -502,6 +502,22 @@ impl<T: GodotObject> Ref<T, Shared> {
     pub unsafe fn assume_unique(self) -> Ref<T, Unique> {
         T::RefKind::impl_assume_unique(self)
     }
+
+    /// Create a Ref from a Godot instance ID.
+    /// This is the ID you can retrieve via `Object::get_instance_id()`.
+    ///
+    /// If `id` does not refer to a valid object, None is returned.
+    pub fn try_from_instance_id(id: i64) -> Option<Ref<T, Shared>> {
+        let api = get_api();
+        let obj: *mut sys::godot_object = unsafe { (api.godot_instance_from_id)(id as i32) };
+
+        NonNull::new(obj)
+            .map(|non_null| {
+                let result = unsafe { Ref::init_from_sys(non_null) };
+                result
+            })
+    }
+
 }
 
 /// Extra methods with explicit sanity checks for manually-managed unsafe references.
