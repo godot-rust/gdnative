@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The minimum compatible engine version is now 3.2-stable.**
+
 ## [0.9.1] - 2020-10-19
 
 ### Added

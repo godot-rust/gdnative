@@ -101,6 +101,8 @@ typedef struct godot_gdnative_ext_android_api_struct {
 	const godot_gdnative_api_struct *next;
 	JNIEnv*(*godot_android_get_env)();
 	jobject (*godot_android_get_activity)();
+	jobject (*godot_android_get_surface)();
+	bool (*godot_android_is_activity_resumed)();
 } godot_gdnative_ext_android_api_struct;
 
 typedef struct godot_gdnative_ext_arvr_api_struct {
@@ -129,6 +131,15 @@ typedef struct godot_gdnative_ext_videodecoder_api_struct {
 	void (*godot_videodecoder_register_decoder)(const godot_videodecoder_interface_gdnative *p_interface);
 } godot_gdnative_ext_videodecoder_api_struct;
 
+typedef struct godot_gdnative_ext_net_3_2_api_struct {
+	unsigned int type;
+	godot_gdnative_api_version version;
+	const godot_gdnative_api_struct *next;
+	godot_error (*godot_net_set_webrtc_library)(const godot_net_webrtc_library *p_library);
+	void (*godot_net_bind_webrtc_peer_connection)(godot_object *p_obj, const godot_net_webrtc_peer_connection *p_interface);
+	void (*godot_net_bind_webrtc_data_channel)(godot_object *p_obj, const godot_net_webrtc_data_channel *p_interface);
+} godot_gdnative_ext_net_3_2_api_struct;
+
 typedef struct godot_gdnative_ext_net_api_struct {
 	unsigned int type;
 	godot_gdnative_api_version version;
@@ -137,6 +148,30 @@ typedef struct godot_gdnative_ext_net_api_struct {
 	void (*godot_net_bind_packet_peer)(godot_object *p_obj, const godot_net_packet_peer *p_interface);
 	void (*godot_net_bind_multiplayer_peer)(godot_object *p_obj, const godot_net_multiplayer_peer *p_interface);
 } godot_gdnative_ext_net_api_struct;
+
+typedef struct godot_gdnative_core_1_2_api_struct {
+	unsigned int type;
+	godot_gdnative_api_version version;
+	const godot_gdnative_api_struct *next;
+	godot_dictionary (*godot_dictionary_duplicate)(const godot_dictionary *p_self, const godot_bool p_deep);
+	godot_vector3 (*godot_vector3_move_toward)(const godot_vector3 *p_self, const godot_vector3 *p_to, const godot_real p_delta);
+	godot_vector2 (*godot_vector2_move_toward)(const godot_vector2 *p_self, const godot_vector2 *p_to, const godot_real p_delta);
+	godot_int (*godot_string_count)(const godot_string *p_self, godot_string p_what, godot_int p_from, godot_int p_to);
+	godot_int (*godot_string_countn)(const godot_string *p_self, godot_string p_what, godot_int p_from, godot_int p_to);
+	godot_vector3 (*godot_vector3_direction_to)(const godot_vector3 *p_self, const godot_vector3 *p_to);
+	godot_vector2 (*godot_vector2_direction_to)(const godot_vector2 *p_self, const godot_vector2 *p_to);
+	godot_array (*godot_array_slice)(const godot_array *p_self, const godot_int p_begin, const godot_int p_end, const godot_int p_step, const godot_bool p_deep);
+	godot_bool (*godot_pool_byte_array_empty)(const godot_pool_byte_array *p_self);
+	godot_bool (*godot_pool_int_array_empty)(const godot_pool_int_array *p_self);
+	godot_bool (*godot_pool_real_array_empty)(const godot_pool_real_array *p_self);
+	godot_bool (*godot_pool_string_array_empty)(const godot_pool_string_array *p_self);
+	godot_bool (*godot_pool_vector2_array_empty)(const godot_pool_vector2_array *p_self);
+	godot_bool (*godot_pool_vector3_array_empty)(const godot_pool_vector3_array *p_self);
+	godot_bool (*godot_pool_color_array_empty)(const godot_pool_color_array *p_self);
+	void *(*godot_get_class_tag)(const godot_string_name *p_class);
+	godot_object *(*godot_object_cast_to)(const godot_object *p_object, void *p_class_tag);
+	godot_object *(*godot_instance_from_id)(godot_int p_instance_id);
+} godot_gdnative_core_1_2_api_struct;
 
 typedef struct godot_gdnative_core_1_1_api_struct {
 	unsigned int type;

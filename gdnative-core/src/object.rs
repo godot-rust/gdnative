@@ -151,6 +151,36 @@ pub unsafe trait GodotObject: Sized + crate::private::godot_object::Sealed {
     {
         Ref::from_sys(self.as_raw().sys())
     }
+
+    /// Recovers a instance ID previously returned by `Object::get_instance_id` if the object is
+    /// still alive. See also `TRef::try_from_instance_id`.
+    ///
+    /// # Safety
+    ///
+    /// During the entirety of `'a`, the thread from which `try_from_instance_id` is called must
+    /// have exclusive access to the underlying object, if it is still alive.
+    #[inline]
+    unsafe fn try_from_instance_id<'a>(id: i64) -> Option<TRef<'a, Self, Shared>> {
+        TRef::try_from_instance_id(id)
+    }
+
+    /// Recovers a instance ID previously returned by `Object::get_instance_id` if the object is
+    /// still alive, and panics otherwise. This does **NOT** guarantee that the resulting
+    /// reference is safe to use.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given id refers to a destroyed object. For a non-panicking version, see
+    /// `try_from_instance_id`.
+    ///
+    /// # Safety
+    ///
+    /// During the entirety of `'a`, the thread from which `try_from_instance_id` is called must
+    /// have exclusive access to the underlying object, if it is still alive.
+    #[inline]
+    unsafe fn from_instance_id<'a>(id: i64) -> TRef<'a, Self, Shared> {
+        TRef::from_instance_id(id)
+    }
 }
 
 /// Marker trait for API types that are subclasses of another type. This trait is implemented
@@ -889,6 +919,41 @@ where
     #[inline]
     pub fn claim(self) -> Ref<T, Access> {
         unsafe { Ref::from_sys(self.obj.as_raw().sys()) }
+    }
+}
+
+impl<'a, T: GodotObject> TRef<'a, T, Shared> {
+    /// Recovers a instance ID previously returned by `Object::get_instance_id` if the object is
+    /// still alive.
+    ///
+    /// # Safety
+    ///
+    /// During the entirety of `'a`, the thread from which `try_from_instance_id` is called must
+    /// have exclusive access to the underlying object, if it is still alive.
+    #[inline]
+    pub unsafe fn try_from_instance_id(id: i64) -> Option<Self> {
+        let api = get_api();
+        let ptr = NonNull::new((api.godot_instance_from_id)(id as sys::godot_int))?;
+        let raw = RawObject::try_from_sys_ref(ptr)?;
+        Some(TRef::new(T::cast_ref(raw)))
+    }
+
+    /// Recovers a instance ID previously returned by `Object::get_instance_id` if the object is
+    /// still alive, and panics otherwise. This does **NOT** guarantee that the resulting
+    /// reference is safe to use.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given id refers to a destroyed object. For a non-panicking version, see
+    /// `try_from_instance_id`.
+    ///
+    /// # Safety
+    ///
+    /// During the entirety of `'a`, the thread from which `try_from_instance_id` is called must
+    /// have exclusive access to the underlying object, if it is still alive.
+    #[inline]
+    pub unsafe fn from_instance_id(id: i64) -> Self {
+        Self::try_from_instance_id(id).expect("instance should be alive")
     }
 }
 

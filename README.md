@@ -17,7 +17,7 @@ The bindings cover most of the exposed API of Godot 3.2, and are being used on a
 
 We are serious about engine compatibility. We are committed to keeping compatibility with the latest stable patch releases of all minor versions of the engine, starting from Godot 3.2.
 
-The current minimum compatible version, with `api.json` replacement, is Godot 3.1.1-stable. Changes to this will be considered a breaking change, and will be called out in the release notes.
+The current minimum compatible version, with `api.json` replacement, is Godot 3.2-stable. Changes to this will be considered a breaking change, and will be called out in the release notes.
 
 The bindings do *not* support Godot 4.0 (`master` branch) currently.
 
