@@ -15,6 +15,7 @@ members = [
     "examples/resource",
     "examples/native_plugin",
     "examples/rpc",
+    "examples/array_export",
     "impl/proc_macros"
 ]
 

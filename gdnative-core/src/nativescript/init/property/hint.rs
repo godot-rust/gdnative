@@ -7,7 +7,7 @@ use crate::core_types::GodotString;
 use crate::core_types::VariantType;
 use crate::sys;
 
-use super::ExportInfo;
+use super::{Export, ExportInfo};
 
 /// Hints that an integer or float property should be within an inclusive range.
 ///
@@ -398,6 +398,81 @@ impl ColorHint {
                 ColorHint::NoAlpha => sys::godot_property_hint_GODOT_PROPERTY_HINT_COLOR_NO_ALPHA,
             },
             hint_string: GodotString::new(),
+        }
+    }
+}
+
+/// Array hints optionally with an element hint.
+#[derive(Debug, Default)]
+pub struct ArrayHint {
+    element_hint: Option<ExportInfo>,
+}
+
+impl ArrayHint {
+    /// Returns an `ArrayHint` without a element hint.
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Returns an `ArrayHint` with an element hint for type `T`, but without a hint for
+    /// that type.
+    #[inline]
+    pub fn with_element<T: Export>() -> Self {
+        Self::with_maybe_element_hint::<T>(None)
+    }
+
+    /// Returns an `ArrayHint` with an element hint for type `T`, and a hint for that type.
+    #[inline]
+    pub fn with_element_hint<T: Export>(hint: T::Hint) -> Self {
+        Self::with_maybe_element_hint::<T>(Some(hint))
+    }
+
+    /// Returns an `ArrayHint` with an element hint for type `T`, and optionally a hint
+    /// for that type.
+    #[inline]
+    pub fn with_maybe_element_hint<T: Export>(hint: Option<T::Hint>) -> Self {
+        ArrayHint {
+            element_hint: Some(T::export_info(hint)),
+        }
+    }
+}
+
+impl ArrayHint {
+    #[inline]
+    pub fn export_info(self) -> ExportInfo {
+        if let Some(element_hint) = self.element_hint {
+            let hint_string = match (element_hint.variant_type, element_hint.hint_kind) {
+                // Special-cased because sub-hints seem to leave off the hint only if it's NONE,
+                // but Array will also do it on HINT_TYPE_STRING.
+                (
+                    VariantType::VariantArray,
+                    sys::godot_property_hint_GODOT_PROPERTY_HINT_TYPE_STRING,
+                ) => format!(
+                    "{}:{}",
+                    VariantType::VariantArray as u32,
+                    element_hint.hint_string
+                ),
+                (variant_type, sys::godot_property_hint_GODOT_PROPERTY_HINT_NONE) => {
+                    format!("{}:{}", variant_type as u32, element_hint.hint_string)
+                }
+                (variant_type, hint_type) => format!(
+                    "{}/{}:{}",
+                    variant_type as u32, hint_type, element_hint.hint_string
+                ),
+            }
+            .into();
+            ExportInfo {
+                variant_type: VariantType::VariantArray,
+                hint_kind: sys::godot_property_hint_GODOT_PROPERTY_HINT_TYPE_STRING,
+                hint_string,
+            }
+        } else {
+            ExportInfo {
+                variant_type: VariantType::VariantArray,
+                hint_kind: sys::godot_property_hint_GODOT_PROPERTY_HINT_NONE,
+                hint_string: GodotString::new(),
+            }
         }
     }
 }
