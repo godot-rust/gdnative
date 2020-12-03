@@ -256,7 +256,7 @@ fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
 
 const UNSAFE_OBJECT_METHODS: &[(&str, &str)] = &[
     ("Object", "call"),
-    ("Object", "vcall"),
+    ("Object", "callv"),
     ("Object", "call_deferred"),
 ];
 
