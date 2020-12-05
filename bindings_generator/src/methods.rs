@@ -256,7 +256,7 @@ fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
 
 const UNSAFE_OBJECT_METHODS: &[(&str, &str)] = &[
     ("Object", "call"),
-    ("Object", "vcall"),
+    ("Object", "callv"),
     ("Object", "call_deferred"),
 ];
 
@@ -348,10 +348,15 @@ pub(crate) fn generate_methods(
 
         let rusty_name = format_ident!("{}", rusty_method_name);
 
-        let maybe_unsafe = if UNSAFE_OBJECT_METHODS.contains(&(&class.name, method_name)) {
-            quote! { unsafe }
+        let maybe_unsafe: TokenStream;
+        let maybe_unsafe_reason: &str;
+        if UNSAFE_OBJECT_METHODS.contains(&(&class.name, method_name)) {
+            maybe_unsafe = quote! { unsafe };
+            maybe_unsafe_reason = "\n# Safety\nThis function bypasses Rust's static type checks \
+                (aliasing, thread boundaries, calls to free(), ...).";
         } else {
-            Default::default()
+            maybe_unsafe = TokenStream::default();
+            maybe_unsafe_reason = "";
         };
 
         let method_bind_fetch = {
@@ -370,8 +375,8 @@ pub(crate) fn generate_methods(
         let recover = ret_recover(&ret_type, icall_ty);
 
         let output = quote! {
-
             #[doc = #doc_comment]
+            #[doc = #maybe_unsafe_reason]
             #[inline]
             pub #maybe_unsafe fn #rusty_name(&self #params_decl) -> #rust_ret_type {
                 unsafe {
