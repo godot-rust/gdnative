@@ -52,7 +52,8 @@ pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStrea
     let official_docs = format!(
         r#"## Official documentation
 
-See the [documentation of this class]({url}) in the Godot engine's official documentation."#,
+See the [documentation of this class]({url}) in the Godot engine's official documentation.
+The method descriptions are generated from it and typically contain code samples in GDScript, not Rust."#,
         url = official_doc_url(class),
     );
 
