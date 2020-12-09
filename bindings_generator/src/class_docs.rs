@@ -110,17 +110,11 @@ impl GodotXMLDocs {
     }
 
     fn add_fn(&mut self, class: &str, method: &str, desc: &str, default_args: &[(&str, &str)]) {
-        let doc = desc.trim();
+        let mut doc = unindent::unindent(desc.trim());
 
         if doc.is_empty() && default_args.is_empty() {
             return;
         }
-
-        let mut doc = if !doc.is_empty() {
-            format!("```text\n{}\n```\n", doc)
-        } else {
-            String::new()
-        };
 
         if !default_args.is_empty() {
             doc.push_str("\n# Default Arguments");
@@ -130,7 +124,29 @@ impl GodotXMLDocs {
             }
         }
 
-        self.class_fn_desc
-            .insert((class.into(), method.into()), doc);
+        self.class_fn_desc.insert(
+            (class.into(), method.into()),
+            Self::reformat_as_rustdoc(doc),
+        );
+    }
+
+    /// Takes the Godot documentation markup and transforms it to Rustdoc.
+    /// Very basic approach with limitations, but already helps readability quite a bit.
+    fn reformat_as_rustdoc(godot_doc: String) -> String {
+        let gdscript_note = if godot_doc.contains("[codeblock]") {
+            "_Sample code is GDScript unless otherwise noted._\n\n"
+        } else {
+            ""
+        };
+
+        let translated = godot_doc
+            .replace("[code]", "`")
+            .replace("[/code]", "`")
+            .replace("[codeblock]", "```gdscript")
+            .replace("[/codeblock]", "```")
+            .replace("[b]", "**")
+            .replace("[/b]", "**");
+
+        format!("{}{}", gdscript_note, translated)
     }
 }
