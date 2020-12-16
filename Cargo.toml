@@ -13,6 +13,7 @@ members = [
     "examples/signals",
     "examples/dodge_the_creeps",
     "examples/resource",
+    "examples/native_plugin",
     "impl/proc_macros"
 ]
 
