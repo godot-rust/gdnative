@@ -90,6 +90,7 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - [/examples/scene_create](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
 - [/examples/signals](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
 - [/examples/resource](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Shows you how to create and use custom resources.
+- [/examples/native_plugin](https://github.com/godot-rust/godot-rust/tree/master/examples/native_plugin) - Shows you how to create custom node plugins.
 
 ## Third-party resources
 
