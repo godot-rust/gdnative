@@ -1,0 +1,39 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "EditorPlugin",
+"class": "CustomNode",
+"language": "NativeScript",
+"path": "res://addons/my_custom_node/custom_node.gdns"
+}, {
+"base": "Button",
+"class": "MyButton",
+"language": "NativeScript",
+"path": "res://my_button.gdns"
+} ]
+_global_script_class_icons={
+"CustomNode": "",
+"MyButton": ""
+}
+
+[application]
+
+config/name="native_plugin"
+run/main_scene="res://Main.tscn"
+config/icon="res://icon.png"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "my_custom_node" )
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"

@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://my_button.gdns" type="Script" id=1]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="MyButton" type="Button" parent="."]
+margin_right = 359.0
+margin_bottom = 175.0
+text = "Click me!"
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
