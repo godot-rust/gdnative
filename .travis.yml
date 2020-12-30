@@ -113,6 +113,31 @@ matrix:
        - mkdir -p $HOME/.cargo/bin
        - cp cargo-dinghy-macos/cargo-dinghy $HOME/.cargo/bin
 
+    - name: cargo build --release (stable, android)
+      os: linux
+      rust: stable
+      env: CI_STAGE_BUILD_RELEASE=yes CI_ANDROID_TEST=yes JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 ANDROID_SDK_ROOT=/opt/android-ndk-r21d
+      before_script:
+        # aarch64 and armv7 cover most Android phones & tablets.
+        # However armv7 is not yet available for Rust stable.
+        - rustup target add aarch64-linux-android
+        - sudo apt-get install openjdk-8-jdk
+        - sudo apt-get install llvm-dev libclang-dev clang g++-multilib gcc-multilib libc6-dev libc6-dev-arm64-cross
+        # Downloading NDK. This file is huge (1Gb) maybe extract only what's needed and repackage.
+        # See https://developer.android.com/ndk/downloads for updates.
+        # The Android SDK which comes with Android Studio is not required. Only Java + NDK are.
+        - install -d /opt
+        - cd /opt && wget -nc -nv https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip && cd $TRAVIS_BUILD_DIR
+        - echo "bcf4023eb8cb6976a4c7cff0a8a8f145f162bf4d  /opt/android-ndk-r21d-linux-x86_64.zip" >> /opt/SHA1SUM.txt
+        - sha1sum --check /opt/SHA1SUM.txt
+        - cd /opt && unzip -q android-ndk-r21d-linux-x86_64.zip && cd $TRAVIS_BUILD_DIR
+        # Using clang linker from NDK when building Android programs.
+        - install -d $HOME/.cargo
+        - echo >> $HOME/.cargo/config
+        - echo "[target.aarch64-linux-android]" >> $HOME/.cargo/config
+        - find /opt -name aarch64-linux-android21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config
+        - echo >> $HOME/.cargo/config
+
 script:
   - if [[ "$CI_STAGE_CARGO_FMT" == "yes" ]]; then
       cargo fmt --all -- --check;
@@ -144,6 +169,9 @@ script:
       cargo build --release;
       if [[ "$CI_MSVC_TEST" == "yes" ]]; then
         cargo build --target x86_64-pc-windows-msvc --release;
+      fi;
+      if [[ "$CI_ANDROID_TEST" == "yes" ]]; then
+        cargo build --target aarch64-linux-android --release;
       fi
     fi
 
