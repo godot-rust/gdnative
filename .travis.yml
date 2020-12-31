@@ -119,8 +119,7 @@ matrix:
       env: CI_STAGE_BUILD_RELEASE=yes CI_ANDROID_TEST=yes JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 ANDROID_SDK_ROOT=/opt/android-ndk-r21d
       before_script:
         # aarch64 and armv7 cover most Android phones & tablets.
-        # However armv7 is not yet available for Rust stable.
-        - rustup target add aarch64-linux-android
+        - rustup target add aarch64-linux-android armv7-linux-androideabi
         - sudo apt-get install openjdk-8-jdk
         - sudo apt-get install llvm-dev libclang-dev clang g++-multilib gcc-multilib libc6-dev libc6-dev-arm64-cross
         # Downloading NDK. This file is huge (1Gb) maybe extract only what's needed and repackage.
@@ -136,6 +135,9 @@ matrix:
         - echo >> $HOME/.cargo/config
         - echo "[target.aarch64-linux-android]" >> $HOME/.cargo/config
         - find /opt -name aarch64-linux-android21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config
+        - echo >> $HOME/.cargo/config
+        - echo "[target.armv7-linux-androideabi]" >> $HOME/.cargo/config
+        - find /opt -name armv7a-linux-androideabi21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config
         - echo >> $HOME/.cargo/config
 
 script:
@@ -172,6 +174,7 @@ script:
       fi;
       if [[ "$CI_ANDROID_TEST" == "yes" ]]; then
         cargo build --target aarch64-linux-android --release;
+        cargo build --target armv7-linux-androideabi --release;
       fi
     fi
 
