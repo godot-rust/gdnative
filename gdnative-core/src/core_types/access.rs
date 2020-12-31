@@ -33,7 +33,7 @@ where
 ///
 /// This trait is sealed and has no public members.
 #[allow(clippy::len_without_is_empty)]
-pub unsafe trait Guard: Drop + private::Sealed {
+pub unsafe trait Guard: private::Sealed {
     #[doc(hidden)]
     type Target;
 
