@@ -153,6 +153,13 @@ pub type DefaultUserData<T> = LocalCellData<T>;
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Infallible {}
 
+impl std::fmt::Display for Infallible {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Operation that can't fail just failed")
+    }
+}
+
 /// Policies to deal with potential deadlocks
 ///
 /// As Godot allows mutable pointer aliasing, doing certain things in exported method bodies may
@@ -526,7 +533,11 @@ mod local_cell {
                     "Accessing from the wrong thread, expected {:?} found {:?}",
                     original, current
                 ),
-                LocalCellError::BorrowFailed => write!(f, "Borrow Failed"),
+                LocalCellError::BorrowFailed => write!(
+                    f,
+                    "Borrow failed; a &mut reference was requested, but one already exists. Cause is likely a re-entrant call \
+                    (e.g. a GDNative Rust method calls to GDScript, which again calls a Rust method on the same object)."
+                ),
             }
         }
     }

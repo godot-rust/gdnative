@@ -204,7 +204,7 @@ macro_rules! godot_wrap_method_inner {
                             <$retty as $crate::core_types::OwnedToVariant>::owned_to_variant(ret)
                         })
                         .unwrap_or_else(|err| {
-                            $crate::godot_error!("gdnative-core: method call failed with error: {:?}", err);
+                            $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
                             $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
                             $crate::core_types::Variant::new()
                         });
