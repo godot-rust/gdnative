@@ -18,7 +18,7 @@ pub fn official_doc_url(class: &GodotClass) -> String {
 }
 
 pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStream {
-    let has_parent = class.base_class != "";
+    let has_parent = !class.base_class.is_empty();
     let singleton_str = if class.singleton { "singleton " } else { "" };
     let ownership_type = if class.is_refcounted() {
         "reference counted"
@@ -81,7 +81,7 @@ if it is a `Node`."#,
         "".into()
     };
 
-    let base_class_docs = if class.base_class != "" {
+    let base_class_docs = if !class.base_class.is_empty() {
         let mut docs = vec![];
         write!(
             &mut docs,
@@ -138,7 +138,7 @@ fn list_base_classes(output: &mut impl Write, api: &Api, parent_name: &str) -> G
 
         writeln!(output, " - {}", class_link)?;
 
-        if parent.base_class != "" {
+        if !parent.base_class.is_empty() {
             list_base_classes(output, api, &parent.base_class)?;
         }
     }
