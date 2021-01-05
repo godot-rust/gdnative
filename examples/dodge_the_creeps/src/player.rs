@@ -46,16 +46,16 @@ impl Player {
         let mut velocity = Vector2::new(0.0, 0.0);
 
         if Input::is_action_pressed(&input, "ui_right") {
-            velocity.x += 1.0
+            velocity.x += self.speed
         }
         if Input::is_action_pressed(&input, "ui_left") {
-            velocity.x -= 1.0
+            velocity.x -= self.speed
         }
         if Input::is_action_pressed(&input, "ui_down") {
-            velocity.y += 1.0
+            velocity.y += self.speed
         }
         if Input::is_action_pressed(&input, "ui_up") {
-            velocity.y -= 1.0
+            velocity.y -= self.speed
         }
 
         if velocity.length() > 0.0 {
