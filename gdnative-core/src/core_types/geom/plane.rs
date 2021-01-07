@@ -128,7 +128,8 @@ impl Plane {
 
         let dist = (self.normal.dot(begin) - self.d) / den;
 
-        if dist < -std::f32::EPSILON || dist > (1.0 + std::f32::EPSILON) {
+        // check that dist is not in -EPSILON..(EPSILON+1)
+        if !(-std::f32::EPSILON..=(std::f32::EPSILON + 1.0)).contains(&dist) {
             return None;
         }
 
