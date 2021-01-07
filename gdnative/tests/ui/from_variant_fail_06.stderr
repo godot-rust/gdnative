@@ -1,0 +1,5 @@
+error: String expected, wrap with double quotes.
+ --> $DIR/from_variant_fail_06.rs:6:35
+  |
+6 |     #[variant(from_variant_with = path)]
+  |                                   ^^^^

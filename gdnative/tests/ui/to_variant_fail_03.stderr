@@ -1,0 +1,6 @@
+error: Found baz::quux, expected one of:
+    to_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip
+ --> $DIR/to_variant_fail_03.rs:6:15
+  |
+6 |     #[variant(baz::quux = "path::to::function")]
+  |               ^^^

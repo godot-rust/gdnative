@@ -1,5 +1,5 @@
-use proc_macro::TokenStream;
-use syn::{Data, DeriveInput, Generics, Ident};
+use proc_macro2::TokenStream as TokenStream2;
+use syn::{spanned::Spanned, Data, DeriveInput, Generics, Ident};
 
 mod attr;
 mod bounds;
@@ -52,51 +52,58 @@ impl ToVariantTrait {
 }
 
 pub(crate) fn parse_derive_input(
-    input: TokenStream,
+    input: DeriveInput,
     bound: &syn::Path,
     dir: Direction,
-) -> DeriveData {
-    let input = match syn::parse_macro_input::parse::<DeriveInput>(input) {
-        Ok(val) => val,
-        Err(err) => {
-            panic!("{}", err);
-        }
-    };
-
+) -> Result<DeriveData, syn::Error> {
     let repr = match input.data {
-        Data::Struct(struct_data) => Repr::Struct(VariantRepr::repr_for(&struct_data.fields)),
+        Data::Struct(struct_data) => Repr::Struct(VariantRepr::repr_for(&struct_data.fields)?),
         Data::Enum(enum_data) => Repr::Enum(
             enum_data
                 .variants
                 .iter()
                 .map(|variant| {
-                    (
+                    Ok((
                         variant.ident.clone(),
-                        VariantRepr::repr_for(&variant.fields),
-                    )
+                        VariantRepr::repr_for(&variant.fields)?,
+                    ))
                 })
-                .collect(),
+                .collect::<Result<_, syn::Error>>()?,
         ),
-        Data::Union(_) => panic!("Variant conversion derive macro does not work on unions."),
+        Data::Union(_) => {
+            return Err(syn::Error::new(
+                input.span(),
+                "Variant conversion derive macro does not work on unions.",
+            ))
+        }
     };
 
     let generics = extend_bounds(input.generics, &repr, bound, dir);
 
-    DeriveData {
+    Ok(DeriveData {
         ident: input.ident,
         repr,
         generics,
-    }
+    })
 }
 
-pub(crate) fn derive_to_variant(trait_kind: ToVariantTrait, input: TokenStream) -> TokenStream {
-    to::expand_to_variant(
+pub(crate) fn derive_to_variant(
+    trait_kind: ToVariantTrait,
+    input: proc_macro::TokenStream,
+) -> Result<TokenStream2, syn::Error> {
+    let derive_input = syn::parse_macro_input::parse::<syn::DeriveInput>(input)?;
+
+    let variant = to::expand_to_variant(
         trait_kind,
-        parse_derive_input(input, &trait_kind.trait_path(), Direction::To),
-    )
+        parse_derive_input(derive_input, &trait_kind.trait_path(), Direction::To)?,
+    )?;
+
+    Ok(variant)
 }
 
-pub(crate) fn derive_from_variant(input: TokenStream) -> TokenStream {
-    let bound: syn::Path = syn::parse2(quote! { ::gdnative::core_types::FromVariant }).unwrap();
-    from::expand_from_variant(parse_derive_input(input, &bound, Direction::From))
+pub(crate) fn derive_from_variant(derive_input: DeriveInput) -> Result<TokenStream2, syn::Error> {
+    let bound: syn::Path = syn::parse_quote! { ::gdnative::core_types::FromVariant };
+
+    let variant = parse_derive_input(derive_input, &bound, Direction::From);
+    from::expand_from_variant(variant?)
 }

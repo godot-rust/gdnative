@@ -1,0 +1,5 @@
+error: Unexpected input, expected a double quoted string: "path::to::something"
+  --> $DIR/derive_fail_property_empty_hint.rs:12:23
+   |
+12 |     #[property(hint = "")]
+   |                       ^^

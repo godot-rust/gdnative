@@ -1,0 +1,7 @@
+error: No "inherit" attribute found
+ --> $DIR/derive_fail_inherit.rs:3:10
+  |
+3 | #[derive(NativeClass)]
+  |          ^^^^^^^^^^^
+  |
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
