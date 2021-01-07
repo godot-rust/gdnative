@@ -1816,7 +1816,7 @@ godot_test!(
     test_variant_option {
         use std::marker::PhantomData;
 
-        let variant = Some(42 as i64).to_variant();
+        let variant = Some(42_i64).to_variant();
         assert_eq!(Some(42), variant.try_to_i64());
 
         let variant = Option::<bool>::None.to_variant();
@@ -1841,11 +1841,11 @@ godot_test!(
     }
 
     test_variant_result {
-        let variant = Result::<i64, ()>::Ok(42 as i64).to_variant();
+        let variant = Result::<i64, ()>::Ok(42_i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
         assert_eq!(Some(42), dict.get("Ok").try_to_i64());
 
-        let variant = Result::<(), i64>::Err(54 as i64).to_variant();
+        let variant = Result::<(), i64>::Err(54_i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
         assert_eq!(Some(54), dict.get("Err").try_to_i64());
 
