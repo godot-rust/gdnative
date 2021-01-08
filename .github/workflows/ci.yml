@@ -141,6 +141,7 @@ jobs:
           cargo build;
       - name: Running Godot Tests
         run: |
+          cd test;
           mkdir -p ./project/lib;
           cp ../target/debug/libgdnative_test.so ./project/lib/;
           "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/;
