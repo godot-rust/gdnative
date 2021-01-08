@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - staging
+      - trying
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+          - rust: nightly
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: clippy
+      - run: cargo clippy --all --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+
+  # This job doesn't actually test anything, but they're used to tell bors the
+  # build completed, as there is no practical way to detect when a workflow is
+  # successful listening to webhooks only.
+  #
+  # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+
+  ci-success:
+    name: ci
+    if: github.event_name == 'push' && success()
+    needs:
+      - clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark the job as a success
+        run: exit 0
