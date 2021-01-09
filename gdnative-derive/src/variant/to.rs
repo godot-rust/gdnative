@@ -48,10 +48,12 @@ pub(crate) fn expand_to_variant(
                         let tokens = quote! {
                             #ident::#var_ident #destructure_pattern => {
                                 let __dict = ::gdnative::core_types::Dictionary::new();
-                                let __key = ::gdnative::core_types::GodotString::from(#var_ident_string_literal).to_variant();
+                                let __key = ::gdnative::core_types::ToVariant::to_variant(
+                                    &::gdnative::core_types::GodotString::from(#var_ident_string_literal)
+                                );
                                 let __value = #to_variant;
                                 __dict.insert(&__key, &__value);
-                                __dict.into_shared().to_variant()
+                                ::gdnative::core_types::ToVariant::to_variant(&__dict.into_shared())
                             }
                         };
                         Ok(tokens)
