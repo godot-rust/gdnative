@@ -1,4 +1,3 @@
-use crate::extensions::NodeExt;
 use gdnative::api::{AnimatedSprite, RigidBody2D};
 use gdnative::prelude::*;
 use rand::seq::SliceRandom;
@@ -44,8 +43,11 @@ impl Mob {
     #[export]
     fn _ready(&mut self, owner: &RigidBody2D) {
         let mut rng = rand::thread_rng();
-        let animated_sprite =
-            unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
+        let animated_sprite = unsafe {
+            owner
+                .get_node_as::<AnimatedSprite>("animated_sprite")
+                .unwrap()
+        };
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str())
     }
 

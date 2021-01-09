@@ -1,4 +1,3 @@
-use crate::extensions::NodeExt as _;
 use gdnative::api::{AnimatedSprite, Area2D, CollisionShape2D, PhysicsBody2D};
 use gdnative::prelude::*;
 
@@ -39,8 +38,11 @@ impl Player {
 
     #[export]
     fn _process(&mut self, owner: &Area2D, delta: f32) {
-        let animated_sprite =
-            unsafe { owner.get_typed_node::<AnimatedSprite, _>("animated_sprite") };
+        let animated_sprite = unsafe {
+            owner
+                .get_node_as::<AnimatedSprite>("animated_sprite")
+                .unwrap()
+        };
 
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
@@ -90,8 +92,11 @@ impl Player {
         owner.hide();
         owner.emit_signal("hit", &[]);
 
-        let collision_shape =
-            unsafe { owner.get_typed_node::<CollisionShape2D, _>("collision_shape_2d") };
+        let collision_shape = unsafe {
+            owner
+                .get_node_as::<CollisionShape2D>("collision_shape_2d")
+                .unwrap()
+        };
 
         collision_shape.set_deferred("disabled", true);
     }
@@ -101,8 +106,11 @@ impl Player {
         owner.set_global_position(pos);
         owner.show();
 
-        let collision_shape =
-            unsafe { owner.get_typed_node::<CollisionShape2D, _>("collision_shape_2d") };
+        let collision_shape = unsafe {
+            owner
+                .get_node_as::<CollisionShape2D>("collision_shape_2d")
+                .unwrap()
+        };
 
         collision_shape.set_disabled(false);
     }

@@ -1,4 +1,3 @@
-use crate::extensions::NodeExt as _;
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -22,41 +21,41 @@ impl HUD {
 
     #[export]
     pub fn show_message(&self, owner: &CanvasLayer, text: String) {
-        let message_label = unsafe { owner.get_typed_node::<Label, _>("message_label") };
+        let message_label = unsafe { owner.get_node_as::<Label>("message_label").unwrap() };
         message_label.set_text(text);
         message_label.show();
 
-        let timer = unsafe { owner.get_typed_node::<Timer, _>("message_timer") };
+        let timer = unsafe { owner.get_node_as::<Timer>("message_timer").unwrap() };
         timer.start(0.0);
     }
 
     pub fn show_game_over(&self, owner: &CanvasLayer) {
         self.show_message(owner, "Game Over".into());
 
-        let message_label = unsafe { owner.get_typed_node::<Label, _>("message_label") };
+        let message_label = unsafe { owner.get_node_as::<Label>("message_label").unwrap() };
         message_label.set_text("Dodge the\nCreeps!");
         message_label.show();
 
-        let button = unsafe { owner.get_typed_node::<Button, _>("start_button") };
+        let button = unsafe { owner.get_node_as::<Button>("start_button").unwrap() };
         button.show();
     }
 
     #[export]
     pub fn update_score(&self, owner: &CanvasLayer, score: i64) {
-        let label = unsafe { owner.get_typed_node::<Label, _>("score_label") };
+        let label = unsafe { owner.get_node_as::<Label>("score_label").unwrap() };
         label.set_text(score.to_string());
     }
 
     #[export]
     fn on_start_button_pressed(&self, owner: &CanvasLayer) {
-        let button = unsafe { owner.get_typed_node::<Button, _>("start_button") };
+        let button = unsafe { owner.get_node_as::<Button>("start_button").unwrap() };
         button.hide();
         owner.emit_signal("start_game", &[]);
     }
 
     #[export]
     fn on_message_timer_timeout(&self, owner: &CanvasLayer) {
-        let message_label = unsafe { owner.get_typed_node::<Label, _>("message_label") };
+        let message_label = unsafe { owner.get_node_as::<Label>("message_label").unwrap() };
         message_label.hide()
     }
 }

@@ -38,3 +38,6 @@ pub use gdnative_bindings::{
     KinematicBody, KinematicBody2D, Label, Node, Node2D, Object, PackedScene, Reference,
     ResourceLoader, SceneTree, Shader, Spatial, Sprite, Texture, Timer, Tween, Viewport,
 };
+
+#[cfg(feature = "bindings")]
+pub use gdnative_bindings::utils::*;
