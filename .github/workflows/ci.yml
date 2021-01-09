@@ -1,0 +1,257 @@
+name: CI
+
+env:
+  RUST_BACKTRACE: 1
+  GODOT_VER: 3.2
+  GODOT_REL: stable
+
+on:
+  push:
+    branches:
+      - staging
+      - trying
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt
+      - name: Checking rustfmt
+        run: cargo fmt --all -- --check;
+
+  clippy:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    needs: rustfmt
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            experimental: false
+          - rust: nightly
+            experimental: true
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: clippy
+      - run: cargo clippy --all --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+
+  test:
+    continue-on-error: ${{ matrix.experimental }}
+    needs: rustfmt
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            os: ubuntu-latest
+            experimental: false
+            is_windows: false
+          - rust: nightly
+            os: ubuntu-latest
+            experimental: true
+            is_windows: false
+          - rust: stable
+            os: macos-latest
+            experimental: false
+            is_windows: false
+          - rust: nightly
+            os: macos-latest
+            experimental: true
+            is_windows: false
+          - rust: stable
+            os: windows-latest
+            experimental: false
+            is_windows: true
+          - rust: nightly
+            os: windows-latest
+            experimental: true
+            is_windows: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
+        with:
+          version: 10.0
+          directory: ${{ runner.temp }}/llvm
+      - name: Non-Windows test
+        if: ${{ !matrix.is_windows }}
+        run: cargo test --all --all-features;
+      - name: Non-Windows release build
+        if: ${{ !matrix.is_windows }}
+        run: cargo build --release;
+      - name: Windows test
+        if: ${{ matrix.is_windows }}
+        run: cargo test --target x86_64-pc-windows-msvc --all --all-features;
+      - name: Windows release build
+        if: ${{ matrix.is_windows }}
+        run: cargo build --target x86_64-pc-windows-msvc --release;
+
+  test_ios:
+    continue-on-error: ${{ matrix.experimental }}
+    needs: rustfmt
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            os: macos-latest
+            experimental: false
+          - rust: nightly
+            os: macos-latest
+            experimental: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
+        with:
+          version: 10.0
+          directory: ${{ runner.temp }}/llvm
+      - name: Installing cargo-dinghy
+        run: |
+          rustup target add x86_64-apple-ios;
+          curl -L https://github.com/snipsco/dinghy/releases/download/cargo-dinghy%2F0.4.37/cargo-dinghy-macos.tgz -o cargo-dinghy-macos.tar.gz;
+          tar -zxvf cargo-dinghy-macos.tar.gz;
+          mkdir -p $HOME/.cargo/bin;
+          cp cargo-dinghy-macos/cargo-dinghy $HOME/.cargo/bin;
+      - run: |
+          RUNTIME_ID=$(xcrun simctl list runtimes | grep iOS | cut -d ' ' -f 7 | tail -1);
+          export SIM_ID=$(xcrun simctl create My-iphone11 com.apple.CoreSimulator.SimDeviceType.iPhone-11 $RUNTIME_ID);
+          xcrun simctl boot $SIM_ID;
+          cd gdnative-core;
+          cargo dinghy --platform auto-ios-x86_64 test;
+          cd ..;
+          cd gdnative-sys;
+          cargo dinghy --platform auto-ios-x86_64 test;
+
+  test_android:
+    continue-on-error: ${{ matrix.experimental }}
+    needs: rustfmt
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            os: ubuntu-latest
+            experimental: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
+        with:
+          version: 10.0
+          directory: ${{ runner.temp }}/llvm
+      - run: |
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64;
+          export ANDROID_SDK_ROOT=/opt/ndk/android-ndk-r21d;
+          # aarch64 and armv7 cover most Android phones & tablets.;
+          rustup target add aarch64-linux-android armv7-linux-androideabi;
+          sudo apt-get update;
+          sudo apt-get install openjdk-8-jdk;
+          sudo apt-get install llvm-dev libclang-dev clang g++-multilib gcc-multilib libc6-dev libc6-dev-arm64-cross;
+          # Downloading NDK. This file is huge (1Gb) maybe extract only what's needed and repackage.;
+          # See https://developer.android.com/ndk/downloads for updates.;
+          # The Android SDK which comes with Android Studio is not required. Only Java + NDK are.;
+          mkdir /opt/ndk
+          install -d /opt/ndk;
+          cd /opt/ndk && wget -nc -nv https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip && cd $GITHUB_WORKSPACE;
+          echo "bcf4023eb8cb6976a4c7cff0a8a8f145f162bf4d  /opt/ndk/android-ndk-r21d-linux-x86_64.zip" >> /opt/ndk/SHA1SUM.txt;
+          sha1sum --check /opt/ndk/SHA1SUM.txt;
+          cd /opt/ndk && unzip -q android-ndk-r21d-linux-x86_64.zip && cd $GITHUB_WORKSPACE;
+          # Using clang linker from NDK when building Android programs.;
+          install -d $HOME/.cargo;
+          echo >> $HOME/.cargo/config;
+          echo "[target.aarch64-linux-android]" >> $HOME/.cargo/config;
+          find /opt/ndk -name aarch64-linux-android21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config;
+          echo >> $HOME/.cargo/config;
+          echo "[target.armv7-linux-androideabi]" >> $HOME/.cargo/config;
+          find /opt/ndk -name armv7a-linux-androideabi21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config;
+          echo >> $HOME/.cargo/config;
+          cargo build --target aarch64-linux-android --release;
+          cargo build --target armv7-linux-androideabi --release;
+
+  godot_test:
+    continue-on-error: ${{ matrix.experimental }}
+    needs: rustfmt
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            os: ubuntu-latest
+            experimental: false
+          - rust: nightly
+            os: ubuntu-latest
+            experimental: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
+        with:
+          version: 10.0
+          directory: ${{ runner.temp }}/llvm
+      - name: Installing Godot
+        run: |
+          wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip
+          unzip /tmp/godot.zip -d ${{ runner.temp }}/godot_bin
+      - name: Building Godot-Rust
+        run: |
+          cd test;
+          cargo build;
+      - name: Running Godot Tests
+        run: |
+          cd test;
+          mkdir -p ./project/lib;
+          cp ../target/debug/libgdnative_test.so ./project/lib/;
+          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/;
+          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" -e --path ./project/ --run-editor-tests;
+          cargo build --features=type_tag_fallback;
+          mkdir -p ./project/lib;
+          cp ../target/debug/libgdnative_test.so ./project/lib/;
+          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/;
+          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" -e --path ./project/ --run-editor-tests;
+          
+  # This job doesn't actually test anything, but they're used to tell bors the
+  # build completed, as there is no practical way to detect when a workflow is
+  # successful listening to webhooks only.
+  #
+  # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+
+  ci-success:
+    name: ci
+    if: github.event_name == 'push' && success()
+    needs:
+      - clippy
+      - rustfmt
+      - test
+      - test_ios
+      - test_android
+      - godot_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark the job as a success
+        run: exit 0
