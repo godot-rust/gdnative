@@ -105,6 +105,9 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - Action RPG - https://github.com/MacKarp/Rust_Action_RPG_Tutorial - This [Godot Tutorial](https://www.youtube.com/playlist?list=PL9FzW-m48fn2SlrW0KoLT4n5egNdX-W9a) ported to Rust.
 - Simple Single-Player Blackjack - https://github.com/paytonrules/Blackjack
 
+### Tools
+- ftw - https://github.com/macalimlim/ftw - manage your godot-rust projects!
+
 ## Contributing
 
 See the [contribution guidelines](CONTRIBUTING.md)
