@@ -1,0 +1,12 @@
+[package]
+name = "rpc"
+version = "0.1.0"
+authors = ["The godot-rust developers"]
+publish = false
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gdnative = { path = "../../gdnative" }

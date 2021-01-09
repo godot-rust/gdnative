@@ -32,8 +32,8 @@ impl Player {
 
     #[export]
     fn _ready(&mut self, owner: &Area2D) {
-        let viewport = unsafe { owner.get_viewport().unwrap().assume_safe() };
-        self.screen_size = viewport.size();
+        let viewport = owner.get_viewport_rect();
+        self.screen_size = viewport.size.to_vector();
         owner.hide();
     }
 

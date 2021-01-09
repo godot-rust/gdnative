@@ -14,6 +14,7 @@ members = [
     "examples/dodge_the_creeps",
     "examples/resource",
     "examples/native_plugin",
+    "examples/rpc",
     "impl/proc_macros"
 ]
 
