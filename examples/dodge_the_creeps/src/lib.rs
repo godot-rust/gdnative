@@ -1,6 +1,5 @@
 use gdnative::prelude::*;
 
-mod extensions;
 mod hud;
 mod main_scene;
 mod mob;

@@ -8,4 +8,6 @@
 mod generated;
 pub use generated::*;
 
+pub mod utils;
+
 pub(crate) mod icalls;

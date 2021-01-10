@@ -1,8 +1,7 @@
-use crate::extensions::NodeExt as _;
 use crate::hud;
 use crate::mob;
 use crate::player;
-use gdnative::api::{Area2D, PathFollow2D, Position2D, RigidBody2D};
+use gdnative::api::{PathFollow2D, Position2D, RigidBody2D};
 use gdnative::prelude::*;
 use rand::*;
 use std::f64::consts::PI;
@@ -27,55 +26,50 @@ impl Main {
 
     #[export]
     fn game_over(&self, owner: &Node) {
-        let score_timer = unsafe { owner.get_typed_node::<Timer, _>("score_timer") };
-        let mob_timer = unsafe { owner.get_typed_node::<Timer, _>("mob_timer") };
+        let score_timer = unsafe { owner.get_node_as::<Timer>("score_timer").unwrap() };
+        let mob_timer = unsafe { owner.get_node_as::<Timer>("mob_timer").unwrap() };
 
         score_timer.stop();
         mob_timer.stop();
 
-        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
-        hud_node
-            .cast_instance::<hud::HUD>()
-            .and_then(|hud| hud.map(|x, o| x.show_game_over(&*o)).ok())
+        let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+        hud.map(|x, o| x.show_game_over(&*o))
+            .ok()
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
     fn new_game(&mut self, owner: &Node) {
-        let start_position = unsafe { owner.get_typed_node::<Position2D, _>("start_position") };
-        let player = unsafe { owner.get_typed_node::<Area2D, _>("player") };
-        let start_timer = unsafe { owner.get_typed_node::<Timer, _>("start_timer") };
+        let start_position = unsafe { owner.get_node_as::<Position2D>("start_position").unwrap() };
+        let player = unsafe {
+            owner
+                .get_node_as_instance::<player::Player>("player")
+                .unwrap()
+        };
+        let start_timer = unsafe { owner.get_node_as::<Timer>("start_timer").unwrap() };
 
         self.score = 0;
 
         player
-            .cast_instance::<player::Player>()
-            .and_then(|player| {
-                player
-                    .map(|x, o| x.start(&*o, start_position.position()))
-                    .ok()
-            })
+            .map(|x, o| x.start(&*o, start_position.position()))
+            .ok()
             .unwrap_or_else(|| godot_print!("Unable to get player"));
 
         start_timer.start(0.0);
 
-        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
-        hud_node
-            .cast_instance::<hud::HUD>()
-            .and_then(|hud| {
-                hud.map(|x, o| {
-                    x.update_score(&*o, self.score);
-                    x.show_message(&*o, "Get Ready".into());
-                })
-                .ok()
-            })
-            .unwrap_or_else(|| godot_print!("Unable to get hud"));
+        let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+        hud.map(|x, o| {
+            x.update_score(&*o, self.score);
+            x.show_message(&*o, "Get Ready".into());
+        })
+        .ok()
+        .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
     fn on_start_timer_timeout(&self, owner: &Node) {
-        let mob_timer = unsafe { owner.get_typed_node::<Timer, _>("mob_timer") };
-        let score_timer = unsafe { owner.get_typed_node::<Timer, _>("score_timer") };
+        let mob_timer = unsafe { owner.get_node_as::<Timer>("mob_timer").unwrap() };
+        let score_timer = unsafe { owner.get_node_as::<Timer>("score_timer").unwrap() };
         mob_timer.start(0.0);
         score_timer.start(0.0);
     }
@@ -84,17 +78,19 @@ impl Main {
     fn on_score_timer_timeout(&mut self, owner: &Node) {
         self.score += 1;
 
-        let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
-        hud_node
-            .cast_instance::<hud::HUD>()
-            .and_then(|hud| hud.map(|x, o| x.update_score(&*o, self.score)).ok())
+        let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+        hud.map(|x, o| x.update_score(&*o, self.score))
+            .ok()
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
     #[export]
     fn on_mob_timer_timeout(&self, owner: &Node) {
-        let mob_spawn_location =
-            unsafe { owner.get_typed_node::<PathFollow2D, _>("mob_path/mob_spawn_locations") };
+        let mob_spawn_location = unsafe {
+            owner
+                .get_node_as::<PathFollow2D>("mob_path/mob_spawn_locations")
+                .unwrap()
+        };
 
         let mob_scene: Ref<RigidBody2D, _> = instance_scene(&self.mob);
 
@@ -123,8 +119,7 @@ impl Main {
             mob_owner
                 .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
 
-            let hud_node = unsafe { owner.get_typed_node::<CanvasLayer, _>("hud") };
-            let hud = hud_node.cast_instance::<hud::HUD>().unwrap();
+            let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
 
             hud.map(|_, o| {
                 o.connect(
