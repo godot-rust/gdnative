@@ -1,5 +1,4 @@
-use proc_macro::TokenStream;
-use proc_macro2::Literal;
+use proc_macro2::{Literal, TokenStream as TokenStream2};
 
 use super::repr::Repr;
 use super::{DeriveData, ToVariantTrait};
@@ -7,7 +6,7 @@ use super::{DeriveData, ToVariantTrait};
 pub(crate) fn expand_to_variant(
     trait_kind: ToVariantTrait,
     derive_data: DeriveData,
-) -> TokenStream {
+) -> Result<TokenStream2, syn::Error> {
     let DeriveData {
         ident,
         repr,
@@ -25,7 +24,7 @@ pub(crate) fn expand_to_variant(
     let return_expr = match repr {
         Repr::Struct(var_repr) => {
             let destructure_pattern = var_repr.destructure_pattern();
-            let to_variant = var_repr.to_variant(trait_kind);
+            let to_variant = var_repr.to_variant(trait_kind)?;
             quote! {
                 {
                     let #ident #destructure_pattern = self;
@@ -43,10 +42,10 @@ pub(crate) fn expand_to_variant(
                     .iter()
                     .map(|(var_ident, var_repr)| {
                         let destructure_pattern = var_repr.destructure_pattern();
-                        let to_variant = var_repr.to_variant(trait_kind);
+                        let to_variant = var_repr.to_variant(trait_kind)?;
                         let var_ident_string = format!("{}", var_ident);
                         let var_ident_string_literal = Literal::string(&var_ident_string);
-                        quote! {
+                        let tokens = quote! {
                             #ident::#var_ident #destructure_pattern => {
                                 let __dict = ::gdnative::core_types::Dictionary::new();
                                 let __key = ::gdnative::core_types::GodotString::from(#var_ident_string_literal).to_variant();
@@ -54,8 +53,9 @@ pub(crate) fn expand_to_variant(
                                 __dict.insert(&__key, &__value);
                                 __dict.into_shared().to_variant()
                             }
-                        }
-                    });
+                        };
+                        Ok(tokens)
+                    }).collect::<Result<Vec<_>,syn::Error>>()?;
 
                 quote! {
                     match &self {
@@ -80,5 +80,5 @@ pub(crate) fn expand_to_variant(
         }
     };
 
-    result.into()
+    Ok(result)
 }

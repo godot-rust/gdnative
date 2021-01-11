@@ -1,6 +1,6 @@
 use syn::{spanned::Spanned, FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
 
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use std::boxed::Box;
 
@@ -67,115 +67,89 @@ pub(crate) struct ExportArgs {
     pub(crate) rpc_mode: RpcMode,
 }
 
-pub(crate) fn derive_methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    let (impl_block, export) = match parse_method_export(meta, input) {
-        Ok(val) => val,
-        Err(toks) => return toks,
-    };
+pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
+    let (impl_block, export) = impl_gdnative_expose(item_impl);
 
-    let output = {
-        let class_name = export.class_ty;
+    let class_name = export.class_ty;
 
-        let builder = syn::Ident::new("builder", proc_macro2::Span::call_site());
+    let builder = syn::Ident::new("builder", proc_macro2::Span::call_site());
 
-        let methods = export
-            .methods
-            .into_iter()
-            .map(|ExportMethod { sig, args }| {
-                let sig_span = sig.ident.span();
+    let methods = export
+        .methods
+        .into_iter()
+        .map(|ExportMethod { sig, args }| {
+            let sig_span = sig.ident.span();
 
-                let name = sig.ident;
-                let name_string = name.to_string();
-                let ret_span = sig.output.span();
-                let ret_ty = match sig.output {
-                    syn::ReturnType::Default => quote_spanned!(ret_span => ()),
-                    syn::ReturnType::Type(_, ty) => quote_spanned!( ret_span => #ty ),
-                };
+            let name = sig.ident;
+            let name_string = name.to_string();
+            let ret_span = sig.output.span();
+            let ret_ty = match sig.output {
+                syn::ReturnType::Default => quote_spanned!(ret_span => ()),
+                syn::ReturnType::Type(_, ty) => quote_spanned!( ret_span => #ty ),
+            };
 
-                let arg_count = sig.inputs.len();
+            let arg_count = sig.inputs.len();
 
-                if arg_count < 2 {
-                    return syn::Error::new(
-                        sig_span,
-                        "exported methods must take self and owner as arguments",
-                    )
-                    .to_compile_error();
-                }
-
-                let optional_args = match args.optional_args {
-                    Some(count) => {
-                        let max_optional = arg_count - 2; // self and owner
-                        if count > max_optional {
-                            let message = format!(
-                                "there can be at most {} optional arguments, got {}",
-                                max_optional, count,
-                            );
-                            return syn::Error::new(sig_span, message).to_compile_error();
-                        }
-                        count
-                    }
-                    None => 0,
-                };
-
-                let rpc = args.rpc_mode;
-
-                let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
-                    let span = arg.span();
-                    if n < arg_count - optional_args {
-                        quote_spanned!(span => #arg ,)
-                    } else {
-                        quote_spanned!(span => #[opt] #arg ,)
-                    }
-                });
-
-                quote_spanned!( sig_span=>
-                    {
-                        let method = ::gdnative::godot_wrap_method!(
-                            #class_name,
-                            fn #name ( #( #args )* ) -> #ret_ty
-                        );
-
-                        #builder.add_method_with_rpc_mode(#name_string, method, #rpc);
-                    }
+            if arg_count < 2 {
+                return syn::Error::new(
+                    sig_span,
+                    "exported methods must take self and owner as arguments",
                 )
-            })
-            .collect::<Vec<_>>();
-
-        quote::quote!(
-
-            #impl_block
-
-            impl gdnative::nativescript::NativeClassMethods for #class_name {
-
-                fn register(#builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
-                    use gdnative::nativescript::init::*;
-
-                    #(#methods)*
-                }
-
+                .to_compile_error();
             }
 
-        )
-    };
+            let optional_args = match args.optional_args {
+                Some(count) => {
+                    let max_optional = arg_count - 2; // self and owner
+                    if count > max_optional {
+                        let message = format!(
+                            "there can be at most {} optional arguments, got {}",
+                            max_optional, count,
+                        );
+                        return syn::Error::new(sig_span, message).to_compile_error();
+                    }
+                    count
+                }
+                None => 0,
+            };
 
-    TokenStream::from(output)
-}
+            let rpc = args.rpc_mode;
 
-/// Parse the input.
-///
-/// Returns the TokenStream of the impl block together with a description of methods to export.
-fn parse_method_export(
-    _meta: TokenStream,
-    input: TokenStream,
-) -> Result<(ItemImpl, ClassMethodExport), TokenStream> {
-    let ast = match syn::parse_macro_input::parse::<ItemImpl>(input) {
-        Ok(impl_block) => impl_block,
-        Err(err) => {
-            return Err(err.to_compile_error().into());
+            let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
+                let span = arg.span();
+                if n < arg_count - optional_args {
+                    quote_spanned!(span => #arg ,)
+                } else {
+                    quote_spanned!(span => #[opt] #arg ,)
+                }
+            });
+
+            quote_spanned!( sig_span=>
+                {
+                    let method = ::gdnative::godot_wrap_method!(
+                        #class_name,
+                        fn #name ( #( #args )* ) -> #ret_ty
+                    );
+
+                    #builder.add_method_with_rpc_mode(#name_string, method, #rpc);
+                }
+            )
+        })
+        .collect::<Vec<_>>();
+
+    quote::quote!(
+
+        #impl_block
+
+        impl gdnative::nativescript::NativeClassMethods for #class_name {
+            fn register(#builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
+                use gdnative::nativescript::init::*;
+
+                #(#methods)*
+            }
         }
-    };
 
-    Ok(impl_gdnative_expose(ast))
+    )
 }
 
 /// Extract the data to export from the impl block.

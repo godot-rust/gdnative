@@ -1,5 +1,6 @@
 use std::iter::FromIterator;
 
+use proc_macro2::Span;
 use syn::spanned::Spanned;
 
 use super::Direction;
@@ -30,6 +31,16 @@ pub struct AttrBuilder {
     errors: Vec<syn::Error>,
 }
 
+fn generate_error_with_docs(span: Span, message: &str) -> syn::Error {
+    syn::Error::new(
+        span,
+        format!(
+            "{}\n\texpecting #[variant(...)]. See documentation:\n\thttps://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes",
+            message
+        ),
+    )
+}
+
 impl AttrBuilder {
     fn extend_meta(&mut self, meta: &syn::Meta) {
         match meta {
@@ -57,7 +68,7 @@ impl AttrBuilder {
     fn try_set_flag(&mut self, flag: &syn::Path) -> Result<(), syn::Error> {
         let name = flag
             .get_ident()
-            .ok_or_else(|| syn::Error::new(flag.span(), "key should be single ident"))?
+            .ok_or_else(|| generate_error_with_docs(flag.span(), "Invalid syntax"))?
             .to_string();
 
         macro_rules! impl_options {
@@ -95,7 +106,10 @@ impl AttrBuilder {
             _ => {}
         }
 
-        Err(syn::Error::new(flag.span(), "unknown flag"))
+        Err(generate_error_with_docs(
+            flag.span(),
+            "Missing macro arguments",
+        ))
     }
 
     fn set_pair(&mut self, pair: &syn::MetaNameValue) {
@@ -107,9 +121,27 @@ impl AttrBuilder {
     fn try_set_pair(&mut self, pair: &syn::MetaNameValue) -> Result<(), syn::Error> {
         let syn::MetaNameValue { path, lit, .. } = pair;
 
+        const VALID_KEYS: &str =
+            "to_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip";
+
         let name = path
             .get_ident()
-            .ok_or_else(|| syn::Error::new(path.span(), "key should be single ident"))?
+            .ok_or_else(|| {
+                let path_token = path.segments.iter().enumerate().fold(
+                    String::new(),
+                    |mut paths, (index, segment)| {
+                        if index > 0 {
+                            paths.push_str("::");
+                        }
+                        paths.push_str(&segment.ident.to_string());
+                        paths
+                    },
+                );
+                syn::Error::new(
+                    path.span(),
+                    &format!("Found {}, expected one of:\n\t{}", path_token, VALID_KEYS),
+                )
+            })?
             .to_string();
 
         macro_rules! impl_options {
@@ -152,7 +184,12 @@ impl AttrBuilder {
             "with" => {
                 let path = match lit {
                     syn::Lit::Str(lit_str) => lit_str.parse::<syn::Path>()?,
-                    _ => return Err(syn::Error::new(lit.span(), "expected string literal")),
+                    _ => {
+                        return Err(syn::Error::new(
+                            lit.span(),
+                            "expecting a path to a module in double quotes: #[variant(with = \"path::to::mod\")]",
+                        ))
+                    }
                 };
 
                 if self
@@ -182,7 +219,10 @@ impl AttrBuilder {
             _ => {}
         }
 
-        Err(syn::Error::new(path.span(), "unknown argument"))
+        Err(syn::Error::new(
+            path.span(),
+            format!("unknown argument, expected one of:\n\t{}", VALID_KEYS),
+        ))
     }
 }
 
@@ -200,7 +240,7 @@ impl FromIterator<syn::Meta> for AttrBuilder {
 }
 
 impl AttrBuilder {
-    pub fn done(self) -> Result<Attr, Vec<syn::Error>> {
+    pub fn done(mut self) -> Result<Attr, syn::Error> {
         if self.errors.is_empty() {
             Ok(Attr {
                 skip_to_variant: self.skip_to_variant,
@@ -209,7 +249,16 @@ impl AttrBuilder {
                 from_variant_with: self.from_variant_with,
             })
         } else {
-            Err(self.errors)
+            let first_error = self.errors.remove(0);
+            let errors = self
+                .errors
+                .into_iter()
+                .fold(first_error, |mut errors, error| {
+                    errors.combine(error);
+                    errors
+                });
+
+            Err(errors)
         }
     }
 }

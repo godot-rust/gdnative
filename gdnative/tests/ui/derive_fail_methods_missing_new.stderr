@@ -1,0 +1,16 @@
+error[E0599]: no function or associated item named `new` found for struct `Foo` in the current scope
+ --> $DIR/derive_fail_methods_missing_new.rs:3:10
+  |
+3 | #[derive(NativeClass)]
+  |          ^^^^^^^^^^^ function or associated item not found in `Foo`
+4 | #[inherit(Node)]
+5 | struct Foo {}
+  | ---------- function or associated item `new` not found for this
+  |
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following traits define an item `new`, perhaps you need to implement one of them:
+          candidate #1: `UserData`
+          candidate #2: `gdnative::GodotObject`
+          candidate #3: `PtrWrapper`
+          candidate #4: `parking_lot_core::thread_parker::ThreadParkerT`
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

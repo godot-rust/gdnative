@@ -1,6 +1,6 @@
 use syn::{spanned::Spanned, AttributeArgs, ItemFn, Meta, NestedMeta};
 
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 
 pub struct ProfiledAttrArgs {
     pub tag: Option<String>,
@@ -70,20 +70,23 @@ impl ProfiledAttrArgsBuilder {
     }
 }
 
-pub(crate) fn derive_profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(meta as AttributeArgs);
-    let mut input = parse_macro_input!(input as ItemFn);
-
+pub(crate) fn derive_profiled(
+    args: AttributeArgs,
+    mut item_fn: ItemFn,
+) -> Result<TokenStream2, syn::Error> {
     let args = {
         let mut args_builder = ProfiledAttrArgsBuilder::default();
         args_builder.extend(args.iter());
         match args_builder.done() {
             Ok(args) => args,
-            Err(errors) => {
-                return errors
-                    .into_iter()
-                    .map(|e| TokenStream::from(e.to_compile_error()))
-                    .collect()
+            Err(mut errors) => {
+                // Combine the errors into one erorr
+                let first_error = errors.remove(0);
+                let combined_errors = errors.into_iter().fold(first_error, |mut errors, error| {
+                    errors.combine(error);
+                    errors
+                });
+                return Err(combined_errors);
             }
         }
     };
@@ -91,7 +94,7 @@ pub(crate) fn derive_profiled(meta: TokenStream, input: TokenStream) -> TokenStr
     let tag = match args.tag {
         Some(tag) => quote!(#tag),
         None => {
-            let ident = input.sig.ident.to_string();
+            let ident = item_fn.sig.ident.to_string();
 
             quote! {
                 &format!(
@@ -106,12 +109,12 @@ pub(crate) fn derive_profiled(meta: TokenStream, input: TokenStream) -> TokenStr
         }
     };
 
-    let stmts = std::mem::take(&mut input.block.stmts);
-    input.block = Box::new(parse_quote!({
+    let stmts = std::mem::take(&mut item_fn.block.stmts);
+    item_fn.block = Box::new(parse_quote!({
         ::gdnative::nativescript::profiling::profile(::gdnative::profile_sig!(#tag), move || {
             #(#stmts)*
         })
     }));
 
-    quote!(#input).into()
+    Ok(quote!(#item_fn))
 }

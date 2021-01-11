@@ -24,22 +24,34 @@ pub(crate) struct Field {
     pub attr: Attr,
 }
 
-fn parse_attrs<'a, I>(attrs: I) -> Result<Attr, Vec<syn::Error>>
+fn improve_meta_error(err: syn::Error) -> syn::Error {
+    let error = err.to_string();
+    match error.as_str() {
+        "expected literal" => {
+            syn::Error::new(err.span(), "String expected, wrap with double quotes.")
+        }
+        other => syn::Error::new(
+            err.span(),
+            format!("{}, ie: #[variant(with = \"...\")]", other),
+        ),
+    }
+}
+
+fn parse_attrs<'a, I>(attrs: I) -> Result<Attr, syn::Error>
 where
     I: IntoIterator<Item = &'a syn::Attribute>,
 {
     attrs
         .into_iter()
         .filter(|attr| attr.path.is_ident("variant"))
-        .map(|attr| attr.parse_meta())
-        .collect::<Result<AttrBuilder, syn::Error>>()
-        .map_err(|err| vec![err])?
+        .map(|attr| attr.parse_meta().map_err(improve_meta_error))
+        .collect::<Result<AttrBuilder, syn::Error>>()?
         .done()
 }
 
 impl VariantRepr {
-    pub(crate) fn repr_for(fields: &Fields) -> Self {
-        match fields {
+    pub(crate) fn repr_for(fields: &Fields) -> Result<Self, syn::Error> {
+        let this = match fields {
             Fields::Named(fields) => VariantRepr::Struct(
                 fields
                     .named
@@ -47,11 +59,10 @@ impl VariantRepr {
                     .map(|f| {
                         let ident = f.ident.clone().expect("fields should be named");
                         let ty = f.ty.clone();
-                        let attr =
-                            parse_attrs(&f.attrs).expect("should be able to parse attribute");
-                        Field { ident, ty, attr }
+                        let attr = parse_attrs(&f.attrs)?;
+                        Ok(Field { ident, ty, attr })
                     })
-                    .collect(),
+                    .collect::<Result<Vec<_>, syn::Error>>()?,
             ),
             Fields::Unnamed(fields) => VariantRepr::Tuple(
                 fields
@@ -61,14 +72,15 @@ impl VariantRepr {
                     .map(|(n, f)| {
                         let ident = Ident::new(&format!("__field_{}", n), Span::call_site());
                         let ty = f.ty.clone();
-                        let attr =
-                            parse_attrs(&f.attrs).expect("should be able to parse attribute");
-                        Field { ident, ty, attr }
+                        let attr = parse_attrs(&f.attrs)?;
+                        Ok(Field { ident, ty, attr })
                     })
-                    .collect(),
+                    .collect::<Result<_, syn::Error>>()?,
             ),
             Fields::Unit => VariantRepr::Unit,
-        }
+        };
+
+        Ok(this)
     }
 
     pub(crate) fn destructure_pattern(&self) -> TokenStream2 {
@@ -89,8 +101,11 @@ impl VariantRepr {
         }
     }
 
-    pub(crate) fn to_variant(&self, trait_kind: ToVariantTrait) -> TokenStream2 {
-        match self {
+    pub(crate) fn to_variant(
+        &self,
+        trait_kind: ToVariantTrait,
+    ) -> Result<TokenStream2, syn::Error> {
+        let tokens = match self {
             VariantRepr::Unit => {
                 quote! { ::gdnative::core_types::Dictionary::new().into_shared().to_variant() }
             }
@@ -99,7 +114,10 @@ impl VariantRepr {
                     // as newtype
                     let field = fields.get(0).unwrap();
                     if field.attr.skip_to_variant {
-                        panic!("cannot skip the only field in a tuple");
+                        return Err(syn::Error::new(
+                            field.ident.span(),
+                            "cannot skip the only field in a tuple",
+                        ));
                     }
                     field.to_variant(trait_kind)
                 } else {
@@ -147,11 +165,17 @@ impl VariantRepr {
                     }
                 }
             }
-        }
+        };
+
+        Ok(tokens)
     }
 
-    pub(crate) fn from_variant(&self, variant: &Ident, ctor: &TokenStream2) -> TokenStream2 {
-        match self {
+    pub(crate) fn from_variant(
+        &self,
+        variant: &Ident,
+        ctor: &TokenStream2,
+    ) -> Result<TokenStream2, syn::Error> {
+        let tokens = match self {
             VariantRepr::Unit => {
                 quote! {
                     if #variant.is_nil() {
@@ -170,7 +194,10 @@ impl VariantRepr {
                     // as newtype
                     let field = fields.get(0).unwrap();
                     if field.attr.skip_from_variant {
-                        panic!("cannot skip the only field in a tuple");
+                        return Err(syn::Error::new(
+                            field.ident.span(),
+                            "cannot skip the only field in a tuple",
+                        ));
                     }
                     let expr = field.from_variant(&quote!(#variant));
                     quote! {
@@ -283,7 +310,9 @@ impl VariantRepr {
                     }
                 }
             }
-        }
+        };
+
+        Ok(tokens)
     }
 }
 

@@ -1,12 +1,11 @@
-use proc_macro::TokenStream;
-use proc_macro2::{Literal, Span};
+use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
 
 use syn::Ident;
 
 use super::repr::Repr;
 use super::DeriveData;
 
-pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
+pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream2, syn::Error> {
     let DeriveData {
         ident,
         repr,
@@ -21,7 +20,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
 
     let return_expr = match repr {
         Repr::Struct(var_repr) => {
-            let from_variant = var_repr.from_variant(&input_ident, &quote! { #ident });
+            let from_variant = var_repr.from_variant(&input_ident, &quote! { #ident })?;
             quote! {
                 {
                     #from_variant
@@ -30,7 +29,10 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
         }
         Repr::Enum(variants) => {
             if variants.is_empty() {
-                panic!("cannot derive FromVariant for an uninhabited enum");
+                return Err(syn::Error::new(
+                    ident.span(),
+                    "cannot derive FromVariant for an uninhabited enum",
+                ));
             }
 
             let var_input_ident = Ident::new("__enum_variant", Span::call_site());
@@ -47,9 +49,12 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
 
             let ref_var_ident_string_literals = &var_ident_string_literals;
 
-            let var_from_variants = variants.iter().map(|(var_ident, var_repr)| {
-                var_repr.from_variant(&var_input_ident, &quote! { #ident::#var_ident })
-            });
+            let var_from_variants = variants
+                .iter()
+                .map(|(var_ident, var_repr)| {
+                    var_repr.from_variant(&var_input_ident, &quote! { #ident::#var_ident })
+                })
+                .collect::<Result<Vec<_>, _>>()?;
 
             let var_input_ident_iter = std::iter::repeat(&var_input_ident);
 
@@ -117,5 +122,5 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> TokenStream {
         }
     };
 
-    result.into()
+    Ok(result)
 }
