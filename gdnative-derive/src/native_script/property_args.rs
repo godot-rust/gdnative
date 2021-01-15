@@ -8,6 +8,7 @@ pub struct PropertyAttrArgs {
     pub after_get: Option<syn::Path>,
     pub before_set: Option<syn::Path>,
     pub after_set: Option<syn::Path>,
+    pub no_editor: bool,
 }
 
 #[derive(Default)]
@@ -19,6 +20,7 @@ pub struct PropertyAttrArgsBuilder {
     after_get: Option<syn::Path>,
     before_set: Option<syn::Path>,
     after_set: Option<syn::Path>,
+    no_editor: bool,
 }
 
 impl PropertyAttrArgsBuilder {
@@ -167,6 +169,19 @@ impl PropertyAttrArgsBuilder {
 
         Ok(())
     }
+
+    pub fn add_path(&mut self, path: &syn::Path) -> Result<(), syn::Error> {
+        if path.is_ident("no_editor") {
+            self.no_editor = true;
+        } else {
+            return Err(syn::Error::new(
+                path.span(),
+                format!("unexpected argument: {:?}", path.get_ident()),
+            ));
+        }
+
+        Ok(())
+    }
 }
 
 impl PropertyAttrArgsBuilder {
@@ -179,6 +194,7 @@ impl PropertyAttrArgsBuilder {
             after_get: self.after_get,
             before_set: self.before_set,
             after_set: self.after_set,
+            no_editor: self.no_editor,
         }
     }
 }
