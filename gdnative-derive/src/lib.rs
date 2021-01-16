@@ -153,6 +153,10 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// Call hook methods with `self` and `owner` before and/or after the generated property
 /// accessors.
+///
+/// - `no_editor`
+///
+/// Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.
 #[proc_macro_derive(
     NativeClass,
     attributes(
