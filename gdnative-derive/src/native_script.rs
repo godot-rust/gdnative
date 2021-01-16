@@ -60,6 +60,12 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                 None
             };
 
+            let with_usage = if config.no_editor {
+                Some(quote!(.with_usage(::gdnative::nativescript::init::property::Usage::NOEDITOR)))
+            } else {
+                None
+            };
+
             let before_get: Option<Stmt> = config
                 .before_get
                 .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
@@ -81,6 +87,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                 builder.add_property(#label)
                     #with_default
                     #with_hint
+                    #with_usage
                     .with_ref_getter(|this: &#name, _owner: ::gdnative::TRef<Self::Base>| {
                         #before_get
                         let res = &this.#ident;
@@ -202,6 +209,8 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
                         for arg in &nested {
                             if let NestedMeta::Meta(Meta::NameValue(ref pair)) = arg {
                                 attr_args_builder.add_pair(pair)?;
+                            } else if let NestedMeta::Meta(Meta::Path(ref path)) = arg {
+                                attr_args_builder.add_path(path)?;
                             } else {
                                 let msg = format!("Unexpected argument: {:?}", arg);
                                 return Err(syn::Error::new(arg.span(), msg));
@@ -283,6 +292,23 @@ mod tests {
             #[inherit(Node)]
             struct Foo {
                 #[property(before_get = "foo::bar")]
+                bar: String,
+            }"#,
+        )
+        .unwrap();
+
+        let input: DeriveInput = syn::parse2(input).unwrap();
+
+        parse_derive_input(&input).unwrap();
+    }
+
+    #[test]
+    fn derive_property_no_editor() {
+        let input: TokenStream2 = syn::parse_str(
+            r#"
+            #[inherit(Node)]
+            struct Foo {
+                #[property(no_editor)]
                 bar: String,
             }"#,
         )
