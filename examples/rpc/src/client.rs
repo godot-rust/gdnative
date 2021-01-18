@@ -31,6 +31,8 @@ impl ServerPuppet {
 
         let tree = owner.get_tree().expect("could not retreive SceneTree");
         let tree = unsafe { tree.assume_safe() };
+        
+        tree.set_network_peer(peer);
 
         tree.connect(
             "connected_to_server",
