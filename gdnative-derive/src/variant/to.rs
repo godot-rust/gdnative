@@ -58,7 +58,7 @@ pub(crate) fn expand_to_variant(
                     }).collect::<Result<Vec<_>,syn::Error>>()?;
 
                 quote! {
-                    match &self {
+                    match #to_variant_receiver {
                         #( #match_arms ),*
                     }
                 }

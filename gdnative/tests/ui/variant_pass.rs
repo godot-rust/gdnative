@@ -36,4 +36,12 @@ pub struct Foo {
     skip_from: String,
 }
 
+#[derive(OwnedToVariant)]
+pub struct Owned;
+
+#[derive(OwnedToVariant)]
+pub struct Bar {
+    owned: Owned,
+}
+
 fn main() {}
