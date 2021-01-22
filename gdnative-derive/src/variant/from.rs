@@ -87,7 +87,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
                                 #ref_var_ident_string_literals => {
                                     let #var_input_ident_iter = &__dict.get(&__keys.get(0));
                                     (#var_from_variants).map_err(|err| FVE::InvalidEnumVariant {
-                                        variant: "Ok",
+                                        variant: #ref_var_ident_string_literals,
                                         error: Box::new(err),
                                     })
                                 },
