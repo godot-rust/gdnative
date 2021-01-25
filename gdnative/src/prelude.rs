@@ -20,7 +20,7 @@ pub use gdnative_core::NewRef;
 pub use gdnative_core::nativescript::{
     self,
     class::{Instance, RefInstance},
-    init::{ClassBuilder, InitHandle, Signal, SignalArgument},
+    init::{ClassBuilder, InitHandle, Method, MethodBuilder, Signal, SignalArgument},
     user_data::{self, Aether, ArcData, LocalCellData, MutexData, RwLockData},
     ExportInfo, NativeClass, NativeClassMethods, PropertyUsage,
 };

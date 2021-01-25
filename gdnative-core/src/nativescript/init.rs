@@ -31,6 +31,9 @@
 //! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
 //! in the godot-rust repository.
 
+// Temporary for unsafe method registration
+#![allow(deprecated)]
+
 use crate::*;
 
 use std::ffi::CString;
@@ -48,7 +51,9 @@ use super::emplace;
 pub mod method;
 pub mod property;
 
-pub use self::method::{Method, Varargs, RpcMode, ScriptMethod, MethodBuilder, ScriptMethodAttributes, ScriptMethodFn};
+pub use self::method::{
+    Method, MethodBuilder, RpcMode, ScriptMethod, ScriptMethodAttributes, ScriptMethodFn, Varargs,
+};
 pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
 
 /// A handle that can register new classes to the engine during initialization.
@@ -223,6 +228,7 @@ pub struct ClassBuilder<C> {
 
 impl<C: NativeClass> ClassBuilder<C> {
     #[inline]
+    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
     pub fn add_method_advanced(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
 
@@ -256,6 +262,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     #[inline]
+    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
     pub fn add_method_with_rpc_mode(&self, name: &str, method: ScriptMethodFn, rpc_mode: RpcMode) {
         self.add_method_advanced(ScriptMethod {
             name,
@@ -267,12 +274,32 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     #[inline]
+    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
         self.add_method_with_rpc_mode(name, method, RpcMode::Disabled);
     }
 
+    /// Returns a `MethodBuilder` which can be used to add a method to the class being
+    /// registered.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```ignore
+    /// // `Bar` is a stateful method implementing `Method<C>`
+    ///
+    /// builder
+    ///     .build_method("foo", Bar { baz: 42 })
+    ///     .with_rpc_mode(RpcMode::RemoteSync)
+    ///     .done();
+    /// ```
     #[inline]
-    pub fn build_method<'a, F: Method<C>>(&'a self, name: &'a str, method: F) -> MethodBuilder<'a, C, F> {
+    pub fn build_method<'a, F: Method<C>>(
+        &'a self,
+        name: &'a str,
+        method: F,
+    ) -> MethodBuilder<'a, C, F> {
         MethodBuilder::new(self, name, method)
     }
 

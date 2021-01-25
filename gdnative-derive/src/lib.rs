@@ -9,9 +9,11 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use syn::{AttributeArgs, DeriveInput, ItemFn, ItemImpl};
 
+mod extend_bounds;
 mod methods;
 mod native_script;
 mod profiled;
+mod varargs;
 mod variant;
 
 #[proc_macro_attribute]
@@ -210,6 +212,28 @@ pub fn derive_owned_to_variant(input: TokenStream) -> TokenStream {
 pub fn derive_from_variant(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
     match variant::derive_from_variant(derive_input) {
+        Ok(stream) => stream.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
+/// Enable struct types to be parsed as argument lists.
+///
+/// The `FromVarargs` trait can be derived for structure types where each type implements
+/// `FromVariant`. The order of fields matter for this purpose:
+///
+/// ```ignore
+/// #[derive(FromVarargs)]
+/// struct MyArgs {
+///     foo: i32,
+///     bar: String,
+///     #[opt] baz: Option<Ref<Node>>,
+/// }
+/// ```
+#[proc_macro_derive(FromVarargs, attributes(opt))]
+pub fn derive_from_varargs(input: TokenStream) -> TokenStream {
+    let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
+    match varargs::derive_from_varargs(derive_input) {
         Ok(stream) => stream.into(),
         Err(err) => err.to_compile_error().into(),
     }

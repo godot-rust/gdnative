@@ -1,13 +1,19 @@
+//! Method registration
+
+// Temporary for unsafe method registration
+#![allow(deprecated)]
+
 use std::fmt;
 use std::marker::PhantomData;
 
-use crate::thread_access::Shared;
-use crate::nativescript::class::{NativeClass, RefInstance};
 use crate::core_types::{FromVariant, FromVariantError, Variant};
+use crate::nativescript::class::{NativeClass, RefInstance};
 use crate::object::{Ref, TRef};
+use crate::thread_access::Shared;
 
 use super::ClassBuilder;
 
+/// Builder type used to register a method on a `NativeClass`.
 pub struct MethodBuilder<'a, C, F> {
     class_builder: &'a super::ClassBuilder<C>,
     name: &'a str,
@@ -80,6 +86,9 @@ where
     }
 }
 
+#[deprecated(
+    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
+)]
 pub type ScriptMethodFn = unsafe extern "C" fn(
     *mut sys::godot_object,
     *mut libc::c_void,
@@ -105,10 +114,16 @@ impl Default for RpcMode {
     }
 }
 
+#[deprecated(
+    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
+)]
 pub struct ScriptMethodAttributes {
     pub rpc_mode: RpcMode,
 }
 
+#[deprecated(
+    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
+)]
 pub struct ScriptMethod<'l> {
     pub name: &'l str,
     pub method_ptr: Option<ScriptMethodFn>,
@@ -118,7 +133,7 @@ pub struct ScriptMethod<'l> {
     pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
 }
 
-/// Low-level trait for stateful, variadic methods that can be called on a native script type.
+/// Safe low-level trait for stateful, variadic methods that can be called on a native script type.
 pub trait Method<C: NativeClass>: Send + Sync + 'static {
     fn call(&self, this: RefInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant;
 }
@@ -135,7 +150,50 @@ impl<C: NativeClass, F: Method<C> + Copy + Default> Method<C> for Stateless<F> {
     }
 }
 
-/// Interface to a list of borrowed method arguments with a convenient interface
+/// Adapter for methods whose arguments are statically determined. If the arguments would fail to
+/// type check, the method will print the errors to Godot's debug console and return `null`.
+#[derive(Clone, Copy, Default, Debug)]
+pub struct StaticArgs<F> {
+    f: F,
+}
+
+impl<F> StaticArgs<F> {
+    /// Wrap `f` in an adapter that implements `Method`.
+    #[inline]
+    pub fn new(f: F) -> Self {
+        StaticArgs { f }
+    }
+}
+
+/// Trait for methods whose argument lists are known at compile time. Not to be confused with a
+/// "static method".
+pub trait StaticArgsMethod<C: NativeClass>: Send + Sync + 'static {
+    type Args: FromVarargs;
+    fn call(&self, this: RefInstance<'_, C, Shared>, args: Self::Args) -> Variant;
+}
+
+impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
+    #[inline]
+    fn call(&self, this: RefInstance<'_, C, Shared>, mut args: Varargs<'_>) -> Variant {
+        match args.read_many::<F::Args>() {
+            Ok(parsed) => {
+                if let Err(err) = args.done() {
+                    godot_error!("{}", err);
+                    return Variant::new();
+                }
+                F::call(&self.f, this, parsed)
+            }
+            Err(errors) => {
+                for err in errors {
+                    godot_error!("{}", err);
+                }
+                Variant::new()
+            }
+        }
+    }
+}
+
+/// Safe interface to a list of borrowed method arguments with a convenient API
 /// for common operations with them. Can also be used as an iterator.
 pub struct Varargs<'a> {
     idx: usize,
@@ -164,6 +222,13 @@ impl<'a> Varargs<'a> {
             ty: None,
             _marker: PhantomData,
         }
+    }
+
+    /// Parses a structure that implements `FromVarargs` incrementally from the
+    /// remaining arguments.
+    #[inline]
+    pub fn read_many<T: FromVarargs>(&mut self) -> Result<T, Vec<ArgumentError<'a>>> {
+        T::read(self)
     }
 
     /// Returns the remaining arguments as a slice of `Variant`s.
@@ -213,11 +278,28 @@ impl<'a> Iterator for Varargs<'a> {
     }
 }
 
+/// Trait for structures that can be parsed from `Varargs`.
+///
+/// This trait can be derived for structure types where each type implements `FromVariant`.
+/// The order of fields matter for this purpose:
+///
+/// ```ignore
+/// #[derive(FromVarargs)]
+/// struct MyArgs {
+///     foo: i32,
+///     bar: String,
+///     #[opt] baz: Option<Ref<Node>>,
+/// }
+/// ```
+pub trait FromVarargs: Sized {
+    fn read<'a>(args: &mut Varargs<'a>) -> Result<Self, Vec<ArgumentError<'a>>>;
+}
+
 /// Builder for providing additional argument information for error reporting.
 pub struct ArgBuilder<'r, 'a, T> {
     args: &'r mut Varargs<'a>,
-    name: Option<&'r str>,
-    ty: Option<&'r str>,
+    name: Option<&'a str>,
+    ty: Option<&'a str>,
     _marker: PhantomData<T>,
 }
 
@@ -225,7 +307,7 @@ impl<'r, 'a, T> ArgBuilder<'r, 'a, T> {
     /// Provides a name for this argument. If an old name is already set, it is
     /// silently replaced.
     #[inline]
-    pub fn with_name(mut self, name: &'r str) -> Self {
+    pub fn with_name(mut self, name: &'a str) -> Self {
         self.name = Some(name);
         self
     }
@@ -234,7 +316,7 @@ impl<'r, 'a, T> ArgBuilder<'r, 'a, T> {
     /// already set, it is silently replaced. If no type name is given, a value
     /// from `std::any::type_name` is used.
     #[inline]
-    pub fn with_type_name(mut self, ty: &'r str) -> Self {
+    pub fn with_type_name(mut self, ty: &'a str) -> Self {
         self.ty = Some(ty);
         self
     }
@@ -247,7 +329,7 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     ///
     /// If the argument is missing, or cannot be converted to the desired type.
     #[inline]
-    pub fn get(self) -> Result<T, ArgumentError<'r>> {
+    pub fn get(self) -> Result<T, ArgumentError<'a>> {
         let name = self.name;
         let idx = self.args.idx;
 
@@ -261,7 +343,7 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     ///
     /// If the argument is present, but cannot be converted to the desired type.
     #[inline]
-    pub fn get_optional(self) -> Result<Option<T>, ArgumentError<'r>> {
+    pub fn get_optional(self) -> Result<Option<T>, ArgumentError<'a>> {
         let Self { args, name, ty, .. } = self;
         let idx = args.idx;
 
@@ -282,6 +364,7 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     }
 }
 
+/// Error during argument parsing.
 #[derive(Debug)]
 pub enum ArgumentError<'a> {
     Missing {
@@ -380,7 +463,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                 C::class_name(),
             );
             return Variant::new().forget();
-        },
+        }
     };
 
     let result = std::panic::catch_unwind(move || {
@@ -389,7 +472,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
         let this: Ref<C::Base, Shared> = Ref::from_sys(this);
         let this: TRef<'_, C::Base, _> = this.assume_safe_unchecked();
         let this: RefInstance<'_, C, _> = RefInstance::from_raw_unchecked(this, user_data);
-    
+
         let args = Varargs::from_sys(num_args, args);
 
         F::call(method, this, args)

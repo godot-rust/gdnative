@@ -97,74 +97,43 @@ macro_rules! godot_wrap_method_inner {
             #[derive(Copy, Clone, Default)]
             struct ThisMethod;
 
-            use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+            const _IMPL_THIS_METHOD: () = {
+                use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+                use ::gdnative::FromVarargs;
 
-            #[allow(unused_variables, unused_assignments, unused_mut)]
-            impl $crate::nativescript::init::Method<$type_name> for ThisMethod {
-                fn call(
-                    &self,
-                    this: RefInstance<'_, $type_name, $crate::thread_access::Shared>,
-                    mut args: $crate::nativescript::init::method::Varargs<'_>,
-                ) -> $crate::core_types::Variant {
-                    let mut is_failure = false;
-
-                    $(
-                        let $pname = args.read()
-                            .with_name(stringify!($pname))
-                            .with_type_name(stringify!($pty))
-                            .get()
-                            .map_err(|err| {
-                                $crate::godot_error!("{}", err);
-                                is_failure = true;
-                            })
-                            .ok();
-                    )*
-
-                    $(
-                        let $opt_pname = args.read()
-                            .with_name(stringify!($opt_pname))
-                            .with_type_name(stringify!($opt_pty))
-                            .get_optional()
-                            .map_err(|err| {
-                                $crate::godot_error!("{}", err);
-                                is_failure = true;
-                            })
-                            .ok()
-                            .flatten()
-                            .unwrap_or_default();
-                    )*
-
-                    if let Err(err) = args.done() {
-                        $crate::godot_error!("{}", err);
-                        is_failure = true;
-                    }
-
-                    if is_failure {
-                        return $crate::core_types::Variant::new();
-                    }
-
-                    $(
-                        let $pname = $pname.unwrap();
-                    )*
-
-                    this
-                        .$map_method(|__rust_val, $owner| {
-                            let ret = __rust_val.$method_name(
-                                OwnerArg::from_safe_ref($owner),
-                                $($pname,)*
-                                $($opt_pname,)*
-                            );
-                            <$retty as $crate::core_types::OwnedToVariant>::owned_to_variant(ret)
-                        })
-                        .unwrap_or_else(|err| {
-                            $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
-                            $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                            $crate::core_types::Variant::new()
-                        })
+                #[derive(FromVarargs)]
+                struct Args {
+                    $($pname: $pty,)*
+                    $(#[opt] $opt_pname: $opt_pty,)*
                 }
-            }
-            
-            ThisMethod
+
+                #[allow(unused_variables, unused_assignments, unused_mut)]
+                impl $crate::nativescript::init::method::StaticArgsMethod<$type_name> for ThisMethod {
+                    type Args = Args;
+                    fn call(
+                        &self,
+                        this: RefInstance<'_, $type_name, $crate::thread_access::Shared>,
+                        Args { $($pname,)* $($opt_pname,)* }: Args,
+                    ) -> $crate::core_types::Variant {
+                        this
+                            .$map_method(|__rust_val, $owner| {
+                                let ret = __rust_val.$method_name(
+                                    OwnerArg::from_safe_ref($owner),
+                                    $($pname,)*
+                                    $($opt_pname,)*
+                                );
+                                <$retty as $crate::core_types::OwnedToVariant>::owned_to_variant(ret)
+                            })
+                            .unwrap_or_else(|err| {
+                                $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
+                                $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                                $crate::core_types::Variant::new()
+                            })
+                    }
+                }
+            };
+
+            $crate::nativescript::init::method::StaticArgs::new(ThisMethod)
         }
     };
 }
