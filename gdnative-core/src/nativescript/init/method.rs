@@ -1,7 +1,139 @@
 use std::fmt;
 use std::marker::PhantomData;
 
+use crate::thread_access::Shared;
+use crate::nativescript::class::{NativeClass, RefInstance};
 use crate::core_types::{FromVariant, FromVariantError, Variant};
+use crate::object::{Ref, TRef};
+
+use super::ClassBuilder;
+
+pub struct MethodBuilder<'a, C, F> {
+    class_builder: &'a super::ClassBuilder<C>,
+    name: &'a str,
+    method: F,
+
+    rpc_mode: RpcMode,
+}
+
+impl<'a, C, F> MethodBuilder<'a, C, F>
+where
+    C: NativeClass,
+    F: Method<C>,
+{
+    pub(super) fn new(class_builder: &'a ClassBuilder<C>, name: &'a str, method: F) -> Self {
+        MethodBuilder {
+            class_builder,
+            name,
+            method,
+            rpc_mode: RpcMode::Disabled,
+        }
+    }
+
+    /// Set a RPC mode for this method.
+    #[inline]
+    pub fn with_rpc_mode(mut self, rpc_mode: RpcMode) -> Self {
+        self.rpc_mode = rpc_mode;
+        self
+    }
+
+    /// Register the method.
+    #[inline]
+    pub fn done(self) {
+        let method_data = Box::into_raw(Box::new(self.method));
+
+        let script_method = ScriptMethod {
+            name: self.name,
+            method_ptr: Some(method_wrapper::<C, F>),
+            attributes: ScriptMethodAttributes {
+                rpc_mode: self.rpc_mode,
+            },
+            method_data: method_data as *mut libc::c_void,
+            free_func: Some(free_func::<F>),
+        };
+
+        self.class_builder.add_method_advanced(script_method);
+    }
+}
+
+impl<'a, C, F> MethodBuilder<'a, C, F>
+where
+    C: NativeClass,
+    F: Method<C> + Copy + Default,
+{
+    /// Register the method as a stateless method. Stateless methods do not have data
+    /// pointers and destructors and is thus slightly lighter. This is intended for ZSTs,
+    /// but can be used with any `Method` type with `Copy + Default`.
+    #[inline]
+    pub fn done_stateless(self) {
+        let script_method = ScriptMethod {
+            name: self.name,
+            method_ptr: Some(method_wrapper::<C, Stateless<F>>),
+            attributes: ScriptMethodAttributes {
+                rpc_mode: self.rpc_mode,
+            },
+            method_data: 1 as *mut libc::c_void,
+            free_func: None,
+        };
+
+        self.class_builder.add_method_advanced(script_method);
+    }
+}
+
+pub type ScriptMethodFn = unsafe extern "C" fn(
+    *mut sys::godot_object,
+    *mut libc::c_void,
+    *mut libc::c_void,
+    libc::c_int,
+    *mut *mut sys::godot_variant,
+) -> sys::godot_variant;
+
+pub enum RpcMode {
+    Disabled,
+    Remote,
+    RemoteSync,
+    Master,
+    Puppet,
+    MasterSync,
+    PuppetSync,
+}
+
+impl Default for RpcMode {
+    #[inline]
+    fn default() -> Self {
+        RpcMode::Disabled
+    }
+}
+
+pub struct ScriptMethodAttributes {
+    pub rpc_mode: RpcMode,
+}
+
+pub struct ScriptMethod<'l> {
+    pub name: &'l str,
+    pub method_ptr: Option<ScriptMethodFn>,
+    pub attributes: ScriptMethodAttributes,
+
+    pub method_data: *mut libc::c_void,
+    pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
+}
+
+/// Low-level trait for stateful, variadic methods that can be called on a native script type.
+pub trait Method<C: NativeClass>: Send + Sync + 'static {
+    fn call(&self, this: RefInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant;
+}
+
+/// Wrapper for stateless methods that produces values with `Copy` and `Default`.
+struct Stateless<F> {
+    _marker: PhantomData<F>,
+}
+
+impl<C: NativeClass, F: Method<C> + Copy + Default> Method<C> for Stateless<F> {
+    fn call(&self, this: RefInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant {
+        let f = F::default();
+        f.call(this, args)
+    }
+}
 
 /// Interface to a list of borrowed method arguments with a convenient interface
 /// for common operations with them. Can also be used as an iterator.
@@ -223,4 +355,54 @@ impl<'a> fmt::Display for ArgumentError<'a> {
             }
         }
     }
+}
+
+unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
+    this: *mut sys::godot_object,
+    method_data: *mut libc::c_void,
+    user_data: *mut libc::c_void,
+    num_args: libc::c_int,
+    args: *mut *mut sys::godot_variant,
+) -> sys::godot_variant {
+    if user_data.is_null() {
+        godot_error!(
+            "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
+            C::class_name(),
+        );
+        return Variant::new().forget();
+    }
+
+    let this = match std::ptr::NonNull::new(this) {
+        Some(this) => this,
+        None => {
+            godot_error!(
+                "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
+                C::class_name(),
+            );
+            return Variant::new().forget();
+        },
+    };
+
+    let result = std::panic::catch_unwind(move || {
+        let method = &*(method_data as *const F);
+
+        let this: Ref<C::Base, Shared> = Ref::from_sys(this);
+        let this: TRef<'_, C::Base, _> = this.assume_safe_unchecked();
+        let this: RefInstance<'_, C, _> = RefInstance::from_raw_unchecked(this, user_data);
+    
+        let args = Varargs::from_sys(num_args, args);
+
+        F::call(method, this, args)
+    });
+
+    result
+        .unwrap_or_else(|_| {
+            godot_error!("gdnative-core: method panicked (check stderr for output)");
+            Variant::new()
+        })
+        .forget()
+}
+
+unsafe extern "C" fn free_func<F>(method_data: *mut libc::c_void) {
+    drop(Box::from_raw(method_data as *mut F))
 }

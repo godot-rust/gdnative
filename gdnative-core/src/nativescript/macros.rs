@@ -94,49 +94,20 @@ macro_rules! godot_wrap_method_inner {
         ) -> $retty:ty
     ) => {
         {
-            #[allow(unused_unsafe, unused_variables, unused_assignments, unused_mut)]
-            #[allow(clippy::transmute_ptr_to_ptr)]
-            unsafe extern "C" fn method(
-                this: *mut $crate::sys::godot_object,
-                method_data: *mut $crate::libc::c_void,
-                user_data: *mut $crate::libc::c_void,
-                num_args: $crate::libc::c_int,
-                args: *mut *mut $crate::sys::godot_variant
-            ) -> $crate::sys::godot_variant {
+            #[derive(Copy, Clone, Default)]
+            struct ThisMethod;
 
-                use std::panic::{self, AssertUnwindSafe};
-                use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
-                use $crate::nativescript::init::method::Varargs;
-                use $crate::object::{GodotObject, Ref, TRef};
+            use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
 
-                if user_data.is_null() {
-                    $crate::godot_error!(
-                        "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-                        stringify!($type_name),
-                    );
-                    return $crate::core_types::Variant::new().forget();
-                }
-
-                let this = match std::ptr::NonNull::new(this) {
-                    Some(this) => this,
-                    None => {
-                        $crate::godot_error!(
-                            "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
-                            stringify!($type_name),
-                        );
-                        return $crate::core_types::Variant::new().forget();
-                    },
-                };
-
-                let __catch_result = panic::catch_unwind(move || {
-                    let this: Ref<<$type_name as NativeClass>::Base, $crate::thread_access::Shared> = Ref::from_sys(this);
-                    let this: TRef<'_, <$type_name as NativeClass>::Base, _> = this.assume_safe_unchecked();
-                    let __instance: RefInstance<'_, $type_name, _> = RefInstance::from_raw_unchecked(this, user_data);
-
-                    let mut args = Varargs::from_sys(num_args, args);
+            #[allow(unused_variables, unused_assignments, unused_mut)]
+            impl $crate::nativescript::init::Method<$type_name> for ThisMethod {
+                fn call(
+                    &self,
+                    this: RefInstance<'_, $type_name, $crate::thread_access::Shared>,
+                    mut args: $crate::nativescript::init::method::Varargs<'_>,
+                ) -> $crate::core_types::Variant {
                     let mut is_failure = false;
 
-                    let mut offset = 0;
                     $(
                         let $pname = args.read()
                             .with_name(stringify!($pname))
@@ -176,7 +147,7 @@ macro_rules! godot_wrap_method_inner {
                         let $pname = $pname.unwrap();
                     )*
 
-                    let __ret = __instance
+                    this
                         .$map_method(|__rust_val, $owner| {
                             let ret = __rust_val.$method_name(
                                 OwnerArg::from_safe_ref($owner),
@@ -189,22 +160,11 @@ macro_rules! godot_wrap_method_inner {
                             $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
                             $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
                             $crate::core_types::Variant::new()
-                        });
-
-                    std::mem::drop(__instance);
-
-                    __ret
-                });
-
-                __catch_result
-                    .unwrap_or_else(|_err| {
-                        $crate::godot_error!("gdnative-core: method panicked (check stderr for output)");
-                        $crate::core_types::Variant::new()
-                    })
-                    .forget()
+                        })
+                }
             }
-
-            method
+            
+            ThisMethod
         }
     };
 }

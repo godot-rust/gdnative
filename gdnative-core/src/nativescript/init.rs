@@ -48,6 +48,7 @@ use super::emplace;
 pub mod method;
 pub mod property;
 
+pub use self::method::{Method, Varargs, RpcMode, ScriptMethod, MethodBuilder, ScriptMethodAttributes, ScriptMethodFn};
 pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
 
 /// A handle that can register new classes to the engine during initialization.
@@ -213,37 +214,6 @@ impl InitHandle {
     }
 }
 
-pub type ScriptMethodFn = unsafe extern "C" fn(
-    *mut sys::godot_object,
-    *mut libc::c_void,
-    *mut libc::c_void,
-    libc::c_int,
-    *mut *mut sys::godot_variant,
-) -> sys::godot_variant;
-
-pub enum RpcMode {
-    Disabled,
-    Remote,
-    RemoteSync,
-    Master,
-    Puppet,
-    MasterSync,
-    PuppetSync,
-}
-
-pub struct ScriptMethodAttributes {
-    pub rpc_mode: RpcMode,
-}
-
-pub struct ScriptMethod<'l> {
-    pub name: &'l str,
-    pub method_ptr: Option<ScriptMethodFn>,
-    pub attributes: ScriptMethodAttributes,
-
-    pub method_data: *mut libc::c_void,
-    pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
-}
-
 #[derive(Debug)]
 pub struct ClassBuilder<C> {
     init_handle: *mut libc::c_void,
@@ -299,6 +269,11 @@ impl<C: NativeClass> ClassBuilder<C> {
     #[inline]
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
         self.add_method_with_rpc_mode(name, method, RpcMode::Disabled);
+    }
+
+    #[inline]
+    pub fn build_method<'a, F: Method<C>>(&'a self, name: &'a str, method: F) -> MethodBuilder<'a, C, F> {
+        MethodBuilder::new(self, name, method)
     }
 
     /// Returns a `PropertyBuilder` which can be used to add a property to the class being
