@@ -106,6 +106,7 @@ macro_rules! godot_wrap_method_inner {
 
                 use std::panic::{self, AssertUnwindSafe};
                 use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+                use $crate::nativescript::init::method::Varargs;
                 use $crate::object::{GodotObject, Ref, TRef};
 
                 if user_data.is_null() {
@@ -132,66 +133,47 @@ macro_rules! godot_wrap_method_inner {
                     let this: TRef<'_, <$type_name as NativeClass>::Base, _> = this.assume_safe_unchecked();
                     let __instance: RefInstance<'_, $type_name, _> = RefInstance::from_raw_unchecked(this, user_data);
 
-                    let num_args = num_args as isize;
-
-                    let num_required_params = $crate::godot_wrap_method_parameter_count!($($pname,)*);
-                    if num_args < num_required_params {
-                        $crate::godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
-                        return $crate::core_types::Variant::new();
-                    }
-
-                    let num_optional_params = $crate::godot_wrap_method_parameter_count!($($opt_pname,)*);
-                    let num_max_params = num_required_params + num_optional_params;
-                    if num_args > num_max_params {
-                        $crate::godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
-                        return $crate::core_types::Variant::new();
-                    }
+                    let mut args = Varargs::from_sys(num_args, args);
+                    let mut is_failure = false;
 
                     let mut offset = 0;
                     $(
-                        let _variant: &$crate::core_types::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-                        let $pname = match <$pty as $crate::core_types::FromVariant>::from_variant(_variant) {
-                            Ok(val) => val,
-                            Err(err) => {
-                                $crate::godot_error!(
-                                    "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
-                                    idx = offset + 1,
-                                    name = stringify!($pname),
-                                    ty = stringify!($pty),
-                                    err = err,
-                                );
-                                return $crate::core_types::Variant::new();
-                            },
-                        };
-
-                        offset += 1;
+                        let $pname = args.read()
+                            .with_name(stringify!($pname))
+                            .with_type_name(stringify!($pty))
+                            .get()
+                            .map_err(|err| {
+                                $crate::godot_error!("{}", err);
+                                is_failure = true;
+                            })
+                            .ok();
                     )*
 
                     $(
-                        let $opt_pname = if offset < num_args {
-                            let _variant: &$crate::core_types::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
+                        let $opt_pname = args.read()
+                            .with_name(stringify!($opt_pname))
+                            .with_type_name(stringify!($opt_pty))
+                            .get_optional()
+                            .map_err(|err| {
+                                $crate::godot_error!("{}", err);
+                                is_failure = true;
+                            })
+                            .ok()
+                            .flatten()
+                            .unwrap_or_default();
+                    )*
 
-                            let $opt_pname = match <$opt_pty as $crate::core_types::FromVariant>::from_variant(_variant) {
-                                Ok(val) => val,
-                                Err(err) => {
-                                    $crate::godot_error!(
-                                        "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
-                                        idx = offset + 1,
-                                        name = stringify!($opt_pname),
-                                        ty = stringify!($opt_pty),
-                                        err = err,
-                                    );
-                                    return $crate::core_types::Variant::new();
-                                },
-                            };
+                    if let Err(err) = args.done() {
+                        $crate::godot_error!("{}", err);
+                        is_failure = true;
+                    }
 
-                            offset += 1;
+                    if is_failure {
+                        return $crate::core_types::Variant::new();
+                    }
 
-                            $opt_pname
-                        }
-                        else {
-                            <$opt_pty as ::std::default::Default>::default()
-                        };
+                    $(
+                        let $pname = $pname.unwrap();
                     )*
 
                     let __ret = __instance

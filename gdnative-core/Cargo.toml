@@ -23,6 +23,7 @@ approx = "0.3.2"
 euclid = "0.22.1"
 indexmap = "1.6.0"
 ahash = "0.4.5"
+thiserror = "1.0"
 
 gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.1" }
 

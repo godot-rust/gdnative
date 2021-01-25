@@ -45,6 +45,7 @@ use crate::private::get_api;
 
 use super::emplace;
 
+pub mod method;
 pub mod property;
 
 pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
