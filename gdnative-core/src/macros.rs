@@ -102,13 +102,7 @@ macro_rules! godot_gdnative_terminate {
 #[macro_export]
 macro_rules! godot_print {
     ($($args:tt)*) => ({
-        let msg = format!($($args)*);
-
-        #[allow(unused_unsafe)]
-        unsafe {
-            let msg = $crate::core_types::GodotString::from_str(msg);
-            ($crate::private::get_api().godot_print)(&msg.to_sys() as *const _);
-        }
+        $crate::log::print(::std::format_args!($($args)*));
     });
 }
 
@@ -139,6 +133,51 @@ macro_rules! godot_dbg {
     };
 }
 
+/// Creates a `gdnative::log::Site` value from the current position in code,
+/// optionally with a function path for identification.
+///
+/// # Examples
+///
+/// ```ignore
+/// // WARN: <unset>: foo At: path/to/file.rs:123
+/// gdnative::log::warn(godot_site!(), "foo");
+/// // WARN: Foo::my_func: bar At: path/to/file.rs:123
+/// gdnative::log::error(godot_site!(Foo::my_func), "bar");
+/// ```
+#[macro_export]
+macro_rules! godot_site {
+    () => {{
+        // SAFETY: I guess we can assume that all sane file systems don't allow
+        // NUL-bytes in paths?
+        #[allow(unused_unsafe)]
+        let site: $crate::log::Site<'static> = unsafe {
+            let file = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                ::std::concat!(::std::file!(), "\0").as_bytes(),
+            );
+            let func = ::std::ffi::CStr::from_bytes_with_nul_unchecked(b"<unset>\0");
+            $crate::log::Site::new(file, func, ::std::line!())
+        };
+
+        site
+    }};
+    ($($path:tt)+) => {{
+        // SAFETY: I guess we can assume that all sane file systems don't allow
+        // NUL-bytes in paths?
+        #[allow(unused_unsafe)]
+        let site: $crate::log::Site<'static> = unsafe {
+            let file = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                ::std::concat!(::std::file!(), "\0").as_bytes(),
+            );
+            let func = ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                ::std::concat!(::std::stringify!($($path)+), "\0").as_bytes(),
+            );
+            $crate::log::Site::new(file, func, ::std::line!())
+        };
+
+        site
+    }};
+}
+
 /// Print a warning using the engine's logging system (visible in the editor).
 ///
 /// # Guarantees
@@ -150,22 +189,8 @@ macro_rules! godot_dbg {
 #[macro_export]
 macro_rules! godot_warn {
     ($($args:tt)*) => ({
-        let msg = format!($($args)*);
-        let line = line!();
-        let file = file!();
-        #[allow(unused_unsafe)]
-        unsafe {
-            let msg = ::std::ffi::CString::new(msg).unwrap();
-            let file = ::std::ffi::CString::new(file).unwrap();
-            let func = b"<native>\0";
-            ($crate::private::get_api().godot_print_warning)(
-                msg.as_ptr() as *const _,
-                func.as_ptr() as *const _,
-                file.as_ptr() as *const _,
-                line as _,
-            );
-        }
-    })
+        $crate::log::warn($crate::godot_site!(), ::std::format_args!($($args)*));
+    });
 }
 
 /// Print an error using the engine's logging system (visible in the editor).
@@ -179,22 +204,8 @@ macro_rules! godot_warn {
 #[macro_export]
 macro_rules! godot_error {
     ($($args:tt)*) => ({
-        let msg = format!($($args)*);
-        let line = line!();
-        let file = file!();
-        #[allow(unused_unsafe)]
-        unsafe {
-            let msg = ::std::ffi::CString::new(msg).unwrap();
-            let file = ::std::ffi::CString::new(file).unwrap();
-            let func = b"<native>\0";
-            ($crate::private::get_api().godot_print_error)(
-                msg.as_ptr() as *const _,
-                func.as_ptr() as *const _,
-                file.as_ptr() as *const _,
-                line as _,
-            );
-        }
-    })
+        $crate::log::error($crate::godot_site!(), ::std::format_args!($($args)*));
+    });
 }
 
 macro_rules! impl_basic_trait_as_sys {

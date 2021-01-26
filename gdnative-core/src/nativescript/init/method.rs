@@ -3,10 +3,12 @@
 // Temporary for unsafe method registration
 #![allow(deprecated)]
 
+use std::borrow::Cow;
 use std::fmt;
 use std::marker::PhantomData;
 
 use crate::core_types::{FromVariant, FromVariantError, Variant};
+use crate::log::Site;
 use crate::nativescript::class::{NativeClass, RefInstance};
 use crate::object::{Ref, TRef};
 use crate::thread_access::Shared;
@@ -78,6 +80,9 @@ where
             attributes: ScriptMethodAttributes {
                 rpc_mode: self.rpc_mode,
             },
+
+            // Stateless<F> is a ZST for any type F, so we can use any non-zero value as
+            // a valid pointer for it.
             method_data: 1 as *mut libc::c_void,
             free_func: None,
         };
@@ -135,7 +140,16 @@ pub struct ScriptMethod<'l> {
 
 /// Safe low-level trait for stateful, variadic methods that can be called on a native script type.
 pub trait Method<C: NativeClass>: Send + Sync + 'static {
+    /// Calls the method on `this` with `args`.
     fn call(&self, this: RefInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant;
+
+    /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
+    ///
+    /// Default implementation returns `None`.
+    #[inline]
+    fn site() -> Option<Site<'static>> {
+        None
+    }
 }
 
 /// Wrapper for stateless methods that produces values with `Copy` and `Default`.
@@ -170,6 +184,14 @@ impl<F> StaticArgs<F> {
 pub trait StaticArgsMethod<C: NativeClass>: Send + Sync + 'static {
     type Args: FromVarargs;
     fn call(&self, this: RefInstance<'_, C, Shared>, args: Self::Args) -> Variant;
+
+    /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
+    ///
+    /// Default implementation returns `None`.
+    #[inline]
+    fn site() -> Option<Site<'static>> {
+        None
+    }
 }
 
 impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
@@ -178,18 +200,23 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
         match args.read_many::<F::Args>() {
             Ok(parsed) => {
                 if let Err(err) = args.done() {
-                    godot_error!("{}", err);
+                    err.with_site(F::site().unwrap_or_default()).log_error();
                     return Variant::new();
                 }
                 F::call(&self.f, this, parsed)
             }
             Err(errors) => {
                 for err in errors {
-                    godot_error!("{}", err);
+                    err.with_site(F::site().unwrap_or_default()).log_error();
                 }
                 Variant::new()
             }
         }
+    }
+
+    #[inline]
+    fn site() -> Option<Site<'static>> {
+        F::site()
     }
 }
 
@@ -220,6 +247,7 @@ impl<'a> Varargs<'a> {
             args: self,
             name: None,
             ty: None,
+            site: None,
             _marker: PhantomData,
         }
     }
@@ -247,8 +275,11 @@ impl<'a> Varargs<'a> {
         if self.is_empty() {
             Ok(())
         } else {
-            Err(ArgumentError::ExcessArguments {
-                rest: self.as_slice(),
+            Err(ArgumentError {
+                site: None,
+                kind: ArgumentErrorKind::ExcessArguments {
+                    rest: self.as_slice(),
+                },
             })
         }
     }
@@ -298,26 +329,37 @@ pub trait FromVarargs: Sized {
 /// Builder for providing additional argument information for error reporting.
 pub struct ArgBuilder<'r, 'a, T> {
     args: &'r mut Varargs<'a>,
-    name: Option<&'a str>,
-    ty: Option<&'a str>,
+    name: Option<Cow<'a, str>>,
+    ty: Option<Cow<'a, str>>,
+    site: Option<Site<'a>>,
     _marker: PhantomData<T>,
 }
 
 impl<'r, 'a, T> ArgBuilder<'r, 'a, T> {
     /// Provides a name for this argument. If an old name is already set, it is
-    /// silently replaced.
+    /// silently replaced. The name can either be borrowed from the environment
+    /// or owned.
     #[inline]
-    pub fn with_name(mut self, name: &'a str) -> Self {
-        self.name = Some(name);
+    pub fn with_name<S: Into<Cow<'a, str>>>(mut self, name: S) -> Self {
+        self.name = Some(name.into());
         self
     }
 
     /// Provides a more readable type name for this argument. If an old name is
     /// already set, it is silently replaced. If no type name is given, a value
-    /// from `std::any::type_name` is used.
+    /// from `std::any::type_name` is used. The name can either be borrowed from
+    /// the environment or owned.
     #[inline]
-    pub fn with_type_name(mut self, ty: &'a str) -> Self {
-        self.ty = Some(ty);
+    pub fn with_type_name<S: Into<Cow<'a, str>>>(mut self, ty: S) -> Self {
+        self.ty = Some(ty.into());
+        self
+    }
+
+    /// Provides a call site for this argument. If an old call site is already set,
+    /// it is silently replaced. If given, the site will be used in case of error.
+    #[inline]
+    pub fn with_site(mut self, site: Site<'a>) -> Self {
+        self.site = Some(site);
         self
     }
 }
@@ -329,12 +371,16 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     ///
     /// If the argument is missing, or cannot be converted to the desired type.
     #[inline]
-    pub fn get(self) -> Result<T, ArgumentError<'a>> {
-        let name = self.name;
-        let idx = self.args.idx;
-
-        self.get_optional()
-            .and_then(|arg| arg.ok_or(ArgumentError::Missing { idx, name }))
+    pub fn get(mut self) -> Result<T, ArgumentError<'a>> {
+        self.get_optional_internal().and_then(|arg| {
+            arg.ok_or(ArgumentError {
+                site: self.site,
+                kind: ArgumentErrorKind::Missing {
+                    idx: self.args.idx,
+                    name: self.name,
+                },
+            })
+        })
     }
 
     /// Get the argument as optional.
@@ -343,21 +389,34 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     ///
     /// If the argument is present, but cannot be converted to the desired type.
     #[inline]
-    pub fn get_optional(self) -> Result<Option<T>, ArgumentError<'a>> {
-        let Self { args, name, ty, .. } = self;
+    pub fn get_optional(mut self) -> Result<Option<T>, ArgumentError<'a>> {
+        self.get_optional_internal()
+    }
+
+    fn get_optional_internal(&mut self) -> Result<Option<T>, ArgumentError<'a>> {
+        let Self {
+            site,
+            args,
+            name,
+            ty,
+            ..
+        } = self;
         let idx = args.idx;
 
         if let Some(arg) = args.iter.next() {
             args.idx += 1;
-            T::from_variant(arg)
-                .map(Some)
-                .map_err(|err| ArgumentError::CannotConvert {
+            T::from_variant(arg).map(Some).map_err(|err| ArgumentError {
+                site: *site,
+                kind: ArgumentErrorKind::CannotConvert {
                     idx,
-                    name,
+                    name: name.take(),
                     value: arg,
-                    ty: ty.unwrap_or_else(|| std::any::type_name::<T>()),
+                    ty: ty
+                        .take()
+                        .unwrap_or_else(|| Cow::Borrowed(std::any::type_name::<T>())),
                     err,
-                })
+                },
+            })
         } else {
             Ok(None)
         }
@@ -366,15 +425,63 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
 
 /// Error during argument parsing.
 #[derive(Debug)]
-pub enum ArgumentError<'a> {
+pub struct ArgumentError<'a> {
+    site: Option<Site<'a>>,
+    kind: ArgumentErrorKind<'a>,
+}
+
+impl<'a> std::error::Error for ArgumentError<'a> {}
+impl<'a> fmt::Display for ArgumentError<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(site) = &self.site {
+            write!(f, "at {}: ", site)?;
+        }
+        write!(f, "{}", self.kind)
+    }
+}
+
+impl<'a> ArgumentError<'a> {
+    /// Assign a call site for this error. If an old one is already set, it is silently
+    /// replaced.
+    #[inline]
+    pub fn with_site(mut self, site: Site<'a>) -> Self {
+        self.site = Some(site);
+        self
+    }
+
+    /// Print this error in the Godot debug console as a warning.
+    ///
+    /// # Panics
+    ///
+    /// If the API isn't initialized.
+    #[inline]
+    pub fn log_warn(&self) {
+        crate::log::warn(self.site.unwrap_or_default(), &self.kind);
+    }
+
+    /// Print this error in the Godot debug console as an error.
+    ///
+    /// # Panics
+    ///
+    /// If the API isn't initialized.
+    #[inline]
+    pub fn log_error(&self) {
+        crate::log::error(self.site.unwrap_or_default(), &self.kind);
+    }
+}
+
+/// Error during argument parsing.
+#[derive(Debug)]
+enum ArgumentErrorKind<'a> {
     Missing {
         idx: usize,
-        name: Option<&'a str>,
+        name: Option<Cow<'a, str>>,
     },
     CannotConvert {
         idx: usize,
-        name: Option<&'a str>,
-        ty: &'a str,
+        name: Option<Cow<'a, str>>,
+        ty: Cow<'a, str>,
         value: &'a Variant,
         err: FromVariantError,
     },
@@ -383,12 +490,12 @@ pub enum ArgumentError<'a> {
     },
 }
 
-impl<'a> std::error::Error for ArgumentError<'a> {}
+impl<'a> std::error::Error for ArgumentErrorKind<'a> {}
 
-impl<'a> fmt::Display for ArgumentError<'a> {
+impl<'a> fmt::Display for ArgumentErrorKind<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use ArgumentError as E;
+        use ArgumentErrorKind as E;
 
         match self {
             E::Missing {
@@ -448,9 +555,12 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
     args: *mut *mut sys::godot_variant,
 ) -> sys::godot_variant {
     if user_data.is_null() {
-        godot_error!(
-            "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-            C::class_name(),
+        crate::log::error(
+            F::site().unwrap_or_default(),
+            format_args!(
+                "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
+                C::class_name(),
+            ),
         );
         return Variant::new().forget();
     }
@@ -458,9 +568,12 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
     let this = match std::ptr::NonNull::new(this) {
         Some(this) => this,
         None => {
-            godot_error!(
-                "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
-                C::class_name(),
+            crate::log::error(
+                F::site().unwrap_or_default(),
+                format_args!(
+                    "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
+                    C::class_name(),
+                ),
             );
             return Variant::new().forget();
         }
@@ -480,7 +593,10 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
 
     result
         .unwrap_or_else(|_| {
-            godot_error!("gdnative-core: method panicked (check stderr for output)");
+            crate::log::error(
+                F::site().unwrap_or_default(),
+                "gdnative-core: method panicked (check stderr for output)",
+            );
             Variant::new()
         })
         .forget()
