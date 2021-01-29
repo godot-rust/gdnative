@@ -1,8 +1,8 @@
 #![allow(clippy::blacklisted_name)]
 
-use gdnative::api;
 use gdnative::prelude::*;
 
+mod test_constructor;
 mod test_derive;
 mod test_free_ub;
 mod test_register;
@@ -54,13 +54,13 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_vector3_array_access();
     status &= gdnative::core_types::test_vector3_array_debug();
 
-    status &= test_constructor();
     status &= test_underscore_method_binding();
     status &= test_rust_class_construction();
     status &= test_from_instance_id();
 
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
+    status &= test_constructor::run_tests();
     status &= test_register::run_tests();
     status &= test_return_leak::run_tests();
     status &= test_variant_call_args::run_tests();
@@ -68,21 +68,6 @@ pub extern "C" fn run_tests(
     status &= test_vararray_return::run_tests();
 
     gdnative::core_types::Variant::from_bool(status).forget()
-}
-
-fn test_constructor() -> bool {
-    println!(" -- test_constructor");
-
-    // Just create an object and call a method as a sanity check for the
-    // generated constructors.
-    let lib = api::GDNativeLibrary::new();
-    let _ = lib.is_singleton();
-
-    let path = api::Path2D::new();
-    let _ = path.z_index();
-    path.free();
-
-    true
 }
 
 fn test_underscore_method_binding() -> bool {
@@ -269,6 +254,7 @@ fn init(handle: InitHandle) {
 
     test_derive::register(handle);
     test_free_ub::register(handle);
+    test_constructor::register(handle);
     test_register::register(handle);
     test_return_leak::register(handle);
     test_variant_call_args::register(handle);

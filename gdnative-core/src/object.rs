@@ -1,11 +1,12 @@
 use std::borrow::Borrow;
+use std::ffi::CString;
 use std::fmt::{self, Debug};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
-use crate::private::{get_api, ReferenceCountedClassPlaceholder};
+use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted, RefKind};
 use crate::sys;
 use crate::thread_access::{
@@ -319,6 +320,27 @@ impl<T: GodotObject + Instanciable> Ref<T, Unique> {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         T::construct()
+    }
+}
+
+impl<T: GodotObject> Ref<T, Unique> {
+    /// Creates a new instance of a sub-class of `T` by its class name. Returns `None` if the
+    /// class does not exist, cannot be constructed, has a different `RefKind` from, or is not
+    /// a sub-class of `T`.
+    ///
+    /// The lifetime of the returned object is *not* automatically managed if `T` is a manually-
+    /// managed type. This means that if `Object` is used as the type parameter, any `Reference`
+    /// objects created, if returned, will be leaked. As a result, such calls will return `None`.
+    /// Casting between `Object` and `Reference` is possible on `TRef` and bare references.
+    #[inline]
+    pub fn by_class_name(class_name: &str) -> Option<Self> {
+        unsafe {
+            // Classes with NUL-bytes in their names can not exist
+            let class_name = CString::new(class_name).ok()?;
+            let ctor = (get_api().godot_get_class_constructor)(class_name.as_ptr())?;
+            let ptr = NonNull::new(ctor() as *mut sys::godot_object)?;
+            <T::RefKind as RefKindSpec>::impl_from_maybe_ref_counted(ptr)
+        }
     }
 }
 
@@ -1132,6 +1154,11 @@ pub trait RefKindSpec: Sized {
     type PtrWrapper: PtrWrapper;
 
     #[doc(hidden)]
+    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
+        ptr: NonNull<sys::godot_object>,
+    ) -> Option<Ref<T, Unique>>;
+
+    #[doc(hidden)]
     unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
         this: &Ref<T, Shared>,
     ) -> TRef<'a, T, Shared>
@@ -1158,6 +1185,25 @@ pub trait RefKindSpec: Sized {
 
 impl RefKindSpec for ManuallyManaged {
     type PtrWrapper = Forget;
+
+    #[inline(always)]
+    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
+        ptr: NonNull<sys::godot_object>,
+    ) -> Option<Ref<T, Unique>> {
+        if RawObject::<ReferenceCountedClassPlaceholder>::try_from_sys_ref(ptr).is_some() {
+            drop(Ref::<ReferenceCountedClassPlaceholder, Unique>::init_from_sys(ptr));
+            None
+        } else {
+            let obj = Ref::<ManuallyManagedClassPlaceholder, Unique>::init_from_sys(ptr);
+
+            if obj.as_raw().is_class::<T>() {
+                Some(obj.cast_unchecked())
+            } else {
+                obj.free();
+                None
+            }
+        }
+    }
 
     #[inline(always)]
     unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
@@ -1189,6 +1235,24 @@ impl RefKindSpec for ManuallyManaged {
 
 impl RefKindSpec for RefCounted {
     type PtrWrapper = UnRef;
+
+    #[inline(always)]
+    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
+        ptr: NonNull<sys::godot_object>,
+    ) -> Option<Ref<T, Unique>> {
+        if RawObject::<ReferenceCountedClassPlaceholder>::try_from_sys_ref(ptr).is_some() {
+            let obj = Ref::<ReferenceCountedClassPlaceholder, Unique>::init_from_sys(ptr);
+
+            if obj.as_raw().is_class::<T>() {
+                Some(obj.cast_unchecked())
+            } else {
+                None
+            }
+        } else {
+            RawObject::<ManuallyManagedClassPlaceholder>::from_sys_ref_unchecked(ptr).free();
+            None
+        }
+    }
 
     #[inline(always)]
     unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
