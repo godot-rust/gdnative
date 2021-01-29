@@ -150,7 +150,7 @@ unsafe impl crate::object::GodotObject for ManuallyManagedClassPlaceholder {
     type RefKind = crate::ref_kind::ManuallyManaged;
 
     fn class_name() -> &'static str {
-        "{placeholder} manually managed object"
+        "Object"
     }
 }
 
@@ -162,7 +162,7 @@ unsafe impl crate::object::GodotObject for ReferenceCountedClassPlaceholder {
     type RefKind = crate::ref_kind::RefCounted;
 
     fn class_name() -> &'static str {
-        "{placeholder} reference counted object"
+        "Reference"
     }
 }
 
