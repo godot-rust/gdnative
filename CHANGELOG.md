@@ -5,11 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.2] - 2020-02-01
+
+### Added
+
+- Added `Instance::emplace`, a constructor that moves an existing script struct onto a new object.
+
+- Added `Ref::by_class_name`, a method to construct Godot objects from class names.
+
+- Added methods to recover `Ref`s or `TRef`s from instance IDs.
+
+- Added a `Default` implementation for `NodePath`.
+
+- Added `Add`, `AddAssign`, `Ord`, `PartialOrd`, `Index` implementations for `GodotString`.
+
+- Added convenience methods for getting typed nodes in `gdnative-bindings`.
+
+- Added examples for custom node plugins and Godot networking.
+
+- Added the `#[property(no_editor)]` flag, which exports properties that can be accessed from other languages like GDScript, but aren't shown in the editor.
 
 ### Changed
 
 - **The minimum compatible engine version is now 3.2-stable.**
+
+- Improved readability of generated documentation for the API methods.
+
+- Improved error messages for failed method calls.
+
+- Proc-macros now emit compile errors rather than panic, improving the development experience.
+
+- Documented the trade-offs of using `GodotString` vs. the `std` `String` type.
+
+### Fixed
+
+- `Object::callv` is now correctly marked as `unsafe`.
+
+- Derive macro for `FromVariant` now correctly uses the actual variant name when reporting errors for enums.
+
+- Derive macro for `OwnerToVariant` now correctly takes ownership of `self`.
 
 ## [0.9.1] - 2020-10-19
 

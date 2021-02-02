@@ -5,7 +5,7 @@ description = "The Godot game engine's gdnative core bindings."
 documentation = "https://docs.rs/crate/gdnative-core"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
-version = "0.9.1"
+version = "0.9.2"
 license = "MIT"
 workspace = ".."
 edition = "2018"
@@ -17,14 +17,14 @@ nativescript = ["bitflags", "parking_lot"]
 type_tag_fallback = []
 
 [dependencies]
-gdnative-sys = { path = "../gdnative-sys", version = "0.9.1" }
+gdnative-sys = { path = "../gdnative-sys", version = "0.9.2" }
 libc = "0.2"
-approx = "0.3.2"
+approx = "0.4.0"
 euclid = "0.22.1"
 indexmap = "1.6.0"
-ahash = "0.4.5"
+ahash = "0.7.0"
 
-gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.1" }
+gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.2" }
 
 bitflags = { version = "1.2", optional = true }
 parking_lot = { version = "0.11.0", optional = true }

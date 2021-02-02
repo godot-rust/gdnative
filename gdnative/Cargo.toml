@@ -5,7 +5,7 @@ description = "The Godot game engine's gdnative bindings."
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
-version = "0.9.1"
+version = "0.9.2"
 license = "MIT"
 workspace = ".."
 readme = "../README.md"
@@ -20,9 +20,9 @@ type_tag_fallback = ["gdnative-core/type_tag_fallback"]
 bindings = ["gdnative-bindings"]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive", version = "=0.9.1" }
-gdnative-core = { path = "../gdnative-core", version = "=0.9.1" }
-gdnative-bindings = { optional = true, path = "../gdnative-bindings", version = "=0.9.1" }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.9.2" }
+gdnative-core = { path = "../gdnative-core", version = "=0.9.2" }
+gdnative-bindings = { optional = true, path = "../gdnative-bindings", version = "=0.9.2" }
 
 [dev-dependencies]
 trybuild = "1.0"

@@ -6,7 +6,7 @@ documentation = "https://docs.rs/crate/gdnative_bindings_generator"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
 license = "MIT"
-version = "0.9.1"
+version = "0.9.2"
 workspace = ".."
 edition = "2018"
 
@@ -15,7 +15,7 @@ debug = []
 
 [dependencies]
 heck = "0.3.0"
-roxmltree = "0.13.0"
+roxmltree = "0.14.0"
 proc-macro2 = "1.0.6"
 quote = "1.0.2"
 syn = { version = "1.0", features = ["full", "extra-traits", "visit"] }

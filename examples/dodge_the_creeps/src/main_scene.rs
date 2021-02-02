@@ -95,7 +95,7 @@ impl Main {
         let mob_scene: Ref<RigidBody2D, _> = instance_scene(&self.mob);
 
         let mut rng = rand::thread_rng();
-        let offset = rng.gen_range(std::u32::MIN, std::u32::MAX);
+        let offset = rng.gen_range(std::u32::MIN..std::u32::MAX);
 
         mob_spawn_location.set_offset(offset.into());
 
@@ -103,7 +103,7 @@ impl Main {
 
         mob_scene.set_position(mob_spawn_location.position());
 
-        direction += rng.gen_range(-PI / 4.0, PI / 4.0);
+        direction += rng.gen_range(-PI / 4.0..PI / 4.0);
         mob_scene.set_rotation(direction);
         let d = direction as f32;
 
@@ -114,7 +114,7 @@ impl Main {
 
         mob.map(|x, mob_owner| {
             mob_owner
-                .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed, x.max_speed), 0.0));
+                .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed..x.max_speed), 0.0));
 
             mob_owner
                 .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
