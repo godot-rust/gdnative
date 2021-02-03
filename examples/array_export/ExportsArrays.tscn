@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://ExportsArrays.gdns" type="Script" id=1]
+
+[node name="ExportsArrays" type="Node"]
+script = ExtResource( 1 )
+single_array = [ 133.7, 1337, "Third Element" ]
+single_array_range = [ -5, 1, 3, -3, 0 ]
+double_array = [ [ 6, "(0, 1)" ], [ "Element 1, 0", 1375.5 ] ]
+double_array_range = [ [ -2, 3 ], [ 4, -5 ] ]

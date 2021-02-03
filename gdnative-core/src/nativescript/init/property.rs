@@ -407,7 +407,6 @@ mod impl_export {
     impl_export_for_core_type_without_hint!(NodePath);
     impl_export_for_core_type_without_hint!(Rid);
     impl_export_for_core_type_without_hint!(Dictionary);
-    impl_export_for_core_type_without_hint!(VariantArray);
     impl_export_for_core_type_without_hint!(ByteArray);
     impl_export_for_core_type_without_hint!(Int32Array);
     impl_export_for_core_type_without_hint!(Float32Array);
@@ -458,6 +457,15 @@ mod impl_export {
         #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
             T::export_info(hint)
+        }
+    }
+
+    impl Export for VariantArray<Shared> {
+        type Hint = ArrayHint;
+
+        #[inline]
+        fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
+            hint.unwrap_or_default().export_info()
         }
     }
 }
