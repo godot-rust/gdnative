@@ -1156,7 +1156,9 @@ pub trait RefKindSpec: Sized {
     #[doc(hidden)]
     unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
         ptr: NonNull<sys::godot_object>,
-    ) -> Option<Ref<T, Unique>>;
+    ) -> Option<Ref<T, Unique>>
+    where
+        Self: RefKind;
 
     #[doc(hidden)]
     unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
