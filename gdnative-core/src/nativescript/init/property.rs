@@ -19,6 +19,12 @@ use accessor::{Getter, InvalidGetter, InvalidSetter, RawGetter, RawSetter, Sette
 /// Trait for exportable types.
 pub trait Export: ToVariant {
     /// A type-specific hint type that is valid for the type being exported.
+    ///
+    /// If this type shows up as `NoHint`, a private, uninhabitable type indicating
+    /// that there are no hints available for the time being, users *must* use `None`
+    /// for properties of this type. This ensures that it will not be a breaking change
+    /// to add a hint for the type later, since it supports no operations and cannot
+    /// be named directly in user code.
     type Hint;
 
     /// Returns `ExportInfo` given an optional typed hint.
@@ -319,6 +325,13 @@ impl Usage {
 mod impl_export {
     use super::*;
 
+    /// Hint type indicating that there are no hints available for the time being.
+    ///
+    /// This is an inhabitable type that cannot be constructed. As a result, users
+    /// *must* use `None` for the property hint when exporting types using this as
+    /// the hint.
+    pub enum NoHint {}
+
     macro_rules! impl_export_for_int {
         ($ty:ident) => {
             impl Export for $ty {
@@ -382,7 +395,7 @@ mod impl_export {
     macro_rules! impl_export_for_core_type_without_hint {
         ($ty:ty: $variant_ty:ident) => {
             impl Export for $ty {
-                type Hint = ();
+                type Hint = NoHint;
                 #[inline]
                 fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
                     ExportInfo::new(VariantType::$variant_ty)
@@ -430,7 +443,7 @@ mod impl_export {
     where
         T: GodotObject,
     {
-        type Hint = ();
+        type Hint = NoHint;
         #[inline]
         fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
             ExportInfo::resource_type::<T>()
@@ -442,7 +455,7 @@ mod impl_export {
         T: NativeClass,
         Instance<T, Shared>: ToVariant,
     {
-        type Hint = ();
+        type Hint = NoHint;
         #[inline]
         fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
             ExportInfo::resource_type::<T::Base>()
