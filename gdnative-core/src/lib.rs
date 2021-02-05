@@ -41,6 +41,7 @@ mod init;
 #[cfg(feature = "nativescript")]
 pub mod nativescript;
 
+pub mod log;
 mod new_ref;
 pub mod object;
 pub mod ref_kind;

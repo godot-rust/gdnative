@@ -20,14 +20,14 @@ pub use gdnative_core::NewRef;
 pub use gdnative_core::nativescript::{
     self,
     class::{Instance, RefInstance},
-    init::{ClassBuilder, InitHandle, Signal, SignalArgument},
+    init::{ClassBuilder, InitHandle, Method, MethodBuilder, Signal, SignalArgument},
     user_data::{self, Aether, ArcData, LocalCellData, MutexData, RwLockData},
     ExportInfo, NativeClass, NativeClassMethods, PropertyUsage,
 };
 
 pub use gdnative_core::{
     godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
-    godot_nativescript_init, godot_print, godot_warn,
+    godot_nativescript_init, godot_print, godot_site, godot_warn,
 };
 
 pub use gdnative_derive::*;

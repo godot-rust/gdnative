@@ -94,135 +94,48 @@ macro_rules! godot_wrap_method_inner {
         ) -> $retty:ty
     ) => {
         {
-            #[allow(unused_unsafe, unused_variables, unused_assignments, unused_mut)]
-            #[allow(clippy::transmute_ptr_to_ptr)]
-            unsafe extern "C" fn method(
-                this: *mut $crate::sys::godot_object,
-                method_data: *mut $crate::libc::c_void,
-                user_data: *mut $crate::libc::c_void,
-                num_args: $crate::libc::c_int,
-                args: *mut *mut $crate::sys::godot_variant
-            ) -> $crate::sys::godot_variant {
+            #[derive(Copy, Clone, Default)]
+            struct ThisMethod;
 
-                use std::panic::{self, AssertUnwindSafe};
-                use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
-                use $crate::object::{GodotObject, Ref, TRef};
+            use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+            use ::gdnative::FromVarargs;
 
-                if user_data.is_null() {
-                    $crate::godot_error!(
-                        "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-                        stringify!($type_name),
-                    );
-                    return $crate::core_types::Variant::new().forget();
-                }
+            #[derive(FromVarargs)]
+            struct Args {
+                $($pname: $pty,)*
+                $(#[opt] $opt_pname: $opt_pty,)*
+            }
 
-                let this = match std::ptr::NonNull::new(this) {
-                    Some(this) => this,
-                    None => {
-                        $crate::godot_error!(
-                            "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
-                            stringify!($type_name),
-                        );
-                        return $crate::core_types::Variant::new().forget();
-                    },
-                };
-
-                let __catch_result = panic::catch_unwind(move || {
-                    let this: Ref<<$type_name as NativeClass>::Base, $crate::thread_access::Shared> = Ref::from_sys(this);
-                    let this: TRef<'_, <$type_name as NativeClass>::Base, _> = this.assume_safe_unchecked();
-                    let __instance: RefInstance<'_, $type_name, _> = RefInstance::from_raw_unchecked(this, user_data);
-
-                    let num_args = num_args as isize;
-
-                    let num_required_params = $crate::godot_wrap_method_parameter_count!($($pname,)*);
-                    if num_args < num_required_params {
-                        $crate::godot_error!("Incorrect number of parameters: required {} but got {}", num_required_params, num_args);
-                        return $crate::core_types::Variant::new();
-                    }
-
-                    let num_optional_params = $crate::godot_wrap_method_parameter_count!($($opt_pname,)*);
-                    let num_max_params = num_required_params + num_optional_params;
-                    if num_args > num_max_params {
-                        $crate::godot_error!("Incorrect number of parameters: expected at most {} but got {}", num_max_params, num_args);
-                        return $crate::core_types::Variant::new();
-                    }
-
-                    let mut offset = 0;
-                    $(
-                        let _variant: &$crate::core_types::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-                        let $pname = match <$pty as $crate::core_types::FromVariant>::from_variant(_variant) {
-                            Ok(val) => val,
-                            Err(err) => {
-                                $crate::godot_error!(
-                                    "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
-                                    idx = offset + 1,
-                                    name = stringify!($pname),
-                                    ty = stringify!($pty),
-                                    err = err,
-                                );
-                                return $crate::core_types::Variant::new();
-                            },
-                        };
-
-                        offset += 1;
-                    )*
-
-                    $(
-                        let $opt_pname = if offset < num_args {
-                            let _variant: &$crate::core_types::Variant = ::std::mem::transmute(&mut **(args.offset(offset)));
-
-                            let $opt_pname = match <$opt_pty as $crate::core_types::FromVariant>::from_variant(_variant) {
-                                Ok(val) => val,
-                                Err(err) => {
-                                    $crate::godot_error!(
-                                        "Cannot convert argument #{idx} ({name}) to {ty}: {err} (non-primitive types may impose structural checks)",
-                                        idx = offset + 1,
-                                        name = stringify!($opt_pname),
-                                        ty = stringify!($opt_pty),
-                                        err = err,
-                                    );
-                                    return $crate::core_types::Variant::new();
-                                },
-                            };
-
-                            offset += 1;
-
-                            $opt_pname
-                        }
-                        else {
-                            <$opt_pty as ::std::default::Default>::default()
-                        };
-                    )*
-
-                    let __ret = __instance
+            #[allow(unused_variables, unused_assignments, unused_mut)]
+            impl $crate::nativescript::init::method::StaticArgsMethod<$type_name> for ThisMethod {
+                type Args = Args;
+                fn call(
+                    &self,
+                    this: RefInstance<'_, $type_name, $crate::thread_access::Shared>,
+                    Args { $($pname,)* $($opt_pname,)* }: Args,
+                ) -> $crate::core_types::Variant {
+                    this
                         .$map_method(|__rust_val, $owner| {
                             let ret = __rust_val.$method_name(
                                 OwnerArg::from_safe_ref($owner),
                                 $($pname,)*
                                 $($opt_pname,)*
                             );
-                            <$retty as $crate::core_types::OwnedToVariant>::owned_to_variant(ret)
+                            OwnedToVariant::owned_to_variant(ret)
                         })
                         .unwrap_or_else(|err| {
                             $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
                             $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
                             $crate::core_types::Variant::new()
-                        });
+                        })
+                }
 
-                    std::mem::drop(__instance);
-
-                    __ret
-                });
-
-                __catch_result
-                    .unwrap_or_else(|_err| {
-                        $crate::godot_error!("gdnative-core: method panicked (check stderr for output)");
-                        $crate::core_types::Variant::new()
-                    })
-                    .forget()
+                fn site() -> Option<$crate::log::Site<'static>> {
+                    Some($crate::godot_site!($type_name::$method_name))
+                }
             }
 
-            method
+            $crate::nativescript::init::method::StaticArgs::new(ThisMethod)
         }
     };
 }

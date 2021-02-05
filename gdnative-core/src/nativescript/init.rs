@@ -31,6 +31,9 @@
 //! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
 //! in the godot-rust repository.
 
+// Temporary for unsafe method registration
+#![allow(deprecated)]
+
 use crate::*;
 
 use std::ffi::CString;
@@ -45,8 +48,12 @@ use crate::private::get_api;
 
 use super::emplace;
 
+pub mod method;
 pub mod property;
 
+pub use self::method::{
+    Method, MethodBuilder, RpcMode, ScriptMethod, ScriptMethodAttributes, ScriptMethodFn, Varargs,
+};
 pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
 
 /// A handle that can register new classes to the engine during initialization.
@@ -212,37 +219,6 @@ impl InitHandle {
     }
 }
 
-pub type ScriptMethodFn = unsafe extern "C" fn(
-    *mut sys::godot_object,
-    *mut libc::c_void,
-    *mut libc::c_void,
-    libc::c_int,
-    *mut *mut sys::godot_variant,
-) -> sys::godot_variant;
-
-pub enum RpcMode {
-    Disabled,
-    Remote,
-    RemoteSync,
-    Master,
-    Puppet,
-    MasterSync,
-    PuppetSync,
-}
-
-pub struct ScriptMethodAttributes {
-    pub rpc_mode: RpcMode,
-}
-
-pub struct ScriptMethod<'l> {
-    pub name: &'l str,
-    pub method_ptr: Option<ScriptMethodFn>,
-    pub attributes: ScriptMethodAttributes,
-
-    pub method_data: *mut libc::c_void,
-    pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
-}
-
 #[derive(Debug)]
 pub struct ClassBuilder<C> {
     init_handle: *mut libc::c_void,
@@ -252,6 +228,7 @@ pub struct ClassBuilder<C> {
 
 impl<C: NativeClass> ClassBuilder<C> {
     #[inline]
+    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
     pub fn add_method_advanced(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
 
@@ -285,6 +262,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     #[inline]
+    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
     pub fn add_method_with_rpc_mode(&self, name: &str, method: ScriptMethodFn, rpc_mode: RpcMode) {
         self.add_method_advanced(ScriptMethod {
             name,
@@ -296,8 +274,33 @@ impl<C: NativeClass> ClassBuilder<C> {
     }
 
     #[inline]
+    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
     pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
         self.add_method_with_rpc_mode(name, method, RpcMode::Disabled);
+    }
+
+    /// Returns a `MethodBuilder` which can be used to add a method to the class being
+    /// registered.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```ignore
+    /// // `Bar` is a stateful method implementing `Method<C>`
+    ///
+    /// builder
+    ///     .build_method("foo", Bar { baz: 42 })
+    ///     .with_rpc_mode(RpcMode::RemoteSync)
+    ///     .done();
+    /// ```
+    #[inline]
+    pub fn build_method<'a, F: Method<C>>(
+        &'a self,
+        name: &'a str,
+        method: F,
+    ) -> MethodBuilder<'a, C, F> {
+        MethodBuilder::new(self, name, method)
     }
 
     /// Returns a `PropertyBuilder` which can be used to add a property to the class being

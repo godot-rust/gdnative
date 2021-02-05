@@ -65,8 +65,8 @@ func _assert_choose(expected, foo, fun, a, which, b):
 func _test_optional_args():
     print(" -- _test_optional_args")
     print("   -- expected error messages for edge cases:")
-    print("     -- Incorrect number of parameters: required 2 but got 1")
-    print("     -- Incorrect number of parameters: expected at most 5 but got 6")
+    print("     -- missing non-optional parameter `b` (#1)")
+    print("     -- 1 excessive argument is given: [I64(6)]")
     print("   -- the test is successful when and only when these errors are shown")
 
     var script = NativeScript.new()
