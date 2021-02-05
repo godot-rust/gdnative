@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/gdnative"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/gdnative-bindings"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/gdnative-core"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/gdnative-derive"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/gdnative-sys"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/bindings_generator"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/impl/proc-macros"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/test"
+    schedule:
+      interval: "daily"
