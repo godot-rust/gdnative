@@ -440,6 +440,21 @@ impl<T, OPT> Clone for RwLockData<T, OPT> {
 #[derive(Debug)]
 pub struct ArcData<T>(Arc<T>);
 
+impl<T> ArcData<T> {
+    /// Returns the internal `Arc<T>`. Useful for API's that require an `Arc`
+    /// directly, or for coercing it into a trait object.
+    ///
+    /// Note that this removes
+    /// the restriction of only being able to access the `NativeClass` instance
+    /// temporarily through the `Map` trait; however, it should be exactly as safe
+    /// as permanently storing an owned `ArcData` and then calling `.map()` on
+    /// it later.
+    #[inline]
+    pub fn into_inner(self) -> Arc<T> {
+        self.0
+    }
+}
+
 unsafe impl<T> UserData for ArcData<T>
 where
     T: NativeClass + Send + Sync,
