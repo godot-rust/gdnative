@@ -125,8 +125,8 @@ where
 
         let path = ::std::ffi::CString::new(self.name).unwrap();
 
-        let set = unsafe { self.setter.as_godot_function() };
-        let get = unsafe { self.getter.as_godot_function() };
+        let set = unsafe { self.setter.into_godot_function() };
+        let get = unsafe { self.getter.into_godot_function() };
 
         unsafe {
             (get_api().godot_nativescript_register_property)(

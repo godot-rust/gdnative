@@ -3,7 +3,7 @@ use gdnative_bindings_generator::*;
 use std::env;
 use std::fs::File;
 use std::io::{BufWriter, Write as _};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
@@ -15,7 +15,7 @@ fn main() {
     let icalls_rs = out_path.join("icalls.rs");
 
     let api = Api::new(&api_data);
-    let docs = GodotXMLDocs::new("docs");
+    let docs = GodotXmlDocs::new("docs");
     let binding_res = generate_bindings(&api, Some(&docs));
 
     {
@@ -111,7 +111,7 @@ fn generate(
     }
 }
 
-fn format_file(output_rs: &PathBuf) {
+fn format_file(output_rs: &Path) {
     print!(
         "Formatting generated file: {}... ",
         output_rs.file_name().and_then(|s| s.to_str()).unwrap()

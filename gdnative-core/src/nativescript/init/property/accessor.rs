@@ -17,16 +17,18 @@ pub use self::invalid::{InvalidGetter, InvalidSetter};
 
 /// Trait for raw property setters.
 ///
-/// It's usually unnecessary to use this directly.
+/// This is an internal interface. User code should not use this directly.
 pub unsafe trait RawSetter<C, T> {
-    unsafe fn as_godot_function(self) -> sys::godot_property_set_func;
+    #[doc(hidden)]
+    unsafe fn into_godot_function(self) -> sys::godot_property_set_func;
 }
 
 /// Trait for raw property getters.
 ///
-/// It's usually unnecessary to use this directly.
+/// This is an internal interface. User code should not use this directly.
 pub unsafe trait RawGetter<C, T> {
-    unsafe fn as_godot_function(self) -> sys::godot_property_get_func;
+    #[doc(hidden)]
+    unsafe fn into_godot_function(self) -> sys::godot_property_get_func;
 }
 
 #[derive(Debug)]
@@ -206,7 +208,7 @@ where
     SelfArg: MapSet<C, F, T>,
 {
     #[inline]
-    unsafe fn as_godot_function(self) -> sys::godot_property_set_func {
+    unsafe fn into_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
         let data = Box::new(self.func);
         set.method_data = Box::into_raw(data) as *mut _;
@@ -281,7 +283,7 @@ where
     (SelfArg, RetKind): MapGet<C, F, T>,
 {
     #[inline]
-    unsafe fn as_godot_function(self) -> sys::godot_property_get_func {
+    unsafe fn into_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
         let data = Box::new(self.func);
         get.method_data = Box::into_raw(data) as *mut _;

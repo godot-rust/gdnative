@@ -43,7 +43,7 @@ pub struct BindingResult {
     pub icalls: TokenStream,
 }
 
-pub fn generate_bindings(api: &Api, docs: Option<&GodotXMLDocs>) -> BindingResult {
+pub fn generate_bindings(api: &Api, docs: Option<&GodotXmlDocs>) -> BindingResult {
     let mut icalls = HashMap::new();
 
     let class_bindings = api
@@ -80,7 +80,7 @@ fn generate_class_bindings(
     api: &Api,
     class: &GodotClass,
     icalls: &mut HashMap<String, MethodSig>,
-    docs: Option<&GodotXMLDocs>,
+    docs: Option<&GodotXmlDocs>,
 ) -> TokenStream {
     // types and methods
     let types_and_methods = {

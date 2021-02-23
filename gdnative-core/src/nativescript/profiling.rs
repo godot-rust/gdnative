@@ -96,11 +96,11 @@ impl Signature<'static> {
     /// If `file` or `tag` contain `::` or NUL-bytes.
     #[inline]
     pub fn new(file: &str, line: u32, tag: &str) -> Self {
-        if file.find("::").is_some() {
+        if file.contains("::") {
             panic!("file name should not contain `::`");
         }
 
-        if tag.find("::").is_some() {
+        if tag.contains("::") {
             panic!("tag should not contain `::`");
         }
 

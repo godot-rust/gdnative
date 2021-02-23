@@ -3,18 +3,18 @@ use std::{collections::HashMap, fs};
 use roxmltree::Node;
 
 #[derive(Debug)]
-pub struct GodotXMLDocs {
+pub struct GodotXmlDocs {
     class_fn_desc: HashMap<(String, String), String>,
 }
 
-impl GodotXMLDocs {
+impl GodotXmlDocs {
     pub fn new(folder: &str) -> Self {
         let entries = fs::read_dir(folder)
             .unwrap()
             .map(|e| e.unwrap().path())
             .collect::<Vec<_>>();
 
-        let mut docs = GodotXMLDocs {
+        let mut docs = GodotXmlDocs {
             class_fn_desc: HashMap::default(),
         };
 
