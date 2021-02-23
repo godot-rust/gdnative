@@ -63,7 +63,7 @@
 //! - You don't need to do anything special in `Drop`.
 
 use parking_lot::{Mutex, RwLock};
-use std::fmt::Debug;
+use std::fmt::{self, Debug, Display};
 use std::marker::PhantomData;
 use std::mem;
 use std::sync::Arc;
@@ -143,6 +143,20 @@ pub trait MapMut: UserData {
     fn map_mut<F, U>(&self, op: F) -> Result<U, Self::Err>
     where
         F: FnOnce(&mut Self::Target) -> U;
+}
+
+/// Trait for wrappers that can be mapped once.
+pub trait MapOwned: UserData {
+    type Err: Debug;
+
+    /// Maps a `T` to `U`. Called for methods that take `self`. This method may fail with
+    /// an error if it is called more than once on the same object.
+    ///
+    /// Implementations of this method must not panic. Failures should be indicated by
+    /// returning `Err`.
+    fn map_owned<F, U>(&self, op: F) -> Result<U, Self::Err>
+    where
+        F: FnOnce(Self::Target) -> U;
 }
 
 /// The default user data wrapper used by derive macro, when no `user_data` attribute is present.
@@ -440,6 +454,21 @@ impl<T, OPT> Clone for RwLockData<T, OPT> {
 #[derive(Debug)]
 pub struct ArcData<T>(Arc<T>);
 
+impl<T> ArcData<T> {
+    /// Returns the internal `Arc<T>`. Useful for API's that require an `Arc`
+    /// directly, or for coercing it into a trait object.
+    ///
+    /// Note that this removes
+    /// the restriction of only being able to access the `NativeClass` instance
+    /// temporarily through the `Map` trait; however, it should be exactly as safe
+    /// as permanently storing an owned `ArcData` and then calling `.map()` on
+    /// it later.
+    #[inline]
+    pub fn into_inner(self) -> Arc<T> {
+        self.0
+    }
+}
+
 unsafe impl<T> UserData for ArcData<T>
 where
     T: NativeClass + Send + Sync,
@@ -730,5 +759,78 @@ where
         F: FnOnce(&T) -> U,
     {
         Ok(op(&Default::default()))
+    }
+}
+
+/// Special user-data wrapper intended for objects that can only be used once. Only
+/// implements `MapOwned`.
+pub struct Once<T>(Arc<atomic_take::AtomicTake<T>>);
+
+impl<T> Clone for Once<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Once(Arc::clone(&self.0))
+    }
+}
+
+unsafe impl<T> UserData for Once<T>
+where
+    T: NativeClass + Send,
+{
+    type Target = T;
+
+    #[inline]
+    fn new(val: Self::Target) -> Self {
+        Once(Arc::new(atomic_take::AtomicTake::new(val)))
+    }
+
+    #[inline]
+    fn into_user_data(self) -> *const libc::c_void {
+        Arc::into_raw(self.0) as *const _
+    }
+
+    #[inline]
+    unsafe fn consume_user_data_unchecked(ptr: *const libc::c_void) -> Self {
+        Once(Arc::from_raw(ptr as *const _))
+    }
+
+    #[inline]
+    unsafe fn clone_from_user_data_unchecked(ptr: *const libc::c_void) -> Self {
+        let borrowed = Arc::from_raw(ptr as *const _);
+        let arc = Arc::clone(&borrowed);
+        mem::forget(borrowed);
+        Once(arc)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct ValueTaken;
+
+impl std::error::Error for ValueTaken {}
+impl Display for ValueTaken {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "this object has already been used once")
+    }
+}
+
+impl<T> MapOwned for Once<T>
+where
+    T: NativeClass + Send,
+{
+    type Err = ValueTaken;
+
+    /// Maps a `T` to `U`. Called for methods that take `self`. This method may fail with
+    /// an error if it is called more than once on the same object.
+    ///
+    /// Implementations of this method must not panic. Failures should be indicated by
+    /// returning `Err`.
+    #[inline]
+    fn map_owned<F, U>(&self, op: F) -> Result<U, Self::Err>
+    where
+        F: FnOnce(Self::Target) -> U,
+    {
+        let v = self.0.take().ok_or(ValueTaken)?;
+        Ok(op(v))
     }
 }

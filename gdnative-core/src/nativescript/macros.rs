@@ -188,6 +188,50 @@ macro_rules! godot_wrap_method {
             ) -> $retty
         )
     };
+    // owned
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            mut $self:ident,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            $(,)?
+        ) -> $retty:ty
+    ) => {
+        $crate::godot_wrap_method_inner!(
+            $type_name,
+            map_owned,
+            fn $method_name(
+                $self,
+                $owner: $owner_ty
+                $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
+            ) -> $retty
+        )
+    };
+    // owned
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            $self:ident,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            $(,)?
+        ) -> $retty:ty
+    ) => {
+        $crate::godot_wrap_method_inner!(
+            $type_name,
+            map_owned,
+            fn $method_name(
+                $self,
+                $owner: $owner_ty
+                $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
+            ) -> $retty
+        )
+    };
     // mutable without return type
     (
         $type_name:ty,
@@ -224,6 +268,48 @@ macro_rules! godot_wrap_method {
             $type_name,
             fn $method_name(
                 & $self,
+                $owner: $owner_ty
+                $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
+            ) -> ()
+        )
+    };
+    // owned without return type
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            mut $self:ident,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            $(,)?
+        )
+    ) => {
+        $crate::godot_wrap_method!(
+            $type_name,
+            fn $method_name(
+                $self,
+                $owner: $owner_ty
+                $(,$pname : $pty)*
+                $(,#[opt] $opt_pname : $opt_pty)*
+            ) -> ()
+        )
+    };
+    // owned without return type
+    (
+        $type_name:ty,
+        fn $method_name:ident(
+            $self:ident,
+            $owner:ident : $owner_ty:ty
+            $(,$pname:ident : $pty:ty)*
+            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            $(,)?
+        )
+    ) => {
+        $crate::godot_wrap_method!(
+            $type_name,
+            fn $method_name(
+                $self,
                 $owner: $owner_ty
                 $(,$pname : $pty)*
                 $(,#[opt] $opt_pname : $opt_pty)*

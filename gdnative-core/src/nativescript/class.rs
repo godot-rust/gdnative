@@ -4,9 +4,7 @@ use crate::core_types::{
     FromVariant, FromVariantError, GodotString, OwnedToVariant, ToVariant, Variant,
 };
 use crate::nativescript::init::ClassBuilder;
-use crate::nativescript::Map;
-use crate::nativescript::MapMut;
-use crate::nativescript::UserData;
+use crate::nativescript::{Map, MapMut, MapOwned, UserData};
 use crate::object::{
     AssumeSafeLifetime, LifetimeConstraint, QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw,
     SafeDeref, TRef,
@@ -441,6 +439,18 @@ where
         self.script
             .map_mut(|script| op(script, self.owner.as_ref()))
     }
+
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value. Can be used on reference counted types for multiple times.
+    #[inline]
+    pub fn map_owned<F, U>(&self, op: F) -> Result<U, <T::UserData as MapOwned>::Err>
+    where
+        T::UserData: MapOwned,
+        F: FnOnce(T, TRef<'_, T::Base, Access>) -> U,
+    {
+        self.script
+            .map_owned(|script| op(script, self.owner.as_ref()))
+    }
 }
 
 /// Methods for instances with manually-managed base classes.
@@ -647,6 +657,17 @@ where
         F: FnOnce(&mut T, TRef<'_, T::Base, Access>) -> U,
     {
         self.script.map_mut(|script| op(script, self.owner))
+    }
+
+    /// Calls a function with a NativeClass instance and its owner, and returns its return
+    /// value.
+    #[inline]
+    pub fn map_owned<F, U>(&self, op: F) -> Result<U, <T::UserData as MapOwned>::Err>
+    where
+        T::UserData: MapOwned,
+        F: FnOnce(T, TRef<'_, T::Base, Access>) -> U,
+    {
+        self.script.map_owned(|script| op(script, self.owner))
     }
 }
 

@@ -5,6 +5,7 @@ use gdnative::prelude::*;
 mod test_constructor;
 mod test_derive;
 mod test_free_ub;
+mod test_map_owned;
 mod test_register;
 mod test_return_leak;
 mod test_vararray_return;
@@ -61,6 +62,7 @@ pub extern "C" fn run_tests(
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
     status &= test_constructor::run_tests();
+    status &= test_map_owned::run_tests();
     status &= test_register::run_tests();
     status &= test_return_leak::run_tests();
     status &= test_variant_call_args::run_tests();
@@ -255,6 +257,7 @@ fn init(handle: InitHandle) {
     test_derive::register(handle);
     test_free_ub::register(handle);
     test_constructor::register(handle);
+    test_map_owned::register(handle);
     test_register::register(handle);
     test_return_leak::register(handle);
     test_variant_call_args::register(handle);

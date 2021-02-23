@@ -11,4 +11,4 @@ pub mod user_data;
 
 pub use class::*;
 pub use init::*;
-pub use user_data::{Map, MapMut, UserData};
+pub use user_data::{Map, MapMut, MapOwned, UserData};
