@@ -3,6 +3,6 @@
 [ext_resource path="res://dodge_the_creeps_library.gdnlib" type="GDNativeLibrary" id=1]
 
 [resource]
-resource_name = "HUD"
-class_name = "HUD"
+resource_name = "Hud"
+class_name = "Hud"
 library = ExtResource( 1 )

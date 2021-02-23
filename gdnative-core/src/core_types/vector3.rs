@@ -27,6 +27,7 @@ pub trait Vector3Godot {
     fn distance_squared_to(self, other: Vector3) -> f32;
 
     #[doc(hidden)]
+    #[allow(clippy::wrong_self_convention)]
     fn to_sys(self) -> sys::godot_vector3;
     /// Internal API for converting to `sys` representation. Makes it possible to remove
     /// `transmute`s elsewhere.

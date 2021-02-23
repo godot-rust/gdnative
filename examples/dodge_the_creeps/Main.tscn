@@ -3,7 +3,7 @@
 [ext_resource path="res://Main.gdns" type="Script" id=1]
 [ext_resource path="res://Mob.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Player.tscn" type="PackedScene" id=3]
-[ext_resource path="res://HUD.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Hud.tscn" type="PackedScene" id=4]
 
 [sub_resource type="Curve2D" id=1]
 _data = {

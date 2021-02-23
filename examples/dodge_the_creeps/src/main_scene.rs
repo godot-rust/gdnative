@@ -32,7 +32,7 @@ impl Main {
         score_timer.stop();
         mob_timer.stop();
 
-        let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+        let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
         hud.map(|x, o| x.show_game_over(&*o))
             .ok()
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
@@ -57,7 +57,7 @@ impl Main {
 
         start_timer.start(0.0);
 
-        let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+        let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
         hud.map(|x, o| {
             x.update_score(&*o, self.score);
             x.show_message(&*o, "Get Ready".into());
@@ -78,7 +78,7 @@ impl Main {
     fn on_score_timer_timeout(&mut self, owner: &Node) {
         self.score += 1;
 
-        let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+        let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
         hud.map(|x, o| x.update_score(&*o, self.score))
             .ok()
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
@@ -119,7 +119,7 @@ impl Main {
             mob_owner
                 .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
 
-            let hud = unsafe { owner.get_node_as_instance::<hud::HUD>("hud").unwrap() };
+            let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
 
             hud.map(|_, o| {
                 o.connect(

@@ -35,6 +35,7 @@ pub trait Vector2Godot {
     /// Internal API for converting to `sys` representation. Makes it possible to remove
     /// `transmute`s elsewhere.
     #[doc(hidden)]
+    #[allow(clippy::wrong_self_convention)]
     fn to_sys(self) -> sys::godot_vector2;
     /// Internal API for converting to `sys` representation. Makes it possible to remove
     /// `transmute`s elsewhere.

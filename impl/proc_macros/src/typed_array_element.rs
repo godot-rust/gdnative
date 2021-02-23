@@ -161,6 +161,7 @@ fn fn_ty(method: &str) -> Type {
     }
 }
 
+#[allow(clippy::unnecessary_wraps)]
 fn expand(input: Args) -> Result<TokenStream, syn::Error> {
     let Args {
         trait_name,

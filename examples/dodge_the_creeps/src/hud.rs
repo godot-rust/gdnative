@@ -2,12 +2,12 @@ use gdnative::prelude::*;
 
 #[derive(NativeClass)]
 #[inherit(CanvasLayer)]
-#[user_data(user_data::ArcData<HUD>)]
+#[user_data(user_data::ArcData<Hud>)]
 #[register_with(Self::register_hud)]
-pub struct HUD;
+pub struct Hud;
 
 #[methods]
-impl HUD {
+impl Hud {
     fn register_hud(builder: &ClassBuilder<Self>) {
         builder.add_signal(Signal {
             name: "start_game",
@@ -16,7 +16,7 @@ impl HUD {
     }
 
     fn new(_owner: &CanvasLayer) -> Self {
-        HUD
+        Hud
     }
 
     #[export]

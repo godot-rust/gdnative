@@ -141,10 +141,10 @@ where
     }
 }
 
-impl Into<String> for NodePath {
+impl From<NodePath> for String {
     #[inline]
-    fn into(self) -> String {
-        self.to_string()
+    fn from(p: NodePath) -> String {
+        p.to_string()
     }
 }
 
@@ -155,10 +155,10 @@ impl From<GodotString> for NodePath {
     }
 }
 
-impl Into<GodotString> for NodePath {
+impl From<NodePath> for GodotString {
     #[inline]
-    fn into(self) -> GodotString {
-        self.to_godot_string()
+    fn from(p: NodePath) -> GodotString {
+        p.to_godot_string()
     }
 }
 

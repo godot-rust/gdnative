@@ -1,5 +1,5 @@
 use crate::api::*;
-use crate::class_docs::GodotXMLDocs;
+use crate::class_docs::GodotXmlDocs;
 use crate::rust_safe_name;
 
 use proc_macro2::TokenStream;
@@ -250,7 +250,7 @@ fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
     if name.starts_with("get_") && class.is_getter(name) {
         &name[4..]
     } else {
-        &name[..]
+        &name
     }
 }
 
@@ -263,7 +263,7 @@ const UNSAFE_OBJECT_METHODS: &[(&str, &str)] = &[
 pub(crate) fn generate_methods(
     class: &GodotClass,
     icalls: &mut HashMap<String, MethodSig>,
-    docs: Option<&GodotXMLDocs>,
+    docs: Option<&GodotXmlDocs>,
 ) -> TokenStream {
     // Brings values of some types to a type with less information.
     fn arg_erase(ty: &Ty, name: &proc_macro2::Ident) -> TokenStream {
