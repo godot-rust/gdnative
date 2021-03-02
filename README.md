@@ -27,6 +27,16 @@ The generator makes use of `bindgen`, which depends on Clang. Instructions for i
 
 `bindgen` may complain about a missing `llvm-config` binary, but it is not actually required to build the `gdnative` crate. If you see a warning about `llvm-config` and a failed build, it's likely that you're having a different problem!
 
+### 'Header not found' errors
+
+When building the library, `bindgen` may produce errors that look like this:
+
+```
+godot-rust\gdnative-sys/godot_headers\gdnative/string.h:39:10: fatal error: 'wchar.h' file not found
+```
+
+This means that `bindgen` was unable to find the C system headers for your platform. If you can locate the headers manually, you may try setting the `C_INCLUDE_PATH` environment variable so `libclang` could find them. If on Windows, you may try building from the Visual Studio "developer console", which should setup the appropriate variables for you.
+
 ## Usage
 
 ### Godot 3.2.3-stable
