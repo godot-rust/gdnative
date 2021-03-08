@@ -5,7 +5,7 @@ struct Foo {}
 
 #[methods]
 impl Foo {
-    fn new(_owner: &Node) -> Self {
+    fn new(_owner: &Reference) -> Self {
         Foo {}
     }
 }
