@@ -83,9 +83,10 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 
 /// Makes it possible to use a type as a NativeScript.
 ///
-/// ## Required attributes
+/// ## Type attributes
 ///
-/// The following attributes are required on the type deriving `NativeClass`:
+/// The behavior of the derive macro can be customized using attributes on the type
+/// deriving `NativeClass`. All type attributes are optional.
 ///
 /// ### `#[inherit(gdnative::api::BaseClass)]`
 ///
@@ -97,9 +98,10 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// Inheritance from other scripts, either in Rust or other languages, is
 /// not supported.
 ///
-/// ## Optional type attributes
+/// If no `#[inherit(...)]` is provided, [`gdnative::api::Reference`](../gdnative/api/struct.Reference.html)
+/// is used as a base class. This behavior is consistent with GDScript: omitting the
+/// `extends` keyword will inherit `Reference`.
 ///
-/// Behavior of the derive macro can be customized using attribute on the type:
 ///
 /// ### `#[user_data(gdnative::user_data::SomeWrapper<Self>)]`
 ///
@@ -134,7 +136,10 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// See documentation on `Instance::emplace` for an example on how this can be used.
 ///
-/// ## Optional field attributes
+///
+/// ## Field attributes
+///
+/// All field attributes are optional.
 ///
 /// ### `#[property]`
 ///
