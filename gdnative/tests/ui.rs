@@ -5,8 +5,8 @@ fn ui_tests() {
     // NativeClass
     t.pass("tests/ui/derive_pass.rs");
     t.pass("tests/ui/derive_property_basic.rs");
+    t.pass("tests/ui/derive_no_inherit.rs");
     t.compile_fail("tests/ui/derive_fail_property_hint.rs");
-    t.compile_fail("tests/ui/derive_fail_inherit.rs");
     t.compile_fail("tests/ui/derive_fail_inherit_param.rs");
     t.compile_fail("tests/ui/derive_fail_methods.rs");
     t.compile_fail("tests/ui/derive_fail_methods_param.rs");

@@ -144,14 +144,14 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
 
     let ident = input.ident.clone();
 
-    let inherit_attr = input
-        .attrs
-        .iter()
-        .find(|a| a.path.is_ident("inherit"))
-        .ok_or_else(|| syn::Error::new(span, "No \"inherit\" attribute found"))?;
+    let inherit_attr = input.attrs.iter().find(|a| a.path.is_ident("inherit"));
 
     // read base class
-    let base = inherit_attr.parse_args::<Type>()?;
+    let base = if let Some(attr) = inherit_attr {
+        attr.parse_args::<Type>()?
+    } else {
+        syn::parse2::<Type>(quote! { ::gdnative::api::Reference }).unwrap()
+    };
 
     let register_callback = input
         .attrs
