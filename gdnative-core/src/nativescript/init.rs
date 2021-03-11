@@ -313,7 +313,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// ```ignore
     /// builder
     ///     .add_property("foo")
-    ///     .default(0.0)
+    ///     .with_default(0.0)
     ///     .with_hint((-10.0..=30.0).into())
     ///     .with_getter(MyType::get_foo)
     ///     .with_setter(MyType::set_foo)
