@@ -2,8 +2,8 @@ pub use gdnative_core::core_types::{
     self, error::GodotError, Aabb, Angle, Basis, ByteArray, Color, ColorArray, Dictionary,
     Float32Array, GodotString, Int32Array, NodePath, Plane, Point2, Point3, Quat, Rect2, Rid,
     Rotation2D, Rotation3D, Size2, StringArray, StringName, Transform, Transform2D, TypedArray,
-    Variant, VariantArray, VariantOperator, VariantType, Vector2, Vector2Array, Vector3,
-    Vector3Array,
+    Variant, VariantArray, VariantDispatch, VariantOperator, VariantType, Vector2, Vector2Array,
+    Vector3, Vector3Array,
 };
 pub use gdnative_core::core_types::{
     FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq, Vector2Godot,
