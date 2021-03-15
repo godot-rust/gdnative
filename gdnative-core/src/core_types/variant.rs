@@ -84,37 +84,88 @@ macro_rules! variant_to_type_from_sys {
     )
 }
 
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum VariantType {
-    Nil = sys::godot_variant_type_GODOT_VARIANT_TYPE_NIL as u32,
-    Bool = sys::godot_variant_type_GODOT_VARIANT_TYPE_BOOL as u32,
-    I64 = sys::godot_variant_type_GODOT_VARIANT_TYPE_INT as u32,
-    F64 = sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL as u32,
-    GodotString = sys::godot_variant_type_GODOT_VARIANT_TYPE_STRING as u32,
-    Vector2 = sys::godot_variant_type_GODOT_VARIANT_TYPE_VECTOR2 as u32,
-    Rect2 = sys::godot_variant_type_GODOT_VARIANT_TYPE_RECT2 as u32,
-    Vector3 = sys::godot_variant_type_GODOT_VARIANT_TYPE_VECTOR3 as u32,
-    Transform2D = sys::godot_variant_type_GODOT_VARIANT_TYPE_TRANSFORM2D as u32,
-    Plane = sys::godot_variant_type_GODOT_VARIANT_TYPE_PLANE as u32,
-    Quat = sys::godot_variant_type_GODOT_VARIANT_TYPE_QUAT as u32,
-    Aabb = sys::godot_variant_type_GODOT_VARIANT_TYPE_AABB as u32,
-    Basis = sys::godot_variant_type_GODOT_VARIANT_TYPE_BASIS as u32,
-    Transform = sys::godot_variant_type_GODOT_VARIANT_TYPE_TRANSFORM as u32,
-    Color = sys::godot_variant_type_GODOT_VARIANT_TYPE_COLOR as u32,
-    NodePath = sys::godot_variant_type_GODOT_VARIANT_TYPE_NODE_PATH as u32,
-    Rid = sys::godot_variant_type_GODOT_VARIANT_TYPE_RID as u32,
-    Object = sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT as u32,
-    Dictionary = sys::godot_variant_type_GODOT_VARIANT_TYPE_DICTIONARY as u32,
-    VariantArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_ARRAY as u32,
-    ByteArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY as u32,
-    Int32Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_INT_ARRAY as u32,
-    Float32Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_REAL_ARRAY as u32,
-    StringArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_STRING_ARRAY as u32,
-    Vector2Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY as u32,
-    Vector3Array = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY as u32,
-    ColorArray = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY as u32,
+macro_rules! variant_dispatch_arm {
+    ($v:expr, $variant:ident ( $inner:ty )) => {
+        VariantDispatch::$variant(<$inner>::from_variant($v).unwrap())
+    };
+    ($v:expr, $variant:ident) => {
+        VariantDispatch::$variant
+    };
 }
+
+macro_rules! decl_variant_type {
+    (
+        pub enum VariantType, VariantDispatch {
+            $(
+                $variant:ident $( ($inner:ty) )? = $c_const:path,
+            )*
+        }
+    ) => {
+        #[repr(u32)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+        pub enum VariantType {
+            $(
+                $variant = $c_const as u32,
+            )*
+        }
+
+        /// Rust enum associating each primitive variant type to its value.
+        ///
+        /// For `Variant`s containing objects, the original `Variant` is returned unchanged, due to
+        /// the limitations of statically-determined memory management.
+        #[repr(u32)]
+        pub enum VariantDispatch {
+            $(
+                $variant $( ($inner) )?,
+            )*
+        }
+
+        impl<'a> From<&'a Variant> for VariantDispatch {
+            #[inline]
+            fn from(v: &'a Variant) -> Self {
+                match v.get_type() {
+                    $(
+                        VariantType::$variant => {
+                            variant_dispatch_arm!(v, $variant $( ($inner) )?)
+                        },
+                    )*
+                }
+            }
+        }
+    }
+}
+
+decl_variant_type!(
+    pub enum VariantType, VariantDispatch {
+        Nil = sys::godot_variant_type_GODOT_VARIANT_TYPE_NIL,
+        Bool(bool) = sys::godot_variant_type_GODOT_VARIANT_TYPE_BOOL,
+        I64(i64) = sys::godot_variant_type_GODOT_VARIANT_TYPE_INT,
+        F64(f64) = sys::godot_variant_type_GODOT_VARIANT_TYPE_REAL,
+        GodotString(GodotString) = sys::godot_variant_type_GODOT_VARIANT_TYPE_STRING,
+        Vector2(Vector2) = sys::godot_variant_type_GODOT_VARIANT_TYPE_VECTOR2,
+        Rect2(Rect2) = sys::godot_variant_type_GODOT_VARIANT_TYPE_RECT2,
+        Vector3(Vector3) = sys::godot_variant_type_GODOT_VARIANT_TYPE_VECTOR3,
+        Transform2D(Transform2D) = sys::godot_variant_type_GODOT_VARIANT_TYPE_TRANSFORM2D,
+        Plane(Plane) = sys::godot_variant_type_GODOT_VARIANT_TYPE_PLANE,
+        Quat(Quat) = sys::godot_variant_type_GODOT_VARIANT_TYPE_QUAT,
+        Aabb(Aabb) = sys::godot_variant_type_GODOT_VARIANT_TYPE_AABB,
+        Basis(Basis) = sys::godot_variant_type_GODOT_VARIANT_TYPE_BASIS,
+        Transform(Transform) = sys::godot_variant_type_GODOT_VARIANT_TYPE_TRANSFORM,
+        Color(Color) = sys::godot_variant_type_GODOT_VARIANT_TYPE_COLOR,
+        NodePath(NodePath) = sys::godot_variant_type_GODOT_VARIANT_TYPE_NODE_PATH,
+        Rid(Rid) = sys::godot_variant_type_GODOT_VARIANT_TYPE_RID,
+        Object(Variant) = sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT,
+        Dictionary(Dictionary) = sys::godot_variant_type_GODOT_VARIANT_TYPE_DICTIONARY,
+        VariantArray(VariantArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_ARRAY,
+        ByteArray(ByteArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY,
+        Int32Array(Int32Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_INT_ARRAY,
+        Float32Array(Float32Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_REAL_ARRAY,
+        StringArray(StringArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_STRING_ARRAY,
+        Vector2Array(Vector2Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY,
+        Vector3Array(Vector3Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY,
+        ColorArray(ColorArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY,
+    }
+);
 
 impl VariantType {
     #[doc(hidden)]
@@ -672,6 +723,24 @@ impl Variant {
     #[inline]
     pub fn get_type(&self) -> VariantType {
         unsafe { VariantType::from_sys((get_api().godot_variant_get_type)(&self.0)) }
+    }
+
+    /// Converts this variant to a primitive value depending on its type.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let variant = 42.to_variant();
+    /// let number_as_float = match variant.dispatch() {
+    ///     VariantDispatch::I64(i) => i as f64,
+    ///     VariantDispatch::F64(f) => f,
+    ///     _ => panic!("not a number"),
+    /// };
+    /// approx::assert_relative_eq!(42.0, number_as_float);
+    /// ```
+    #[inline]
+    pub fn dispatch(&self) -> VariantDispatch {
+        self.into()
     }
 
     /// Returns true if this is an empty variant.
@@ -1927,5 +1996,29 @@ godot_test!(
 
         let tuple = <(i64, i64)>::from_variant(&variant);
         assert_eq!(Ok((42, 54)), tuple);
+    }
+
+    test_variant_dispatch {
+        let variant = 42i64.to_variant();
+        if let VariantDispatch::I64(i) = variant.dispatch() {
+            assert_eq!(42, i);
+        } else {
+            panic!("incorrect dispatch type");
+        };
+
+        let variant = true.to_variant();
+        if let VariantDispatch::Bool(b) = variant.dispatch() {
+            assert!(b);
+        } else {
+            panic!("incorrect dispatch type");
+        };
+
+        let variant = 42.to_variant();
+        let number_as_float = match variant.dispatch() {
+            VariantDispatch::I64(i) => i as f64,
+            VariantDispatch::F64(f) => f,
+            _ => panic!("not a number"),
+        };
+        approx::assert_relative_eq!(42.0, number_as_float);
     }
 );

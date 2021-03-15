@@ -14,6 +14,13 @@ use crate::NewRef;
 /// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
 /// element types.
 ///
+/// `TypedArray` unifies all the different `Pool*Array` types exported by Godot. It can be used
+/// in exported Rust methods as parameter and return types, as well as in exported properties.
+/// However, it is limited to the element types, for which a `Pool*Array` exists in GDScript,
+/// i.e. it cannot contain user-defined types.
+/// If you need other types, look into [`VariantArray`](struct.VariantArray.html) or directly use
+/// `Vec<T>` for type safety.
+///
 /// This type is CoW. The `Clone` implementation of this type creates a new reference without
 /// copying the contents.
 ///
