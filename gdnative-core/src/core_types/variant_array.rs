@@ -157,6 +157,18 @@ impl<Access: ThreadAccess> VariantArray<Access> {
         }
     }
 
+    /// Create a deep copy of the array.
+    ///
+    /// This creates a new array and is **not** a cheap reference count
+    /// increment.
+    #[inline]
+    pub fn duplicate_deep(&self) -> VariantArray<Unique> {
+        unsafe {
+            let sys = (get_api().godot_array_duplicate)(self.sys(), true);
+            VariantArray::<Unique>::from_sys(sys)
+        }
+    }
+
     /// Returns an iterator through all values in the `VariantArray`.
     ///
     /// `VariantArray` is reference-counted and have interior mutability in Rust parlance.
@@ -647,6 +659,18 @@ godot_test!(test_array {
         &[42, 1337, 512],
         array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
     );
+
+    let array4 = VariantArray::new(); // []
+    let array5 = VariantArray::new(); // []
+    array4.push(&foo); // [&foo]
+    array4.push(&bar); // [&foo, &bar]
+    array5.push(array4); // [[&foo, &bar]]
+
+    let array6 = array5.duplicate_deep(); // [[&foo, &bar]]
+    unsafe { array5.get(0).to_array().assume_unique().pop(); } // [[&foo]]
+
+    assert!(!array5.get(0).to_array().contains(&bar));
+    assert!(array6.get(0).to_array().contains(&bar));
 });
 
 godot_test!(
