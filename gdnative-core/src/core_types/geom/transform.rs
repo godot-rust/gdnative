@@ -1,5 +1,4 @@
 use crate::core_types::{Basis, Vector3};
-use euclid::{default, Point3D, Transform3D, UnknownUnit};
 
 /// 3D Transformation (3x4 matrix) Using basis + origin representation.
 #[repr(C)]
@@ -33,25 +32,6 @@ impl Transform {
         Transform {
             basis: Basis::identity(),
             origin,
-        }
-    }
-
-    /// Creates a `Basis` from the rotation and scaling of the provided transform.
-    #[inline]
-    pub fn from_transform(transform: &default::Transform3D<f32>) -> Transform {
-        Self::from_typed_transform::<UnknownUnit, UnknownUnit>(transform)
-    }
-
-    /// Creates a `Basis` from the rotation and scaling of the provided transform, in `Dst` space.
-    #[inline]
-    pub fn from_typed_transform<Src, Dst>(transform: &Transform3D<f32, Src, Dst>) -> Transform {
-        Transform {
-            basis: Basis::from_typed_transform(transform),
-            origin: transform
-                .transform_point3d(Point3D::origin())
-                .unwrap_or_else(Point3D::origin)
-                .to_vector()
-                .to_untyped(),
         }
     }
 }

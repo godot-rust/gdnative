@@ -5,9 +5,7 @@ use std::iter::{Extend, FromIterator};
 use gdnative_impl_proc_macros as macros;
 
 use crate::core_types::access::{Aligned, MaybeUnaligned};
-use crate::core_types::{
-    Color, GodotString, VariantArray, Vector2, Vector2Godot, Vector3, Vector3Godot,
-};
+use crate::core_types::{Color, GodotString, VariantArray, Vector2, Vector3};
 use crate::private::get_api;
 use crate::NewRef;
 

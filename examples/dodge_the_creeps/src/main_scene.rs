@@ -116,8 +116,7 @@ impl Main {
             mob_owner
                 .set_linear_velocity(Vector2::new(rng.gen_range(x.min_speed..x.max_speed), 0.0));
 
-            mob_owner
-                .set_linear_velocity(mob_owner.linear_velocity().rotated(Angle { radians: d }));
+            mob_owner.set_linear_velocity(mob_owner.linear_velocity().rotated(d));
 
             let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
 
