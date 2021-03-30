@@ -1,4 +1,3 @@
-use euclid::vec3;
 use gdnative::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -64,7 +63,7 @@ impl SceneCreate {
 
                 let x = (self.children_spawned % 10) as f32;
                 let z = (self.children_spawned / 10) as f32;
-                spatial.translate(vec3(-10.0 + x * 2.0, 0.0, -10.0 + z * 2.0));
+                spatial.translate(Vector3::new(-10.0 + x * 2.0, 0.0, -10.0 + z * 2.0));
 
                 // You need to parent the new scene under some node if you want it in the scene.
                 //   We parent it under ourselves.

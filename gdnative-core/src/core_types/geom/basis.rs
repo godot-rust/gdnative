@@ -1,5 +1,5 @@
-use crate::core_types::{Quat, Vector3};
-use euclid::{approxeq::ApproxEq, default, Transform3D, UnknownUnit, Vector3D};
+use crate::core_types::{IsEqualApprox, Quat, Vector3};
+use core::ops::Mul;
 
 /// A 3x3 matrix.
 #[repr(C)]
@@ -96,7 +96,7 @@ impl Basis {
     #[inline]
     pub fn from_axis_angle(axis: &Vector3, phi: f32) -> Self {
         assert!(
-            axis.length().approx_eq(&1.0),
+            axis.length().is_equal_approx(1.0),
             "The axis Vector3 must be normalized."
         );
 
@@ -147,7 +147,7 @@ impl Basis {
         ];
 
         let det: f32 = x.x * co[0] + x.y * co[1] + x.z * co[2];
-        assert!(!det.approx_eq(&0.0), "Determinant was zero");
+        assert!(!det.is_equal_approx(0.0), "Determinant was zero");
 
         let s: f32 = 1.0 / det;
 
@@ -210,7 +210,7 @@ impl Basis {
     #[inline]
     pub fn orthonormalize(&mut self) {
         assert!(
-            !self.determinant().approx_eq(&0.0),
+            !self.determinant().is_equal_approx(0.0),
             "Determinant should not be zero."
         );
 
@@ -219,11 +219,11 @@ impl Basis {
         let mut y = self.y();
         let mut z = self.z();
 
-        x = x.normalize();
+        x = x.normalized();
         y = y - x * (x.dot(y));
-        y = y.normalize();
+        y = y.normalized();
         z = z - x * (x.dot(z)) - y * (y.dot(z));
-        z = z.normalize();
+        z = z.normalized();
 
         self.set_x(x);
         self.set_y(y);
@@ -241,23 +241,23 @@ impl Basis {
 
     /// Returns `true` if `self` and `other` are approximately equal.
     #[inline]
-    pub fn approx_eq(&self, other: &Basis) -> bool {
-        self.elements[0].approx_eq(&other.elements[0])
-            && self.elements[1].approx_eq(&other.elements[1])
-            && self.elements[2].approx_eq(&other.elements[2])
+    pub fn is_equal_approx(&self, other: &Basis) -> bool {
+        self.elements[0].is_equal_approx(other.elements[0])
+            && self.elements[1].is_equal_approx(other.elements[1])
+            && self.elements[2].is_equal_approx(other.elements[2])
     }
 
     #[inline]
     fn is_orthogonal(&self) -> bool {
         let identity = Self::identity();
         let m = (*self) * self.transposed();
-        m.approx_eq(&identity)
+        m.is_equal_approx(&identity)
     }
 
     #[inline]
     fn is_rotation(&self) -> bool {
         let det = self.determinant();
-        det.approx_eq(&1.0) && self.is_orthogonal()
+        det.is_equal_approx(1.0) && self.is_orthogonal()
     }
 
     /// Multiplies the matrix from left by the rotation matrix: M -> R.M
@@ -328,9 +328,9 @@ impl Basis {
             let k = (i + 2) % 3;
 
             let elements_arr: [[f32; 3]; 3] = [
-                matrix.elements[0].to_array(),
-                matrix.elements[1].to_array(),
-                matrix.elements[2].to_array(),
+                *matrix.elements[0].as_ref(),
+                *matrix.elements[1].as_ref(),
+                *matrix.elements[2].as_ref(),
             ];
 
             let mut s = (elements_arr[i][i] - elements_arr[j][j] - elements_arr[k][k] + 1.0).sqrt();
@@ -343,7 +343,7 @@ impl Basis {
         }
 
         let [a, b, c, r] = temp;
-        Quat::quaternion(a, b, c, r)
+        Quat::new(a, b, c, r)
     }
 
     /// Returns the scale of the matrix.
@@ -384,17 +384,17 @@ impl Basis {
     /// See [`Basis::to_quat`](#method.to_quat) if you need a quaternion instead.
     #[inline]
     pub fn to_euler(&self) -> Vector3 {
-        let mut euler = Vector3::zero();
+        let mut euler = Vector3::ZERO;
 
         let m12 = self.elements[1].z;
         if m12 < 1.0 {
             if m12 > -1.0 {
                 // is this a pure X rotation?
-                if self.elements[1].x.approx_eq(&0.0)
-                    && self.elements[0].y.approx_eq(&0.0)
-                    && self.elements[0].z.approx_eq(&0.0)
-                    && self.elements[2].x.approx_eq(&0.0)
-                    && self.elements[0].x.approx_eq(&1.0)
+                if self.elements[1].x.is_equal_approx(0.0)
+                    && self.elements[0].y.is_equal_approx(0.0)
+                    && self.elements[0].z.is_equal_approx(0.0)
+                    && self.elements[2].x.is_equal_approx(0.0)
+                    && self.elements[0].x.is_equal_approx(1.0)
                 {
                     // return the simplest form (human friendlier in editor and scripts)
                     euler.x = (-m12).atan2(self.elements[1].y);
@@ -471,6 +471,7 @@ impl Basis {
         )
     }
 
+    /*
     /// Creates a `Basis` from the rotation and scaling of the provided transform.
     #[inline]
     pub fn from_transform(transform: &default::Transform3D<f32>) -> Basis {
@@ -494,6 +495,7 @@ impl Basis {
             ],
         }
     }
+    */
 
     /// Transposed dot product with the **X Axis** of the matrix.
     #[inline]
@@ -580,6 +582,15 @@ impl core::ops::Mul<Basis> for Basis {
     }
 }
 
+impl Mul<Vector3> for Basis {
+    type Output = Vector3;
+
+    #[inline]
+    fn mul(self, rhs: Self::Output) -> Self::Output {
+        Self::Output::new(self.tdotx(rhs), self.tdoty(rhs), self.tdotz(rhs))
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unreadable_literal)]
 mod tests {
@@ -620,7 +631,7 @@ mod tests {
     #[test]
     fn set_is_sane() {
         let mut basis = Basis {
-            elements: [Vector3::zero(), Vector3::zero(), Vector3::zero()],
+            elements: [Vector3::ZERO, Vector3::ZERO, Vector3::ZERO],
         };
 
         basis.set_x(Vector3::new(1.0, 4.0, 7.0));
@@ -634,7 +645,7 @@ mod tests {
 
     fn test_inputs() -> (Basis, Basis) {
         let v = Vector3::new(37.51756, 20.39467, 49.96816);
-        let vn = v.normalize();
+        let vn = v.normalized();
         let b = Basis::from_euler(v);
         let bn = Basis::from_euler(vn);
         (b, bn)
@@ -644,14 +655,17 @@ mod tests {
     fn determinant() {
         let (b, _bn) = test_inputs();
 
-        assert!(b.determinant().approx_eq(&1.0), "Determinant should be 1.0");
+        assert!(
+            b.determinant().is_equal_approx(1.0),
+            "Determinant should be 1.0"
+        );
     }
 
     #[test]
     fn euler() {
         let (_b, bn) = test_inputs();
 
-        assert!(Vector3::new(0.57079, 0.310283, 0.760213).approx_eq(&bn.to_euler()));
+        assert!(Vector3::new(0.57079, 0.310283, 0.760213).is_equal_approx(bn.to_euler()));
     }
 
     #[test]
@@ -663,7 +677,7 @@ mod tests {
             Vector3::new(-0.288147, 0.94041, 0.180557),
             Vector3::new(-0.95445, -0.297299, 0.025257),
         ]);
-        assert!(expected.approx_eq(&b.orthonormalized()));
+        assert!(expected.is_equal_approx(&b.orthonormalized()));
     }
 
     #[test]
@@ -675,40 +689,40 @@ mod tests {
             Vector3::new(0.012407, -0.040492, -0.007774),
             Vector3::new(-0.682131, -0.212475, 0.018051),
         ]);
-        assert!(expected.approx_eq(&b.scaled(&Vector3::new(0.677813, -0.043058, 0.714685))));
+        assert!(expected.is_equal_approx(&b.scaled(&Vector3::new(0.677813, -0.043058, 0.714685))));
     }
 
     #[test]
     fn rotated() {
         let (b, _bn) = test_inputs();
 
-        let r = Vector3::new(-50.167156, 60.67781, -70.04305).normalize();
+        let r = Vector3::new(-50.167156, 60.67781, -70.04305).normalized();
         let expected = Basis::from_elements([
             Vector3::new(-0.676245, 0.113805, 0.727833),
             Vector3::new(-0.467094, 0.697765, -0.54309),
             Vector3::new(-0.569663, -0.707229, -0.418703),
         ]);
-        assert!(expected.approx_eq(&b.rotated(r, 1.0)));
+        assert!(expected.is_equal_approx(&b.rotated(r, 1.0)));
     }
 
     #[test]
     fn to_quat() {
         let (b, _bn) = test_inputs();
 
-        assert!(Quat::quaternion(-0.167156, 0.677813, -0.043058, 0.714685).approx_eq(&b.to_quat()));
+        assert!(Quat::new(-0.167156, 0.677813, -0.043058, 0.714685).is_equal_approx(&b.to_quat()));
     }
 
     #[test]
     fn scale() {
         let (b, _bn) = test_inputs();
 
-        assert!(Vector3::new(1.0, 1.0, 1.0).approx_eq(&b.to_scale()));
+        assert!(Vector3::new(1.0, 1.0, 1.0).is_equal_approx(b.to_scale()));
     }
 
     #[test]
     fn approx_eq() {
         let (b, _bn) = test_inputs();
-        assert!(!b.approx_eq(&Basis::from_euler(Vector3::new(37.517, 20.394, 49.968))));
+        assert!(!b.is_equal_approx(&Basis::from_euler(Vector3::new(37.517, 20.394, 49.968))));
     }
 
     #[test]
@@ -719,7 +733,7 @@ mod tests {
             Vector3::new(-0.165055, 0.94041, -0.297299),
             Vector3::new(0.98324, 0.180557, 0.025257),
         ]);
-        assert!(expected.approx_eq(&b.transposed()));
+        assert!(expected.is_equal_approx(&b.transposed()));
     }
 
     #[test]
@@ -727,7 +741,7 @@ mod tests {
         let (b, _bn) = test_inputs();
 
         assert!(Vector3::new(-0.273471, 0.478102, -0.690386)
-            .approx_eq(&b.xform(Vector3::new(0.5, 0.7, -0.2))));
+            .is_equal_approx(b.xform(Vector3::new(0.5, 0.7, -0.2))));
     }
 
     #[test]
@@ -735,7 +749,7 @@ mod tests {
         let (b, _bn) = test_inputs();
 
         assert!(Vector3::new(-0.884898, -0.460316, 0.071165)
-            .approx_eq(&b.xform_inv(Vector3::new(0.077431, -0.165055, 0.98324))));
+            .is_equal_approx(b.xform_inv(Vector3::new(0.077431, -0.165055, 0.98324))));
     }
 
     #[test]
@@ -747,6 +761,6 @@ mod tests {
             Vector3::new(-0.165055, 0.94041, -0.297299),
             Vector3::new(0.98324, 0.180557, 0.025257),
         ]);
-        assert!(expected.approx_eq(&b.inverted()));
+        assert!(expected.is_equal_approx(&b.inverted()));
     }
 }

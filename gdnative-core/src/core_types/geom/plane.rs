@@ -1,5 +1,4 @@
-use crate::core_types::Vector3;
-use euclid::approxeq::ApproxEq;
+use crate::core_types::{IsEqualApprox, Vector3};
 
 /// Plane in hessian form.
 #[repr(C)]
@@ -43,7 +42,7 @@ impl Plane {
     /// If all three points are collinear, returns `None`.
     #[inline]
     pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Option<Plane> {
-        let normal = (a - c).cross(a - b).normalize();
+        let normal = (a - c).cross(a - b).normalized();
 
         if normal.x.is_nan() || normal.y.is_nan() || normal.z.is_nan() {
             None
@@ -84,7 +83,7 @@ impl Plane {
 
         let denom = Vector3::cross(a.normal, b.normal).dot(c.normal);
 
-        if denom.approx_eq(&0.0) {
+        if denom.is_equal_approx(0.0) {
             None
         } else {
             Some(
@@ -102,7 +101,7 @@ impl Plane {
     pub fn intersects_ray(&self, from: Vector3, dir: Vector3) -> Option<Vector3> {
         let den = self.normal.dot(dir);
 
-        if den.approx_eq(&0.0) {
+        if den.is_equal_approx(0.0) {
             return None;
         }
 
@@ -122,7 +121,7 @@ impl Plane {
         let segment = begin - end;
         let den = self.normal.dot(segment);
 
-        if den.approx_eq(&0.0) {
+        if den.is_equal_approx(0.0) {
             return None;
         }
 
@@ -139,8 +138,8 @@ impl Plane {
     /// Returns `true` if this `Plane` and `other` are approximately equal.
     /// Determined by running `approx_eq` on both `normal` and `d`.
     #[inline]
-    pub fn approx_eq(&self, other: Plane) -> bool {
-        self.normal.approx_eq(&other.normal) && self.d.approx_eq(&other.d)
+    pub fn is_equal_approx(self, other: Plane) -> bool {
+        self.normal.is_equal_approx(other.normal) && self.d.is_equal_approx(other.d)
     }
 
     /// Returns `true` if `point` is above the `Plane`.
@@ -194,7 +193,7 @@ mod test {
 
         assert!(Plane::from_points(a, b, c)
             .unwrap()
-            .approx_eq(expected_valid));
+            .is_equal_approx(expected_valid));
         assert_eq!(Plane::from_points(a, b, d), None);
     }
 
@@ -204,7 +203,7 @@ mod test {
 
         let expected = Vector3::new(0.0008, 0.0016, 0.0032);
 
-        assert!(p.center().approx_eq(&expected));
+        assert!(p.center().is_equal_approx(expected));
     }
 
     #[test]
@@ -213,7 +212,7 @@ mod test {
 
         let expected = -0.0464;
 
-        assert!(p.distance_to(v).approx_eq(&expected));
+        assert!(p.distance_to(v).is_equal_approx(expected));
     }
 
     #[test]
@@ -239,7 +238,7 @@ mod test {
         let d = Plane::from_coordinates(0.01, 0.02, 0.4, 0.16);
         let e = Plane::from_coordinates(0.01, 0.02, 0.4, 0.32);
 
-        assert!(p.intersect_3(b, c).unwrap().approx_eq(&expected));
+        assert!(p.intersect_3(b, c).unwrap().is_equal_approx(expected));
         assert_eq!(p.intersect_3(d, e), None);
     }
 
@@ -252,7 +251,7 @@ mod test {
         assert!(p
             .intersects_ray(v, Vector3::new(0.0, 1.0, 0.0))
             .unwrap()
-            .approx_eq(&expected));
+            .is_equal_approx(expected));
         assert_eq!(p.intersects_ray(v, Vector3::new(0.0, -1.0, 0.0)), None);
     }
 
@@ -265,7 +264,7 @@ mod test {
         assert!(p
             .intersects_segment(v, Vector3::new(0.16, 10.0, 0.64))
             .unwrap()
-            .approx_eq(&expected));
+            .is_equal_approx(expected));
         assert_eq!(
             p.intersects_segment(v, Vector3::new(0.16, -10.0, 0.64)),
             None
@@ -284,7 +283,7 @@ mod test {
     fn normalize() {
         let (p, _v) = test_inputs();
 
-        assert!(p.normalize().approx_eq(Plane::from_coordinates(
+        assert!(p.normalize().is_equal_approx(Plane::from_coordinates(
             0.218218, 0.436436, 0.872872, 1.745743
         )));
     }
@@ -295,6 +294,6 @@ mod test {
 
         let expected = Vector3::new(0.160464, 0.320928, 0.641856);
 
-        assert!(p.project(v).approx_eq(&expected))
+        assert!(p.project(v).is_equal_approx(expected))
     }
 }
