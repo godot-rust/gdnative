@@ -26,6 +26,7 @@ gdnative-bindings = { optional = true, path = "../gdnative-bindings", version = 
 
 [dev-dependencies]
 trybuild = "1.0"
+rustversion = "1.0"
 
 [package.metadata.docs.rs]
 all-features = true

@@ -20,8 +20,7 @@ fn ui_tests() {
 
     // ToVariant
     t.compile_fail("tests/ui/to_variant_fail_01.rs");
-    t.compile_fail("tests/ui/to_variant_fail_02.rs");
-    t.compile_fail("tests/ui/to_variant_fail_03.rs");
+    to_variant_ui_path(&t);
     t.compile_fail("tests/ui/to_variant_fail_04.rs");
     t.compile_fail("tests/ui/to_variant_fail_05.rs");
     t.compile_fail("tests/ui/to_variant_fail_06.rs");
@@ -29,10 +28,31 @@ fn ui_tests() {
 
     // FromVariant
     t.compile_fail("tests/ui/from_variant_fail_01.rs");
-    t.compile_fail("tests/ui/from_variant_fail_02.rs");
-    t.compile_fail("tests/ui/from_variant_fail_03.rs");
+    from_variant_ui_path(&t);
     t.compile_fail("tests/ui/from_variant_fail_04.rs");
     t.compile_fail("tests/ui/from_variant_fail_05.rs");
     t.compile_fail("tests/ui/from_variant_fail_06.rs");
     t.compile_fail("tests/ui/from_variant_fail_07.rs");
+}
+
+// FIXME(rust/issues/54725): Full path spans are only available on nightly as of now
+#[rustversion::not(nightly)]
+fn to_variant_ui_path(_t: &trybuild::TestCases) {}
+
+// FIXME(rust/issues/54725): Full path spans are only available on nightly as of now
+#[rustversion::nightly]
+fn to_variant_ui_path(t: &trybuild::TestCases) {
+    t.compile_fail("tests/ui/to_variant_fail_02.rs");
+    t.compile_fail("tests/ui/to_variant_fail_03.rs");
+}
+
+// FIXME(rust/issues/54725): Full path spans are only available on nightly as of now
+#[rustversion::not(nightly)]
+fn from_variant_ui_path(_t: &trybuild::TestCases) {}
+
+// FIXME(rust/issues/54725): Full path spans are only available on nightly as of now
+#[rustversion::nightly]
+fn from_variant_ui_path(t: &trybuild::TestCases) {
+    t.compile_fail("tests/ui/from_variant_fail_02.rs");
+    t.compile_fail("tests/ui/from_variant_fail_03.rs");
 }
