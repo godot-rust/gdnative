@@ -3,7 +3,7 @@ use super::IsEqualApprox;
 use glam::Vec3A;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct Vector3 {
     pub x: f32,
@@ -23,14 +23,31 @@ pub enum Axis {
 ///
 /// See the official [`Godot documentation`](https://docs.godotengine.org/en/3.1/classes/class_vector3.html).
 impl Vector3 {
+    /// The zero vector.
     pub const ZERO: Self = Self::new(0.0, 0.0, 0.0);
+
+    /// A vector with all components set to 1. Typically used for scaling.
     pub const ONE: Self = Self::new(1.0, 1.0, 1.0);
+
+    /// A vector with all components set to +infinity.
     pub const INF: Self = Self::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
+
+    /// Unit vector in -X direction.
     pub const LEFT: Self = Self::new(-1.0, 0.0, 0.0);
+
+    /// Unit vector in +X direction.
     pub const RIGHT: Self = Self::new(1.0, 0.0, 0.0);
+
+    /// Unit vector in +Y direction.
     pub const UP: Self = Self::new(0.0, 1.0, 0.0);
+
+    /// Unit vector in -Y direction.
     pub const DOWN: Self = Self::new(0.0, -1.0, 0.0);
+
+    /// Unit vector in -Z direction.
     pub const FORWARD: Self = Self::new(0.0, 0.0, -1.0);
+
+    /// Unit vector in +Z direction.
     pub const BACK: Self = Self::new(0.0, 0.0, 1.0);
 
     /// Returns a Vector3 with the given components.

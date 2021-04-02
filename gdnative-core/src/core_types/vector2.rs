@@ -2,7 +2,7 @@ use super::IsEqualApprox;
 use glam::Vec2;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct Vector2 {
     pub x: f32,
@@ -13,6 +13,27 @@ pub struct Vector2 {
 ///
 /// See the official [`Godot documentation`](https://docs.godotengine.org/en/3.1/classes/class_vector2.html).
 impl Vector2 {
+    /// The zero vector.
+    pub const ZERO: Vector2 = Vector2::new(0.0, 0.0);
+
+    /// A vector with all components set to 1. Typically used for scaling.
+    pub const ONE: Vector2 = Vector2::new(1.0, 1.0);
+
+    /// A vector with all components set to +infinity.
+    pub const INF: Vector2 = Vector2::new(f32::INFINITY, f32::INFINITY);
+
+    /// Unit vector in -X direction.
+    pub const LEFT: Vector2 = Vector2::new(-1.0, 0.0);
+
+    /// Unit vector in +X direction.
+    pub const RIGHT: Vector2 = Vector2::new(1.0, 0.0);
+
+    /// Unit vector in -Y direction (the Y axis points down in 2D).
+    pub const UP: Vector2 = Vector2::new(0.0, -1.0);
+
+    /// Unit vector in +Y direction (the Y axis points down in 2D).
+    pub const DOWN: Vector2 = Vector2::new(0.0, 1.0);
+
     /// Constructs a new Vector2 from the given x and y.
     #[inline]
     pub const fn new(x: f32, y: f32) -> Self {
@@ -455,7 +476,7 @@ mod tests {
                 V::new(-1.2, 0.8),
                 V::new(1.2, 10.3),
                 V::new(-5.4, 4.2),
-                0.2
+                0.2,
             ))
         );
 
@@ -464,7 +485,7 @@ mod tests {
                 V::new(-3.7, 2.1),
                 V::new(5.4, -8.5),
                 V::new(-10.8, -6.6),
-                0.6
+                0.6,
             ))
         );
     }
