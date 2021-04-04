@@ -1,7 +1,6 @@
-use super::{Basis, IsEqualApprox, Vector3, CMP_EPSILON};
-use core::f32::consts::FRAC_PI_2;
-use core::ops::Mul;
-use glam::Mat3;
+use super::{Basis, IsEqualApprox, Vector3};
+use glam::{Mat3, EulerRot};
+use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C)]
@@ -16,6 +15,8 @@ pub struct Quat {
 ///
 /// See the official [`Godot documentation`](https://docs.godotengine.org/en/stable/classes/class_quat.html).
 impl Quat {
+    /// The identity quaternion, representing no rotation. Equivalent to an identity [`Basis`] matrix.
+    /// If a vector is transformed by an identity quaternion, it will not change.
     pub const IDENTITY: Self = Self::new(0.0, 0.0, 0.0, 1.0);
 
     /// Constructs a quaternion defined by the given values.
@@ -35,7 +36,7 @@ impl Quat {
     /// (X angle, Y angle, Z angle).
     #[inline]
     pub fn from_euler(euler: Vector3) -> Self {
-        Self::gd(glam::Quat::from_rotation_ypr(euler.y, euler.x, euler.z))
+        Self::gd(glam::Quat::from_euler(EulerRot::YXZ, euler.y, euler.x, euler.z))
     }
 
     /// Constructs a quaternion that will rotate around the given axis by the specified angle. The
@@ -66,34 +67,15 @@ impl Quat {
     /// corresponding to the rotation represented by the unit quaternion. Returned vector contains
     /// the rotation angles in the format (X angle, Y angle, Z angle).
     #[inline]
-    pub fn get_euler(self) -> Vector3 {
-        let basis = Mat3::from_quat(self.glam());
-        let elm = basis.to_cols_array_2d();
-        // Copied from Basis::get_euler_yxz
-        let m12 = elm[1][2];
-        if m12 < 1.0 - CMP_EPSILON as f32 {
-            if m12 > CMP_EPSILON as f32 - 1.0 {
-                #[allow(clippy::float_cmp)] // Godot also used direct comparison
-                if elm[1][0] == 0.0
-                    && elm[0][1] == 0.0
-                    && elm[0][2] == 0.0
-                    && elm[2][0] == 0.0
-                    && elm[0][0] == 1.0
-                {
-                    Vector3::new((-m12).atan2(elm[1][1]), 0.0, 0.0)
-                } else {
-                    Vector3::new(
-                        (-m12).asin(),
-                        elm[0][2].atan2(elm[2][2]),
-                        elm[1][0].atan2(elm[1][1]),
-                    )
-                }
-            } else {
-                Vector3::new(FRAC_PI_2, elm[0][1].atan2(elm[0][0]), 0.0)
-            }
-        } else {
-            Vector3::new(-FRAC_PI_2, (-elm[0][1]).atan2(elm[0][0]), 0.0)
-        }
+    pub fn to_euler(self) -> Vector3 {
+		let basis = Mat3::from_quat(self.glam());
+        let basis = basis.to_cols_array_2d();
+        let basis = [
+            Vector3::new(basis[0][0], basis[1][0], basis[2][0]),
+            Vector3::new(basis[0][1], basis[1][1], basis[2][1]),
+            Vector3::new(basis[0][2], basis[1][2], basis[2][2]),
+		];
+        Basis::from_elements(basis).to_euler()
     }
 
     /// Returns the inverse of the quaternion.
@@ -134,21 +116,6 @@ impl Quat {
     #[inline]
     pub fn normalized(self) -> Self {
         Self::gd(self.glam().normalize())
-    }
-
-    /// Sets the quaternion to a rotation which rotates around axis by the specified angle, in
-    /// radians. The axis must be a normalized vector.
-    #[inline]
-    pub fn set_axis_angle(&mut self, axis: Vector3, angle: f32) {
-        *self = Self::from_axis_angle(axis, angle)
-    }
-
-    /// Sets the quaternion to a rotation specified by Euler angles (in the YXZ convention: when
-    /// decomposing, first Z, then X, and Y last), given in the vector format as (X angle, Y angle,
-    /// Z angle).
-    #[inline]
-    pub fn set_euler(&mut self, euler: Vector3) {
-        *self = Self::from_euler(euler);
     }
 
     /// Returns the result of the spherical linear interpolation between this quaternion and to by
@@ -243,11 +210,10 @@ mod test {
     }
 
     #[test]
-    fn get_euler() {
+    fn to_euler() {
         let quat = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
         let expect = Vector3::new(0.25, -1.043185, 3.00001);
-        dbg!(quat.get_euler());
-        assert!(quat.get_euler().is_equal_approx(expect));
+        assert!(quat.to_euler().is_equal_approx(expect));
     }
 
     #[test]
