@@ -709,7 +709,7 @@ mod tests {
     fn to_quat() {
         let (b, _bn) = test_inputs();
 
-        assert!(Quat::new(-0.167156, 0.677813, -0.043058, 0.714685).is_equal_approx(&b.to_quat()));
+        assert!(Quat::new(-0.167156, 0.677813, -0.043058, 0.714685).is_equal_approx(b.to_quat()));
     }
 
     #[test]

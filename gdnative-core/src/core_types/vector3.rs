@@ -380,12 +380,12 @@ impl Vector3 {
     }
 
     #[inline]
-    fn glam(self) -> Vec3A {
+    pub(super) fn glam(self) -> Vec3A {
         Vec3A::new(self.x, self.y, self.z)
     }
 
     #[inline]
-    fn gd(from: Vec3A) -> Self {
+    pub(super) fn gd(from: Vec3A) -> Self {
         Self::new(from.x, from.y, from.z)
     }
 }
