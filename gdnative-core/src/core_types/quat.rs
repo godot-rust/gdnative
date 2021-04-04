@@ -1,5 +1,5 @@
 use super::{Basis, IsEqualApprox, Vector3};
-use glam::{Mat3, EulerRot};
+use glam::EulerRot;
 use std::ops::Mul;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -68,14 +68,7 @@ impl Quat {
     /// the rotation angles in the format (X angle, Y angle, Z angle).
     #[inline]
     pub fn to_euler(self) -> Vector3 {
-		let basis = Mat3::from_quat(self.glam());
-        let basis = basis.to_cols_array_2d();
-        let basis = [
-            Vector3::new(basis[0][0], basis[1][0], basis[2][0]),
-            Vector3::new(basis[0][1], basis[1][1], basis[2][1]),
-            Vector3::new(basis[0][2], basis[1][2], basis[2][2]),
-		];
-        Basis::from_elements(basis).to_euler()
+		Basis::from_quat(self).to_euler()
     }
 
     /// Returns the inverse of the quaternion.
@@ -159,13 +152,12 @@ impl Quat {
     }
 
     #[inline]
-    fn gd(quat: glam::Quat) -> Self {
+    pub(super) fn gd(quat: glam::Quat) -> Self {
         Self::new(quat.x, quat.y, quat.z, quat.w)
     }
 
     #[inline]
-    #[allow(unused)]
-    fn glam(self) -> glam::Quat {
+    pub(super) fn glam(self) -> glam::Quat {
         glam::Quat::from_xyzw(self.x, self.y, self.z, self.w)
     }
 }
@@ -199,13 +191,7 @@ mod test {
             Vector3::new(0.136732, -0.959216, -0.247404),
             Vector3::new(-0.837788, -0.245243, 0.487819),
         ]);
-        let basis = Mat3::from_quat(quat.glam()).to_cols_array_2d();
-        let basis = [
-            Vector3::new(basis[0][0], basis[1][0], basis[2][0]),
-            Vector3::new(basis[0][1], basis[1][1], basis[2][1]),
-            Vector3::new(basis[0][2], basis[1][2], basis[2][2]),
-        ];
-        let basis = Basis::from_elements(basis);
+        let basis = Basis::from_quat(quat);
         assert!(basis.is_equal_approx(&expect));
     }
 

@@ -1,5 +1,6 @@
 use crate::core_types::{IsEqualApprox, Quat, Vector3};
 use core::ops::Mul;
+use glam::Mat3;
 
 /// A 3x3 matrix.
 #[repr(C)]
@@ -84,6 +85,18 @@ impl Basis {
         let mut b = Basis::default();
         b.set_euler_yxz(&euler);
         b
+    }
+
+    /// Constructs a pure rotation basis matrix from the given quaternion.
+    #[inline]
+    pub fn from_quat(quat: Quat) -> Self {
+        let basis = Mat3::from_quat(quat.glam()).to_cols_array_2d();
+        let basis = [
+            Vector3::new(basis[0][0], basis[1][0], basis[2][0]),
+            Vector3::new(basis[0][1], basis[1][1], basis[2][1]),
+            Vector3::new(basis[0][2], basis[1][2], basis[2][2]),
+        ];
+        Basis::from_elements(basis)
     }
 
     /// Rotation matrix from axis and angle.
