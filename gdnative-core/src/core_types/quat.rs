@@ -119,7 +119,7 @@ impl Quat {
     pub fn slerp(self, b: Self, t: f32) -> Self {
         debug_assert!(self.is_normalized(), "Quaternion `self` is not normalized");
         debug_assert!(b.is_normalized(), "Quaternion `b` is not normalized");
-        Self::gd(self.glam().slerp(b.glam(), t))
+        Self::gd(self.glam().lerp(b.glam(), t))
     }
 
     /// Returns the result of the spherical linear interpolation between this quaternion and `t` by
@@ -208,5 +208,24 @@ mod test {
         let vec = Vector3::new(2.2, 0.8, 1.65);
         let expect = Vector3::new(-2.43176, -0.874777, -1.234427);
         assert!(expect.is_equal_approx(quat * vec));
+    }
+
+    #[test]
+    fn slerp() {
+        let q = Quat::new(-0.635115, -0.705592, 0.314052, 0.011812);
+        let p = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
+        let t = 0.2;
+        let e = Quat::new(-0.638517, -0.620742, 0.454844, 0.009609);
+        dbg!(q.slerp(p, t), e);
+        assert!(e.is_equal_approx(q.slerp(p, t)));
+    }
+
+    #[test]
+    fn slerpni() {
+        let q = Quat::new(-0.635115, -0.705592, 0.314052, 0.011812);
+        let p = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
+        let t = 0.2;
+        let e = Quat::new(-0.535331, -0.836627, -0.114954, 0.016143);
+        assert!(e.is_equal_approx(q.slerpni(p, t)));
     }
 }
