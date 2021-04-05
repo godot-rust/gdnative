@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
-use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::{Data, DeriveInput, Fields, Ident, Meta, MetaList, NestedMeta, Path, Stmt, Type};
 
@@ -13,7 +12,7 @@ pub(crate) struct DeriveData {
     pub(crate) base: Type,
     pub(crate) register_callback: Option<Path>,
     pub(crate) user_data: Type,
-    pub(crate) properties: HashMap<Ident, PropertyAttrArgs>,
+    pub(crate) properties: Vec<(Ident, PropertyAttrArgs)>,
     pub(crate) no_constructor: bool,
 }
 
@@ -188,7 +187,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
     };
 
     // Find all fields with a `#[property]` attribute
-    let mut properties = HashMap::new();
+    let mut properties = Vec::new();
 
     if let Fields::Named(names) = &struct_data.fields {
         for field in &names.named {
@@ -232,7 +231,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
                     .ident
                     .clone()
                     .ok_or_else(|| syn::Error::new(field.ident.span(), "Fields should be named"))?;
-                properties.insert(ident, builder.done());
+                properties.push((ident, builder.done()));
             }
         }
     };
