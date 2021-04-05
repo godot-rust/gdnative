@@ -259,7 +259,6 @@ mod test {
         let p = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
         let t = 0.2;
         let e = Quat::new(-0.638517, -0.620742, 0.454844, 0.009609);
-        dbg!(q.slerp(p, t), e);
         assert!(e.is_equal_approx(q.slerp(p, t)));
     }
 
@@ -270,5 +269,16 @@ mod test {
         let t = 0.2;
         let e = Quat::new(-0.535331, -0.836627, -0.114954, 0.016143);
         assert!(e.is_equal_approx(q.slerpni(p, t)));
+    }
+
+    #[test]
+    fn cubic_slerp() {
+        let a = Quat::new(-0.635115, -0.705592, 0.314052, 0.011812);
+        let b = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
+        let c = Quat::new(-0.666276, 0.03859, 0.083527, -0.740007);
+        let d = Quat::new(-0.856633, -0.430228, -0.284017, 0.020464);
+        let t = 0.2;
+        let e = Quat::new(-0.768253, -0.490687, 0.341836, -0.22839);
+        assert!(e.is_equal_approx(a.cubic_slerp(b, c, d, t)));
     }
 }
