@@ -1,6 +1,6 @@
-use super::{Basis, IsEqualApprox, Vector3};
+use super::{Basis, IsEqualApprox, Vector3, CMP_EPSILON};
 use glam::EulerRot;
-use std::ops::Mul;
+use std::ops::{Mul, Neg};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C)]
@@ -119,7 +119,38 @@ impl Quat {
     pub fn slerp(self, b: Self, t: f32) -> Self {
         debug_assert!(self.is_normalized(), "Quaternion `self` is not normalized");
         debug_assert!(b.is_normalized(), "Quaternion `b` is not normalized");
-        Self::gd(self.glam().lerp(b.glam(), t))
+
+        // Copied from Godot's Quat::slerp as glam::lerp version diverges too much
+
+        // calc cosine
+        let cosom = self.dot(b);
+
+        // adjust signs (if necessary)
+        let (cosom, b) = if cosom < 0.0 {
+            (-cosom, -b)
+        } else {
+            (cosom, b)
+        };
+
+        // calculate coefficients
+        let scale = if (1.0 - cosom) > CMP_EPSILON as f32 {
+            // standard case (slerp)
+            let omega = cosom.acos();
+            let sinom = omega.sin();
+            (((1.0 - t) * omega).sin() / sinom, (t * omega).sin() / sinom)
+        } else {
+            // "from" and "to" quaternions are very close
+            //  ... so we can do a linear interpolation
+            (1.0 - t, t)
+        };
+
+        // calculate final values
+        Self::new(
+            scale.0 * self.x + scale.1 * b.x,
+            scale.0 * self.y + scale.1 * b.y,
+            scale.0 * self.z + scale.1 * b.z,
+            scale.0 * self.w + scale.1 * b.w,
+        )
     }
 
     /// Returns the result of the spherical linear interpolation between this quaternion and `t` by
@@ -128,6 +159,9 @@ impl Quat {
     pub fn slerpni(self, b: Self, t: f32) -> Self {
         debug_assert!(self.is_normalized(), "Quaternion `self` is not normalized");
         debug_assert!(b.is_normalized(), "Quaternion `b` is not normalized");
+
+        // Copied from Godot's Quat::slerpni as glam::slerp version diverges too much
+
         let dot = self.dot(b);
         if dot.abs() > 0.9999 {
             self
@@ -169,6 +203,15 @@ impl Mul<Vector3> for Quat {
     fn mul(self, with: Vector3) -> Vector3 {
         debug_assert!(self.is_normalized(), "Quaternion is not normalized");
         Vector3::gd(self.glam() * with.glam())
+    }
+}
+
+impl Neg for Quat {
+    type Output = Quat;
+
+    #[inline]
+    fn neg(self) -> Self {
+        Self::gd(-self.glam())
     }
 }
 
