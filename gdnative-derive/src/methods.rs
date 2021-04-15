@@ -68,6 +68,7 @@ pub(crate) struct ExportArgs {
 }
 
 pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
+    let derived = crate::automatically_derived();
     let (impl_block, export) = impl_gdnative_expose(item_impl);
 
     let class_name = export.class_ty;
@@ -140,9 +141,9 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
         .collect::<Vec<_>>();
 
     quote::quote!(
-
         #impl_block
 
+        #derived
         impl gdnative::nativescript::NativeClassMethods for #class_name {
             fn register(#builder: &::gdnative::nativescript::init::ClassBuilder<Self>) {
                 use gdnative::nativescript::init::*;

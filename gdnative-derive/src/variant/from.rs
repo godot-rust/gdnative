@@ -12,6 +12,8 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
         mut generics,
     } = derive_data;
 
+    let derived = crate::automatically_derived();
+
     for param in generics.type_params_mut() {
         param.default = None;
     }
@@ -106,7 +108,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
     let where_clause = &generics.where_clause;
 
     let result = quote! {
-        #[allow(unused_variables)]
+        #derived
         impl #generics ::gdnative::core_types::FromVariant for #ident #generics #where_clause {
             fn from_variant(
                 #input_ident: &::gdnative::core_types::Variant
