@@ -75,3 +75,12 @@ impl<'n, N: SubClass<Node>> NodeExt for &'n N {
         self.upcast().get_node(path)?.assume_safe().cast()
     }
 }
+
+impl<'n, N: SubClass<Node>> NodeExt for TRef<'n, N> {
+    unsafe fn get_node_as<'a, T>(&self, path: &str) -> Option<TRef<'a, T>>
+    where
+        T: SubClass<Node>,
+    {
+        self.as_ref().get_node_as(path)
+    }
+}
