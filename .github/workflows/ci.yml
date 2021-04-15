@@ -85,7 +85,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
+      - uses: KyleMayes/install-llvm-action@7673c1af8f0ae228f19f5962fc2cd6e3378305a8
         with:
           version: 10.0
           directory: ${{ runner.temp }}/llvm
