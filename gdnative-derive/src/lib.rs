@@ -238,3 +238,18 @@ pub fn derive_from_varargs(input: TokenStream) -> TokenStream {
         Err(err) => err.to_compile_error().into(),
     }
 }
+
+/// Returns a standard header for derived implementations.
+///
+/// Adds the `automatically_derived` attribute and prevents common lints from triggering
+/// in user code. See:
+///
+/// - https://doc.rust-lang.org/reference/attributes/derive.html
+/// - https://doc.rust-lang.org/rustc/lints/groups.html
+/// - https://github.com/rust-lang/rust-clippy#clippy
+fn automatically_derived() -> proc_macro2::TokenStream {
+    quote! {
+        #[automatically_derived]
+        #[allow(nonstandard_style, unused, clippy::style, clippy::complexity, clippy::perf, clippy::pedantic)]
+    }
+}

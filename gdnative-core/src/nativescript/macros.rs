@@ -101,6 +101,7 @@ macro_rules! godot_wrap_method_inner {
             use ::gdnative::FromVarargs;
 
             #[derive(FromVarargs)]
+            #[allow(clippy::used_underscore_binding)]
             struct Args {
                 $($pname: $pty,)*
                 $(#[opt] $opt_pname: $opt_pty,)*

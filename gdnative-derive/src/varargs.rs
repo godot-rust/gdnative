@@ -9,6 +9,8 @@ use syn::{spanned::Spanned, Data, DeriveInput, Ident};
 use crate::extend_bounds::with_visitor;
 
 pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, syn::Error> {
+    let derived = crate::automatically_derived();
+
     if let Data::Struct(struct_data) = input.data {
         let ident = input.ident;
 
@@ -32,6 +34,7 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
             Fields::Unnamed(fields) => &fields.unnamed,
             Fields::Unit => {
                 return Ok(quote! {
+                    #derived
                     impl #generics ::gdnative::nativescript::init::method::FromVarargs for #ident #generics #where_clause {
                         fn read<'a>(
                             #input_ident: &mut ::gdnative::nativescript::init::method::Varargs<'a>,
@@ -109,7 +112,7 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
             .collect::<Vec<_>>();
 
         Ok(quote! {
-            #[allow(unused_variables)]
+            #derived
             impl #generics ::gdnative::nativescript::init::method::FromVarargs for #ident #generics #where_clause {
                 fn read<'a>(
                     #input_ident: &mut ::gdnative::nativescript::init::method::Varargs<'a>,

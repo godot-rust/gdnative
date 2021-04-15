@@ -18,9 +18,11 @@ pub(crate) struct DeriveData {
 }
 
 pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2 {
+    let derived = crate::automatically_derived();
     let name = &derive_input.ident;
 
     quote! {
+        #derived
         impl ::gdnative::prelude::NativeClass for #name {
             type Base = ::gdnative::api::Object;
             type UserData = ::gdnative::prelude::LocalCellData<Self>;
@@ -36,6 +38,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 }
 
 pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStream, syn::Error> {
+    let derived = crate::automatically_derived();
     let data = parse_derive_input(&derive_input)?;
 
     // generate NativeClass impl
@@ -117,6 +120,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
         };
 
         quote!(
+            #derived
             impl ::gdnative::nativescript::NativeClass for #name {
                 type Base = #base;
                 type UserData = #user_data;
