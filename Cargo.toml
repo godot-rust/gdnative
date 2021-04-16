@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "gdnative",
+    "gdnative-async",
     "gdnative-bindings",
     "gdnative-core",
     "gdnative-derive",

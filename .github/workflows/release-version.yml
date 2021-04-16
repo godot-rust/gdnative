@@ -44,4 +44,6 @@ jobs:
           sleep 1m;
           (cd gdnative-bindings && cargo publish);
           sleep 1m;
+          (cd gdnative-async && cargo publish);
+          sleep 1m;
           (cd gdnative && cargo publish);
