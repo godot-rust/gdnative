@@ -73,3 +73,8 @@ pub mod prelude;
 #[cfg(feature = "bindings")]
 /// Bindings for the Godot Class API.
 pub use gdnative_bindings as api;
+
+#[doc(inline)]
+#[cfg(feature = "async")]
+/// Support for async code
+pub use gdnative_async as asn;

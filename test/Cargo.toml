@@ -16,3 +16,5 @@ type_tag_fallback = ["gdnative/type_tag_fallback"]
 gdnative = { path = "../gdnative", features = ["gd_test"] }
 gdnative-derive = { path = "../gdnative-derive" }
 approx = "0.3.2"
+futures = "0.3.13"
+once_cell = "1.7.2"
