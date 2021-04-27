@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ScriptEditor" inherits="PanelContainer" version="3.2">
+<class name="ScriptEditor" inherits="PanelContainer" version="3.3">
 	<brief_description>
 		Godot editor's script editor.
 	</brief_description>
@@ -74,6 +74,7 @@
 			<argument index="1" name="base_path" type="String">
 			</argument>
 			<description>
+				Opens the script create dialog. The script will extend [code]base_name[/code]. The file extension can be omitted from [code]base_path[/code]. It will be added based on the selected scripting language.
 			</description>
 		</method>
 	</methods>

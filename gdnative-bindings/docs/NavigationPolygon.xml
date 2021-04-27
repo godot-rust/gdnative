@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="NavigationPolygon" inherits="Resource" version="3.2">
+<class name="NavigationPolygon" inherits="Resource" version="3.3">
 	<brief_description>
 		A node that has methods to draw outlines or use indices of vertices to create navigation polygons.
 	</brief_description>
@@ -24,6 +24,7 @@
 		[/codeblock]
 	</description>
 	<tutorials>
+		<link title="2D Navigation Demo">https://godotengine.org/asset-library/asset/117</link>
 	</tutorials>
 	<methods>
 		<method name="add_outline">

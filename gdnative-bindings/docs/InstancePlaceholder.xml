@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="InstancePlaceholder" inherits="Node" version="3.2">
+<class name="InstancePlaceholder" inherits="Node" version="3.3">
 	<brief_description>
 		Placeholder for the root [Node] of a [PackedScene].
 	</brief_description>
@@ -18,13 +18,14 @@
 			<argument index="1" name="custom_scene" type="PackedScene" default="null">
 			</argument>
 			<description>
+				Not thread-safe. Use [method Object.call_deferred] if calling from a thread.
 			</description>
 		</method>
 		<method name="get_instance_path" qualifiers="const">
 			<return type="String">
 			</return>
 			<description>
-				Gets the path to the [PackedScene] resource file that is loaded by default when calling [method replace_by_instance].
+				Gets the path to the [PackedScene] resource file that is loaded by default when calling [method replace_by_instance]. Not thread-safe. Use [method Object.call_deferred] if calling from a thread.
 			</description>
 		</method>
 		<method name="get_stored_values">

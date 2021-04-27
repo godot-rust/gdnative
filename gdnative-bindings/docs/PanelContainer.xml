@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PanelContainer" inherits="Container" version="3.2">
+<class name="PanelContainer" inherits="Container" version="3.3">
 	<brief_description>
 		Panel container type.
 	</brief_description>
@@ -7,6 +7,7 @@
 		Panel container type. This container fits controls inside of the delimited area of a stylebox. It's useful for giving controls an outline.
 	</description>
 	<tutorials>
+		<link title="2D Role Playing Game Demo">https://godotengine.org/asset-library/asset/520</link>
 	</tutorials>
 	<methods>
 	</methods>

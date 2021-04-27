@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AudioStreamGenerator" inherits="AudioStream" version="3.2">
+<class name="AudioStreamGenerator" inherits="AudioStream" version="3.3">
 	<brief_description>
 	</brief_description>
 	<description>
 	</description>
 	<tutorials>
-		<link>https://github.com/godotengine/godot-demo-projects/tree/master/audio/generator</link>
+		<link title="Audio Generator Demo">https://godotengine.org/asset-library/asset/526</link>
 	</tutorials>
 	<methods>
 	</methods>
