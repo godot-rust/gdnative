@@ -22,7 +22,7 @@ pub extern "C" fn run_tests(
 
     status &= gdnative::core_types::dictionary::test_dictionary();
     // status &= gdnative::test_dictionary_clone_clear();
-
+    status &= gdnative::core_types::test_color();
     status &= gdnative::core_types::test_array();
     status &= gdnative::core_types::test_array_debug();
     // status &= gdnative::test_array_clone_clear();
