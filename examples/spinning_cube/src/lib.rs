@@ -64,7 +64,7 @@ impl RustTest {
         if let Some(mat) = owner.get_surface_material(0) {
             let mat = unsafe { mat.assume_safe() };
             let mat = mat.cast::<SpatialMaterial>().expect("Incorrect material");
-            mat.set_albedo(Color::rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
+            mat.set_albedo(Color::from_rgba(self.time.cos().abs(), 0.0, 0.0, 1.0));
         }
     }
 }

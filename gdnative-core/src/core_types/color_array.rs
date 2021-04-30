@@ -9,17 +9,17 @@ godot_test!(
         use crate::NewRef as _;
 
         let arr = ColorArray::from_vec(vec![
-            Color::rgb(1.0, 0.0, 0.0),
-            Color::rgb(0.0, 1.0, 0.0),
-            Color::rgb(0.0, 0.0, 1.0),
+            Color::from_rgb(1.0, 0.0, 0.0),
+            Color::from_rgb(0.0, 1.0, 0.0),
+            Color::from_rgb(0.0, 0.0, 1.0),
         ]);
 
         let original_read = {
             let read = arr.read();
             assert_eq!(&[
-                Color::rgb(1.0, 0.0, 0.0),
-                Color::rgb(0.0, 1.0, 0.0),
-                Color::rgb(0.0, 0.0, 1.0),
+                Color::from_rgb(1.0, 0.0, 0.0),
+                Color::from_rgb(0.0, 1.0, 0.0),
+                Color::from_rgb(0.0, 0.0, 1.0),
             ], read.as_slice());
             read.clone()
         };
@@ -34,15 +34,15 @@ godot_test!(
             }
         }
 
-        assert_eq!(Color::rgb(1.0, 0.0, 1.0), cow_arr.get(0));
-        assert_eq!(Color::rgb(0.0, 1.0, 1.0), cow_arr.get(1));
-        assert_eq!(Color::rgb(0.0, 0.0, 1.0), cow_arr.get(2));
+        assert_eq!(Color::from_rgb(1.0, 0.0, 1.0), cow_arr.get(0));
+        assert_eq!(Color::from_rgb(0.0, 1.0, 1.0), cow_arr.get(1));
+        assert_eq!(Color::from_rgb(0.0, 0.0, 1.0), cow_arr.get(2));
 
         // the write shouldn't have affected the original array
         assert_eq!(&[
-            Color::rgb(1.0, 0.0, 0.0),
-            Color::rgb(0.0, 1.0, 0.0),
-            Color::rgb(0.0, 0.0, 1.0),
+            Color::from_rgb(1.0, 0.0, 0.0),
+            Color::from_rgb(0.0, 1.0, 0.0),
+            Color::from_rgb(0.0, 0.0, 1.0),
         ], original_read.as_slice());
     }
 );
@@ -50,9 +50,9 @@ godot_test!(
 godot_test!(
     test_color_array_debug {
         let arr = ColorArray::from_vec(vec![
-            Color::rgb(1.0, 0.0, 0.0),
-            Color::rgb(0.0, 1.0, 0.0),
-            Color::rgb(0.0, 0.0, 1.0),
+            Color::from_rgb(1.0, 0.0, 0.0),
+            Color::from_rgb(0.0, 1.0, 0.0),
+            Color::from_rgb(0.0, 0.0, 1.0),
         ]);
 
         assert_eq!(format!("{:?}", arr), "[Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 1.0, b: 0.0, a: 1.0 }, Color { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }]");
