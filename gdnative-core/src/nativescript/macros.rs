@@ -117,12 +117,15 @@ macro_rules! godot_wrap_method_inner {
                 ) -> $crate::core_types::Variant {
                     this
                         .$map_method(|__rust_val, $owner| {
-                            let ret = __rust_val.$method_name(
-                                OwnerArg::from_safe_ref($owner),
-                                $($pname,)*
-                                $($opt_pname,)*
-                            );
-                            OwnedToVariant::owned_to_variant(ret)
+                            #[allow(unused_unsafe)]
+                            unsafe {
+                                let ret = __rust_val.$method_name(
+                                    OwnerArg::from_safe_ref($owner),
+                                    $($pname,)*
+                                    $($opt_pname,)*
+                                );
+                                gdnative::core_types::OwnedToVariant::owned_to_variant(ret)
+                            }
                         })
                         .unwrap_or_else(|err| {
                             $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
