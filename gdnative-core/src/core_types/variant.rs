@@ -1216,7 +1216,7 @@ impl fmt::Display for FromVariantError {
                 write!(f, "invalid value for variant {}: {}", variant, error)
             }
             E::InvalidInstance { expected } => {
-                write!(f, "object is not an instance of NativeClass {}", expected)
+                write!(f, "object is not an instance of `NativeClass` {}", expected)
             }
             E::InvalidField { field_name, error } => {
                 write!(f, "invalid value for field {}", field_name)?;

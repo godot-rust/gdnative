@@ -170,7 +170,7 @@ pub enum Infallible {}
 impl std::fmt::Display for Infallible {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Operation that can't fail just failed")
+        write!(f, "operation that can't fail just failed")
     }
 }
 
@@ -232,8 +232,8 @@ impl std::fmt::Display for LockFailed {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LockFailed::Timeout(wait) => write!(f, "Failed to acquire lock within {:?}", wait),
-            LockFailed::Pessimistic => write!(f, "Failed to acquire lock, it was already held."),
+            LockFailed::Timeout(wait) => write!(f, "failed to acquire lock within {:?}", wait),
+            LockFailed::Pessimistic => write!(f, "failed to acquire lock, it was already held"),
         }
     }
 }
@@ -559,13 +559,13 @@ mod local_cell {
             match self {
                 LocalCellError::DifferentThread { original, current } => write!(
                     f,
-                    "Accessing from the wrong thread, expected {:?} found {:?}",
+                    "accessing from the wrong thread, expected {:?} found {:?}",
                     original, current
                 ),
                 LocalCellError::BorrowFailed => write!(
                     f,
-                    "Borrow failed; a &mut reference was requested, but one already exists. Cause is likely a re-entrant call \
-                    (e.g. a GDNative Rust method calls to GDScript, which again calls a Rust method on the same object)."
+                    "borrow failed; a &mut reference was requested, but one already exists. The cause is likely a re-entrant call \
+                    (e.g. a GDNative Rust method calls to GDScript, which again calls a Rust method on the same object)"
                 ),
             }
         }
