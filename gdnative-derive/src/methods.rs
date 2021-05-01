@@ -65,6 +65,7 @@ pub(crate) struct ExportMethod {
 pub(crate) struct ExportArgs {
     pub(crate) optional_args: Option<usize>,
     pub(crate) rpc_mode: RpcMode,
+    pub(crate) name_override: Option<String>,
 }
 
 pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
@@ -82,7 +83,10 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             let sig_span = sig.ident.span();
 
             let name = sig.ident;
-            let name_string = name.to_string();
+            let name_string = match args.name_override {
+                Some(name_override) => name_override,
+                None => name.to_string(),
+            };
             let ret_span = sig.output.span();
             let ret_ty = match sig.output {
                 syn::ReturnType::Default => quote_spanned!(ret_span => ()),
@@ -181,6 +185,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
                 let mut rpc = None;
+                let mut name_override = None;
 
                 let mut errors = vec![];
 
@@ -253,8 +258,9 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     };
                                     let path = last.ident.to_string();
 
-                                    // Match rpc mode
+                                    // Match optional export arguments
                                     match path.as_str() {
+                                        // rpc mode
                                         "rpc" => {
                                             let value = if let syn::Lit::Str(lit_str) = lit {
                                                 lit_str.value()
@@ -281,17 +287,50 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                                 ));
                                                 return false;
                                             }
+                                        }
+                                        // name override
+                                        "name" => {
+                                            let value = if let syn::Lit::Str(lit_str) = lit {
+                                                lit_str.value()
+                                            } else {
+                                                errors.push(syn::Error::new(
+                                                    last.span(),
+                                                    "unexpected type for name value, expected Str",
+                                                ));
+                                                return false;
+                                            };
 
+                                            // NOTE: We take advantage of rust identifiers following
+                                            // the same syntax rules as Godot method identifiers. See:
+                                            // https://docs.godotengine.org/en/stable/getting_started/scripting/gdscript/gdscript_basics.html#identifiers
+                                            match syn::parse_str::<syn::Ident>(value.as_ref()) {
+                                                Ok(_) => {
+                                                    if name_override.replace(value).is_some() {
+                                                        errors.push(syn::Error::new(
+                                                            last.span(),
+                                                            "name was set more than once",
+                                                        ));
+                                                        return false;
+                                                    }
+                                                }
+                                                Err(_) => {
+                                                    errors.push(syn::Error::new(
+                                                        last.span(),
+                                                        "name value must be a valid identifier",
+                                                    ));
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                        _ => {
+                                            let msg =
+                                                format!("unknown option for export: `{}`", path);
+                                            errors.push(syn::Error::new(last.span(), msg));
                                             return false;
                                         }
-                                        _ => (),
                                     }
-
-                                    let msg = format!("unknown option for export: `{}`", path);
-                                    errors.push(syn::Error::new(last.span(), msg));
                                 }
                             }
-
                             return false;
                         }
                     }
@@ -340,6 +379,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                     export_args.optional_args = optional_args;
                     export_args.rpc_mode = rpc.unwrap_or(RpcMode::Disabled);
+                    export_args.name_override = name_override;
 
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
