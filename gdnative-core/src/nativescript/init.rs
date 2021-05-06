@@ -46,8 +46,8 @@ use crate::nativescript::NativeClassMethods;
 use crate::nativescript::UserData;
 use crate::private::get_api;
 
+use super::class_registry;
 use super::emplace;
-
 pub mod method;
 pub mod property;
 
@@ -96,6 +96,12 @@ impl InitHandle {
     where
         C: NativeClassMethods,
     {
+        if !class_registry::register_class::<C>() {
+            panic!(
+                "`{type_name}` has already been registered",
+                type_name = std::any::type_name::<C>()
+            );
+        }
         unsafe {
             let class_name = CString::new(C::class_name()).unwrap();
             let base_name = CString::new(C::Base::class_name()).unwrap();

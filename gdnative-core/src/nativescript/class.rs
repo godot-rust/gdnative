@@ -14,8 +14,8 @@ use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted};
 use crate::thread_access::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 
+use super::class_registry;
 use super::emplace;
-
 /// Trait used for describing and initializing a Godot script class.
 ///
 /// This trait is used to provide data and functionality to the
@@ -321,6 +321,8 @@ impl<T: NativeClass> Instance<T, Unique> {
                 std::ptr::null_mut(),
             );
 
+            debug_assert!(class_registry::is_class_registered::<T>(), "`{type_name}` must be registered before it can be used; call `handle.add_class::<{type_name}>()` in your `nativescript_init` callback", type_name = std::any::type_name::<T>());
+
             assert!(
                 emplace::take::<T>().is_none(),
                 "emplacement value should be taken by the constructor wrapper (this is a bug in the bindings)",
@@ -330,7 +332,7 @@ impl<T: NativeClass> Instance<T, Unique> {
 
             let owner = variant
                 .try_to_object::<T::Base>()
-                .expect("base object should be of the correct type (is the script registered?)")
+                .expect("the engine should return a base object of the correct type")
                 .assume_unique();
 
             let script_ptr =

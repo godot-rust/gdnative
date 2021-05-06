@@ -109,8 +109,10 @@ pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
 #[inline]
 pub unsafe fn cleanup_internal_state() {
     #[cfg(feature = "nativescript")]
-    crate::nativescript::type_tag::cleanup();
-
+    {
+        crate::nativescript::type_tag::cleanup();
+        crate::nativescript::class_registry::cleanup();
+    }
     GODOT_API = None;
 }
 
