@@ -286,7 +286,7 @@ impl Basis {
     ///
     /// If `self` is not normalized.
     #[inline]
-    pub fn to_quat(&self) -> Quat {
+    pub fn to_quat(self) -> Quat {
         // Assumes that the matrix can be decomposed into a proper rotation and scaling matrix as M = R.S,
         // and returns the Euler angles corresponding to the rotation part, complementing get_scale().
         // See the comment in get_scale() for further information.
@@ -348,7 +348,7 @@ impl Basis {
 
     /// Returns the scale of the matrix.
     #[inline]
-    pub fn to_scale(&self) -> Vector3 {
+    pub fn to_scale(self) -> Vector3 {
         let det = self.determinant();
         let det_sign = if det < 0.0 { -1.0 } else { 1.0 };
         Vector3::new(
@@ -383,7 +383,7 @@ impl Basis {
     ///
     /// See [`Basis::to_quat`](#method.to_quat) if you need a quaternion instead.
     #[inline]
-    pub fn to_euler(&self) -> Vector3 {
+    pub fn to_euler(self) -> Vector3 {
         let mut euler = Vector3::ZERO;
 
         let m12 = self.elements[1].z;

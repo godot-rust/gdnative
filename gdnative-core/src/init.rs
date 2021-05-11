@@ -60,9 +60,9 @@ impl InitializeInfo {
             crate::core_types::GodotString::clone_from_sys(*active_library_path);
 
         Self {
-            options,
             in_editor,
             active_library_path,
+            options,
         }
     }
 

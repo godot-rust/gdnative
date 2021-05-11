@@ -110,7 +110,7 @@ impl Color {
     }
 
     #[inline]
-    pub fn to_html(&self, with_alpha: bool) -> GodotString {
+    pub fn to_html(self, with_alpha: bool) -> GodotString {
         GodotString::from_sys(unsafe { (get_api().godot_color_to_html)(self.sys(), with_alpha) })
     }
 
@@ -122,7 +122,7 @@ impl Color {
     /// # Example
     /// `0x00FF7FFF` would be the equivalent to `Color::from_rgba(1.0, 0.5, 1.0, 0.0)`
     #[inline]
-    pub fn to_abgr32(&self) -> u32 {
+    pub fn to_abgr32(self) -> u32 {
         ((self.a * 255.0) as u32) << 24
             | ((self.b * 255.0) as u32) << 16
             | ((self.g * 255.0) as u32) << 8
@@ -137,7 +137,7 @@ impl Color {
     /// # Example
     /// `0x0000FFFF7FFFFFFF` would be the equivalent to `Color::from_rgba(0.0, 1.0, 0.5, 1.0)`
     #[inline]
-    pub fn to_abgr64(&self) -> u64 {
+    pub fn to_abgr64(self) -> u64 {
         ((self.a * 65535.0) as u64) << 48
             | ((self.b * 65535.0) as u64) << 32
             | ((self.g * 65535.0) as u64) << 16
@@ -151,7 +151,7 @@ impl Color {
     /// On little endian machines this is stored in the order BGRA byte order
     /// `0x0000FFFF7FFFFFFF` would be the equivalent to `Color::from_rgba(1.0, 0.5, 1.0, 0.0)`
     #[inline]
-    pub fn to_argb32(&self) -> u32 {
+    pub fn to_argb32(self) -> u32 {
         ((self.a * 255.0) as u32) << 24
             | ((self.r * 255.0) as u32) << 16
             | ((self.g * 255.0) as u32) << 8
@@ -166,7 +166,7 @@ impl Color {
     /// # Example
     /// `0x0000FFFF7FFFFFFF` would be the equivalent to `Color::from_rgba(1.0, 0.5, 1.0, 0.0)`
     #[inline]
-    pub fn to_argb64(&self) -> u64 {
+    pub fn to_argb64(self) -> u64 {
         ((self.a * 65535.0) as u64) << 48
             | ((self.r * 65535.0) as u64) << 32
             | ((self.g * 65535.0) as u64) << 16
@@ -181,7 +181,7 @@ impl Color {
     /// # Example
     /// `0x00FF7FFF` would be the equivalent to `Color::from_rgba(0.0, 1.0, 0.5, 1.0)`
     #[inline]
-    pub fn to_rgba32(&self) -> u32 {
+    pub fn to_rgba32(self) -> u32 {
         ((self.r * 255.0) as u32) << 24
             | ((self.g * 255.0) as u32) << 16
             | ((self.b * 255.0) as u32) << 8
@@ -196,7 +196,7 @@ impl Color {
     /// # Example
     /// `0x0000FFFF7FFFFFFF` would be the equivalent to `Color::from_rgba(0.0, 1.0, 0.5, 1.0)`
     #[inline]
-    pub fn to_rgba64(&self) -> u64 {
+    pub fn to_rgba64(self) -> u64 {
         ((self.r * 65535.0) as u64) << 48
             | ((self.g * 65535.0) as u64) << 32
             | ((self.b * 65535.0) as u64) << 16
