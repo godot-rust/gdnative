@@ -1,5 +1,6 @@
 //! Types and functions related to the NativeScript extension of GDNative.
 
+pub(crate) mod class_registry;
 mod emplace;
 mod macros;
 

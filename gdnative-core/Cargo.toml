@@ -23,6 +23,7 @@ approx = "0.4.0"
 glam = "0.14.0"
 indexmap = "1.6.0"
 ahash = "0.7.0"
+once_cell = "1.7.2"
 
 gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.3" }
 
