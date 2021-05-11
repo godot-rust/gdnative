@@ -45,16 +45,14 @@ fn visit(api: &Api, class: &GodotClass, visited: &mut HashSet<String>) {
 fn base_classes(api: &Api, class: &GodotClass) -> HashSet<String> {
     let mut bases = HashSet::new();
 
-    if class.base_class.is_empty() {
-        bases
-    } else {
+    if !class.base_class.is_empty() {
         if let Some(class) = api.find_class(&class.base_class) {
             bases.insert(class.name.clone());
-
             bases.extend(base_classes(api, class));
         }
-        bases
     }
+
+    bases
 }
 
 fn referenced_classes(api: &Api, class: &GodotClass) -> HashSet<String> {

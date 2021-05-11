@@ -636,10 +636,9 @@ godot_test!(test_string {
     let cmp1: GodotString = "foo".into();
     let cmp2: GodotString = "foo".into();
     let cmp3: GodotString = "bar".into();
-    assert_eq!(cmp1 < cmp2, false, "equal should not be less than");
-    assert_eq!(cmp1 > cmp2, false, "equal should not be greater than");
-    assert_eq!(cmp1 < cmp3, false, "foo should be less than bar");
-    assert_eq!(cmp3 > cmp1, false, "bar should be greater than foo");
+    assert_eq!(cmp1.cmp(&cmp2), Ordering::Equal, "equal should not be less than");
+    assert_eq!(cmp1.cmp(&cmp3), Ordering::Greater, "foo should greater than bar");
+    assert_eq!(cmp3.cmp(&cmp1), Ordering::Less, "bar should be less than foo");
 
     let index_string: GodotString = "bar".into();
     assert_eq!(index_string[0], 'b');

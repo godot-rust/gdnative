@@ -51,17 +51,10 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             .map(|function_path| quote!(#function_path(builder);))
             .unwrap_or(quote!({}));
         let properties = data.properties.into_iter().map(|(ident, config)| {
-            let with_default = if let Some(default_value) = &config.default {
-                Some(quote!(.with_default(#default_value)))
-            } else {
-                None
-            };
-
-            let with_hint = if let Some(hint_fn) = &config.hint {
-                Some(quote!(.with_hint(#hint_fn())))
-            } else {
-                None
-            };
+            let with_default = config
+                .default
+                .map(|default_value| quote!(.with_default(#default_value)));
+            let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
 
             let with_usage = if config.no_editor {
                 Some(quote!(.with_usage(::gdnative::nativescript::init::property::Usage::NOEDITOR)))
