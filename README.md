@@ -93,6 +93,13 @@ godot_init!(init);
 
 ### Further examples
 
+
+> ### **IMPORTANT NOTE**
+>
+> Before launching the examples in the godot editor, you must first run `cargo build` and wait for the build operations to finish successfully.
+>
+>At startup, the Godot editor tries to load all resources used by the project, including the native binary. If it isn't present, the editor skips properties or signals associated with the missing NativeScripts in the scene. This will cause the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
+
 The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
 - [/examples/hello_world](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
