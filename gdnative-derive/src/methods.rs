@@ -2,7 +2,7 @@ use syn::{FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
 
 use proc_macro::TokenStream;
 use std::boxed::Box;
-use syn::export::Span;
+use proc_macro2::Span;
 
 pub(crate) struct ClassMethodExport {
     pub(crate) class_ty: Box<Type>,
