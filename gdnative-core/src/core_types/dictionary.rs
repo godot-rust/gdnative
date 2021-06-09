@@ -544,6 +544,12 @@ where
     }
 }
 
+impl Clone for Dictionary {
+    fn clone(&self) -> Self {
+        self.new_ref()
+    }
+}
+
 godot_test!(test_dictionary {
     use std::collections::HashSet;
 
