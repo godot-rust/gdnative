@@ -2,7 +2,7 @@ name: CI
 
 env:
   RUST_BACKTRACE: 1
-  GODOT_VER: 3.2
+  GODOT_VER: 3.3
   GODOT_REL: stable
 
 on:
