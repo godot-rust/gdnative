@@ -83,19 +83,25 @@ fn test_derive_to_variant() -> bool {
 
         let variant = data.to_variant();
         let dictionary = variant.try_to_dictionary().expect("should be dictionary");
-        assert_eq!(Some(42), dictionary.get("foo").try_to_i64());
-        assert_eq!(Some(54.0), dictionary.get("bar").try_to_f64());
+        assert_eq!(Some(42), dictionary.get("foo").and_then(|v| v.try_to_i64()));
+        assert_eq!(
+            Some(54.0),
+            dictionary.get("bar").and_then(|v| v.try_to_f64())
+        );
         assert_eq!(
             Some("*mut ()".into()),
-            dictionary.get("ptr").try_to_string()
+            dictionary.get("ptr").and_then(|v| v.try_to_string())
         );
         assert!(!dictionary.contains("skipped"));
 
         let enum_dict = dictionary
             .get("baz")
-            .try_to_dictionary()
+            .and_then(|v| v.try_to_dictionary())
             .expect("should be dictionary");
-        assert_eq!(Some(true), enum_dict.get("Foo").try_to_bool());
+        assert_eq!(
+            Some(true),
+            enum_dict.get("Foo").and_then(|v| v.try_to_bool())
+        );
 
         assert_eq!(
             Ok(ToVar::<f64, i128> {
@@ -146,7 +152,7 @@ fn test_derive_owned_to_variant() -> bool {
         let dictionary = variant.try_to_dictionary().expect("should be dictionary");
         let array = dictionary
             .get("arr")
-            .try_to_array()
+            .and_then(|v| v.try_to_array())
             .expect("should be array");
         assert_eq!(3, array.len());
         assert_eq!(

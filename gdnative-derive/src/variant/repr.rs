@@ -280,7 +280,7 @@ impl VariantRepr {
                 let name_string_literals =
                     name_strings.iter().map(|string| Literal::string(&string));
 
-                let expr_variant = &quote!(&__dict.get(&__key));
+                let expr_variant = &quote!(&__dict.get_or_nil(&__key));
                 let exprs = non_skipped_fields
                     .iter()
                     .map(|f| f.from_variant(expr_variant));
