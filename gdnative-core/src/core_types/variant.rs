@@ -1753,7 +1753,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
 
         match key.as_str() {
             "Ok" => {
-                let val = T::from_variant(&dict.get(key_variant)).map_err(|err| {
+                let val = T::from_variant(&dict.get_or_nil(key_variant)).map_err(|err| {
                     FVE::InvalidEnumVariant {
                         variant: "Ok",
                         error: Box::new(err),
@@ -1762,7 +1762,7 @@ impl<T: FromVariant, E: FromVariant> FromVariant for Result<T, E> {
                 Ok(Ok(val))
             }
             "Err" => {
-                let err = E::from_variant(&dict.get(key_variant)).map_err(|err| {
+                let err = E::from_variant(&dict.get_or_nil(key_variant)).map_err(|err| {
                     FVE::InvalidEnumVariant {
                         variant: "Err",
                         error: Box::new(err),
@@ -1912,11 +1912,11 @@ godot_test!(
     test_variant_result {
         let variant = Result::<i64, ()>::Ok(42_i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(42), dict.get("Ok").try_to_i64());
+        assert_eq!(Some(42), dict.get("Ok").and_then(|v| v.try_to_i64()));
 
         let variant = Result::<(), i64>::Err(54_i64).to_variant();
         let dict = variant.try_to_dictionary().expect("should be dic");
-        assert_eq!(Some(54), dict.get("Err").try_to_i64());
+        assert_eq!(Some(54), dict.get("Err").and_then(|v| v.try_to_i64()));
 
         let variant = Variant::from_bool(true);
         assert_eq!(

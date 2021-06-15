@@ -69,21 +69,49 @@ impl<Access: ThreadAccess> Dictionary<Access> {
         unsafe { (get_api().godot_dictionary_has_all)(self.sys(), keys.sys()) }
     }
 
-    /// Returns a copy of the value corresponding to the key.
+    /// Returns a copy of the value corresponding to the key if it exists.
     #[inline]
-    pub fn get<K>(&self, key: K) -> Variant
+    pub fn get<K>(&self, key: K) -> Option<Variant>
     where
         K: ToVariant + ToVariantEq,
     {
+        let key = key.to_variant();
+        if self.contains(&key) {
+            // This should never return the default Nil, but there isn't a safe way to otherwise check
+            // if the entry exists in a single API call.
+            Some(self.get_or_nil(key))
+        } else {
+            None
+        }
+    }
+
+    /// Returns a copy of the value corresponding to the key, or `default` if it doesn't exist
+    #[inline]
+    pub fn get_or<K, D>(&self, key: K, default: D) -> Variant
+    where
+        K: ToVariant + ToVariantEq,
+        D: ToVariant,
+    {
         unsafe {
-            Variant((get_api().godot_dictionary_get)(
+            Variant((get_api().godot_dictionary_get_with_default)(
                 self.sys(),
                 key.to_variant().sys(),
+                default.to_variant().sys(),
             ))
         }
     }
 
-    /// Update an existing element corresponding ot the key.
+    /// Returns a copy of the element corresponding to the key, or `Nil` if it doesn't exist.
+    /// Shorthand for `self.get_or(key, Variant::new())`.
+    #[inline]
+    pub fn get_or_nil<K>(&self, key: K) -> Variant
+    where
+        K: ToVariant + ToVariantEq,
+    {
+        self.get_or(key, Variant::new())
+    }
+
+    /// Update an existing element corresponding to the key.
     ///
     /// # Panics
     ///
@@ -106,12 +134,14 @@ impl<Access: ThreadAccess> Dictionary<Access> {
         }
     }
 
-    /// Returns a reference to the value corresponding to the key.
+    /// Returns a reference to the value corresponding to the key, inserting a `Nil` value first if
+    /// it does not exist.
     ///
     /// # Safety
     ///
     /// The returned reference is invalidated if the same container is mutated through another
-    /// reference.
+    /// reference, and other references may be invalidated if the entry does not already exist
+    /// (which causes this function to insert `Nil` and thus possibly re-allocate).
     ///
     /// `Variant` is reference-counted and thus cheaply cloned. Consider using `get` instead.
     #[inline]
@@ -125,13 +155,16 @@ impl<Access: ThreadAccess> Dictionary<Access> {
         ))
     }
 
-    /// Returns a mutable reference to the value corresponding to the key.
+    /// Returns a mutable reference to the value corresponding to the key, inserting a `Nil` value
+    /// first if it does not exist.
     ///
     /// # Safety
     ///
     /// The returned reference is invalidated if the same container is mutated through another
-    /// reference. It is possible to create two mutable references to the same memory location
-    /// if the same `key` is provided, causing undefined behavior.
+    /// reference, and other references may be invalidated if the `key` does not already exist
+    /// (which causes this function to insert `Nil` and thus possibly re-allocate). It is also
+    /// possible to create two mutable references to the same memory location if the same `key`
+    /// is provided, causing undefined behavior.
     #[inline]
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn get_mut_ref<K>(&self, key: K) -> &mut Variant
@@ -425,7 +458,7 @@ unsafe fn iter_next<Access: ThreadAccess>(
         None
     } else {
         let key = Variant::cast_ref(next_ptr).clone();
-        let value = dic.get(&key);
+        let value = dic.get_or_nil(&key);
         *last_key = Some(key.clone());
         Some((key, value))
     }
@@ -591,7 +624,7 @@ godot_test!(test_dictionary {
     let mut iter_keys = HashSet::new();
     let expected_keys = ["foo", "bar"].iter().map(|&s| s.to_string()).collect::<HashSet<_>>();
     for (key, value) in &dict {
-        assert_eq!(value, dict.get(&key));
+        assert_eq!(Some(value), dict.get(&key));
         if !iter_keys.insert(key.to_string()) {
             panic!("key is already contained in set: {:?}", key);
         }
