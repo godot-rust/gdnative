@@ -10,4 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gdnative = { path = "../../gdnative" }
-glam = "0.16.0"
+glam = "0.17.1"
