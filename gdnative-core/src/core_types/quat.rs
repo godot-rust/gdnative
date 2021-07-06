@@ -106,6 +106,8 @@ impl Quat {
     }
 
     /// Returns a copy of the quaternion, normalized to unit length.
+	///
+	/// Normalization is necessary before transforming vectors through `xform()` or `*`.
     #[inline]
     pub fn normalized(self) -> Self {
         Self::gd(self.glam().normalize())
@@ -123,21 +125,17 @@ impl Quat {
         // Copied from Godot's Quat::slerp as glam::lerp version diverges too much
 
         // calc cosine
-        let cosom = self.dot(b);
+        let cos = self.dot(b);
 
         // adjust signs (if necessary)
-        let (cosom, b) = if cosom < 0.0 {
-            (-cosom, -b)
-        } else {
-            (cosom, b)
-        };
+        let (cos, b) = if cos < 0.0 { (-cos, -b) } else { (cos, b) };
 
         // calculate coefficients
-        let scale = if (1.0 - cosom) > CMP_EPSILON as f32 {
+        let scale = if 1.0 - cos > CMP_EPSILON as f32 {
             // standard case (slerp)
-            let omega = cosom.acos();
-            let sinom = omega.sin();
-            (((1.0 - t) * omega).sin() / sinom, (t * omega).sin() / sinom)
+            let omega = cos.acos();
+            let sin = omega.sin();
+            (((1.0 - t) * omega).sin() / sin, (t * omega).sin() / sin)
         } else {
             // "from" and "to" quaternions are very close
             //  ... so we can do a linear interpolation
@@ -179,7 +177,9 @@ impl Quat {
         }
     }
 
-    /// Returns a vector transformed (multiplied) by this quaternion.
+    /// Returns a vector transformed (multiplied) by this quaternion. This is the same as `mul`
+    ///
+    /// **Note:** The quaternion must be normalized.
     #[inline]
     pub fn xform(self, v: Vector3) -> Vector3 {
         self * v
@@ -200,9 +200,22 @@ impl Mul<Vector3> for Quat {
     type Output = Vector3;
 
     #[inline]
+    /// Returns a vector transformed (multiplied) by this quaternion. This is the same as `xform`
+    ///
+    /// **Note:** The quaternion must be normalized.
     fn mul(self, with: Vector3) -> Vector3 {
         debug_assert!(self.is_normalized(), "Quaternion is not normalized");
         Vector3::gd(self.glam() * with.glam())
+    }
+}
+
+impl Mul<Self> for Quat {
+    type Output = Self;
+
+    #[inline]
+    /// Returns another quaternion transformed (multiplied) by this quaternion.
+    fn mul(self, with: Self) -> Self {
+        Self::gd(self.glam() * with.glam())
     }
 }
 
@@ -246,11 +259,19 @@ mod test {
     }
 
     #[test]
-    fn mul() {
+    fn mul_vec() {
         let quat = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
         let vec = Vector3::new(2.2, 0.8, 1.65);
         let expect = Vector3::new(-2.43176, -0.874777, -1.234427);
         assert!(expect.is_equal_approx(quat * vec));
+    }
+
+    #[test]
+    fn mul_quat() {
+        let a = Quat::new(-0.635115, -0.705592, 0.314052, 0.011812);
+        let b = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
+        let e = Quat::new(0.568756, -0.394417, 0.242027, 0.67998);
+        assert!(e.is_equal_approx(a * b));
     }
 
     #[test]
