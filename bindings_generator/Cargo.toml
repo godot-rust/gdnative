@@ -19,5 +19,5 @@ roxmltree = "0.14.0"
 proc-macro2 = "1.0.6"
 quote = "1.0.2"
 syn = { version = "1.0", features = ["full", "extra-traits", "visit"] }
-miniserde = "=0.1.13"
+miniserde = "=0.1.14"
 unindent = "0.1.7"
