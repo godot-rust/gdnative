@@ -4,4 +4,4 @@ error[E0271]: type mismatch resolving `<String as Export>::Hint == ()`
 5 | #[derive(Default, NativeClass)]
   |                   ^^^^^^^^^^^ expected enum `StringHint`, found `()`
   |
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the derive macro `NativeClass` (in Nightly builds, run with -Z macro-backtrace for more info)
