@@ -25,8 +25,8 @@ gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
 gdnative-bindings = { optional = true, path = "../gdnative-bindings", version = "=0.9.3" }
 
 [dev-dependencies]
-trybuild = "1.0"
-rustversion = "1.0"
+trybuild = "1.0.43"
+rustversion = "1.0.5"
 
 [package.metadata.docs.rs]
 all-features = true
