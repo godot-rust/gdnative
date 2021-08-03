@@ -148,7 +148,7 @@ impl VariantRepr {
                     fields.iter().map(|f| format!("{}", &f.ident)).collect();
 
                 let name_string_literals =
-                    name_strings.iter().map(|string| Literal::string(&string));
+                    name_strings.iter().map(|string| Literal::string(string));
 
                 let exprs = fields.iter().map(|f| f.to_variant(trait_kind));
 
@@ -278,7 +278,7 @@ impl VariantRepr {
                     .collect();
 
                 let name_string_literals =
-                    name_strings.iter().map(|string| Literal::string(&string));
+                    name_strings.iter().map(|string| Literal::string(string));
 
                 let expr_variant = &quote!(&__dict.get_or_nil(&__key));
                 let exprs = non_skipped_fields

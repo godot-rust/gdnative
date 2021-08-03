@@ -79,7 +79,7 @@ pub fn generate_instantiable_impl(class: &GodotClass) -> TokenStream {
 pub fn generate_queue_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", class.name);
 
-    let queue_free_output = if class.name == "Node" || api.class_inherits(&class, "Node") {
+    let queue_free_output = if class.name == "Node" || api.class_inherits(class, "Node") {
         quote! {
             impl QueueFree for #class_name {
                 #[inline]

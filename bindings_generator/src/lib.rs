@@ -52,7 +52,7 @@ pub fn generate_bindings(api: &Api, docs: Option<&GodotXmlDocs>) -> BindingResul
         .map(|class| {
             (
                 class.name.clone(),
-                generate_class_bindings(&api, class, &mut icalls, docs),
+                generate_class_bindings(api, class, &mut icalls, docs),
             )
         })
         .collect();
@@ -84,7 +84,7 @@ fn generate_class_bindings(
 ) -> TokenStream {
     // types and methods
     let types_and_methods = {
-        let documentation = generate_class_documentation(&api, class);
+        let documentation = generate_class_documentation(api, class);
 
         let class_struct = generate_class_struct(class);
 
@@ -111,7 +111,7 @@ fn generate_class_bindings(
     let traits = {
         let object_impl = generate_godot_object_impl(class);
 
-        let free_impl = generate_queue_free_impl(&api, class);
+        let free_impl = generate_queue_free_impl(api, class);
 
         let base_class = if !class.base_class.is_empty() {
             generate_deref_impl(class)
@@ -119,7 +119,7 @@ fn generate_class_bindings(
             Default::default()
         };
 
-        let sub_class = generate_sub_class_impls(&api, class);
+        let sub_class = generate_sub_class_impls(api, class);
 
         // Instantiable
         let instantiable = if class.instantiable {
@@ -146,7 +146,7 @@ fn generate_class_bindings(
 
     // method table for classes with functions
     let method_table = if class.instantiable || !class.methods.is_empty() {
-        generate_method_table(&api, class)
+        generate_method_table(api, class)
     } else {
         Default::default()
     };

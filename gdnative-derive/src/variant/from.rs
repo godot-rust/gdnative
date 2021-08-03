@@ -46,7 +46,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
 
             let var_ident_string_literals = var_ident_strings
                 .iter()
-                .map(|string| Literal::string(&string))
+                .map(|string| Literal::string(string))
                 .collect::<Vec<_>>();
 
             let ref_var_ident_string_literals = &var_ident_string_literals;

@@ -134,7 +134,7 @@ see the type-level documentation on `Ref`.
 
 fn list_base_classes(output: &mut impl Write, api: &Api, parent_name: &str) -> GeneratorResult {
     if let Some(parent) = api.find_class(parent_name) {
-        let class_link = class_doc_link(&parent);
+        let class_link = class_doc_link(parent);
 
         writeln!(output, " - {}", class_link)?;
 

@@ -250,7 +250,7 @@ fn rename_property_getter<'a>(name: &'a str, class: &GodotClass) -> &'a str {
     if name.starts_with("get_") && class.is_getter(name) {
         &name[4..]
     } else {
-        &name
+        name
     }
 }
 
@@ -293,7 +293,7 @@ pub(crate) fn generate_methods(
             ..
         } = method.get_name();
 
-        if skip_method(&method, &method_name) {
+        if skip_method(method, method_name) {
             continue;
         }
 
@@ -337,7 +337,7 @@ pub(crate) fn generate_methods(
 
         // Adjust getters to match guideline conventions:
         // https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter
-        let rusty_method_name = rename_property_getter(&method_name, &class);
+        let rusty_method_name = rename_property_getter(method_name, class);
 
         let method_sig = MethodSig::from_method(method);
         let icall_ty = method_sig.icall_type();

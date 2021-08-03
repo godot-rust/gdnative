@@ -47,16 +47,16 @@ impl Player {
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
 
-        if Input::is_action_pressed(&input, "ui_right") {
+        if Input::is_action_pressed(input, "ui_right") {
             velocity.x += 1.0
         }
-        if Input::is_action_pressed(&input, "ui_left") {
+        if Input::is_action_pressed(input, "ui_left") {
             velocity.x -= 1.0
         }
-        if Input::is_action_pressed(&input, "ui_down") {
+        if Input::is_action_pressed(input, "ui_down") {
             velocity.y += 1.0
         }
-        if Input::is_action_pressed(&input, "ui_up") {
+        if Input::is_action_pressed(input, "ui_up") {
             velocity.y -= 1.0
         }
 
