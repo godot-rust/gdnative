@@ -102,16 +102,16 @@ jobs:
         if: ${{ matrix.is_windows }}
         run: cargo build --target x86_64-pc-windows-msvc --release;
 
-  rustc-1-46:
+  rustc-1-54:
     needs: rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
         with:
-          toolchain: 1.46.0
-      - name: Checking on 1.46.0
-        run: cargo +1.46.0 check --all --all-features;
+          toolchain: 1.54.0
+      - name: Checking on 1.54.0
+        run: cargo +1.54.0 check --all --all-features;
 
   test_ios:
     continue-on-error: ${{ matrix.experimental }}
@@ -271,7 +271,7 @@ jobs:
       - clippy
       - rustfmt
       - test
-      - rustc-1-46
+      - rustc-1-54
       - test_ios
       - test_android
       - godot_test
