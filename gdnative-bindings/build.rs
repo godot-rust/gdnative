@@ -60,7 +60,7 @@ fn generate(
             }}
             pub use crate::generated::{mod_name}::{class_name};
             "#,
-            mod_name = module_name_from_class_name(&class_name),
+            mod_name = module_name_from_class_name(class_name),
             class_name = class_name,
             content = code,
         )
@@ -77,7 +77,7 @@ fn generate(
     binding_res: &BindingResult,
 ) {
     for (class_name, code) in &binding_res.class_bindings {
-        let mod_name = module_name_from_class_name(&class_name);
+        let mod_name = module_name_from_class_name(class_name);
 
         let mod_path = out_path.join(format!("{}.rs", mod_name));
         let mut mod_output = BufWriter::new(File::create(&mod_path).unwrap());

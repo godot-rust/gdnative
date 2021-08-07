@@ -39,7 +39,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 
 pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStream, syn::Error> {
     let derived = crate::automatically_derived();
-    let data = parse_derive_input(&derive_input)?;
+    let data = parse_derive_input(derive_input)?;
 
     // generate NativeClass impl
     let trait_impl = {

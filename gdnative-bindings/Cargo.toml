@@ -17,9 +17,9 @@ one_class_one_file = []
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.9.3" }
 gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
-libc = "0.2"
-bitflags = "1.2"
+libc = "0.2.98"
+bitflags = "1.2.1"
 
 [build-dependencies]
-heck = "0.3.0"
+heck = "0.3.3"
 gdnative_bindings_generator = { path = "../bindings_generator", version = "=0.9.3" }

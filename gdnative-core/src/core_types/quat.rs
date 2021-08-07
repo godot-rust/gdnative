@@ -24,6 +24,7 @@ impl Quat {
     }
 
     #[inline]
+    #[allow(unused)]
     fn glam(self) -> glam::Quat {
         glam::Quat::from_xyzw(self.x, self.y, self.z, self.w)
     }

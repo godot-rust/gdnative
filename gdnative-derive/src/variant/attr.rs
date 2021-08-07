@@ -44,8 +44,8 @@ fn generate_error_with_docs(span: Span, message: &str) -> syn::Error {
 impl AttrBuilder {
     fn extend_meta(&mut self, meta: &syn::Meta) {
         match meta {
-            syn::Meta::Path(flag) => self.set_flag(&flag),
-            syn::Meta::NameValue(pair) => self.set_pair(&pair),
+            syn::Meta::Path(flag) => self.set_flag(flag),
+            syn::Meta::NameValue(pair) => self.set_pair(pair),
             syn::Meta::List(list) => {
                 for nested in list.nested.iter() {
                     match nested {

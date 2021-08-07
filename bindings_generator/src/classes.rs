@@ -67,7 +67,7 @@ pub(crate) fn generate_class_constants(class: &GodotClass) -> TokenStream {
 
     let mut class_constants: Vec<(&ConstantName, &ConstantValue)> =
         class.constants.iter().collect();
-    class_constants.sort_by(|a, b| a.0.cmp(&b.0));
+    class_constants.sort_by(|a, b| a.0.cmp(b.0));
 
     for (name, value) in &class_constants {
         let name = format_ident!("{}", name);
@@ -114,7 +114,7 @@ pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
         let typ_name = format_ident!("{}", enum_name);
 
         let mut values: Vec<_> = e.values.iter().collect();
-        values.sort_by(|a, b| a.1.cmp(&b.1));
+        values.sort_by(|a, b| a.1.cmp(b.1));
 
         let consts = values.iter().map(|(key, val)| {
             let key = key.to_uppercase();

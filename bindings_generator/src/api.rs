@@ -395,9 +395,9 @@ impl Ty {
                 let mut split = ty[5..].split("::");
                 let class_name = split.next().unwrap();
                 let name = format_ident!("{}", split.next().unwrap().to_camel_case());
-                let module = format_ident!("{}", module_name_from_class_name(&class_name));
+                let module = format_ident!("{}", module_name_from_class_name(class_name));
                 // Is it a known type?
-                match Ty::from_src(&class_name) {
+                match Ty::from_src(class_name) {
                     Ty::Enum(_) | Ty::Object(_) => {
                         Ty::Enum(syn::parse_quote! { crate::generated::#module::#name })
                     }
@@ -405,7 +405,7 @@ impl Ty {
                 }
             }
             ty => {
-                let module = format_ident!("{}", module_name_from_class_name(&ty));
+                let module = format_ident!("{}", module_name_from_class_name(ty));
                 let ty = format_ident!("{}", ty);
                 Ty::Object(syn::parse_quote! { crate::generated::#module::#ty })
             }

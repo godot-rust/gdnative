@@ -137,7 +137,7 @@ where
 {
     #[inline]
     fn from(s: S) -> NodePath {
-        NodePath::from_str(&s.as_ref())
+        NodePath::from_str(s.as_ref())
     }
 }
 
