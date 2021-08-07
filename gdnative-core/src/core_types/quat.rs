@@ -36,7 +36,12 @@ impl Quat {
     /// (X angle, Y angle, Z angle).
     #[inline]
     pub fn from_euler(euler: Vector3) -> Self {
-        Self::gd(glam::Quat::from_euler(EulerRot::YXZ, euler.y, euler.x, euler.z))
+        Self::gd(glam::Quat::from_euler(
+            EulerRot::YXZ,
+            euler.y,
+            euler.x,
+            euler.z,
+        ))
     }
 
     /// Constructs a quaternion that will rotate around the given axis by the specified angle. The
@@ -68,7 +73,7 @@ impl Quat {
     /// the rotation angles in the format (X angle, Y angle, Z angle).
     #[inline]
     pub fn to_euler(self) -> Vector3 {
-		Basis::from_quat(self).to_euler()
+        Basis::from_quat(self).to_euler()
     }
 
     /// Returns the inverse of the quaternion.
@@ -106,8 +111,8 @@ impl Quat {
     }
 
     /// Returns a copy of the quaternion, normalized to unit length.
-	///
-	/// Normalization is necessary before transforming vectors through `xform()` or `*`.
+    ///
+    /// Normalization is necessary before transforming vectors through `xform()` or `*`.
     #[inline]
     pub fn normalized(self) -> Self {
         Self::gd(self.glam().normalize())
