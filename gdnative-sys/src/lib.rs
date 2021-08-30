@@ -1,8 +1,14 @@
+// For silenced lints/warnings, see also gdnative-bindings/src/lib.rs
+
+// Notes:
+// * deref_nullptr: since rustc 1.53, bindgen causes UB warnings -- see https://github.com/rust-lang/rust-bindgen/issues/1651
+//   remove this once bindgen has fixed the issue (currently at version 1.59.1)
 #![allow(
     non_upper_case_globals,
     non_camel_case_types,
     non_snake_case,
     improper_ctypes,
+    deref_nullptr,
     clippy::style
 )]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
