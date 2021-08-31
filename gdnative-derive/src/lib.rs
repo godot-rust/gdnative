@@ -16,6 +16,43 @@ mod profiled;
 mod varargs;
 mod variant;
 
+/// Collects method signatures of all functions in a `NativeClass` that have the `#[export]` attribute and registers them with Godot.
+///
+/// For example, in the following class
+/// ```ignore
+/// #[derive(NativeClass)]
+/// #[inherit(Reference)]
+/// #[no_constructor]
+/// struct Foo {}
+///
+/// #[methods]
+/// impl Foo {
+///     #[export]
+///     fn foo(&self, _owner: &Reference, bar: i64) -> i64 {
+///         bar
+///     }
+/// }
+///
+/// ```
+/// Will expand to
+/// ```ignore
+/// struct Foo{}
+/// impl gdnative::nativescript::NativeClassMethods for Foo {
+///     fn register(builder: &ClassBuilder<Self>) {
+///         use gdnative::nativescript::init::*;
+///         builder.build_method("foo", gdnative::godot_wrap_method!(Foo::foo))
+///             .with_rpc_mode(Rpc::Disabled)
+///             .done_stateless();
+///     }
+///
+///     fn foo(&self, _owner: &Reference, bar: i64) -> i64 {
+///         bar
+///     }
+/// }
+/// ```
+/// **Important**: Only one `impl` block per struct may be attributed with `#[methods]`.
+///
+/// For more context, please refer to [gdnative::NativeClass](NativeClass).
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     if syn::parse::<syn::parse::Nothing>(meta.clone()).is_err() {
@@ -164,6 +201,49 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// - `no_editor`
 ///
 /// Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.
+///
+/// ### `#[methods]`
+/// Adds the necessary information to a an `impl` block to register the properties and methods with Godot.
+///
+/// **Important**: This needs to be added to one and only one `impl` block for a given `NativeClass`.
+///
+/// For additional details about how `#[methods]` expands, please refer to [gdnative::methods](methods)
+///
+/// ### `#[export]`
+/// Registers the attributed function signature to be used by Godot.
+/// A valid function signature must have:
+/// - `&self` or `&mut self` as its first parameter
+/// - `&T` or `TRef<T>` where T refers to the type declared in `#[inherit(T)]` attribute as it's second parameter; this is typically called the `owner`.
+/// - Optionally, any number of additional parameters, which must have the type `Variant` or must implement the `FromVariant` trait. `FromVariant` is implemented for most common types.
+/// - Return values must implement the `OwnedToVariant` trait (automatically implemented by `ToVariant`)
+///   or be a `Variant` type.
+///
+/// ```ignore
+/// #[export]
+/// fn foo(&self, owner: &Reference)
+/// ```
+/// **Note**: Marking a function with `#[export]` does not have any effect unless inside an `impl` block that has the `#[methods]` attribute.
+///
+/// Possible arguments for this attribute are
+///
+/// - `name` = "overridden_function_name"
+///
+/// Overrides the function name as the method name to be registered in Godot.
+///
+/// - `rpc` = "selected_rpc"
+///   - "selected_rpc" must be one of the following values, which refer to the associated [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations)
+///     - "disabled" - `RPCMode::RPC_MODE_DISABLED`
+///     - "remote" - `RPCMode::RPC_MODE_REMOTE`
+///     - "remote_sync" - `RPCMode::RPC_MODE_REMOTE_SYMC`
+///     - "master" - `RPCMode::RPC_MODE_MASTER`
+///     - "puppet" - `RPCMode::RPC_MODE_PUPPET`
+///     - "master_sync" - `RPCMode::RPC_MODE_MASTERSYNC`
+///     - "puppet_sync" - `RPCMode::RPC_MODE_PUPPETSYNC`
+///
+/// This enables you to set the [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations) for the function.
+/// Refer to [Godot's Remote Procedure documentation](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html#rpc) for more details.
+///
+
 #[proc_macro_derive(
     NativeClass,
     attributes(
