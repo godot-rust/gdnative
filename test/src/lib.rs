@@ -21,7 +21,7 @@ pub extern "C" fn run_tests(
     let mut status = true;
     status &= gdnative::core_types::test_string();
 
-    status &= gdnative::core_types::dictionary::test_dictionary();
+    status &= gdnative::core_types::test_dictionary();
     // status &= gdnative::test_dictionary_clone_clear();
     status &= gdnative::core_types::test_color();
     status &= gdnative::core_types::test_array();

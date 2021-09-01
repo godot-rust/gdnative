@@ -14,7 +14,7 @@
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
 //! content when using the `Clone` trait, some types do not implement `Clone` and instead
-//! implement [`NewRef`](./trait.NewRef.html) which provides a `new_ref(&self) -> Self` method
+//! implement [`NewRef`](object::NewRef) which provides a `new_ref(&self) -> Self` method
 //! to create references to the same collection or object.
 //!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
@@ -59,4 +59,6 @@ pub use init::{InitializeInfo, TerminateInfo};
 pub use new_ref::NewRef;
 pub use object::{GodotObject, Null, Ref, TRef};
 
-pub type GodotResult = Result<(), core_types::error::GodotError>;
+#[deprecated(since = "0.10", note = "use core_types::GodotResult")]
+#[doc(hidden)]
+pub type GodotResult = core_types::GodotResult;

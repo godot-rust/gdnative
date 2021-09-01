@@ -5,21 +5,21 @@ use std::ops::{Deref, DerefMut};
 use std::ptr;
 use std::slice;
 
+/// A pool array access that may be unaligned.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
-/// An pool array access that may be unaligned.
 pub struct MaybeUnaligned<G> {
     guard: G,
 }
 
+/// A pool array access that is (assumed to be) aligned.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
-/// An pool array access that is (assumed to be) aligned.
 pub struct Aligned<G> {
     guard: G,
 }
 
-#[derive(Debug)]
-/// An pool array write access with an owned aligned copy. The data is written back when this is
+/// A pool array write access with an owned aligned copy. The data is written back when this is
 /// dropped.
+#[derive(Debug)]
 pub struct Owned<G>
 where
     G: Guard + WritePtr,
