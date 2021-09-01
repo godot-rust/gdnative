@@ -211,13 +211,16 @@ impl GodotXmlDocs {
             format!("[`{member}`][Self::{member}]", member = &c[2])
         });
 
+        // Note: maybe some of the following can be expressed as regex, but if text-replace does the job reliably enough, it's even faster
         let translated = godot_doc
             .replace("[code]", "`")
             .replace("[/code]", "`")
             .replace("[codeblock]", "```gdscript")
             .replace("[/codeblock]", "```")
             .replace("[b]", "**")
-            .replace("[/b]", "**");
+            .replace("[/b]", "**")
+            .replace("[i]", "_")
+            .replace("[/i]", "_");
 
         format!("{}{}", gdscript_note, translated)
     }
