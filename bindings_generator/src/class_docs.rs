@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fs};
 
+use regex::{Captures, Regex};
 use roxmltree::Node;
 
 #[derive(Debug)]
@@ -130,6 +131,17 @@ impl GodotXmlDocs {
         );
     }
 
+    fn to_rust_type(godot_type: &str) -> &str {
+        match godot_type {
+            "String" => "GodotString",
+            "Error" => "GodotError",
+            "RID" => "Rid",
+            "G6DOFJointAxisParam" => "G6dofJointAxisParam",
+            "G6DOFJointAxisFlag" => "G6dofJointAxisFlag",
+            _ => godot_type,
+        }
+    }
+
     /// Takes the Godot documentation markup and transforms it to Rustdoc.
     /// Very basic approach with limitations, but already helps readability quite a bit.
     fn reformat_as_rustdoc(godot_doc: String) -> String {
@@ -138,6 +150,66 @@ impl GodotXmlDocs {
         } else {
             ""
         };
+
+        // TODO reuse regex across classes
+        let url_regex = Regex::new("\\[url=(.+?)](.*?)\\[/url]").unwrap();
+
+        let type_regex = Regex::new("\\[enum ([A-Za-z0-9_]+?)]").unwrap();
+        let self_member_regex =
+            Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)]").unwrap();
+        let class_member_regex =
+            Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)\\.([A-Za-z0-9_]+?)]").unwrap();
+
+        // URLs
+        let godot_doc = url_regex.replace_all(&godot_doc, |c: &Captures| {
+            let url = &c[1];
+            let text = &c[2];
+
+            if text.is_empty() {
+                format!("<{url}>", url = url)
+            } else {
+                format!("[{text}]({url})", text = text, url = url)
+            }
+        });
+
+        // Note: we currently don't use c[1], which would be the "kind" (method/member/constant/...)
+        // This one could be used to disambiguate the doc-link, e.g. [`{method}`][fn@Self::{method}]
+
+        // What currently doesn't work are "indexed properties" which are not also exposed as getters, e.g.
+        // https://docs.godotengine.org/en/stable/classes/class_area2d.html#properties 'gravity_point'
+        // This needs to be implemented first: https://github.com/godot-rust/godot-rust/issues/689
+
+        // TODO: [signal M]
+
+        // [Type] style
+        let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
+            let godot_ty = &c[1];
+            let rust_ty = Self::to_rust_type(godot_ty);
+
+            format!(
+                "[`{godot_ty}`][{rust_ty}]",
+                godot_ty = godot_ty,
+                rust_ty = rust_ty
+            )
+        });
+
+        // [Type::member] style
+        let godot_doc = class_member_regex.replace_all(&godot_doc, |c: &Captures| {
+            let godot_ty = &c[2];
+            let rust_ty = Self::to_rust_type(godot_ty);
+
+            format!(
+                "[`{godot_ty}.{member}`][{rust_ty}::{member}]",
+                godot_ty = godot_ty,
+                rust_ty = rust_ty,
+                member = &c[3]
+            )
+        });
+
+        // [member] style
+        let godot_doc = self_member_regex.replace_all(&godot_doc, |c: &Captures| {
+            format!("[`{member}`][Self::{member}]", member = &c[2])
+        });
 
         let translated = godot_doc
             .replace("[code]", "`")
