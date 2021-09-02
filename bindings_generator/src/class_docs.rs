@@ -131,12 +131,21 @@ impl GodotXmlDocs {
         );
     }
 
-    fn to_rust_type(godot_type: &str) -> &str {
+    fn translate_type(godot_type: &str) -> &str {
+        // Note: there is some code duplication with Ty::from_src() in api.rs
         match godot_type {
             "String" => "GodotString",
             "Error" => "GodotError",
             "RID" => "Rid",
-            // TODO PoolVector3Array etc
+            "AABB" => "Aabb",
+            "Array" => "VariantArray",
+            "PoolByteArray" => "ByteArray",
+            "PoolStringArray" => "StringArray",
+            "PoolVector2Array" => "Vector2Array",
+            "PoolVector3Array" => "Vector3Array",
+            "PoolColorArray" => "ColorArray",
+            "PoolIntArray" => "Int32Array",
+            "PoolRealArray" => "Float32Array",
             "G6DOFJointAxisParam" => "G6dofJointAxisParam",
             "G6DOFJointAxisFlag" => "G6dofJointAxisFlag",
             _ => godot_type,
@@ -202,7 +211,7 @@ impl GodotXmlDocs {
         // [Type] style
         let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
             let godot_ty = &c[2];
-            let rust_ty = Self::to_rust_type(godot_ty);
+            let rust_ty = Self::translate_type(godot_ty);
 
             format!(
                 "[`{godot_ty}`][{rust_ty}]",
@@ -214,7 +223,7 @@ impl GodotXmlDocs {
         // [Type::member] style
         let godot_doc = class_member_regex.replace_all(&godot_doc, |c: &Captures| {
             let godot_ty = &c[2];
-            let rust_ty = Self::to_rust_type(godot_ty);
+            let rust_ty = Self::translate_type(godot_ty);
 
             format!(
                 "[`{godot_ty}.{member}`][{rust_ty}::{member}]",
