@@ -162,11 +162,20 @@ impl GodotXmlDocs {
         };
 
         // TODO reuse regex across classes
+        // Note: there are still a few special cases, such as:
+        // * OK and ERR_CANT_CREATE (corresponding Result.Ok() and GodotError.ERR_CANT_CREATE)
 
         // Covers:
         // * [url=U]text[/url]
         // * [url=U][/url]
         let url_regex = Regex::new("\\[url=(.+?)](.*?)\\[/url]").unwrap();
+
+        // Covers:
+        // * [code]C[/code]
+        // * [signal C]
+        // Must run before others, as [code] will itself match the link syntax
+        let no_link_regex =
+            Regex::new("\\[code]([^.]+?)\\[/code]|\\[signal ([A-Za-z0-9_]+?)]").unwrap();
 
         // Covers:
         // * [C]
@@ -187,11 +196,15 @@ impl GodotXmlDocs {
         let class_member_regex =
             Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)\\.([A-Za-z0-9_]+?)]").unwrap();
 
-        // Covers:
-        // * [code]C[/code]
-        // * [signal C]
-        let no_link_regex =
-            Regex::new("\\[code]([^.]+?)\\[/code]|\\[signal ([A-Za-z0-9_]+?)]").unwrap();
+        // Before any regex replacement, do verbatim replacements
+        // Note: maybe some can be expressed as regex, but if text-replace does the job reliably enough, it's even faster
+        let godot_doc = godot_doc
+            .replace("[codeblock]", "```gdscript")
+            .replace("[/codeblock]", "```")
+            .replace("[b]", "**")
+            .replace("[/b]", "**")
+            .replace("[i]", "_")
+            .replace("[/i]", "_");
 
         // URLs
         let godot_doc = url_regex.replace_all(&godot_doc, |c: &Captures| {
@@ -212,7 +225,11 @@ impl GodotXmlDocs {
         // https://docs.godotengine.org/en/stable/classes/class_area2d.html#properties 'gravity_point'
         // This needs to be implemented first: https://github.com/godot-rust/godot-rust/issues/689
 
-        // TODO: [signal M]
+        // `member` style (no link)
+        let godot_doc = no_link_regex.replace_all(&godot_doc, |c: &Captures| {
+            let member = c.get(1).or(c.get(2)).unwrap().as_str();
+            format!("`{member}`", member = member)
+        });
 
         // [Type] style
         let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
@@ -244,20 +261,6 @@ impl GodotXmlDocs {
             format!("[`{member}`][Self::{member}]", member = &c[2])
         });
 
-        // `member` style (no link)
-        let godot_doc = no_link_regex.replace_all(&godot_doc, |c: &Captures| {
-            format!("`{member}`", member = &c[1])
-        });
-
-        // Note: maybe some of the following can be expressed as regex, but if text-replace does the job reliably enough, it's even faster
-        let translated = godot_doc
-            .replace("[codeblock]", "```gdscript")
-            .replace("[/codeblock]", "```")
-            .replace("[b]", "**")
-            .replace("[/b]", "**")
-            .replace("[i]", "_")
-            .replace("[/i]", "_");
-
-        format!("{}{}", gdscript_note, translated)
+        format!("{}{}", gdscript_note, godot_doc)
     }
 }
