@@ -187,6 +187,12 @@ impl GodotXmlDocs {
         let class_member_regex =
             Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)\\.([A-Za-z0-9_]+?)]").unwrap();
 
+        // Covers:
+        // * [code]C[/code]
+        // * [signal C]
+        let no_link_regex =
+            Regex::new("\\[code]([^.]+?)\\[/code]|\\[signal ([A-Za-z0-9_]+?)]").unwrap();
+
         // URLs
         let godot_doc = url_regex.replace_all(&godot_doc, |c: &Captures| {
             let url = &c[1];
@@ -238,10 +244,13 @@ impl GodotXmlDocs {
             format!("[`{member}`][Self::{member}]", member = &c[2])
         });
 
+        // `member` style (no link)
+        let godot_doc = no_link_regex.replace_all(&godot_doc, |c: &Captures| {
+            format!("`{member}`", member = &c[1])
+        });
+
         // Note: maybe some of the following can be expressed as regex, but if text-replace does the job reliably enough, it's even faster
         let translated = godot_doc
-            .replace("[code]", "`")
-            .replace("[/code]", "`")
             .replace("[codeblock]", "```gdscript")
             .replace("[/codeblock]", "```")
             .replace("[b]", "**")
