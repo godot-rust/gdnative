@@ -3,9 +3,9 @@ use std::{collections::HashMap, fs};
 use regex::{Captures, Regex};
 use roxmltree::Node;
 
-#[derive(Debug)]
 pub struct GodotXmlDocs {
     class_fn_desc: HashMap<(String, String), String>,
+    regexes: Regexes,
 }
 
 impl GodotXmlDocs {
@@ -17,6 +17,7 @@ impl GodotXmlDocs {
 
         let mut docs = GodotXmlDocs {
             class_fn_desc: HashMap::default(),
+            regexes: Regexes::new(),
         };
 
         for entry in entries {
@@ -127,10 +128,11 @@ impl GodotXmlDocs {
 
         self.class_fn_desc.insert(
             (class.into(), method.into()),
-            Self::reformat_as_rustdoc(doc),
+            Self::reformat_as_rustdoc(&self.regexes, doc),
         );
     }
 
+    // For types that godot-rust names differently than Godot
     fn translate_type(godot_type: &str) -> &str {
         // Note: there is some code duplication with Ty::from_src() in api.rs
         match godot_type {
@@ -153,47 +155,23 @@ impl GodotXmlDocs {
     }
 
     /// Takes the Godot documentation markup and transforms it to Rustdoc.
-    /// Very basic approach with limitations, but already helps readability quite a bit.
-    fn reformat_as_rustdoc(godot_doc: String) -> String {
-        let gdscript_note = if godot_doc.contains("[codeblock]") {
-            "_Sample code is GDScript unless otherwise noted._\n\n"
-        } else {
-            ""
-        };
-
-        // TODO reuse regex across classes
-        // Note: there are still a few special cases, such as:
+    /// Replaces BBCode syntax with Rustdoc/Markdown equivalents and implements working intra-doc links.
+    fn reformat_as_rustdoc(re: &Regexes, godot_doc: String) -> String {
+        // Note: there are still a few unsupported cases, such as:
         // * OK and ERR_CANT_CREATE (corresponding Result.Ok() and GodotError.ERR_CANT_CREATE)
+        // * "indexed properties" which are not also exposed as getters, e.g. `gravity_point` in
+        //   https://docs.godotengine.org/en/stable/classes/class_area2d.html#properties.
+        //   This needs to be implemented first: https://github.com/godot-rust/godot-rust/issues/689
 
-        // Covers:
-        // * [url=U]text[/url]
-        // * [url=U][/url]
-        let url_regex = Regex::new("\\[url=(.+?)](.*?)\\[/url]").unwrap();
-
-        // Covers:
-        // * [code]C[/code]
-        // * [signal C]
-        // Must run before others, as [code] will itself match the link syntax
-        let no_link_regex = Regex::new("\\[signal ([A-Za-z0-9_]+?)]").unwrap();
-
-        // Covers:
-        // * [C]
-        // * [enum C]
-        let type_regex = Regex::new("\\[(enum )?([A-Za-z0-9_]+?)]").unwrap();
-
-        // Covers:
-        // * [member M]
-        // * [method M]
-        // * [constant M]
-        let self_member_regex =
-            Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)]").unwrap();
-
-        // Covers:
-        // * [member C.M]
-        // * [method C.M]
-        // * [constant C.M]
-        let class_member_regex =
-            Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)\\.([A-Za-z0-9_]+?)]").unwrap();
+        // Info for GDScript blocks
+        let godot_doc = if godot_doc.contains("[codeblock]") {
+            format!(
+                "_Sample code is GDScript unless otherwise noted._\n\n{}",
+                godot_doc
+            )
+        } else {
+            godot_doc
+        };
 
         // Before any regex replacement, do verbatim replacements
         // Note: maybe some can be expressed as regex, but if text-replace does the job reliably enough, it's even faster
@@ -207,15 +185,8 @@ impl GodotXmlDocs {
             .replace("[i]", "_")
             .replace("[/i]", "_");
 
-        // Note: we currently don't use c[1], which would be the "kind" (method/member/constant/...)
-        // This one could be used to disambiguate the doc-link, e.g. [`{method}`][fn@Self::{method}]
-
-        // What currently doesn't work are "indexed properties" which are not also exposed as getters, e.g.
-        // https://docs.godotengine.org/en/stable/classes/class_area2d.html#properties 'gravity_point'
-        // This needs to be implemented first: https://github.com/godot-rust/godot-rust/issues/689
-
         // URLs
-        let godot_doc = url_regex.replace_all(&godot_doc, |c: &Captures| {
+        let godot_doc = re.url.replace_all(&godot_doc, |c: &Captures| {
             let url = &c[1];
             let text = &c[2];
 
@@ -227,7 +198,7 @@ impl GodotXmlDocs {
         });
 
         // [Type::member] style
-        let godot_doc = class_member_regex.replace_all(&godot_doc, |c: &Captures| {
+        let godot_doc = re.class_member.replace_all(&godot_doc, |c: &Captures| {
             let godot_ty = &c[2];
             let rust_ty = Self::translate_type(godot_ty);
 
@@ -240,17 +211,17 @@ impl GodotXmlDocs {
         });
 
         // [member] style
-        let godot_doc = self_member_regex.replace_all(&godot_doc, |c: &Captures| {
+        let godot_doc = re.self_member.replace_all(&godot_doc, |c: &Captures| {
             format!("[`{member}`][Self::{member}]", member = &c[2])
         });
 
         // `member` style (no link)
-        let godot_doc = no_link_regex.replace_all(&godot_doc, |c: &Captures| {
+        let godot_doc = re.no_link.replace_all(&godot_doc, |c: &Captures| {
             format!("`{member}`", member = &c[1])
         });
 
         // [Type] style
-        let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
+        let godot_doc = re.class.replace_all(&godot_doc, |c: &Captures| {
             let godot_ty = &c[2];
             let rust_ty = Self::translate_type(godot_ty);
 
@@ -261,6 +232,53 @@ impl GodotXmlDocs {
             )
         });
 
-        format!("{}{}", gdscript_note, godot_doc)
+        godot_doc.to_string()
+    }
+}
+
+// Holds several compiled regexes to reuse across classes
+// could also use 'lazy_regex' crate, but standard 'regex' has better IDE support and works well enough
+struct Regexes {
+    url: Regex,
+    no_link: Regex,
+    class: Regex,
+    self_member: Regex,
+    class_member: Regex,
+}
+
+impl Regexes {
+    fn new() -> Self {
+        Self {
+            // Covers:
+            // * [url=U]text[/url]
+            // * [url=U][/url]
+            url: Regex::new("\\[url=(.+?)](.*?)\\[/url]").unwrap(),
+
+            // Covers:
+            // * [code]C[/code]
+            // * [signal C]
+            // Must run before others, as [code] will itself match the link syntax
+            no_link: Regex::new("\\[signal ([A-Za-z0-9_]+?)]").unwrap(),
+
+            // Covers:
+            // * [C]
+            // * [enum C]
+            class: Regex::new("\\[(enum )?([A-Za-z0-9_]+?)]").unwrap(),
+
+            // Covers:
+            // * [member M]
+            // * [method M]
+            // * [constant M]
+            self_member: Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)]").unwrap(),
+
+            // Covers:
+            // * [member C.M]
+            // * [method C.M]
+            // * [constant C.M]
+            class_member: Regex::new(
+                "\\[(member|method|constant) ([A-Za-z0-9_]+?)\\.([A-Za-z0-9_]+?)]",
+            )
+            .unwrap(),
+        }
     }
 }
