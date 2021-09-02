@@ -136,6 +136,7 @@ impl GodotXmlDocs {
             "String" => "GodotString",
             "Error" => "GodotError",
             "RID" => "Rid",
+            // TODO PoolVector3Array etc
             "G6DOFJointAxisParam" => "G6dofJointAxisParam",
             "G6DOFJointAxisFlag" => "G6dofJointAxisFlag",
             _ => godot_type,
@@ -152,11 +153,28 @@ impl GodotXmlDocs {
         };
 
         // TODO reuse regex across classes
+
+        // Covers:
+        // * [url=U]text[/url]
+        // * [url=U][/url]
         let url_regex = Regex::new("\\[url=(.+?)](.*?)\\[/url]").unwrap();
 
-        let type_regex = Regex::new("\\[enum ([A-Za-z0-9_]+?)]").unwrap();
+        // Covers:
+        // * [C]
+        // * [enum C]
+        let type_regex = Regex::new("\\[(enum )?([A-Za-z0-9_]+?)]").unwrap();
+
+        // Covers:
+        // * [member M]
+        // * [method M]
+        // * [constant M]
         let self_member_regex =
             Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)]").unwrap();
+
+        // Covers:
+        // * [member C.M]
+        // * [method C.M]
+        // * [constant C.M]
         let class_member_regex =
             Regex::new("\\[(member|method|constant) ([A-Za-z0-9_]+?)\\.([A-Za-z0-9_]+?)]").unwrap();
 
@@ -183,7 +201,7 @@ impl GodotXmlDocs {
 
         // [Type] style
         let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
-            let godot_ty = &c[1];
+            let godot_ty = &c[2];
             let rust_ty = Self::to_rust_type(godot_ty);
 
             format!(
