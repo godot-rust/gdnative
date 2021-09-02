@@ -21,3 +21,5 @@ quote = "1.0.9"
 syn = { version = "1.0.74", features = ["full", "extra-traits", "visit"] }
 miniserde = "0.1.14"
 unindent = "0.1.7"
+regex = "1.5.4"
+memchr = "2.4" # to satisfy regex needing memchr >= 2.4

@@ -357,6 +357,7 @@ pub enum Ty {
 }
 
 impl Ty {
+    // Note: there is some code duplication with GodotXmlDocs::translate_type() in class_docs.rs
     pub fn from_src(src: &str) -> Self {
         match src {
             "void" => Ty::Void,
