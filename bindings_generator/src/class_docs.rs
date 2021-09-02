@@ -174,8 +174,7 @@ impl GodotXmlDocs {
         // * [code]C[/code]
         // * [signal C]
         // Must run before others, as [code] will itself match the link syntax
-        let no_link_regex =
-            Regex::new("\\[code]([^.]+?)\\[/code]|\\[signal ([A-Za-z0-9_]+?)]").unwrap();
+        let no_link_regex = Regex::new("\\[signal ([A-Za-z0-9_]+?)]").unwrap();
 
         // Covers:
         // * [C]
@@ -201,10 +200,19 @@ impl GodotXmlDocs {
         let godot_doc = godot_doc
             .replace("[codeblock]", "```gdscript")
             .replace("[/codeblock]", "```")
+            .replace("[code]", "`")
+            .replace("[/code]", "`")
             .replace("[b]", "**")
             .replace("[/b]", "**")
             .replace("[i]", "_")
             .replace("[/i]", "_");
+
+        // Note: we currently don't use c[1], which would be the "kind" (method/member/constant/...)
+        // This one could be used to disambiguate the doc-link, e.g. [`{method}`][fn@Self::{method}]
+
+        // What currently doesn't work are "indexed properties" which are not also exposed as getters, e.g.
+        // https://docs.godotengine.org/en/stable/classes/class_area2d.html#properties 'gravity_point'
+        // This needs to be implemented first: https://github.com/godot-rust/godot-rust/issues/689
 
         // URLs
         let godot_doc = url_regex.replace_all(&godot_doc, |c: &Captures| {
@@ -216,31 +224,6 @@ impl GodotXmlDocs {
             } else {
                 format!("[{text}]({url})", text = text, url = url)
             }
-        });
-
-        // Note: we currently don't use c[1], which would be the "kind" (method/member/constant/...)
-        // This one could be used to disambiguate the doc-link, e.g. [`{method}`][fn@Self::{method}]
-
-        // What currently doesn't work are "indexed properties" which are not also exposed as getters, e.g.
-        // https://docs.godotengine.org/en/stable/classes/class_area2d.html#properties 'gravity_point'
-        // This needs to be implemented first: https://github.com/godot-rust/godot-rust/issues/689
-
-        // `member` style (no link)
-        let godot_doc = no_link_regex.replace_all(&godot_doc, |c: &Captures| {
-            let member = c.get(1).or(c.get(2)).unwrap().as_str();
-            format!("`{member}`", member = member)
-        });
-
-        // [Type] style
-        let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
-            let godot_ty = &c[2];
-            let rust_ty = Self::translate_type(godot_ty);
-
-            format!(
-                "[`{godot_ty}`][{rust_ty}]",
-                godot_ty = godot_ty,
-                rust_ty = rust_ty
-            )
         });
 
         // [Type::member] style
@@ -259,6 +242,23 @@ impl GodotXmlDocs {
         // [member] style
         let godot_doc = self_member_regex.replace_all(&godot_doc, |c: &Captures| {
             format!("[`{member}`][Self::{member}]", member = &c[2])
+        });
+
+        // `member` style (no link)
+        let godot_doc = no_link_regex.replace_all(&godot_doc, |c: &Captures| {
+            format!("`{member}`", member = &c[1])
+        });
+
+        // [Type] style
+        let godot_doc = type_regex.replace_all(&godot_doc, |c: &Captures| {
+            let godot_ty = &c[2];
+            let rust_ty = Self::translate_type(godot_ty);
+
+            format!(
+                "[`{godot_ty}`][{rust_ty}]",
+                godot_ty = godot_ty,
+                rust_ty = rust_ty
+            )
         });
 
         format!("{}{}", gdscript_note, godot_doc)
