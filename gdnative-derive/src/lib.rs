@@ -227,7 +227,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// **Important**: This needs to be added to one and only one `impl` block for a given `NativeClass`.
 ///
-/// For additional details about how `#[methods]` expands, please refer to [gdnative::methods](methods)
+/// For additional details about how `#[methods]` expands, please refer to [gdnative::methods](macro@methods)
 ///
 /// ### `#[export]`
 /// Registers the attributed function signature to be used by Godot.
