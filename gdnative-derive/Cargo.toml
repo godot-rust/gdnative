@@ -17,3 +17,7 @@ proc-macro = true
 syn = { version = "1.0.74", features = ["full", "extra-traits", "visit"] }
 quote = "1.0.9"
 proc-macro2 = "1.0.28"
+
+[dev-dependencies]
+# This is included for the doc tests.
+gdnative = { path = "../gdnative" }
