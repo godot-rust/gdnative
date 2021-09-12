@@ -1017,8 +1017,10 @@ pub trait AsVariant: AsArg<<Self as AsVariant>::Target> {
 pub struct Null<T>(PhantomData<T>);
 
 impl<T: GodotObject> Null<T> {
-    /// Creates an explicitly null reference that can be used as a method argument.
+    /// Creates an explicit null reference that can be used as a method argument.
+    // TODO consider something more idiomatic, like module::null::<T>(), similar to std::ptr::null()
     #[inline]
+    #[allow(clippy::self_named_constructors)]
     pub fn null() -> Self {
         Null(PhantomData)
     }

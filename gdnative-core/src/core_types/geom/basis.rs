@@ -571,8 +571,9 @@ impl Basis {
     }
 }
 
-impl core::ops::Mul<Basis> for Basis {
+impl Mul<Basis> for Basis {
     type Output = Self;
+
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         Basis::from_elements([
@@ -600,7 +601,7 @@ impl Mul<Vector3> for Basis {
 
     #[inline]
     fn mul(self, rhs: Self::Output) -> Self::Output {
-        Self::Output::new(self.tdotx(rhs), self.tdoty(rhs), self.tdotz(rhs))
+        self.xform(rhs)
     }
 }
 
