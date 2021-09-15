@@ -243,7 +243,7 @@ mod api_wrapper {
 
     #[derive(Debug, Deserialize)]
     struct Api {
-        name: Option<String>,
+        //name: Option<String>, // currently not used
         #[serde(rename = "type")]
         type_: String,
         version: Version,
