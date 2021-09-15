@@ -1,3 +1,3 @@
-block_labels = ["I-needs-decision", "S-blocked"]
+block_labels = ["status: postponed", "status: wontfix"]
 delete_merged_branches = true
-status = ["ci"]
+status = ["full-ci"]

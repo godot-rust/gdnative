@@ -1,8 +1,38 @@
-name: CI
+# Complete CI workflow
+# Run by bors, and enforced before any PR is merged
+# Includes unit and integration tests for all platforms, as well as optional nightly jobs
+
+# See also: https://matklad.github.io/2021/09/04/fast-rust-builds.html
+
+# Note: if workflow-wide fail-fast is needed, this step can be added at the end of *each* job.
+# It will immediately cancel all outstanding jobs. This can be useful to free them up for other runs.
+# - name: If job failed, cancel workflow...
+#   if: failure()
+#   uses: andymckay/cancel-action@0.2
+
+# Note: important points about Rust caching (Swatinem/rust-cache action), which contributes majorly to speedup:
+# 1. It caches only dependencies. The own crates are always fully recompiled, and incremental compilation is disabled.
+# 2. It takes the current job ID as a key, which means it CANNOT cache between jobs.
+#    Running a prior job to reuse build artifacts is thus pointless with this action.
+# 3. The dependencies in Cargo.toml are hashed into the key, thus it cannot happen that removing a dependency will still work
+#    due to the dependency being cached. On the other hand, it means dependency changes come with full recompile.
+# 4. As the effectivity of the cache depends on previous runs and available runners, workflow execution times
+#    can easily vary by 30%.
+
+# Note: if CI becomes more complex, we might look into code-generation of the action and workflow files at some point.
+# 300+ LOC for a few platform tests is still OK, but there's a lot of repetition, and quite some limitations that could be addressed.
+
+name: Full CI
 
 env:
+  # Environment variables used by toolchain
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
   RUST_BACKTRACE: 1
-  GODOT_VER: 3.3
+
+  # Local variables
+  # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
+  GODOT_VER: '3.3'
   GODOT_REL: stable
 
 on:
@@ -20,130 +50,125 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+      - name: Install Rust
+        uses: ./.github/composite/rust
         with:
-          profile: minimal
-          toolchain: stable
           components: rustfmt
-      - name: Checking rustfmt
+      - name: Check rustfmt
         run: cargo fmt --all -- --check;
 
   clippy:
+    name: clippy${{ matrix.rust.postfix }}
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.rust.toolchain == 'nightly' }}
     needs: rustfmt
     strategy:
       matrix:
-        include:
-          - rust: stable
-            experimental: false
-          - rust: nightly
-            experimental: true
+        rust:
+          - toolchain: stable
+            postfix: ''
+          - toolchain: nightly
+            postfix: ' (nightly)'
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+      - name: Install Rust
+        uses: ./.github/composite/rust
         with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
+          rust: ${{ matrix.rust.toolchain }}
           components: clippy
-      - run: cargo clippy --all --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+      - name: Check clippy
+        run: cargo clippy --workspace --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
 
   test:
-    continue-on-error: ${{ matrix.experimental }}
+    name: test-${{ matrix.os.name }}${{ matrix.rust.postfix }}
+    needs: rustfmt
+    continue-on-error: ${{ matrix.rust.toolchain == 'nightly' }}
+    strategy:
+      fail-fast: true # cancel all jobs as soon as one fails?
+      matrix:
+        # Order this way because MacOS typically has longest duration, followed by Windows, so it benefits total workflow execution time.
+        # Additionally, the 'linux (msrv *)' special case will then be listed next to the other 'linux' jobs.
+        # Note: Windows uses '--target x86_64-pc-windows-msvc' by default as Cargo argument.
+        os:
+          - id: macos-latest
+            name: macos
+          - id: windows-latest
+            name: windows
+          - id: ubuntu-latest
+            name: linux
+        rust:
+          - toolchain: stable
+            postfix: ''
+          - toolchain: nightly
+            postfix: ' (nightly)'
+        # All non-stable versions skip UI tests, as it's usually impossible to have them satisfy all possible compiler versions simultaneously
+        include:
+          - rust: { toolchain: 'nightly' }
+            testflags: '-- --skip ui_tests'
+          - os: { id: ubuntu-latest, name: linux }
+            rust: { toolchain: '1.48', postfix: ' (msrv 1.48)' }
+            testflags: '-- --skip ui_tests'
+    runs-on: ${{ matrix.os.id }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust
+        uses: ./.github/composite/rust
+        with:
+          rust: ${{ matrix.rust.toolchain }}
+      - name: Install LLVM
+        uses: ./.github/composite/llvm
+        if: ${{ matrix.os.id == 'windows-latest' }}
+      - name: Test
+        run: cargo test --workspace --all-features ${{ matrix.testflags }};
+
+  check-release:
+    name: check-release-${{ matrix.os.name }}
     needs: rustfmt
     strategy:
+      fail-fast: true # cancel all jobs as soon as one fails?
       matrix:
-        include:
-          - rust: stable
-            os: ubuntu-latest
-            experimental: false
-            is_windows: false
-          - rust: nightly
-            os: ubuntu-latest
-            experimental: true
-            is_windows: false
-          - rust: stable
-            os: macos-latest
-            experimental: false
-            is_windows: false
-          - rust: nightly
-            os: macos-latest
-            experimental: true
-            is_windows: false
-          - rust: stable
-            os: windows-latest
-            experimental: false
-            is_windows: true
-          - rust: nightly
-            os: windows-latest
-            experimental: true
-            is_windows: true
-    runs-on: ${{ matrix.os }}
+        os:
+          - id: macos-latest
+            name: macos
+          - id: windows-latest
+            name: windows
+          - id: ubuntu-latest
+            name: linux
+    runs-on: ${{ matrix.os.id }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+      - name: Install Rust
+        uses: ./.github/composite/rust
         with:
-          profile: minimal
-          toolchain: stable
-      - uses: KyleMayes/install-llvm-action@7673c1af8f0ae228f19f5962fc2cd6e3378305a8
-        with:
-          version: 10.0
-          directory: ${{ runner.temp }}/llvm
-      - name: Non-Windows test
-        if: ${{ !matrix.is_windows }}
-        run: cargo test --all --all-features;
-      - name: Non-Windows release build
-        if: ${{ !matrix.is_windows }}
-        run: cargo build --release;
-      - name: Windows test
-        if: ${{ matrix.is_windows }}
-        run: cargo test --target x86_64-pc-windows-msvc --all --all-features;
-      - name: Windows release build
-        if: ${{ matrix.is_windows }}
-        run: cargo build --target x86_64-pc-windows-msvc --release;
+          rust: stable
+      - name: Install LLVM
+        uses: ./.github/composite/llvm
+        if: ${{ matrix.os.id == 'windows-latest' }}
+      - name: Release build (check only)
+        run: cargo check --release;
 
-  rustc-1-54:
+  test-ios:
     needs: rustfmt
-    runs-on: ubuntu-latest
+    #continue-on-error: ${{ matrix.rust == 'nightly' }}
+    #strategy:
+    #  matrix:
+    #    rust: [stable]
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
-        with:
-          toolchain: 1.54.0
-      - name: Checking on 1.54.0
-        run: cargo +1.54.0 check --all --all-features;
-
-  test_ios:
-    continue-on-error: ${{ matrix.experimental }}
-    needs: rustfmt
-    strategy:
-      matrix:
-        include:
-          - rust: stable
-            os: macos-latest
-            experimental: false
-          - rust: nightly
-            os: macos-latest
-            experimental: true
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
-        with:
-          version: 10.0
-          directory: ${{ runner.temp }}/llvm
-      - name: Installing cargo-dinghy
+      - name: Install Rust
+        uses: ./.github/composite/rust
+        #with:
+        #  rust: ${{ matrix.rust.toolchain }}
+      - name: Install cargo-dinghy
         run: |
           rustup target add x86_64-apple-ios;
-          curl -L https://github.com/snipsco/dinghy/releases/download/cargo-dinghy%2F0.4.37/cargo-dinghy-macos.tgz -o cargo-dinghy-macos.tar.gz;
+          curl -L https://github.com/sonos/dinghy/releases/download/0.4.62/cargo-dinghy-macos-0.4.62.tgz -o cargo-dinghy-macos.tar.gz;
           tar -zxvf cargo-dinghy-macos.tar.gz;
           mkdir -p $HOME/.cargo/bin;
-          cp cargo-dinghy-macos/cargo-dinghy $HOME/.cargo/bin;
-      - run: |
+          cp cargo-dinghy-0.4.62/cargo-dinghy $HOME/.cargo/bin;
+      - name: Cross-compile to iOS
+        run: |
           RUNTIME_ID=$(xcrun simctl list runtimes | grep iOS | cut -d ' ' -f 7 | tail -1);
           export SIM_ID=$(xcrun simctl create My-iphone11 com.apple.CoreSimulator.SimDeviceType.iPhone-11 $RUNTIME_ID);
           xcrun simctl boot $SIM_ID;
@@ -153,27 +178,22 @@ jobs:
           cd gdnative-sys;
           cargo dinghy --platform auto-ios-x86_64 test;
 
-  test_android:
-    continue-on-error: ${{ matrix.experimental }}
+  test-android:
+    # Note: even though Android builds for another architecture than Linux, it can reuse downloaded crates (source code, maybe 'cargo check').
     needs: rustfmt
-    strategy:
-      matrix:
-        include:
-          - rust: stable
-            os: ubuntu-latest
-            experimental: false
-    runs-on: ${{ matrix.os }}
+    #continue-on-error: ${{ matrix.rust == 'nightly' }}
+    #strategy:
+    #  matrix:
+    #    rust: [stable]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
-        with:
-          version: 10.0
-          directory: ${{ runner.temp }}/llvm
-      - run: |
+      - name: Install Rust
+        uses: ./.github/composite/rust
+        #with:
+        #  rust: ${{ matrix.rust.toolchain }}
+      - name: Install Java + NDK
+        run: |
           export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64;
           export ANDROID_SDK_ROOT=/opt/ndk/android-ndk-r21d;
           # aarch64 and armv7 cover most Android phones & tablets.;
@@ -199,41 +219,47 @@ jobs:
           echo "[target.armv7-linux-androideabi]" >> $HOME/.cargo/config;
           find /opt/ndk -name armv7a-linux-androideabi21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config;
           echo >> $HOME/.cargo/config;
+      - name: "Build Rust for targets: aarch64-linux-android, armv7-linux-androideabi"
+        run: |
           cargo build --target aarch64-linux-android --release;
           cargo build --target armv7-linux-androideabi --release;
 
-  godot_test:
-    continue-on-error: ${{ matrix.experimental }}
+  integration-test-godot:
+    name: itest-godot${{ matrix.rust.postfix }}
     needs: rustfmt
+    continue-on-error: ${{ matrix.rust.toolchain == 'nightly' }}
     strategy:
       matrix:
-        include:
-          - rust: stable
-            os: ubuntu-latest
-            experimental: false
-          - rust: nightly
-            os: ubuntu-latest
-            experimental: true
-    runs-on: ${{ matrix.os }}
+        rust:
+          - toolchain: stable
+            postfix: ''
+          - toolchain: nightly
+            postfix: ' (nightly)'
+          - toolchain: '1.48'
+            postfix: ' (msrv 1.48)'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
+      - name: Install Rust
+        uses: ./.github/composite/rust
         with:
-          profile: minimal
-          toolchain: stable
-      - uses: KyleMayes/install-llvm-action@01144dc97b1e2693196c3056414a44f15180648b
+          rust: ${{ matrix.rust.toolchain }}
+      - name: Check cache for installed Godot version
+        id: cache-godot
+        uses: actions/cache@v2
         with:
-          version: 10.0
-          directory: ${{ runner.temp }}/llvm
-      - name: Installing Godot
+          path: ${{ runner.temp }}/godot_bin
+          key: godot-${{ runner.os }}-v${{ env.GODOT_VER }}-${{ env.GODOT_REL }}
+      - name: Install Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
         run: |
           wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip
           unzip /tmp/godot.zip -d ${{ runner.temp }}/godot_bin
-      - name: Building Godot-Rust
+      - name: Build godot-rust
         run: |
           cd test;
           cargo build;
-      - name: Running Godot Tests
+      - name: Run Godot integration tests
         run: |
           cd test;
           mkdir -p ./project/lib;
@@ -258,23 +284,21 @@ jobs:
             exit 1;
           fi;
           
-  # This job doesn't actually test anything, but they're used to tell bors the
-  # build completed, as there is no practical way to detect when a workflow is
-  # successful listening to webhooks only.
+  # This job doesn't actually test anything, but is used to tell bors that the build completed,
+  # as there is no practical way to detect when a workflow is successful, listening to webhooks only.
+  # The ID (not name) of this job is the one referenced in bors.toml.
   #
-  # ALL THE PREVIOUS JOBS NEEDS TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
-
-  ci-success:
-    name: ci
+  # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+  full-ci:
     if: github.event_name == 'push' && success()
     needs:
+      #- rustfmt
       - clippy
-      - rustfmt
       - test
-      - rustc-1-54
-      - test_ios
-      - test_android
-      - godot_test
+      - test-ios
+      - test-android
+      - integration-test-godot
+      - check-release
     runs-on: ubuntu-latest
     steps:
       - name: Mark the job as a success
