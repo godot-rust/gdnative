@@ -24,6 +24,7 @@ glam = "0.18.0"
 indexmap = "1.7.0"
 ahash = "0.7.4"
 once_cell = "1.8.0"
+serde = { version = "1", features = ["derive"], optional = true }
 
 gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.3" }
 

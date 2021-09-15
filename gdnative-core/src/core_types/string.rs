@@ -612,6 +612,56 @@ where
     }
 }
 
+#[cfg(feature = "serde")]
+mod serialize {
+    use super::*;
+    use serde::{
+        de::{Error, Visitor},
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+    use std::fmt::Formatter;
+
+    impl Serialize for GodotString {
+        #[inline]
+        fn serialize<S>(
+            &self,
+            serializer: S,
+        ) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+        where
+            S: Serializer,
+        {
+            serializer.serialize_str(&*self.to_string())
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    impl<'de> serialize::Deserialize<'de> for GodotString {
+        #[inline]
+        fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            struct GodotStringVisitor;
+            impl<'de> Visitor<'de> for GodotStringVisitor {
+                type Value = GodotString;
+
+                fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                    formatter.write_str("a GodotString")
+                }
+
+                fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+                where
+                    E: Error,
+                {
+                    Ok(GodotString::from(s))
+                }
+            }
+
+            deserializer.deserialize_str(GodotStringVisitor)
+        }
+    }
+}
+
 godot_test!(test_string {
     use crate::core_types::{GodotString, Variant, VariantType, ToVariant};
 

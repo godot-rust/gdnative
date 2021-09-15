@@ -9,6 +9,9 @@ use crate::object::*;
 use crate::private::{get_api, ManuallyManagedClassPlaceholder};
 use crate::thread_access::*;
 
+#[cfg(feature = "serde")]
+mod serialize;
+
 // TODO: implement Debug, PartialEq, etc.
 
 /// A `Variant` can represent many of godot's core types.
@@ -109,6 +112,13 @@ macro_rules! decl_variant_type {
             )*
         }
 
+        impl VariantType {
+            /// The potential names of VariantTypes. Mostly used for serialization.
+            pub const NAMES: &'static [&'static str] = &[
+                $(stringify!($variant),)*
+            ];
+        }
+
         /// Rust enum associating each primitive variant type to its value.
         ///
         /// For `Variant`s containing objects, the original `Variant` is returned unchanged, due to
@@ -129,6 +139,19 @@ macro_rules! decl_variant_type {
                             variant_dispatch_arm!(v, $variant $( ($inner) )?)
                         },
                     )*
+                }
+            }
+        }
+
+        impl<'a> From<&'a VariantDispatch> for Variant {
+            #[inline]
+            fn from(v: &'a VariantDispatch) -> Self {
+                match v {
+                    $($(VariantDispatch::$variant(v) => {
+                        let v: &$inner = v;
+                        v.to_variant()
+                    })?)*
+                    _ => Variant::new()
                 }
             }
         }
@@ -172,6 +195,15 @@ impl VariantType {
     #[inline]
     pub fn from_sys(v: sys::godot_variant_type) -> VariantType {
         unsafe { transmute(v as u32) }
+    }
+
+    /// The `stringify!` representation of this variant. Mostly used for serialization.
+    #[inline]
+    pub const fn name(self) -> &'static str {
+        // NOTE: this assumes that the discriminants remain sequential, since any additions to the
+        // VariantType enum would require a breaking change anyway since it is not marked as non-exhaustive.
+        // See also the Deserialize implementation in the serde submodule.
+        Self::NAMES[self as usize]
     }
 }
 

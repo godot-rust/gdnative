@@ -14,6 +14,7 @@ edition = "2018"
 [features]
 default = ["bindings"]
 formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_file"]
+serde = ["gdnative-core/serde"]
 
 gd_test = ["gdnative-core/gd_test"]
 type_tag_fallback = ["gdnative-core/type_tag_fallback"]

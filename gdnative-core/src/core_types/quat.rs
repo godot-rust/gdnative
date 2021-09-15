@@ -3,6 +3,7 @@ use glam::EulerRot;
 use std::ops::{Mul, Neg};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct Quat {
     pub x: f32,
