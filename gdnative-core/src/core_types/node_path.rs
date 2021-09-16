@@ -176,3 +176,10 @@ impl fmt::Debug for NodePath {
         write!(f, "NodePath({})", self.to_string())
     }
 }
+
+impl Clone for NodePath {
+    #[inline]
+    fn clone(&self) -> Self {
+        self.new_ref()
+    }
+}

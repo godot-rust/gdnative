@@ -588,6 +588,12 @@ impl<T: ToVariant, Access: LocalThreadAccess> Extend<T> for VariantArray<Access>
     }
 }
 
+impl Clone for VariantArray {
+    fn clone(&self) -> Self {
+        self.new_ref()
+    }
+}
+
 godot_test!(test_array {
     let foo = Variant::from_str("foo");
     let bar = Variant::from_str("bar");

@@ -113,6 +113,7 @@ macro_rules! decl_variant_type {
         ///
         /// For `Variant`s containing objects, the original `Variant` is returned unchanged, due to
         /// the limitations of statically-determined memory management.
+        #[derive(Clone, Debug)]
         #[repr(u32)]
         pub enum VariantDispatch {
             $(
