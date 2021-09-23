@@ -3,6 +3,7 @@ use crate::core_types::{Basis, Vector3};
 /// 3D Transformation (3x4 matrix) Using basis + origin representation.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transform {
     /// The basis is a matrix containing 3 Vector3 as its columns: X axis, Y axis, and Z axis.
     /// These vectors can be interpreted as the basis vectors of local coordinate system

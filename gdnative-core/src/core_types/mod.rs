@@ -43,7 +43,7 @@ pub use rid::*;
 pub use string::*;
 pub use string_array::*;
 pub use transform2d::*;
-pub use typed_array::TypedArray;
+pub use typed_array::{Element, TypedArray};
 pub use variant::*;
 pub use variant_array::*;
 pub use vector2::*;

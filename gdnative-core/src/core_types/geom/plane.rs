@@ -3,6 +3,7 @@ use crate::core_types::{IsEqualApprox, Vector3};
 /// Plane in hessian form.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Plane {
     pub normal: Vector3,
     pub d: f32,

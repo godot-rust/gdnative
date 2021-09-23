@@ -483,3 +483,63 @@ macros::impl_typed_array_element! {
 mod private {
     pub trait Sealed {}
 }
+
+#[cfg(feature = "serde")]
+mod serialize {
+    use super::*;
+    use serde::{
+        de::{SeqAccess, Visitor},
+        ser::SerializeSeq,
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+    use std::fmt::Formatter;
+    use std::marker::PhantomData;
+
+    impl<T: Serialize + Element> Serialize for TypedArray<T> {
+        #[inline]
+        fn serialize<S>(&self, ser: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+        where
+            S: Serializer,
+        {
+            let read = self.read();
+            let mut ser = ser.serialize_seq(Some(read.len()))?;
+            for e in read.iter() {
+                ser.serialize_element(e)?
+            }
+            ser.end()
+        }
+    }
+
+    impl<'de, T: Deserialize<'de> + Element> Deserialize<'de> for TypedArray<T> {
+        #[inline]
+        fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            struct TypedArrayVisitor<T>(PhantomData<T>);
+            impl<'de, T: Deserialize<'de> + Element> Visitor<'de> for TypedArrayVisitor<T> {
+                type Value = TypedArray<T>;
+
+                fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                    formatter.write_str(std::any::type_name::<Self::Value>())
+                }
+
+                fn visit_seq<A>(
+                    self,
+                    mut seq: A,
+                ) -> Result<Self::Value, <A as SeqAccess<'de>>::Error>
+                where
+                    A: SeqAccess<'de>,
+                {
+                    let mut vec = seq.size_hint().map_or_else(Vec::new, Vec::with_capacity);
+                    while let Some(val) = seq.next_element::<T>()? {
+                        vec.push(val);
+                    }
+                    Ok(Self::Value::from_vec(vec))
+                }
+            }
+
+            deserializer.deserialize_seq(TypedArrayVisitor::<T>(PhantomData))
+        }
+    }
+}

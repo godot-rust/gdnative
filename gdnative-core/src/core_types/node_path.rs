@@ -176,3 +176,60 @@ impl fmt::Debug for NodePath {
         write!(f, "NodePath({})", self.to_string())
     }
 }
+
+#[cfg(feature = "serde")]
+mod serialize {
+    use super::*;
+    use serde::{
+        de::{Error, Visitor},
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+    use std::fmt::Formatter;
+
+    impl Serialize for NodePath {
+        #[inline]
+        fn serialize<S>(&self, ser: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+        where
+            S: Serializer,
+        {
+            ser.serialize_newtype_struct("NodePath", &*self.to_string())
+        }
+    }
+
+    impl<'de> Deserialize<'de> for NodePath {
+        #[inline]
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            struct NodePathVisitor;
+
+            impl<'de> Visitor<'de> for NodePathVisitor {
+                type Value = NodePath;
+
+                fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                    formatter.write_str("a NodePath")
+                }
+
+                fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+                where
+                    E: Error,
+                {
+                    Ok(NodePath::from_str(s))
+                }
+
+                fn visit_newtype_struct<D>(
+                    self,
+                    deserializer: D,
+                ) -> Result<Self::Value, <D as Deserializer<'de>>::Error>
+                where
+                    D: Deserializer<'de>,
+                {
+                    deserializer.deserialize_str(self)
+                }
+            }
+
+            deserializer.deserialize_newtype_struct("NodePath", NodePathVisitor)
+        }
+    }
+}

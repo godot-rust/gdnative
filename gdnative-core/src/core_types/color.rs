@@ -6,6 +6,7 @@ use crate::core_types::GodotString;
 /// RGBA color with 32 bits floating point components.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Color {
     pub r: f32,
     pub g: f32,

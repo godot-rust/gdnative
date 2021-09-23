@@ -8,6 +8,7 @@ mod test_free_ub;
 mod test_map_owned;
 mod test_register;
 mod test_return_leak;
+mod test_serde;
 mod test_vararray_return;
 mod test_variant_call_args;
 mod test_variant_ops;
@@ -66,6 +67,7 @@ pub extern "C" fn run_tests(
     status &= test_map_owned::run_tests();
     status &= test_register::run_tests();
     status &= test_return_leak::run_tests();
+    status &= test_serde::run_tests();
     status &= test_variant_call_args::run_tests();
     status &= test_variant_ops::run_tests();
     status &= test_vararray_return::run_tests();

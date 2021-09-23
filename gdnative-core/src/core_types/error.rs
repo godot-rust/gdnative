@@ -2,6 +2,7 @@ use crate::sys;
 
 /// Error codes used in various Godot APIs.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(u32)]
 pub enum GodotError {
     Failed = sys::godot_error_GODOT_FAILED as u32,
