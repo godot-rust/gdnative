@@ -289,7 +289,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// <br><br>
 ///
 /// ```ignore
-/// fn _get_configuration_warning(&self, owner: &Node);
+/// fn _get_configuration_warning(&self, owner: &Node) -> GodotString;
 /// ```
 /// The string returned from this method is displayed as a warning in the Scene Dock if the script that overrides it is a tool script.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-get-configuration-warning) for more information._
@@ -310,21 +310,21 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// <br><br>
 ///
 /// ```ignore
-/// fn _input(&self, owner: &Node, event: InputEvent);
+/// fn _input(&self, owner: &Node, event: Ref<InputEvent>);
 /// ```
 /// Called when there is an input event.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-input) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _unhandled_input(&self, owner: &Node, event: InputEvent);
+/// fn _unhandled_input(&self, owner: &Node, event: Ref<InputEvent>);
 /// ```
 /// Called when an `InputEvent` hasn't been consumed by `_input()` or any GUI.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-unhandled-input) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _unhandled_key_input (&self, owner: &Node, event: InputKeyEvent);
+/// fn _unhandled_key_input (&self, owner: &Node, event: Ref<InputKeyEvent>);
 /// ```
 /// Called when an `InputEventKey` hasn't been consumed by `_input()` or any GUI.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-unhandled-key-input) for more information._
@@ -349,7 +349,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// <br><br>
 ///
 /// ```ignore
-/// fn _gui_input(&self, owner: &Control, event: InputEvent);
+/// fn _gui_input(&self, owner: &Control, event: Ref<InputEvent>);
 /// ```
 /// Use this method to process and accept inputs on UI elements.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_control.html#class-control-method-gui-input) for more information._
