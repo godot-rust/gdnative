@@ -67,7 +67,7 @@ pub(crate) fn generate_class_constants(class: &GodotClass) -> TokenStream {
 
     let mut class_constants: Vec<(&ConstantName, &ConstantValue)> =
         class.constants.iter().collect();
-    class_constants.sort_by(|a, b| a.0.cmp(b.0));
+    class_constants.sort_by(constant_sorter);
 
     for (name, value) in &class_constants {
         let name = format_ident!("{}", name);
@@ -88,25 +88,10 @@ pub(crate) fn generate_class_constants(class: &GodotClass) -> TokenStream {
     }
 }
 
-fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
-    // In order to not pollute the API with more Result types,
-    // rename the Result enum used by Search to SearchResult
-    // to_camel_case() is used to make the enums more Rust like.
-    // DOFBlurQuality => DofBlurQuality
-    match enum_name {
-        "Result" => {
-            let mut res = String::from(class_name);
-            res.push_str(enum_name);
-            res.to_camel_case()
-        }
-        _ => enum_name.to_camel_case(),
-    }
-}
-
 pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
-    // TODO: check whether the start of the variant name is
-    // equal to the end of the enum name and if so don't repeat it
-    // it. For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
+    // TODO: check whether the start of the variant name is equal to the end of the enum name and if so, don't repeat it.
+    // For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
+
     let mut enums: Vec<&Enum> = class.enums.iter().collect();
     enums.sort();
     let enums = enums.iter().map(|e| {
@@ -114,7 +99,7 @@ pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
         let typ_name = format_ident!("{}", enum_name);
 
         let mut values: Vec<_> = e.values.iter().collect();
-        values.sort_by(|a, b| a.1.cmp(b.1));
+        values.sort_by(constant_sorter);
 
         let consts = values.iter().map(|(key, val)| {
             let key = key.to_uppercase();
@@ -149,4 +134,25 @@ pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
     quote! {
         #(#enums)*
     }
+}
+
+fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
+    // In order to not pollute the API with more Result types,
+    // rename the Result enum used by Search to SearchResult
+    // to_camel_case() is used to make the enums more Rust like.
+    // DOFBlurQuality => DofBlurQuality
+    match enum_name {
+        "Result" => {
+            let mut res = String::from(class_name);
+            res.push_str(enum_name);
+            res.to_camel_case()
+        }
+        _ => enum_name.to_camel_case(),
+    }
+}
+
+// Ensures deterministic order of constants, not dependent on inner hash-map or sort workings
+fn constant_sorter(a: &(&String, &i64), b: &(&String, &i64)) -> std::cmp::Ordering {
+    Ord::cmp(a.1, b.1) // first, sort by integer value
+        .then(Ord::cmp(a.0, b.0)) // and if equal, by name
 }
