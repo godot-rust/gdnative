@@ -1,11 +1,12 @@
 # Contributing to godot's rust bindings.
 
-The godot rust bindings developers welcome contribution from everyone. Here are the guidelines if you are thinking of helping us:
+The godot-rust bindings developers welcome contribution from everyone. Here are the guidelines if you are thinking of helping us:
 
 ## Contributions
 
-Contributions to should be made in the form of GitHub pull requests.
-Each pull request will be reviewed by a core contributor (someone with permission to land patches) and either landed in the main tree or given feedback for changes that would be required.
+Contributions should be made in the form of GitHub pull requests (PRs). Each pull request will be reviewed by a core contributor (someone with permission to land patches) and either landed in the main tree or given feedback for changes that would be required.
+
+When opening a PR, our continuous integration (CI) pipeline will automatically perform a few basic checks (formatting, lints, unit tests). Please make sure those checks pass, adjusting your code if necessary.
 
 Should you wish to work on an issue, please claim it first by commenting on the GitHub issue that you want to work on it. This is to prevent duplicated efforts from contributors on the same issue.
 
@@ -17,7 +18,7 @@ Have a look at the [issues](https://github.com/godot-rust/godot-rust/issues) to 
 
 - Branch from the master branch and, if needed, rebase to the current master branch before submitting your pull request. If it doesn't merge cleanly with master you may be asked to rebase your changes.
 
-- Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
+- Use one commit per logical change. Often, PRs only consist of a single commit. If you change unrelated parts of the code, split it into separate commits.
 
 - If your patch is not getting reviewed or you need a specific person to review it, you can @-reply a reviewer asking for a review in the pull request or a comment.
 
@@ -27,8 +28,9 @@ Have a look at the [issues](https://github.com/godot-rust/godot-rust/issues) to 
 
 ## Testing
 
-- run `cargo test --all` from the root of the repository.
-- on GNU/Linux OSes:
+Everywhere: run `cargo test --workspace` from the root of the repository.
+
+On GNU/Linux operating systems:
 
 ```
 cd test
@@ -61,8 +63,8 @@ Primary communication between developers of the project happens on the `godot-ru
 For questions about using `godot-rust` the `#gdnative` channel on the [Godot Engine community Discord server](https://godotengine.org/community) can be used.
 On IRC the `#godotengine-gdnative` channel on freenode can be used for questions as well.
 
-If those platforms are not accessible enough for you let us know and we can look into opening new channels and possibly bridging them if needed.
+If you are only interested in occasional announcements and showcases, follow [@GodotRust on Twitter](https://twitter.com/GodotRust). For questions and design discussions, please use Discord.
 
 ## License
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
+Any contribution submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
