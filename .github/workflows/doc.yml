@@ -19,7 +19,7 @@ env:
       //! _For stable releases, visit [docs.rs/gdnative](https://docs.rs/gdnative)._
       //! <br><br>
       //!
-  GDNATIVE_DOC_REPO: git@github.com:godot-rust/doc.git
+  GDNATIVE_DOC_REPO: git@github.com:godot-rust/docs.git
   GDNATIVE_DOC_BRANCH: gh-pages
 
 
