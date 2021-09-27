@@ -6,7 +6,7 @@ pub type ColorArray = TypedArray<Color>;
 
 godot_test!(
     test_color_array_access {
-        use crate::NewRef as _;
+        use crate::object::NewRef as _;
 
         let arr = ColorArray::from_vec(vec![
             Color::from_rgb(1.0, 0.0, 0.0),

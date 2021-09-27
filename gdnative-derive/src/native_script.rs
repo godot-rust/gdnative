@@ -29,7 +29,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
             fn class_name() -> &'static str {
                 unimplemented!()
             }
-            fn init(owner: ::gdnative::TRef<'_, Self::Base, Shared>) -> Self {
+            fn init(owner: ::gdnative::object::TRef<'_, Self::Base, Shared>) -> Self {
                 unimplemented!()
             }
         }
@@ -83,13 +83,13 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     #with_default
                     #with_hint
                     #with_usage
-                    .with_ref_getter(|this: &#name, _owner: ::gdnative::TRef<Self::Base>| {
+                    .with_ref_getter(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
                         #before_get
                         let res = &this.#ident;
                         #after_get
                         res
                     })
-                    .with_setter(|this: &mut #name, _owner: ::gdnative::TRef<Self::Base>, v| {
+                    .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
                         #before_set
                         this.#ident = v;
                         #after_set
@@ -105,7 +105,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             None
         } else {
             Some(quote! {
-                fn init(owner: ::gdnative::TRef<Self::Base>) -> Self {
+                fn init(owner: ::gdnative::object::TRef<Self::Base>) -> Self {
                     Self::new(::gdnative::nativescript::OwnerArg::from_safe_ref(owner))
                 }
             })

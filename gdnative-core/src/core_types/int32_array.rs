@@ -5,7 +5,7 @@ pub type Int32Array = TypedArray<i32>;
 
 godot_test!(
     test_int32_array_access {
-        use crate::NewRef as _;
+        use crate::object::NewRef as _;
 
         let arr = (0..8).collect::<Int32Array>();
 

@@ -6,6 +6,8 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
+#[cfg(feature = "nativescript")]
+use crate::nativescript::{Instance, NativeClass, RefInstance};
 use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
 use crate::ref_kind::{ManuallyManaged, RefCounted, RefKind};
 use crate::sys;
@@ -13,12 +15,11 @@ use crate::thread_access::{
     LocalThreadAccess, NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique,
 };
 
-#[cfg(feature = "nativescript")]
-use crate::nativescript::{Instance, NativeClass, RefInstance};
-
-mod raw;
-
+pub use self::new_ref::NewRef;
 pub use self::raw::RawObject;
+
+mod new_ref;
+mod raw;
 
 /// Trait for Godot API objects. This trait is sealed, and implemented for generated wrapper
 /// types.

@@ -1,5 +1,5 @@
 pub use gdnative_core::core_types::{
-    self, GodotError, Aabb, Basis, ByteArray, Color, ColorArray, Dictionary, Float32Array,
+    self, Aabb, Basis, ByteArray, Color, ColorArray, Dictionary, Float32Array, GodotError,
     GodotString, Int32Array, NodePath, Plane, Quat, Rect2, Rid, StringArray, StringName, Transform,
     Transform2D, TypedArray, Variant, VariantArray, VariantDispatch, VariantOperator, VariantType,
     Vector2, Vector2Array, Vector3, Vector3Array,
@@ -10,12 +10,11 @@ pub use gdnative_core::core_types::{
 };
 
 pub use gdnative_core::object::{
-    AsArg, GodotObject, Instanciable, Null, QueueFree, Ref, SubClass, TRef,
+    AsArg, GodotObject, Instanciable, NewRef, Null, QueueFree, Ref, SubClass, TRef,
 };
 
 pub use gdnative_core::ref_kind::{ManuallyManaged, RefCounted};
 pub use gdnative_core::thread_access::{Shared, ThreadLocal, Unique};
-pub use gdnative_core::NewRef;
 
 pub use gdnative_core::nativescript::{
     self,

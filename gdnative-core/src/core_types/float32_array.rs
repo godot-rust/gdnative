@@ -5,7 +5,7 @@ pub type Float32Array = TypedArray<f32>;
 
 godot_test!(
     test_float32_array_access {
-        use crate::NewRef as _;
+        use crate::object::NewRef as _;
 
         let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
 

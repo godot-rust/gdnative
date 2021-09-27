@@ -116,7 +116,7 @@ pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
 ///   scene as the root. For instance Spatial is used for this example.
 fn instance_scene<Root>(scene: &PackedScene) -> Result<Ref<Root, Unique>, ManageErrs>
 where
-    Root: gdnative::GodotObject<RefKind = ManuallyManaged> + SubClass<Node>,
+    Root: gdnative::object::GodotObject<RefKind = ManuallyManaged> + SubClass<Node>,
 {
     let instance = scene
         .instance(PackedScene::GEN_EDIT_STATE_DISABLED)

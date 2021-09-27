@@ -51,13 +51,14 @@
 
 // TODO: add logo using #![doc(html_logo_url = "https://<url>")]
 
-// Workaround: rustdoc currently shows hidden items in the original crate when they are
-//             re-exported. Manually re-exporting the public items works around that.
+// Workaround (rustdoc 1.55):
+// Items, which are #[doc(hidden)] in their original crate and re-exported with a wildcard, lose
+// their hidden status. Re-exporting them manually and hiding the wildcard solves this.
 #[doc(inline)]
 pub use gdnative_core::{
     core_types, godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
     godot_nativescript_init, godot_print, godot_warn, godot_wrap_method, nativescript, object,
-    ref_kind, thread_access, GodotObject, GodotResult, NewRef, Null, Ref, TRef,
+    ref_kind, thread_access,
 };
 
 #[doc(hidden)]

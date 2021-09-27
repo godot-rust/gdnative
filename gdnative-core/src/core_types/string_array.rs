@@ -6,7 +6,7 @@ pub type StringArray = TypedArray<GodotString>;
 
 godot_test!(
     test_string_array_access {
-        use crate::NewRef as _;
+        use crate::object::NewRef as _;
 
         let arr = StringArray::from_vec(vec![
             GodotString::from("foo"),

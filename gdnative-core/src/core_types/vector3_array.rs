@@ -6,7 +6,7 @@ pub type Vector3Array = TypedArray<Vector3>;
 
 godot_test!(
     test_vector3_array_access {
-        use crate::NewRef as _;
+        use crate::object::NewRef as _;
 
         let arr = Vector3Array::from_vec(vec![
             Vector3::new(1.0, 2.0, 3.0),

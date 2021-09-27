@@ -12,7 +12,7 @@ use crate::core_types::ToVariant;
 use crate::core_types::ToVariantEq;
 use crate::core_types::Variant;
 use crate::core_types::VariantArray;
-use crate::NewRef;
+use crate::object::NewRef;
 use std::fmt;
 
 use crate::thread_access::*;

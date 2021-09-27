@@ -9,7 +9,7 @@ use crate::sys;
 use crate::core_types::OwnedToVariant;
 use crate::core_types::ToVariant;
 use crate::core_types::Variant;
-use crate::NewRef;
+use crate::object::NewRef;
 
 use crate::thread_access::*;
 

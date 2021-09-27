@@ -8,8 +8,7 @@ use crate::nativescript::user_data::UserData;
 use crate::nativescript::Map;
 use crate::nativescript::MapMut;
 use crate::nativescript::NativeClass;
-use crate::object::{GodotObject, RawObject};
-use crate::*;
+use crate::object::{GodotObject, RawObject, TRef};
 
 mod invalid;
 

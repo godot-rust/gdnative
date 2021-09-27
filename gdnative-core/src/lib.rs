@@ -25,6 +25,7 @@
 
 #[doc(hidden)]
 pub extern crate gdnative_sys as sys;
+
 #[doc(hidden)]
 pub extern crate libc;
 
@@ -41,8 +42,8 @@ mod init;
 #[cfg(feature = "nativescript")]
 pub mod nativescript;
 
+#[doc(hidden)]
 pub mod log;
-mod new_ref;
 pub mod object;
 pub mod ref_kind;
 pub mod thread_access;
@@ -56,8 +57,6 @@ pub mod private;
 //
 
 pub use init::{InitializeInfo, TerminateInfo};
-pub use new_ref::NewRef;
-pub use object::{GodotObject, Null, Ref, TRef};
 
 #[deprecated(since = "0.10", note = "use core_types::GodotResult")]
 #[doc(hidden)]
