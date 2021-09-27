@@ -118,11 +118,13 @@ jobs:
       - name: Install LLVM
         uses: ./.github/composite/llvm
         if: ${{ matrix.os.id == 'windows-latest' }}
+      - name: Compile tests
+        run: cargo test --workspace --all-features --no-run;
       - name: Test
         run: cargo test --workspace --all-features ${{ matrix.testflags }};
 
-  check-release:
-    name: check-release-${{ matrix.os.name }}
+  build-release:
+    name: build-release-${{ matrix.os.name }}
     needs: rustfmt
     strategy:
       fail-fast: true # cancel all jobs as soon as one fails?
@@ -147,7 +149,7 @@ jobs:
       - name: Release build (check only)
         run: cargo check --release;
 
-  test-ios:
+  build-ios:
     needs: rustfmt
     #continue-on-error: ${{ matrix.rust == 'nightly' }}
     #strategy:
@@ -178,7 +180,7 @@ jobs:
           cd gdnative-sys;
           cargo dinghy --platform auto-ios-x86_64 test;
 
-  test-android:
+  build-android:
     # Note: even though Android builds for another architecture than Linux, it can reuse downloaded crates (source code, maybe 'cargo check').
     needs: rustfmt
     #continue-on-error: ${{ matrix.rust == 'nightly' }}
@@ -295,10 +297,10 @@ jobs:
       #- rustfmt
       - clippy
       - test
-      - test-ios
-      - test-android
       - integration-test-godot
-      - check-release
+      - build-release
+      - build-ios
+      - build-android
     runs-on: ubuntu-latest
     steps:
       - name: Mark the job as a success
