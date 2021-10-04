@@ -2,10 +2,10 @@
 
 use crate::core_types::*;
 use crate::nativescript::{Instance, NativeClass};
+use crate::object::ownership::Shared;
 use crate::object::GodotObject;
 use crate::object::Ref;
 use crate::private::get_api;
-use crate::thread_access::Shared;
 
 use super::ClassBuilder;
 

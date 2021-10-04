@@ -448,7 +448,7 @@ impl Ty {
             Ty::VariantOperator => syn::parse_quote! { VariantOperator },
             Ty::Enum(path) => syn::parse_quote! { #path },
             Ty::Object(path) => {
-                syn::parse_quote! { Option<Ref<#path, thread_access::Shared>> }
+                syn::parse_quote! { Option<Ref<#path, ownership::Shared>> }
             }
         }
     }
@@ -597,7 +597,7 @@ impl Ty {
             Ty::Object(ref path) => {
                 quote! {
                     ptr::NonNull::new(ret)
-                        .map(|sys| <Ref<#path, thread_access::Shared>>::move_from_sys(sys))
+                        .map(|sys| <Ref<#path, ownership::Shared>>::move_from_sys(sys))
                 }
             }
             Ty::Result => {

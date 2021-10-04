@@ -15,7 +15,7 @@ use crate::core_types::VariantArray;
 use crate::object::NewRef;
 use std::fmt;
 
-use crate::thread_access::*;
+use crate::object::ownership::*;
 
 /// A reference-counted `Dictionary` of `Variant` key-value pairs.
 ///

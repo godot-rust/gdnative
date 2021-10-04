@@ -1,4 +1,4 @@
-//! Typestates to express thread safety of Godot types.
+//! Typestates to express ownership and thread safety of Godot types.
 
 /// Marker that indicates that a value currently only has a
 /// single unique reference.

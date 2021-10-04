@@ -58,7 +58,6 @@
 pub use gdnative_core::{
     core_types, godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
     godot_nativescript_init, godot_print, godot_warn, godot_wrap_method, nativescript, object,
-    ref_kind, thread_access,
 };
 
 #[doc(hidden)]

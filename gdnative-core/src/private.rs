@@ -149,7 +149,7 @@ pub mod godot_object {
 pub(crate) struct ManuallyManagedClassPlaceholder;
 
 unsafe impl crate::object::GodotObject for ManuallyManagedClassPlaceholder {
-    type RefKind = crate::ref_kind::ManuallyManaged;
+    type RefKind = crate::object::memory::ManuallyManaged;
 
     fn class_name() -> &'static str {
         "Object"
@@ -161,7 +161,7 @@ impl godot_object::Sealed for ManuallyManagedClassPlaceholder {}
 pub(crate) struct ReferenceCountedClassPlaceholder;
 
 unsafe impl crate::object::GodotObject for ReferenceCountedClassPlaceholder {
-    type RefKind = crate::ref_kind::RefCounted;
+    type RefKind = crate::object::memory::RefCounted;
 
     fn class_name() -> &'static str {
         "Reference"

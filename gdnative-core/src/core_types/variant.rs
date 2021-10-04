@@ -5,9 +5,9 @@ use std::mem::{forget, transmute};
 use std::ptr;
 
 use crate::core_types::*;
+use crate::object::ownership::*;
 use crate::object::*;
 use crate::private::{get_api, ManuallyManagedClassPlaceholder};
-use crate::thread_access::*;
 
 #[cfg(feature = "serde")]
 mod serialize;

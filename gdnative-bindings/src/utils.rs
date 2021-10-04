@@ -2,8 +2,8 @@
 
 use super::generated::{Engine, Node, SceneTree};
 use gdnative_core::nativescript::{NativeClass, RefInstance};
+use gdnative_core::object::ownership::Shared;
 use gdnative_core::object::{SubClass, TRef};
-use gdnative_core::thread_access::Shared;
 
 /// Convenience method  to obtain a reference to an "auto-load" node, that is a child of the root
 /// node. Returns `None` if the node does not exist or is not of the correct type.

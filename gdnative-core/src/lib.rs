@@ -45,8 +45,6 @@ pub mod nativescript;
 #[doc(hidden)]
 pub mod log;
 pub mod object;
-pub mod ref_kind;
-pub mod thread_access;
 
 /// Internal low-level API for use by macros and generated bindings. Not a part of the public API.
 #[doc(hidden)]
@@ -58,6 +56,6 @@ pub mod private;
 
 pub use init::{InitializeInfo, TerminateInfo};
 
-#[deprecated(since = "0.10", note = "use core_types::GodotResult")]
+#[deprecated(since = "0.10.0", note = "use core_types::GodotResult")]
 #[doc(hidden)]
 pub type GodotResult = core_types::GodotResult;

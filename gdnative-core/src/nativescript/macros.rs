@@ -112,7 +112,7 @@ macro_rules! godot_wrap_method_inner {
                 type Args = Args;
                 fn call(
                     &self,
-                    this: RefInstance<'_, $type_name, $crate::thread_access::Shared>,
+                    this: RefInstance<'_, $type_name, $crate::object::ownership::Shared>,
                     Args { $($pname,)* $($opt_pname,)* }: Args,
                 ) -> $crate::core_types::Variant {
                     this

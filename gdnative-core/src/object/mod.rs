@@ -1,3 +1,5 @@
+//! Provides types to interact with the Godot `Object` class hierarchy
+
 use std::borrow::Borrow;
 use std::ffi::CString;
 use std::fmt::{self, Debug};
@@ -8,15 +10,18 @@ use std::ptr::NonNull;
 
 #[cfg(feature = "nativescript")]
 use crate::nativescript::{Instance, NativeClass, RefInstance};
-use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
-use crate::ref_kind::{ManuallyManaged, RefCounted, RefKind};
-use crate::sys;
-use crate::thread_access::{
+use crate::object::memory::{ManuallyManaged, RefCounted, RefKind};
+use crate::object::ownership::{
     LocalThreadAccess, NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique,
 };
+use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
+use crate::sys;
 
 pub use self::new_ref::NewRef;
 pub use self::raw::RawObject;
+
+pub mod memory;
+pub mod ownership;
 
 mod new_ref;
 mod raw;
