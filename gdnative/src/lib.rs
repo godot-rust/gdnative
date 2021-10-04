@@ -15,7 +15,7 @@
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
 //! content when using the `Clone` trait, some types do not implement `Clone` and instead
-//! implement [`NewRef`](./trait.NewRef.html) which provides a `new_ref(&self) -> Self` method
+//! implement [`NewRef`](object::NewRef) which provides a `new_ref(&self) -> Self` method
 //! to create references to the same collection or object.
 //!
 //! ## Generated API types
@@ -41,9 +41,12 @@
 //!
 //! ## Feature flags
 //!
-//! ### `bindings`
-//!
-//! *Enabled* by default. Includes the crates.io version of the bindings in the `api` module.
+//! * `bindings` -- *enabled* by default. Includes the crates.io version of the bindings in the
+//!   `api` module. Disable if you want to use a custom Godot version.
+//! * `serde` -- *disabled* by default. Enable for `serde` support. See also
+//!   [`Variant`](core_types::Variant).
+//! * `formatted` -- *disabled* by default. Enable if the generated binding source code should
+//!   be human-readable.
 //!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 //! [custom-version]: https://github.com/godot-rust/godot-rust/#other-versions-or-custom-builds

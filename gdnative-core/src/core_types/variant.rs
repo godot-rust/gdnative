@@ -14,10 +14,15 @@ mod serialize;
 
 // TODO: implement Debug, PartialEq, etc.
 
-/// A `Variant` can represent many of godot's core types.
+/// A `Variant` can represent all Godot values (core types or `Object` class instances).
 ///
-/// The underlying data can be either stored inline or reference-counted,
-/// dependning on the size of the type and whether the it is trivially copyable.
+/// The underlying data is either stored inline or reference-counted on the heap,
+/// depending on the size of the type and whether the it is trivially copyable.
+///
+/// If you compile godot-rust with the `serde` feature enabled, you will have
+/// access to serialization/deserialization support: the traits `Serializable`
+/// and `Deserializable` will be automatically implemented on [`VariantDispatch`]
+/// as well as most of the types in [`core_types`].
 pub struct Variant(pub(crate) sys::godot_variant);
 
 macro_rules! variant_constructors {
