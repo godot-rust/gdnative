@@ -19,18 +19,17 @@ pub struct Shared;
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ThreadLocal(std::marker::PhantomData<*const ()>);
 
-/// Trait to parametrise over the access markers [`Unique`](struct.Unique.html),
-/// [`Shared`](struct.Shared.html), and [`ThreadLocal`](struct.ThreadLocal.html).
+/// Trait to parametrize over the access markers [`Unique`], [`Shared`] and [`ThreadLocal`].
 ///
 /// This trait is sealed and has no public members.
 pub trait ThreadAccess: private::Sealed {}
 
-/// Trait to parametrise over the access markers that are local to the current thread:
-/// [`Unique`](struct.Unique.html) and [`ThreadLocal`](struct.ThreadLocal.html).
+/// Trait to parametrize over the access markers that are local to the current thread:
+/// [`Unique`] and [`ThreadLocal`].
 pub trait LocalThreadAccess: ThreadAccess {}
 
-/// Trait to parametrise over the access markers that are not unique:
-/// [`Shared`](struct.Shared.html) and [`ThreadLocal`](struct.ThreadLocal.html).
+/// Trait to parametrize over the access markers that are not unique:
+/// [`Shared`] and [`ThreadLocal`].
 pub trait NonUniqueThreadAccess: ThreadAccess {}
 
 impl ThreadAccess for Unique {}

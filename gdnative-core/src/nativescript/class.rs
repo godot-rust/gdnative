@@ -5,13 +5,13 @@ use crate::core_types::{
 };
 use crate::nativescript::init::ClassBuilder;
 use crate::nativescript::{Map, MapMut, MapOwned, UserData};
+use crate::object::bounds::{
+    AssumeSafeLifetime, LifetimeConstraint, RefImplBound, SafeAsRaw, SafeDeref,
+};
 use crate::object::memory::{ManuallyManaged, RefCounted};
 use crate::object::ownership::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
-use crate::object::{
-    AssumeSafeLifetime, LifetimeConstraint, QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw,
-    SafeDeref, TRef,
-};
 use crate::object::{GodotObject, Instanciable};
+use crate::object::{QueueFree, RawObject, Ref, TRef};
 use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 
 use super::class_registry;
