@@ -4,7 +4,7 @@ use gdnative::prelude::*;
 #[inherit(Node)]
 struct HelloWorld;
 
-#[gdnative::methods]
+#[methods]
 impl HelloWorld {
     fn new(_owner: &Node) -> Self {
         HelloWorld

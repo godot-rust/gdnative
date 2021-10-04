@@ -6,7 +6,7 @@ use gdnative::prelude::*;
 #[register_with(Self::register)]
 struct ExportsArrays;
 
-#[gdnative::methods]
+#[methods]
 impl ExportsArrays {
     fn new(_owner: &Node) -> Self {
         ExportsArrays

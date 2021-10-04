@@ -63,7 +63,7 @@ mod variant;
 /// ```
 /// **Important**: Only one `impl` block per struct may be attributed with `#[methods]`.
 ///
-/// For more context, please refer to [gdnative::NativeClass](NativeClass).
+/// For more context, please refer to [gdnative::derive::NativeClass](NativeClass).
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     if syn::parse::<syn::parse::Nothing>(meta.clone()).is_err() {

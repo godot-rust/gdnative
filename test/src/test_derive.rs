@@ -173,7 +173,7 @@ fn test_derive_owned_to_variant() -> bool {
     ok
 }
 
-#[derive(gdnative::NativeClass)]
+#[derive(gdnative::derive::NativeClass)]
 #[inherit(Node)]
 struct PropertyHooks {
     #[property(

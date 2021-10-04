@@ -98,7 +98,7 @@ macro_rules! godot_wrap_method_inner {
             struct ThisMethod;
 
             use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
-            use ::gdnative::FromVarargs;
+            use ::gdnative::derive::FromVarargs;
 
             #[derive(FromVarargs)]
             #[allow(clippy::used_underscore_binding)]

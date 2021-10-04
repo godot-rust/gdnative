@@ -3,7 +3,7 @@ use gdnative::prelude::*;
 
 use gdnative::nativescript::init::property::{EnumHint, IntHint, StringHint};
 
-#[derive(gdnative::NativeClass)]
+#[derive(gdnative::derive::NativeClass)]
 #[inherit(MeshInstance)]
 #[register_with(register_properties)]
 struct RustTest {
@@ -36,7 +36,7 @@ fn register_properties(builder: &ClassBuilder<RustTest>) {
         .done();
 }
 
-#[gdnative::methods]
+#[methods]
 impl RustTest {
     fn new(_owner: &MeshInstance) -> Self {
         RustTest {

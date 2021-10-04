@@ -66,13 +66,14 @@ pub use gdnative_core::{
 #[doc(hidden)]
 pub use gdnative_core::*;
 
+/// Derive macros and macro attributes.
 #[doc(inline)]
-pub use gdnative_derive::*;
+pub use gdnative_derive as derive;
 
 /// Curated re-exports of common items.
 pub mod prelude;
 
+/// Bindings for the Godot Class API.
 #[doc(inline)]
 #[cfg(feature = "bindings")]
-/// Bindings for the Godot Class API.
 pub use gdnative_bindings as api;
