@@ -41,7 +41,7 @@ use std::marker::PhantomData;
 use std::ptr;
 
 use crate::core_types::{GodotString, Variant};
-use crate::nativescript::{NativeClass, NativeClassMethods, UserData};
+use crate::nativescript::{user_data::UserData, NativeClass, NativeClassMethods};
 use crate::object::{GodotObject, NewRef, TRef};
 use crate::private::get_api;
 

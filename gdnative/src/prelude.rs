@@ -20,10 +20,12 @@ pub use gdnative_core::object::{
 
 pub use gdnative_core::nativescript::{
     self,
-    class::{Instance, RefInstance},
-    init::{ClassBuilder, InitHandle, Method, MethodBuilder, Signal, SignalArgument},
+    init::{
+        ClassBuilder, ExportInfo, InitHandle, Method, MethodBuilder, PropertyUsage, Signal,
+        SignalArgument,
+    },
     user_data::{self, Aether, ArcData, LocalCellData, MutexData, RwLockData},
-    ExportInfo, NativeClass, NativeClassMethods, PropertyUsage,
+    Instance, NativeClass, NativeClassMethods, RefInstance,
 };
 
 pub use gdnative_core::{

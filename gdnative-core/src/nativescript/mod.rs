@@ -11,5 +11,3 @@ pub mod type_tag;
 pub mod user_data;
 
 pub use class::*;
-pub use init::*;
-pub use user_data::{Map, MapMut, MapOwned, UserData};
