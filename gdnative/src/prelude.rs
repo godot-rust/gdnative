@@ -10,20 +10,14 @@ pub use gdnative_core::core_types::{
 };
 
 pub use gdnative_core::object::{
-    AsArg, GodotObject, Instanciable, NewRef, Null, QueueFree, Ref, SubClass, TRef,
-};
-
-pub use gdnative_core::object::{
     memory::{ManuallyManaged, RefCounted},
     ownership::{Shared, ThreadLocal, Unique},
+    AsArg, GodotObject, Instanciable, NewRef, Null, QueueFree, Ref, SubClass, TRef,
 };
 
 pub use gdnative_core::nativescript::{
     self,
-    init::{
-        ClassBuilder, ExportInfo, InitHandle, Method, MethodBuilder, PropertyUsage, Signal,
-        SignalArgument,
-    },
+    init::{ClassBuilder, InitHandle, Method, MethodBuilder, Signal, SignalArgument, ExportInfo, PropertyUsage},
     user_data::{self, Aether, ArcData, LocalCellData, MutexData, RwLockData},
     Instance, NativeClass, NativeClassMethods, RefInstance,
 };
