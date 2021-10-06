@@ -1,31 +1,30 @@
-//! Types and functionalities to declare and initialize gdnative classes.
+//! Low-level API to register and export GDNative classes, methods and properties.
 //!
-//! ## API endpoints
+//! ## Init and exit hooks
 //!
 //! Three endpoints are automatically invoked by the engine during startup and shutdown:
 //!
-//! - [`godot_gdnative_init`](macro.godot_gdnative_init.html),
-//! - [`godot_nativescript_init`](macro.godot_nativescript_init.html),
-//! - [`godot_gdnative_terminate`](macro.godot_gdnative_terminate.html),
+//! - [`godot_gdnative_init`],
+//! - [`godot_nativescript_init`],
+//! - [`godot_gdnative_terminate`],
 //!
 //! All three must be present. To quickly define all three endpoints using the default names,
-//! use [`godot_init`](macro.godot_init.html).
+//! use [`godot_init`].
 //!
 //! ## Registering script classes
 //!
-//! To register script classes, call `InitHandle::add_class` or `InitHandle::add_tool_class`
-//! in your `godot_nativescript_init` or `godot_init` callback:
+//! [`InitHandle`] is the registry of all your exported symbols.
+//! To register script classes, call [`InitHandle::add_class`] or [`InitHandle::add_tool_class`]
+//! in your [`godot_nativescript_init`] or [`godot_init`] callback:
 //!
 //! ```ignore
-//! // - snip -
+//! use gdnative::prelude::*;
 //!
-//! fn init(handle: gdnative::init::InitHandle) {
+//! fn init(handle: InitHandle) {
 //!     handle.add_class::<HelloWorld>();
 //! }
 //!
 //! godot_init!(init);
-//!
-//! // - snip -
 //! ```
 //!
 //! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
@@ -291,15 +290,39 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// # Examples
     ///
     /// Basic usage:
-    ///
-    /// ```ignore
-    /// // `Bar` is a stateful method implementing `Method<C>`
-    ///
-    /// builder
-    ///     .build_method("foo", Bar { baz: 42 })
-    ///     .with_rpc_mode(RpcMode::RemoteSync)
-    ///     .done();
     /// ```
+    /// use gdnative::prelude::*;
+    /// use gdnative::nativescript::init::{RpcMode, Varargs};
+    ///
+    /// #[derive(NativeClass)]
+    /// #[register_with(Self::my_register)]
+    /// #[no_constructor]
+    /// struct MyType {}
+    ///
+    /// // Note: no #[methods] required
+    /// impl MyType {
+    ///     fn my_method(&self) -> i64 { 42 }
+    ///
+    ///     fn my_register(builder: &ClassBuilder<MyType>) {
+    ///         builder
+    ///             .build_method("my_method", MyMethod)
+    ///             .with_rpc_mode(RpcMode::RemoteSync)
+    ///             .done();
+    ///     }
+    /// }
+    ///
+    /// // Now, wrap the method (this can do anything and does not need to actually call a method)
+    /// struct MyMethod;
+    /// impl Method<MyType> for MyMethod {
+    ///     fn call(&self, this: RefInstance<'_, MyType, Shared>, _args: Varargs<'_>) -> Variant {
+    ///         this.map(|obj: &MyType, _| {
+    ///             let result = obj.my_method();
+    ///             Variant::from_i64(result)
+    ///         }).expect("method call succeeds")
+    ///     }
+    /// }
+    /// ```
+    ///
     #[inline]
     pub fn build_method<'a, F: Method<C>>(
         &'a self,
@@ -316,14 +339,32 @@ impl<C: NativeClass> ClassBuilder<C> {
     ///
     /// Basic usage:
     ///
-    /// ```ignore
-    /// builder
-    ///     .add_property("foo")
-    ///     .with_default(0.0)
-    ///     .with_hint((-10.0..=30.0).into())
-    ///     .with_getter(MyType::get_foo)
-    ///     .with_setter(MyType::set_foo)
-    ///     .done();
+    /// ```
+    /// use gdnative::prelude::*;
+    ///
+    /// #[derive(NativeClass)]
+    /// #[inherit(Node)]
+    /// #[register_with(Self::my_register)]
+    /// #[no_constructor]
+    /// struct MyType {
+    ///     foo: i32,
+    /// }
+    ///
+    /// // Note: no #[methods] required
+    /// impl MyType {
+    ///     pub fn get_foo(&self, _owner: TRef<Node>) -> i32 { self.foo }
+    ///     pub fn set_foo(&mut self, _owner: TRef<Node>, val: i32) { self.foo = val; }
+    ///
+    ///     fn my_register(builder: &ClassBuilder<MyType>) {
+    ///         builder
+    ///             .add_property("foo")
+    ///             .with_default(5)
+    ///             .with_hint((-10..=30).into())
+    ///             .with_getter(MyType::get_foo)
+    ///             .with_setter(MyType::set_foo)
+    ///             .done();
+    ///     }
+    /// }
     /// ```
     #[inline]
     pub fn add_property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>

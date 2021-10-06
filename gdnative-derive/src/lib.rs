@@ -163,7 +163,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// use gdnative::prelude::*;
-/// use gdnative::nativescript::property::{RangeHint, FloatHint};
+/// use gdnative::nativescript::init::property::{RangeHint, FloatHint};
 ///
 /// #[derive(NativeClass)]
 /// #[inherit(Reference)]
