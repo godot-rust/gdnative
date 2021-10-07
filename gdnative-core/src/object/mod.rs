@@ -1,4 +1,10 @@
 //! Provides types to interact with the Godot `Object` class hierarchy
+//!
+//! This module contains wrappers and helpers to interact with Godot objects.
+//! In Godot, classes stand in an inheritance relationship, with the root at `Object`.
+//!
+//! If you are looking for how to manage user-defined types (native scripts),
+//! check out the [`nativescript`][crate::nativescript] module.
 
 use std::borrow::Borrow;
 use std::ffi::CString;
