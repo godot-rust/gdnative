@@ -17,7 +17,7 @@ pub(crate) mod class_registry;
 pub(crate) mod type_tag;
 
 pub mod init;
-pub mod profiling;
+pub mod profiler;
 pub mod user_data;
 
 pub use class::*;

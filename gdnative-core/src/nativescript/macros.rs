@@ -334,7 +334,7 @@ macro_rules! godot_wrap_method {
 /// ```rust
 /// # fn main() {
 /// use gdnative_core::profile_sig;
-/// use gdnative_core::nativescript::profiling::profile;
+/// use gdnative_core::nativescript::profiler::profile;
 ///
 /// let answer = profile(profile_sig!("foo"), || 42);
 /// assert_eq!(42, answer);
