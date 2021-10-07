@@ -58,9 +58,14 @@
 // Items, which are #[doc(hidden)] in their original crate and re-exported with a wildcard, lose
 // their hidden status. Re-exporting them manually and hiding the wildcard solves this.
 #[doc(inline)]
+pub use gdnative_core::{core_types, nativescript, object};
+
+// Make macros available inside crate on top-level, for convenience and to make other macros look nicer
+// For the user, they are exported either in prelude (convenience) or fully qualified.
+#[deprecated]
 pub use gdnative_core::{
-    core_types, godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
-    godot_nativescript_init, godot_print, godot_warn, godot_wrap_method, nativescript, object,
+    godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
+    godot_nativescript_init, godot_print, godot_warn, godot_wrap_method,
 };
 
 #[doc(hidden)]

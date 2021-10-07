@@ -13,9 +13,9 @@ use crate::private::try_get_api;
 /// identifier of the code, usually be the name of the method. None of the substrings should
 /// contain `::`.
 ///
-/// To create a `Signature` in the correct form, see `Signature::new` or `profile_sig!`. To
-/// create a `Signature` from an existing `CStr` or `CString`, see `Signature::from_raw` and
-/// `Signature::from_raw_owned`.
+/// To create a `Signature` in the correct form, see [`Signature::new()`] or [`profile_sig!`]. To
+/// create a `Signature` from an existing `CStr` or `CString`, see [`Signature::from_raw()`] and
+/// [`Signature::from_raw_owned()`].
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Signature<'a> {
     sig: Cow<'a, CStr>,
@@ -54,7 +54,7 @@ impl<'a> Signature<'a> {
         Self::from_raw(sig)
     }
 
-    /// Create a borrowed version of `self` for repeated use with `add_data` or `profile`.
+    /// Create a borrowed version of `self` for repeated use with [`add_data()`][Self::add_data()] or [`profile()`][Self::add_data()].
     #[inline(always)]
     pub fn borrow(&self) -> Signature<'_> {
         Signature {
@@ -64,7 +64,7 @@ impl<'a> Signature<'a> {
 
     /// Add a data point to Godot's built-in profiler using this signature.
     ///
-    /// See the free function `gdnative::nativescript::profiling::add_data`.
+    /// See the free function [`profiler::add_data()`][add_data()].
     #[inline]
     pub fn add_data(&self, time: Duration) {
         add_data(self.borrow(), time)
@@ -73,7 +73,7 @@ impl<'a> Signature<'a> {
     /// Times a closure and adds the measured time to Godot's built-in profiler with this
     /// signature, and then returns it's return value.
     ///
-    /// See the free function `gdnative::nativescript::profiling::profile`.
+    /// See the free function [`profiler::profile()`][profile()].
     #[inline]
     pub fn profile<F, R>(&self, f: F) -> R
     where
@@ -155,3 +155,30 @@ where
     add_data(signature, Instant::now() - start);
     ret
 }
+
+/// Convenience macro to create a profiling signature with a given tag.
+///
+/// The expanded code will panic at runtime if the file name or `tag` contains `::` or
+/// any NUL-bytes.
+///
+/// See [`Signature`] for more information.
+///
+/// # Examples
+///
+/// ```rust
+/// # fn main() {
+/// use gdnative::nativescript::profiler::{profile, profile_sig};
+///
+/// let answer = profile(profile_sig!("foo"), || 42);
+/// assert_eq!(answer, 42);
+/// # }
+/// ```
+#[macro_export]
+macro_rules! _profile_sig {
+    ($tag:expr) => {
+        $crate::nativescript::profiler::Signature::new(file!(), line!(), $tag)
+    };
+}
+
+// Export macro in this module
+pub use _profile_sig as profile_sig;

@@ -321,28 +321,3 @@ macro_rules! godot_wrap_method {
         )
     };
 }
-
-/// Convenience macro to create a profiling signature with a given tag.
-///
-/// The expanded code will panic at runtime if the file name or `tag` contains `::` or
-/// any NUL-bytes.
-///
-/// See `nativescript::profiling::Signature` for more information.
-///
-/// # Examples
-///
-/// ```rust
-/// # fn main() {
-/// use gdnative_core::profile_sig;
-/// use gdnative_core::nativescript::profiler::profile;
-///
-/// let answer = profile(profile_sig!("foo"), || 42);
-/// assert_eq!(42, answer);
-/// # }
-/// ```
-#[macro_export]
-macro_rules! profile_sig {
-    ($tag:expr) => {
-        $crate::nativescript::profiling::Signature::new(file!(), line!(), $tag)
-    };
-}
