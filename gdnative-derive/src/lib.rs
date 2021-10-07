@@ -49,7 +49,7 @@ mod variant;
 /// }
 /// impl gdnative::nativescript::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
-///         use gdnative::nativescript::init::*;
+///         use gdnative::nativescript::export::*;
 ///         builder.build_method("foo", gdnative::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
@@ -163,7 +163,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// use gdnative::prelude::*;
-/// use gdnative::nativescript::init::property::{RangeHint, FloatHint};
+/// use gdnative::nativescript::export::property::{RangeHint, FloatHint};
 ///
 /// #[derive(NativeClass)]
 /// #[inherit(Reference)]

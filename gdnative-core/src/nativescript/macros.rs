@@ -16,14 +16,14 @@
 #[macro_export]
 macro_rules! godot_nativescript_init {
     () => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::init::InitHandle) {}
+        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
         $crate::godot_nativescript_init!(godot_nativescript_init_empty);
     };
     ($callback:ident) => {
         $crate::godot_nativescript_init!($callback as godot_nativescript_init);
     };
     (_ as $fn_name:ident) => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::init::InitHandle) {}
+        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
         $crate::godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
@@ -36,7 +36,7 @@ macro_rules! godot_nativescript_init {
             }
 
             let __result = ::std::panic::catch_unwind(|| {
-                $callback($crate::nativescript::init::InitHandle::new(handle));
+                $callback($crate::nativescript::export::InitHandle::new(handle));
             });
 
             if __result.is_err() {
@@ -108,7 +108,7 @@ macro_rules! godot_wrap_method_inner {
             }
 
             #[allow(unused_variables, unused_assignments, unused_mut)]
-            impl $crate::nativescript::init::method::StaticArgsMethod<$type_name> for ThisMethod {
+            impl $crate::nativescript::export::method::StaticArgsMethod<$type_name> for ThisMethod {
                 type Args = Args;
                 fn call(
                     &self,
@@ -139,7 +139,7 @@ macro_rules! godot_wrap_method_inner {
                 }
             }
 
-            $crate::nativescript::init::method::StaticArgs::new(ThisMethod)
+            $crate::nativescript::export::method::StaticArgs::new(ThisMethod)
         }
     };
 }

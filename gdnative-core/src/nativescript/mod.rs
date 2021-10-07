@@ -16,7 +16,7 @@ mod macros;
 pub(crate) mod class_registry;
 pub(crate) mod type_tag;
 
-pub mod init;
+pub mod export;
 pub mod profiler;
 pub mod user_data;
 

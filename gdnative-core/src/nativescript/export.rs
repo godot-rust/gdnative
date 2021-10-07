@@ -292,7 +292,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// Basic usage:
     /// ```
     /// use gdnative::prelude::*;
-    /// use gdnative::nativescript::init::{RpcMode, Varargs};
+    /// use gdnative::nativescript::export::{RpcMode, Varargs};
     ///
     /// #[derive(NativeClass)]
     /// #[register_with(Self::my_register)]

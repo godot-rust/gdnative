@@ -1,4 +1,4 @@
-use gdnative::nativescript::init::property::*;
+use gdnative::nativescript::export::property::*;
 use gdnative::prelude::*;
 
 fn test_hint() -> StringHint {

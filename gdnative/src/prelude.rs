@@ -17,7 +17,10 @@ pub use gdnative_core::object::{
 
 pub use gdnative_core::nativescript::{
     self,
-    init::{ClassBuilder, InitHandle, Method, MethodBuilder, Signal, SignalArgument, ExportInfo, PropertyUsage},
+    export::{
+        ClassBuilder, ExportInfo, InitHandle, Method, MethodBuilder, PropertyUsage, Signal,
+        SignalArgument,
+    },
     user_data::{self, Aether, ArcData, LocalCellData, MutexData, RwLockData},
     Instance, NativeClass, NativeClassMethods, RefInstance,
 };
