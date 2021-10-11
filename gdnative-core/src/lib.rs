@@ -37,7 +37,6 @@ extern crate approx;
 mod macros;
 
 pub mod core_types;
-mod init;
 
 #[cfg(feature = "nativescript")]
 pub mod nativescript;
@@ -49,9 +48,3 @@ pub mod object;
 /// Internal low-level API for use by macros and generated bindings. Not a part of the public API.
 #[doc(hidden)]
 pub mod private;
-
-//
-// Re-exports
-//
-
-pub use init::{InitializeInfo, TerminateInfo};
