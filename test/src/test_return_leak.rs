@@ -83,7 +83,7 @@ fn test_return_leak() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_return_leak failed");
+        godot_error!("   !! Test test_return_leak failed");
     }
 
     ok

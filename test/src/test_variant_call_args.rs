@@ -90,7 +90,7 @@ fn test_variant_call_args() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_variant_call_args failed");
+        godot_error!("   !! Test test_variant_call_args failed");
     }
 
     ok

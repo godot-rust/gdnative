@@ -62,7 +62,7 @@ fn test_from_class_name() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_from_class_name failed");
+        godot_error!("   !! Test test_from_class_name failed");
     }
 
     ok

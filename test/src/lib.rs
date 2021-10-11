@@ -86,7 +86,7 @@ fn test_underscore_method_binding() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_underscore_method_binding failed");
+        godot_error!("   !! Test test_underscore_method_binding failed");
     }
 
     ok
@@ -165,7 +165,7 @@ fn test_rust_class_construction() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_rust_class_construction failed");
+        godot_error!("   !! Test test_rust_class_construction failed");
     }
 
     ok
@@ -247,7 +247,7 @@ fn test_from_instance_id() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_from_instance_id failed");
+        godot_error!("   !! Test test_from_instance_id failed");
     }
 
     ok
@@ -268,4 +268,4 @@ fn init(handle: InitHandle) {
     test_vararray_return::register(handle);
 }
 
-gdnative::godot_init!(init);
+godot_init!(init);

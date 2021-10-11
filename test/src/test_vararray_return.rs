@@ -27,7 +27,7 @@ fn test_vararray_return_crash() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_vararray_return_crash failed");
+        godot_error!("   !! Test test_vararray_return_crash failed");
     }
 
     ok

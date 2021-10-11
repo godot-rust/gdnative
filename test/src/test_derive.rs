@@ -129,7 +129,7 @@ fn test_derive_to_variant() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_derive_to_variant failed");
+        godot_error!("   !! Test test_derive_to_variant failed");
     }
 
     ok
@@ -167,7 +167,7 @@ fn test_derive_owned_to_variant() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_derive_owned_to_variant failed");
+        godot_error!("   !! Test test_derive_owned_to_variant failed");
     }
 
     ok
@@ -278,7 +278,7 @@ fn test_derive_nativeclass_with_property_hooks() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_derive_owned_to_variant failed");
+        godot_error!("   !! Test test_derive_owned_to_variant failed");
     }
 
     ok
@@ -315,7 +315,7 @@ fn test_derive_nativeclass_without_constructor() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_derive_nativeclass_without_constructor failed");
+        godot_error!("   !! Test test_derive_nativeclass_without_constructor failed");
     }
 
     ok

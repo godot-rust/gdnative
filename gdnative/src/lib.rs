@@ -60,16 +60,18 @@
 #[doc(inline)]
 pub use gdnative_core::{core_types, nativescript, object};
 
-// Make macros available inside crate on top-level, for convenience and to make other macros look nicer
-// For the user, they are exported either in prelude (convenience) or fully qualified.
-#[deprecated]
-pub use gdnative_core::{
-    godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
-    godot_nativescript_init, godot_print, godot_warn, godot_wrap_method,
-};
+/// Collection of declarative `godot_*` macros, mostly for GDNative registration and output.
+pub mod macros {
+    pub use gdnative_core::{
+        godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
+        godot_nativescript_init, godot_print, godot_warn, godot_wrap_method,
+    };
+}
 
+// Implementation details (e.g. used by macros).
+// However, do not re-export macros (on crate level), thus no wildcard
 #[doc(hidden)]
-pub use gdnative_core::*;
+pub use gdnative_core::{libc, sys};
 
 /// Derive macros and macro attributes.
 #[doc(inline)]
