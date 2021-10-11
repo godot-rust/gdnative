@@ -55,7 +55,3 @@ pub mod private;
 //
 
 pub use init::{InitializeInfo, TerminateInfo};
-
-#[deprecated(since = "0.10.0", note = "use core_types::GodotResult")]
-#[doc(hidden)]
-pub type GodotResult = core_types::GodotResult;
