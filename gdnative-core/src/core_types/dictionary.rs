@@ -625,9 +625,11 @@ godot_test!(test_dictionary {
     let expected_keys = ["foo", "bar"].iter().map(|&s| s.to_string()).collect::<HashSet<_>>();
     for (key, value) in &dict {
         assert_eq!(Some(value), dict.get(&key));
-        if !iter_keys.insert(key.to_string()) {
-            panic!("key is already contained in set: {:?}", key);
-        }
+        assert!(
+            iter_keys.insert(key.to_string()) ,
+            "key is already contained in set: {:?}",
+            key
+        );
     }
     assert_eq!(expected_keys, iter_keys);
 });
