@@ -19,7 +19,7 @@ type_tag_fallback = []
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.9.3" }
 gdnative-impl-proc-macros = { path = "../impl/proc_macros", version = "=0.9.3" }
-ahash = "0.7.4"
+ahash = "=0.7.4" # TODO use flexible version as soon as https://github.com/tkaitchuck/aHash/issues/99 is fixed
 approx = "0.5.0"
 atomic-take = "1.0.0"
 bitflags = { version = "1.2.1", optional = true }
