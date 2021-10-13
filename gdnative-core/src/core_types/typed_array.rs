@@ -6,8 +6,8 @@ use gdnative_impl_proc_macros as macros;
 
 use crate::core_types::access::{Aligned, MaybeUnaligned};
 use crate::core_types::{Color, GodotString, VariantArray, Vector2, Vector3};
+use crate::object::NewRef;
 use crate::private::get_api;
-use crate::NewRef;
 
 /// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
 /// element types.

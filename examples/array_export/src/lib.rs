@@ -1,4 +1,4 @@
-use gdnative::nativescript::init::property::hint::{ArrayHint, IntHint, RangeHint};
+use gdnative::nativescript::export::property::hint::{ArrayHint, IntHint, RangeHint};
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -6,7 +6,7 @@ use gdnative::prelude::*;
 #[register_with(Self::register)]
 struct ExportsArrays;
 
-#[gdnative::methods]
+#[methods]
 impl ExportsArrays {
     fn new(_owner: &Node) -> Self {
         ExportsArrays

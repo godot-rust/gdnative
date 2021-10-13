@@ -16,7 +16,7 @@ use super::{Export, ExportInfo};
 /// Basic usage:
 ///
 /// ```rust
-/// use gdnative_core::nativescript::init::property::hint::RangeHint;
+/// use gdnative_core::nativescript::export::property::hint::RangeHint;
 ///
 /// let hint: RangeHint<f64> = RangeHint::new(0.0, 20.0).or_greater();
 /// ```
@@ -110,7 +110,7 @@ where
 /// Basic usage:
 ///
 /// ```rust
-/// use gdnative_core::nativescript::init::property::hint::EnumHint;
+/// use gdnative_core::nativescript::export::property::hint::EnumHint;
 ///
 /// let hint = EnumHint::new(vec!["Foo".into(), "Bar".into(), "Baz".into()]);
 /// ```

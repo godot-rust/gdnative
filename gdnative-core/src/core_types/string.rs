@@ -1,6 +1,6 @@
+use crate::object::NewRef;
 use crate::private::get_api;
 use crate::sys;
-use crate::NewRef;
 
 use std::cmp::Ordering;
 use std::convert::TryFrom;

@@ -75,7 +75,7 @@ fn test_owner_free_ub() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_owner_free_ub failed");
+        godot_error!("   !! Test test_owner_free_ub failed");
     }
 
     ok

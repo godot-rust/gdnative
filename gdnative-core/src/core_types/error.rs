@@ -82,3 +82,6 @@ impl std::fmt::Display for GodotError {
 }
 
 impl std::error::Error for GodotError {}
+
+/// Result type with [GodotError]
+pub type GodotResult = Result<(), GodotError>;

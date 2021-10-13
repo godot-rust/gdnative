@@ -3,16 +3,16 @@ use std::ptr::NonNull;
 use crate::core_types::{
     FromVariant, FromVariantError, GodotString, OwnedToVariant, ToVariant, Variant,
 };
-use crate::nativescript::init::ClassBuilder;
-use crate::nativescript::{Map, MapMut, MapOwned, UserData};
-use crate::object::{
-    AssumeSafeLifetime, LifetimeConstraint, QueueFree, RawObject, Ref, RefImplBound, SafeAsRaw,
-    SafeDeref, TRef,
+use crate::nativescript::export::ClassBuilder;
+use crate::nativescript::user_data::{Map, MapMut, MapOwned, UserData};
+use crate::object::bounds::{
+    AssumeSafeLifetime, LifetimeConstraint, RefImplBound, SafeAsRaw, SafeDeref,
 };
+use crate::object::memory::{ManuallyManaged, RefCounted};
+use crate::object::ownership::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 use crate::object::{GodotObject, Instanciable};
+use crate::object::{QueueFree, RawObject, Ref, TRef};
 use crate::private::{get_api, ReferenceCountedClassPlaceholder};
-use crate::ref_kind::{ManuallyManaged, RefCounted};
-use crate::thread_access::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 
 use super::class_registry;
 use super::emplace;

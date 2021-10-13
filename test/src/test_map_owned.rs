@@ -62,7 +62,7 @@ fn test_map_owned() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_map_owned failed");
+        godot_error!("   !! Test test_map_owned failed");
     }
 
     ok

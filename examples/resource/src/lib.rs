@@ -8,7 +8,7 @@ struct GreetingResource {
     name: String,
 }
 
-#[gdnative::methods]
+#[methods]
 impl GreetingResource {
     fn new(_owner: &Resource) -> Self {
         Self { name: "".into() }
@@ -29,7 +29,7 @@ struct Greeter {
     greeting_resource: Option<Instance<GreetingResource, Shared>>,
 }
 
-#[gdnative::methods]
+#[methods]
 impl Greeter {
     fn new(_owner: &Node) -> Self {
         Greeter {

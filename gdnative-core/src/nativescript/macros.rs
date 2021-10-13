@@ -16,14 +16,14 @@
 #[macro_export]
 macro_rules! godot_nativescript_init {
     () => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::init::InitHandle) {}
+        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
         $crate::godot_nativescript_init!(godot_nativescript_init_empty);
     };
     ($callback:ident) => {
         $crate::godot_nativescript_init!($callback as godot_nativescript_init);
     };
     (_ as $fn_name:ident) => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::init::InitHandle) {}
+        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
         $crate::godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
@@ -36,7 +36,7 @@ macro_rules! godot_nativescript_init {
             }
 
             let __result = ::std::panic::catch_unwind(|| {
-                $callback($crate::nativescript::init::InitHandle::new(handle));
+                $callback($crate::nativescript::export::InitHandle::new(handle));
             });
 
             if __result.is_err() {
@@ -98,7 +98,7 @@ macro_rules! godot_wrap_method_inner {
             struct ThisMethod;
 
             use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
-            use ::gdnative::FromVarargs;
+            use ::gdnative::derive::FromVarargs;
 
             #[derive(FromVarargs)]
             #[allow(clippy::used_underscore_binding)]
@@ -108,11 +108,11 @@ macro_rules! godot_wrap_method_inner {
             }
 
             #[allow(unused_variables, unused_assignments, unused_mut)]
-            impl $crate::nativescript::init::method::StaticArgsMethod<$type_name> for ThisMethod {
+            impl $crate::nativescript::export::method::StaticArgsMethod<$type_name> for ThisMethod {
                 type Args = Args;
                 fn call(
                     &self,
-                    this: RefInstance<'_, $type_name, $crate::thread_access::Shared>,
+                    this: RefInstance<'_, $type_name, $crate::object::ownership::Shared>,
                     Args { $($pname,)* $($opt_pname,)* }: Args,
                 ) -> $crate::core_types::Variant {
                     this
@@ -139,7 +139,7 @@ macro_rules! godot_wrap_method_inner {
                 }
             }
 
-            $crate::nativescript::init::method::StaticArgs::new(ThisMethod)
+            $crate::nativescript::export::method::StaticArgs::new(ThisMethod)
         }
     };
 }
@@ -319,30 +319,5 @@ macro_rules! godot_wrap_method {
                 $(,#[opt] $opt_pname : $opt_pty)*
             ) -> ()
         )
-    };
-}
-
-/// Convenience macro to create a profiling signature with a given tag.
-///
-/// The expanded code will panic at runtime if the file name or `tag` contains `::` or
-/// any NUL-bytes.
-///
-/// See `nativescript::profiling::Signature` for more information.
-///
-/// # Examples
-///
-/// ```rust
-/// # fn main() {
-/// use gdnative_core::profile_sig;
-/// use gdnative_core::nativescript::profiling::profile;
-///
-/// let answer = profile(profile_sig!("foo"), || 42);
-/// assert_eq!(42, answer);
-/// # }
-/// ```
-#[macro_export]
-macro_rules! profile_sig {
-    ($tag:expr) => {
-        $crate::nativescript::profiling::Signature::new(file!(), line!(), $tag)
     };
 }

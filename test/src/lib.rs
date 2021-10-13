@@ -21,7 +21,7 @@ pub extern "C" fn run_tests(
     let mut status = true;
     status &= gdnative::core_types::test_string();
 
-    status &= gdnative::core_types::dictionary::test_dictionary();
+    status &= gdnative::core_types::test_dictionary();
     // status &= gdnative::test_dictionary_clone_clear();
     status &= gdnative::core_types::test_color();
     status &= gdnative::core_types::test_array();
@@ -86,7 +86,7 @@ fn test_underscore_method_binding() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_underscore_method_binding failed");
+        godot_error!("   !! Test test_underscore_method_binding failed");
     }
 
     ok
@@ -165,7 +165,7 @@ fn test_rust_class_construction() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_rust_class_construction failed");
+        godot_error!("   !! Test test_rust_class_construction failed");
     }
 
     ok
@@ -247,7 +247,7 @@ fn test_from_instance_id() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_from_instance_id failed");
+        godot_error!("   !! Test test_from_instance_id failed");
     }
 
     ok
@@ -268,4 +268,4 @@ fn init(handle: InitHandle) {
     test_vararray_return::register(handle);
 }
 
-gdnative::godot_init!(init);
+godot_init!(init);

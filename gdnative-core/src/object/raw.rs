@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use std::ptr::{self, NonNull};
 
 use crate::core_types::GodotString;
+use crate::object::memory::RefCounted;
 use crate::private::get_api;
-use crate::ref_kind::RefCounted;
 use crate::sys;
 
 use super::GodotObject;

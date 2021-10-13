@@ -41,7 +41,7 @@ fn test_variant_ops() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_variant_ops failed");
+        godot_error!("   !! Test test_variant_ops failed");
     }
 
     ok

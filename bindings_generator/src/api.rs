@@ -422,7 +422,7 @@ impl Ty {
             Ty::Bool => syn::parse_quote! { bool },
             Ty::Vector2 => syn::parse_quote! { Vector2 },
             Ty::Vector3 => syn::parse_quote! { Vector3 },
-            Ty::Vector3Axis => syn::parse_quote! { vector3::Axis },
+            Ty::Vector3Axis => syn::parse_quote! { Axis },
             Ty::Quat => syn::parse_quote! { Quat },
             Ty::Transform => syn::parse_quote! { Transform },
             Ty::Transform2D => syn::parse_quote! { Transform2D },
@@ -448,7 +448,7 @@ impl Ty {
             Ty::VariantOperator => syn::parse_quote! { VariantOperator },
             Ty::Enum(path) => syn::parse_quote! { #path },
             Ty::Object(path) => {
-                syn::parse_quote! { Option<Ref<#path, thread_access::Shared>> }
+                syn::parse_quote! { Option<Ref<#path, ownership::Shared>> }
             }
         }
     }
@@ -597,7 +597,7 @@ impl Ty {
             Ty::Object(ref path) => {
                 quote! {
                     ptr::NonNull::new(ret)
-                        .map(|sys| <Ref<#path, thread_access::Shared>>::move_from_sys(sys))
+                        .map(|sys| <Ref<#path, ownership::Shared>>::move_from_sys(sys))
                 }
             }
             Ty::Result => {

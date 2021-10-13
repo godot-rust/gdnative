@@ -26,7 +26,7 @@ destroying the object) or destroyed manually using `Ref::free`, or preferably
     quote! {
         #[doc=#documentation]
         #[inline]
-        pub fn new() -> Ref<Self, thread_access::Unique> {
+        pub fn new() -> Ref<Self, ownership::Unique> {
             unsafe {
                 let gd_api = get_api();
                 let ctor = #method_table::get(gd_api).class_constructor.unwrap();
@@ -42,17 +42,17 @@ pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
     let name = &class.name;
     let class_name = format_ident!("{}", class.name);
 
-    let ref_kind = if class.is_refcounted() {
-        quote! { ref_kind::RefCounted }
+    let memory = if class.is_refcounted() {
+        quote! { memory::RefCounted }
     } else {
-        quote! { ref_kind::ManuallyManaged }
+        quote! { memory::ManuallyManaged }
     };
 
     quote! {
         impl gdnative_core::private::godot_object::Sealed for #class_name {}
 
         unsafe impl GodotObject for #class_name {
-            type RefKind = #ref_kind;
+            type RefKind = #memory;
 
             #[inline]
             fn class_name() -> &'static str {
@@ -69,7 +69,7 @@ pub fn generate_instantiable_impl(class: &GodotClass) -> TokenStream {
     quote! {
         impl Instanciable for #class_name {
             #[inline]
-            fn construct() -> Ref<Self, thread_access::Unique> {
+            fn construct() -> Ref<Self, ownership::Unique> {
                 #class_name::new()
             }
         }

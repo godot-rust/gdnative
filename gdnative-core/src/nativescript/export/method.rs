@@ -10,8 +10,8 @@ use std::marker::PhantomData;
 use crate::core_types::{FromVariant, FromVariantError, Variant};
 use crate::log::Site;
 use crate::nativescript::class::{NativeClass, RefInstance};
+use crate::object::ownership::Shared;
 use crate::object::{Ref, TRef};
-use crate::thread_access::Shared;
 
 use super::ClassBuilder;
 

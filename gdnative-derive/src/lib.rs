@@ -49,8 +49,8 @@ mod variant;
 /// }
 /// impl gdnative::nativescript::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
-///         use gdnative::nativescript::init::*;
-///         builder.build_method("foo", gdnative::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
+///         use gdnative::nativescript::export::*;
+///         builder.build_method("foo", gdnative::macros::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
 ///     }
@@ -63,7 +63,7 @@ mod variant;
 /// ```
 /// **Important**: Only one `impl` block per struct may be attributed with `#[methods]`.
 ///
-/// For more context, please refer to [gdnative::NativeClass](NativeClass).
+/// For more context, please refer to [gdnative::derive::NativeClass](NativeClass).
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
     if syn::parse::<syn::parse::Nothing>(meta.clone()).is_err() {
@@ -163,7 +163,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// use gdnative::prelude::*;
-/// use gdnative::nativescript::property::{RangeHint, FloatHint};
+/// use gdnative::nativescript::export::property::{RangeHint, FloatHint};
 ///
 /// #[derive(NativeClass)]
 /// #[inherit(Reference)]

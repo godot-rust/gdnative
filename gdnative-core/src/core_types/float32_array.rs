@@ -1,11 +1,11 @@
-use crate::core_types::typed_array::TypedArray;
+use crate::core_types::TypedArray;
 
 /// A reference-counted vector of `f32` that uses Godot's pool allocator.
 pub type Float32Array = TypedArray<f32>;
 
 godot_test!(
     test_float32_array_access {
-        use crate::NewRef as _;
+        use crate::object::NewRef as _;
 
         let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
 

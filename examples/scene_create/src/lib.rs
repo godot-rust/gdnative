@@ -6,7 +6,7 @@ pub enum ManageErrs {
     RootClassNotSpatial(String),
 }
 
-#[derive(gdnative::NativeClass)]
+#[derive(gdnative::derive::NativeClass)]
 #[inherit(Spatial)]
 struct SceneCreate {
     // Store the loaded scene for a very slight performance boost but mostly to show you how.
@@ -24,7 +24,7 @@ struct SceneCreate {
 //  Note, the same mechanism which is used to call from panel into spawn_one and remove_one can be
 //   used to call other GDNative classes here in rust.
 
-#[gdnative::methods]
+#[gdnative::derive::methods]
 impl SceneCreate {
     fn new(_owner: &Spatial) -> Self {
         SceneCreate {
@@ -33,7 +33,7 @@ impl SceneCreate {
         }
     }
 
-    #[export]
+    #[gdnative::derive::export]
     fn _ready(&mut self, _owner: &Spatial) {
         self.template = load_scene("res://Child_scene.tscn");
         match &self.template {
@@ -42,7 +42,7 @@ impl SceneCreate {
         }
     }
 
-    #[export]
+    #[gdnative::derive::export]
     fn spawn_one(&mut self, owner: &Spatial, message: GodotString) {
         godot_print!("Called spawn_one({})", message.to_string());
 
@@ -77,7 +77,7 @@ impl SceneCreate {
         update_panel(owner, num_children);
     }
 
-    #[export]
+    #[gdnative::derive::export]
     fn remove_one(&mut self, owner: &Spatial, str: GodotString) {
         godot_print!("Called remove_one({})", str);
         let num_children = owner.get_child_count();
@@ -116,7 +116,7 @@ pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
 ///   scene as the root. For instance Spatial is used for this example.
 fn instance_scene<Root>(scene: &PackedScene) -> Result<Ref<Root, Unique>, ManageErrs>
 where
-    Root: gdnative::GodotObject<RefKind = ManuallyManaged> + SubClass<Node>,
+    Root: gdnative::object::GodotObject<RefKind = ManuallyManaged> + SubClass<Node>,
 {
     let instance = scene
         .instance(PackedScene::GEN_EDIT_STATE_DISABLED)

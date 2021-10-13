@@ -9,7 +9,7 @@ pub(crate) fn run_tests() -> bool {
     status &= test_variant_eq();
     status &= test_dispatch_eq();
     if !status {
-        gdnative::godot_error!("   !!!! Can't run serde tests, Foo::[to/from]_variant is broken!");
+        godot_error!("   !!!! Can't run serde tests, Foo::[to/from]_variant is broken!");
         return false;
     }
 
@@ -126,7 +126,7 @@ fn test_variant_eq() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_variant_eq failed");
+        godot_error!("     !! Test test_variant_eq failed");
     }
 
     ok
@@ -145,7 +145,7 @@ fn test_dispatch_eq() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_dispatch_eq failed");
+        godot_error!("     !! Test test_dispatch_eq failed");
     }
 
     ok
@@ -174,7 +174,7 @@ fn test_ron() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_ron failed");
+        godot_error!("     !! Test test_ron failed");
     }
 
     ok
@@ -201,7 +201,7 @@ fn test_json() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_json failed");
+        godot_error!("     !! Test test_json failed");
     }
 
     ok
@@ -226,7 +226,7 @@ fn test_yaml() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_yaml failed");
+        godot_error!("     !! Test test_yaml failed");
     }
 
     ok
@@ -252,7 +252,7 @@ fn test_cbor() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_cbor failed");
+        godot_error!("     !! Test test_cbor failed");
     }
 
     ok
@@ -280,7 +280,7 @@ fn test_msgpack() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_msgpack failed");
+        godot_error!("     !! Test test_msgpack failed");
     }
 
     ok
@@ -307,7 +307,7 @@ fn test_bincode() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("     !! Test test_bincode failed");
+        godot_error!("     !! Test test_bincode failed");
     }
 
     ok

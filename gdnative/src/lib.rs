@@ -15,7 +15,7 @@
 //!
 //! Since it is easy to expect containers and other types to allocate a copy of their
 //! content when using the `Clone` trait, some types do not implement `Clone` and instead
-//! implement [`NewRef`](./trait.NewRef.html) which provides a `new_ref(&self) -> Self` method
+//! implement [`NewRef`](object::NewRef) which provides a `new_ref(&self) -> Self` method
 //! to create references to the same collection or object.
 //!
 //! ## Generated API types
@@ -41,9 +41,12 @@
 //!
 //! ## Feature flags
 //!
-//! ### `bindings`
-//!
-//! *Enabled* by default. Includes the crates.io version of the bindings in the `api` module.
+//! * `bindings` -- *enabled* by default. Includes the crates.io version of the bindings in the
+//!   `api` module. Disable if you want to use a custom Godot version.
+//! * `serde` -- *disabled* by default. Enable for `serde` support. See also
+//!   [`Variant`](core_types::Variant).
+//! * `formatted` -- *disabled* by default. Enable if the generated binding source code should
+//!   be human-readable.
 //!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 //! [custom-version]: https://github.com/godot-rust/godot-rust/#other-versions-or-custom-builds
@@ -51,25 +54,33 @@
 
 // TODO: add logo using #![doc(html_logo_url = "https://<url>")]
 
-// Workaround: rustdoc currently shows hidden items in the original crate when they are
-//             re-exported. Manually re-exporting the public items works around that.
+// Workaround (rustdoc 1.55):
+// Items, which are #[doc(hidden)] in their original crate and re-exported with a wildcard, lose
+// their hidden status. Re-exporting them manually and hiding the wildcard solves this.
 #[doc(inline)]
-pub use gdnative_core::{
-    core_types, godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
-    godot_nativescript_init, godot_print, godot_warn, godot_wrap_method, nativescript, object,
-    ref_kind, thread_access, GodotObject, GodotResult, NewRef, Null, Ref, TRef,
-};
+pub use gdnative_core::{core_types, nativescript, object};
 
+/// Collection of declarative `godot_*` macros, mostly for GDNative registration and output.
+pub mod macros {
+    pub use gdnative_core::{
+        godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
+        godot_nativescript_init, godot_print, godot_warn, godot_wrap_method,
+    };
+}
+
+// Implementation details (e.g. used by macros).
+// However, do not re-export macros (on crate level), thus no wildcard
 #[doc(hidden)]
-pub use gdnative_core::*;
+pub use gdnative_core::{libc, sys};
 
+/// Derive macros and macro attributes.
 #[doc(inline)]
-pub use gdnative_derive::*;
+pub use gdnative_derive as derive;
 
 /// Curated re-exports of common items.
 pub mod prelude;
 
+/// Bindings for the Godot Class API.
 #[doc(inline)]
 #[cfg(feature = "bindings")]
-/// Bindings for the Godot Class API.
 pub use gdnative_bindings as api;

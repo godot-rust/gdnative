@@ -1,7 +1,7 @@
 use crate::core_types::GodotString;
+use crate::object::NewRef;
 use crate::private::get_api;
 use crate::sys;
-use crate::NewRef;
 use std::fmt;
 
 /// A reference-counted relative or absolute path in a scene tree, for use with `Node.get_node()` and similar

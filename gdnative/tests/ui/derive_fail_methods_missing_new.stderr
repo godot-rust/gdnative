@@ -10,8 +10,8 @@ error[E0599]: no function or associated item named `new` found for struct `Foo` 
   = help: items from traits can only be used if the trait is implemented and in scope
   = note: the following traits define an item `new`, perhaps you need to implement one of them:
           candidate #1: `UserData`
-          candidate #2: `gdnative::GodotObject`
-          candidate #3: `PtrWrapper`
+          candidate #2: `PtrWrapper`
+          candidate #3: `gdnative::prelude::GodotObject`
           candidate #4: `glam::core::traits::matrix::Matrix2x2`
           candidate #5: `glam::core::traits::vector::MaskVector2`
           candidate #6: `glam::core::traits::vector::MaskVector3`

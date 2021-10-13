@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use gdnative::nativescript::init::method::{StaticArgs, StaticArgsMethod};
+use gdnative::nativescript::export::method::{StaticArgs, StaticArgsMethod};
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
@@ -109,7 +109,7 @@ fn test_register_property() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_register_property failed");
+        godot_error!("   !! Test test_register_property failed");
     }
 
     ok
@@ -236,7 +236,7 @@ fn test_advanced_methods() -> bool {
     .is_ok();
 
     if !ok {
-        gdnative::godot_error!("   !! Test test_advanced_methods failed");
+        godot_error!("   !! Test test_advanced_methods failed");
     }
 
     ok
