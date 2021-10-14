@@ -792,27 +792,31 @@ impl Variant {
         unsafe { (get_api().godot_variant_has_method)(&self.0, &method.0) }
     }
 
+    /// Invokes a method on the held object.
+    ///
+    /// # Safety
+    /// This method may invoke [Object::call()] internally, which is unsafe, as it allows
+    /// execution of arbitrary code (including user-defined code in GDScript or unsafe Rust).
     #[inline]
-    pub fn call(
+    pub unsafe fn call(
         &mut self,
         method: impl Into<GodotString>,
         args: &[Variant],
     ) -> Result<Variant, CallError> {
         let method = method.into();
-        unsafe {
-            let api = get_api();
-            let mut err = sys::godot_variant_call_error::default();
-            let mut arg_refs = args.iter().map(Variant::sys).collect::<Vec<_>>();
-            let variant = (api.godot_variant_call)(
-                &mut self.0,
-                &method.0,
-                arg_refs.as_mut_ptr(),
-                args.len() as i32,
-                &mut err,
-            );
 
-            CallError::from_sys(err.error).map(|_| Variant::from_sys(variant))
-        }
+        let api = get_api();
+        let mut err = sys::godot_variant_call_error::default();
+        let mut arg_refs = args.iter().map(Variant::sys).collect::<Vec<_>>();
+        let variant = (api.godot_variant_call)(
+            &mut self.0,
+            &method.0,
+            arg_refs.as_mut_ptr(),
+            args.len() as i32,
+            &mut err,
+        );
+
+        CallError::from_sys(err.error).map(|_| Variant::from_sys(variant))
     }
 
     /// Evaluates a variant operator on `self` and `rhs` and returns the result on success.

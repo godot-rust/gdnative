@@ -57,25 +57,26 @@ fn test_variant_call_args() -> bool {
 
         let mut base = obj.into_base().into_shared().to_variant();
 
-        assert_eq!(Some(42), base.call("zero", &[]).unwrap().try_to_i64());
+        assert_eq!(Some(42), call_i64(&mut base, "zero", &[]));
 
         assert_eq!(
             Some(126),
-            base.call("one", &[Variant::from_i64(3),])
-                .unwrap()
-                .try_to_i64()
+            call_i64(&mut base, "one", &[Variant::from_i64(3)])
         );
 
         assert_eq!(
             Some(-10),
-            base.call("two", &[Variant::from_i64(-1), Variant::from_i64(32),])
-                .unwrap()
-                .try_to_i64()
+            call_i64(
+                &mut base,
+                "two",
+                &[Variant::from_i64(-1), Variant::from_i64(32)]
+            )
         );
 
         assert_eq!(
             Some(-52),
-            base.call(
+            call_i64(
+                &mut base,
                 "three",
                 &[
                     Variant::from_i64(-2),
@@ -83,8 +84,6 @@ fn test_variant_call_args() -> bool {
                     Variant::from_i64(8),
                 ]
             )
-            .unwrap()
-            .try_to_i64()
         );
     })
     .is_ok();
@@ -94,4 +93,10 @@ fn test_variant_call_args() -> bool {
     }
 
     ok
+}
+
+fn call_i64(variant: &mut Variant, method: &str, args: &[Variant]) -> Option<i64> {
+    let result = unsafe { variant.call(method, args) };
+
+    result.unwrap().try_to_i64()
 }

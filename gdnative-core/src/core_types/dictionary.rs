@@ -1,8 +1,6 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
-use gdnative_impl_proc_macros::doc_variant_collection_safety;
-
 use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
@@ -195,11 +193,6 @@ impl<Access: ThreadAccess> Dictionary<Access> {
         unsafe { VariantArray::<Unique>::from_sys((get_api().godot_dictionary_values)(self.sys())) }
     }
 
-    #[inline]
-    pub fn get_next(&self, key: &Variant) -> &Variant {
-        unsafe { Variant::cast_ref((get_api().godot_dictionary_next)(self.sys(), key.sys())) }
-    }
-
     /// Return a hashed i32 value representing the dictionary's contents.
     #[inline]
     pub fn hash(&self) -> i32 {
@@ -263,41 +256,6 @@ impl Dictionary<Shared> {
     #[inline]
     pub fn new_shared() -> Self {
         Dictionary::<Unique>::new().into_shared()
-    }
-
-    /// Inserts or updates the value of the element corresponding to the key.
-    ///
-    #[doc_variant_collection_safety]
-    #[inline]
-    pub unsafe fn insert<K, V>(&self, key: K, val: V)
-    where
-        K: OwnedToVariant + ToVariantEq,
-        V: OwnedToVariant,
-    {
-        (get_api().godot_dictionary_set)(
-            self.sys_mut(),
-            key.owned_to_variant().sys(),
-            val.owned_to_variant().sys(),
-        )
-    }
-
-    /// Erase a key-value pair in the `Dictionary` by the specified key.
-    ///
-    #[doc_variant_collection_safety]
-    #[inline]
-    pub unsafe fn erase<K>(&self, key: K)
-    where
-        K: ToVariant + ToVariantEq,
-    {
-        (get_api().godot_dictionary_erase)(self.sys_mut(), key.to_variant().sys())
-    }
-
-    /// Clears the `Dictionary`, removing all key-value pairs.
-    ///
-    #[doc_variant_collection_safety]
-    #[inline]
-    pub unsafe fn clear(&self) {
-        (get_api().godot_dictionary_clear)(self.sys_mut())
     }
 }
 

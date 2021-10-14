@@ -1,4 +1,4 @@
-//! Types that represent core data types of Godot.
+//! Types that represent [core types](https://docs.godotengine.org/en/stable/development/cpp/core_types.html) of Godot.
 //!
 //! In contrast to generated Godot class types from the `api` module, the types in here are hand-written in idiomatic Rust and
 //! are the counterparts to built-in types in GDScript.
