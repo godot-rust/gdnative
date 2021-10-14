@@ -79,6 +79,7 @@ unsafe fn check_api_compatibility(
 /// not bound will lead to an abort**, since in most cases there is simply no point to continue
 /// if `get_api` failed. This allows it to be used in FFI contexts without a `catch_unwind`.
 #[inline]
+#[allow(clippy::redundant_closure)] // clippy false positive: https://github.com/rust-lang/rust-clippy/issues/7812
 pub fn get_api() -> &'static sys::GodotApi {
     unsafe { GODOT_API.as_ref().unwrap_or_else(|| std::process::abort()) }
 }

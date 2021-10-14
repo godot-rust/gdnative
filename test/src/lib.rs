@@ -1,4 +1,4 @@
-#![allow(clippy::blacklisted_name)]
+#![allow(clippy::blacklisted_name, clippy::if_then_panic)]
 
 use gdnative::prelude::*;
 

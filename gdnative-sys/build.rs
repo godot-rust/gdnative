@@ -64,9 +64,10 @@ mod header_binding {
         // and have been erroneously used for target platforms in this library in the past. Make sure
         // to double-check them wherever they occur.
 
-        if !cfg!(target_arch = "x86_64") {
-            panic!("unsupported host architecture: build from x86_64 instead");
-        }
+        assert!(
+            cfg!(target_arch = "x86_64"),
+            "unsupported host architecture: build from x86_64 instead"
+        );
 
         builder = builder
             .clang_arg("-I")
@@ -457,9 +458,10 @@ mod api_wrapper {
 
         for api in api_root.all_apis() {
             // Currently don't support Godot 4.0
-            if api.version.major == 1 && api.version.minor == 3 {
-                panic!("GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396");
-            }
+            assert!(
+                !(api.version.major == 1 && api.version.minor == 3),
+                "GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396"
+            );
         }
 
         let struct_fields = godot_api_functions(&api_root);

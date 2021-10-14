@@ -12,10 +12,12 @@ use std::collections::HashMap;
 pub(crate) fn generate_class_struct(class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", &class.name);
 
+    // dead_code: 'this' might not be read
     quote! {
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         pub struct #class_name {
+            #[allow(dead_code)]
             this: RawObject<Self>,
         }
     }
