@@ -16,10 +16,10 @@ debug = []
 [dependencies]
 heck = "0.3.3"
 roxmltree = "0.14.1"
-proc-macro2 = "1.0.28"
-quote = "1.0.9"
-syn = { version = "1.0.74", features = ["full", "extra-traits", "visit"] }
-miniserde = "0.1.14"
+proc-macro2 = "1.0.30"
+quote = "1.0.10"
+syn = { version = "1.0.80", features = ["full", "extra-traits", "visit"] }
+miniserde = "0.1.15"
 unindent = "0.1.7"
 regex = "1.5.4"
-memchr = "2.4" # to satisfy regex needing memchr >= 2.4
+memchr = "2.4.1"
