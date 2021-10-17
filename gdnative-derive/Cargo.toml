@@ -14,9 +14,9 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0.74", features = ["full", "extra-traits", "visit"] }
-quote = "1.0.9"
-proc-macro2 = "1.0.28"
+syn = { version = "1.0.80", features = ["full", "extra-traits", "visit"] }
+quote = "1.0.10"
+proc-macro2 = "1.0.30"
 
 [dev-dependencies]
 # This is included for the doc tests.
