@@ -45,7 +45,6 @@ pub mod core_types;
 #[cfg(feature = "nativescript")]
 pub mod nativescript;
 
-#[doc(hidden)]
 pub mod log;
 pub mod object;
 
