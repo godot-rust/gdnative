@@ -20,7 +20,8 @@ pub(crate) fn make<T>() -> (Yield<T>, Resume<T>) {
     (future, resume)
 }
 
-/// Signal
+/// Future that can be `await`ed for a signal or a `resume` call from Godot. See
+/// [`Context`](crate::Context) for methods that return this future.
 pub struct Yield<T> {
     waker: Arc<AtomicWaker>,
     arg_recv: Receiver<T>,

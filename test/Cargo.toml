@@ -13,7 +13,7 @@ default = []
 type_tag_fallback = ["gdnative/type_tag_fallback"]
 
 [dependencies]
-gdnative = { path = "../gdnative", features = ["gd_test", "serde"] }
+gdnative = { path = "../gdnative", features = ["gd_test", "serde", "async"] }
 gdnative-derive = { path = "../gdnative-derive" }
 approx = "0.5.0"
 ron = "0.6.5"

@@ -14,6 +14,7 @@ mod future;
 mod method;
 mod rt;
 
-pub use executor::{ensure_executor_with, set_boxed_executor, set_executor, SetExecutorError};
+pub use executor::{set_boxed_executor, set_executor};
+pub use future::Yield;
 pub use method::{Async, AsyncMethod, Spawner};
-pub use rt::{register_runtime, terminate_runtime, Context, InitError};
+pub use rt::{register_runtime, terminate_runtime, Context};

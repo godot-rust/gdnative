@@ -88,4 +88,4 @@ pub use gdnative_bindings as api;
 #[doc(inline)]
 #[cfg(feature = "async")]
 /// Support for async code
-pub use gdnative_async as asn;
+pub use gdnative_async as tasks;

@@ -12,7 +12,7 @@ readme = "../README.md"
 edition = "2018"
 
 [features]
-default = ["bindings", "async"]
+default = ["bindings"]
 formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_file"]
 serde = ["gdnative-core/serde"]
 

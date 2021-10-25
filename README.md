@@ -56,6 +56,10 @@ crate-type = ["cdylib"]
 
 The bindings are currently generated from the API description of Godot 3.2.3-stable by default. To use the bindings with another version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-bindings.html) in the user guide.
 
+### Async / "`yield`" support
+
+Async support is a work-in-progress, with a low-level API available in the `gdnative-async` crate. This crate is re-exported as `gdnative::tasks`, if the `async` feature is enabled on `gdnative`.
+
 ## Example
 
 The most general use-case of the bindings will be to interact with Godot using the generated wrapper

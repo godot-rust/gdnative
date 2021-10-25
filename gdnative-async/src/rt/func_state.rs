@@ -53,11 +53,6 @@ impl NativeClass for FuncState {
 
 impl FuncState {
     pub fn new() -> Instance<Self, Unique> {
-        assert!(
-            super::REGISTRATION.get().is_some(),
-            "async API must be registered before any async methods can be called"
-        );
-
         Instance::emplace(FuncState {
             kind: Kind::Pending,
         })

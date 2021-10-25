@@ -43,8 +43,7 @@ struct Entry {
     resume: Resume<Vec<Variant>>,
 
     // Just need to keep this alive.
-    #[allow(dead_code)]
-    obj: Instance<SignalBridge, Shared>,
+    _obj: Instance<SignalBridge, Shared>,
 }
 
 pub(super) struct SignalBridge {
@@ -69,11 +68,6 @@ impl SignalBridge {
         signal: &str,
         resume: Resume<Vec<Variant>>,
     ) -> Result<(), GodotError> {
-        assert!(
-            super::REGISTRATION.get().is_some(),
-            "async API must be registered before any async methods can be called"
-        );
-
         let mut pool = BRIDGES.get_or_init(Mutex::default).lock();
         let (id, bridge) = pool.free.pop().unwrap_or_else(|| {
             let id = pool.next_id();
@@ -90,8 +84,8 @@ impl SignalBridge {
         )?;
 
         let entry = Entry {
-            obj: bridge,
             resume,
+            _obj: bridge,
         };
 
         assert!(pool.busy.insert(id, entry).is_none());

@@ -2,8 +2,6 @@ use std::marker::PhantomData;
 
 use gdnative_bindings::Object;
 use gdnative_core::object::SubClass;
-use once_cell::sync::OnceCell;
-use thiserror::Error;
 
 use gdnative_core::core_types::{GodotError, Variant};
 use gdnative_core::nativescript::export::InitHandle;
@@ -17,20 +15,6 @@ mod bridge;
 mod func_state;
 
 use func_state::FuncState;
-
-static REGISTRATION: OnceCell<()> = OnceCell::new();
-
-#[derive(Debug, Error)]
-#[error("async runtime must only be initialized once")]
-pub struct InitError {
-    _private: (),
-}
-
-impl InitError {
-    fn new() -> Self {
-        InitError { _private: () }
-    }
-}
 
 /// Context for creating `yield`-like futures in async methods.
 pub struct Context {
@@ -108,22 +92,15 @@ impl Context {
     }
 }
 
-pub fn register_runtime(handle: &InitHandle) -> Result<(), InitError> {
-    let mut called = false;
-
-    REGISTRATION.get_or_init(|| {
-        handle.add_class::<bridge::SignalBridge>();
-        handle.add_class::<func_state::FuncState>();
-        called = true;
-    });
-
-    if called {
-        Ok(())
-    } else {
-        Err(InitError::new())
-    }
+/// Adds required supporting NativeScript classes to `handle`. This must be called once and
+/// only once per initialization.
+pub fn register_runtime(handle: &InitHandle) {
+    handle.add_class::<bridge::SignalBridge>();
+    handle.add_class::<func_state::FuncState>();
 }
 
+/// Releases all observers still in use. This should be called in the
+/// `godot_gdnative_terminate` callback.
 pub fn terminate_runtime() {
     bridge::terminate();
 }

@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
-use gdnative::asn::{Async, AsyncMethod, Spawner};
 use gdnative::prelude::*;
+use gdnative::tasks::{Async, AsyncMethod, Spawner};
 
 pub(crate) fn run_tests() -> bool {
     // Relevant tests in GDScript
@@ -15,8 +15,8 @@ thread_local! {
 }
 
 pub(crate) fn register(handle: InitHandle) {
-    gdnative::asn::register_runtime(&handle).unwrap();
-    gdnative::asn::set_executor(EXECUTOR.with(|e| *e)).unwrap();
+    gdnative::tasks::register_runtime(&handle);
+    gdnative::tasks::set_executor(EXECUTOR.with(|e| *e));
 
     handle.add_class::<AsyncMethods>();
     handle.add_class::<AsyncExecutorDriver>();

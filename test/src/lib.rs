@@ -272,7 +272,7 @@ fn init(handle: InitHandle) {
 }
 
 fn terminate(_term_info: &gdnative::TerminateInfo) {
-    gdnative::asn::terminate_runtime();
+    gdnative::tasks::terminate_runtime();
 }
 
 gdnative::macros::godot_gdnative_init!();

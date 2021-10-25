@@ -24,8 +24,8 @@ pub trait AsyncMethod<C: NativeClass>: Send + Sync + 'static {
     /// Spawns the future for result of this method with `spawner`. This is done so
     /// that implementors of this trait do not have to name their future types.
     ///
-    /// If the `spawner` object is not used, the method call will fail, output an error,
-    /// and return a `Nil` variant.
+    /// If the `spawner` object is not used, the Godot side of the call will fail, output an
+    /// error, and return a `Nil` variant.
     fn spawn_with(&self, spawner: Spawner<'_, C>);
 
     /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
@@ -37,6 +37,7 @@ pub trait AsyncMethod<C: NativeClass>: Send + Sync + 'static {
     }
 }
 
+/// A helper structure for working around naming future types. See [`Spawner::spawn`].
 pub struct Spawner<'a, C: NativeClass> {
     sp: &'static dyn LocalSpawn,
     ctx: Context,
