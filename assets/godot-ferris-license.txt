@@ -5,6 +5,7 @@ Godot ferris is licensed under a Creative Commons Attribution-NonCommercial-Shar
 ## Ferris Emoji
 
 Ferris emoji, made by Dzuk (noct.zone) are licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. (creativecommons.org/licenses/by-nc-sa/4.0/)
+Minor changes to improve rendering have been applied by godot-rust contributors.
 
 See https://www.rustacean.net/.
 
