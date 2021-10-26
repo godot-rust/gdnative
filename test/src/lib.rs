@@ -56,6 +56,7 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_vector2_array_debug();
     status &= gdnative::core_types::test_vector3_array_access();
     status &= gdnative::core_types::test_vector3_array_debug();
+    status &= gdnative::core_types::test_transform2d_behavior();
 
     status &= test_underscore_method_binding();
     status &= test_rust_class_construction();
