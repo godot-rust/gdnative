@@ -1,0 +1,26 @@
+[package]
+name = "gdnative-async"
+authors = ["The godot-rust developers"]
+description = "Runtime async support for godot-rust."
+documentation = "https://docs.rs/crate/gdnative-async"
+repository = "https://github.com/godot-rust/godot-rust"
+homepage = "https://godot-rust.github.io/"
+version = "0.9.3"
+license = "MIT"
+workspace = ".."
+edition = "2018"
+
+[features]
+
+[dependencies]
+gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }
+gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
+gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
+futures-task = "0.3.17"
+atomic-waker = "1.0.0"
+once_cell = "1.8.0"
+parking_lot = "0.11.2"
+crossbeam-channel = "0.5.1"
+crossbeam-utils = "0.8.5"
+
+[build-dependencies]

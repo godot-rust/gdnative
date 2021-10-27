@@ -13,7 +13,7 @@ default = []
 type_tag_fallback = ["gdnative/type_tag_fallback"]
 
 [dependencies]
-gdnative = { path = "../gdnative", features = ["gd_test", "serde"] }
+gdnative = { path = "../gdnative", features = ["gd_test", "serde", "async"] }
 gdnative-derive = { path = "../gdnative-derive" }
 approx = "0.5.0"
 ron = "0.7.0"
@@ -23,3 +23,5 @@ bincode = "1.3.3"
 serde_cbor = "0.11.2"
 serde_yaml = "0.8.21"
 rmp-serde = "0.15.5"
+futures = "0.3.17"
+once_cell = "1.8.0"

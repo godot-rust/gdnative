@@ -2,6 +2,7 @@
 
 use gdnative::prelude::*;
 
+mod test_async;
 mod test_constructor;
 mod test_derive;
 mod test_free_ub;
@@ -61,6 +62,7 @@ pub extern "C" fn run_tests(
     status &= test_rust_class_construction();
     status &= test_from_instance_id();
 
+    status &= test_async::run_tests();
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
     status &= test_constructor::run_tests();
@@ -257,6 +259,7 @@ fn init(handle: InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
 
+    test_async::register(handle);
     test_derive::register(handle);
     test_free_ub::register(handle);
     test_constructor::register(handle);
@@ -268,4 +271,10 @@ fn init(handle: InitHandle) {
     test_vararray_return::register(handle);
 }
 
-godot_init!(init);
+fn terminate(_term_info: &gdnative::TerminateInfo) {
+    gdnative::tasks::terminate_runtime();
+}
+
+gdnative::macros::godot_gdnative_init!();
+gdnative::macros::godot_nativescript_init!(init);
+gdnative::macros::godot_gdnative_terminate!(terminate);
