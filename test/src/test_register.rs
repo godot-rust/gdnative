@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use gdnative::nativescript::export::method::{StaticArgs, StaticArgsMethod};
+use gdnative::nativescript::export::{StaticArgs, StaticArgsMethod};
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {

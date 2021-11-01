@@ -1,5 +1,8 @@
 //! Property registration.
 
+use accessor::{Getter, RawGetter, RawSetter, Setter};
+use invalid_accessor::{InvalidGetter, InvalidSetter};
+
 use crate::core_types::*;
 use crate::nativescript::{Instance, NativeClass};
 use crate::object::ownership::Shared;
@@ -7,29 +10,12 @@ use crate::object::GodotObject;
 use crate::object::Ref;
 use crate::private::get_api;
 
-use super::ClassBuilder;
+use super::{ClassBuilder, Export};
 
 mod accessor;
+mod invalid_accessor;
+
 pub mod hint;
-
-pub use hint::*;
-
-use accessor::{Getter, InvalidGetter, InvalidSetter, RawGetter, RawSetter, Setter};
-
-/// Trait for exportable types.
-pub trait Export: ToVariant {
-    /// A type-specific hint type that is valid for the type being exported.
-    ///
-    /// If this type shows up as `NoHint`, a private, uninhabitable type indicating
-    /// that there are no hints available for the time being, users *must* use `None`
-    /// for properties of this type. This ensures that it will not be a breaking change
-    /// to add a hint for the type later, since it supports no operations and cannot
-    /// be named directly in user code.
-    type Hint;
-
-    /// Returns `ExportInfo` given an optional typed hint.
-    fn export_info(hint: Option<Self::Hint>) -> ExportInfo;
-}
 
 /// Metadata about the exported property.
 #[derive(Debug)]
@@ -73,7 +59,7 @@ pub struct PropertyBuilder<'a, C, T: Export, S = InvalidSetter<'a>, G = InvalidG
     getter: G,
     default: Option<T>,
     hint: Option<T::Hint>,
-    usage: Usage,
+    usage: PropertyUsage,
     class_builder: &'a ClassBuilder<C>,
 }
 
@@ -91,7 +77,7 @@ where
             getter: InvalidGetter::new(name),
             default: None,
             hint: None,
-            usage: Usage::DEFAULT,
+            usage: PropertyUsage::DEFAULT,
             class_builder,
         }
     }
@@ -283,14 +269,14 @@ where
 
     /// Sets a property usage.
     #[inline]
-    pub fn with_usage(mut self, usage: Usage) -> Self {
+    pub fn with_usage(mut self, usage: PropertyUsage) -> Self {
         self.usage = usage;
         self
     }
 }
 
 bitflags::bitflags! {
-    pub struct Usage: u32 {
+    pub struct PropertyUsage: u32 {
         const STORAGE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORAGE as u32;
         const EDITOR = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR as u32;
         const NETWORK = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_NETWORK as u32;
@@ -315,7 +301,7 @@ bitflags::bitflags! {
     }
 }
 
-impl Usage {
+impl PropertyUsage {
     #[inline]
     pub fn to_sys(self) -> sys::godot_property_usage_flags {
         self.bits() as sys::godot_property_usage_flags
@@ -474,7 +460,7 @@ mod impl_export {
     }
 
     impl Export for VariantArray<Shared> {
-        type Hint = ArrayHint;
+        type Hint = hint::ArrayHint;
 
         #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {

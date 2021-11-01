@@ -8,10 +8,6 @@ use crate::nativescript::user_data::{Map, MapMut, UserData};
 use crate::nativescript::NativeClass;
 use crate::object::{GodotObject, RawObject, TRef};
 
-mod invalid;
-
-pub use self::invalid::{InvalidGetter, InvalidSetter};
-
 /// Trait for raw property setters.
 ///
 /// This is an internal interface. User code should not use this directly.

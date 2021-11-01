@@ -108,7 +108,7 @@ macro_rules! godot_wrap_method_inner {
             }
 
             #[allow(unused_variables, unused_assignments, unused_mut)]
-            impl $crate::nativescript::export::method::StaticArgsMethod<$type_name> for ThisMethod {
+            impl $crate::nativescript::export::StaticArgsMethod<$type_name> for ThisMethod {
                 type Args = Args;
                 fn call(
                     &self,
@@ -139,7 +139,7 @@ macro_rules! godot_wrap_method_inner {
                 }
             }
 
-            $crate::nativescript::export::method::StaticArgs::new(ThisMethod)
+            $crate::nativescript::export::StaticArgs::new(ThisMethod)
         }
     };
 }

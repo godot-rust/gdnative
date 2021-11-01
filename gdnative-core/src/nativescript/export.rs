@@ -33,27 +33,41 @@
 // Temporary for unsafe method registration
 #![allow(deprecated)]
 
-use crate::*;
-
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
 
-use crate::core_types::{GodotString, Variant};
+use crate::core_types::{GodotString, ToVariant, Variant};
+use crate::nativescript::{class_registry, emplace};
 use crate::nativescript::{user_data::UserData, NativeClass, NativeClassMethods};
-use crate::object::{GodotObject, NewRef, TRef};
+use crate::object::{GodotObject, NewRef, RawObject, TRef};
 use crate::private::get_api;
 
-use super::class_registry;
-use super::emplace;
+pub use method::*;
+pub use property::*;
 
-pub mod method;
-pub mod property;
+mod method;
+mod property;
 
-pub use self::method::{
-    Method, MethodBuilder, RpcMode, ScriptMethod, ScriptMethodAttributes, ScriptMethodFn, Varargs,
-};
-pub use self::property::{Export, ExportInfo, PropertyBuilder, Usage as PropertyUsage};
+//pub use self::method::{
+//    Method, MethodBuilder, RpcMode, ScriptMethod, ScriptMethodAttributes, ScriptMethodFn, Varargs,
+//};
+//pub use self::property::{ExportInfo, PropertyBuilder, Usage as PropertyUsage};
+
+/// Trait for exportable types.
+pub trait Export: ToVariant {
+    /// A type-specific hint type that is valid for the type being exported.
+    ///
+    /// If this type shows up as `NoHint`, a private, uninhabitable type indicating
+    /// that there are no hints available for the time being, users *must* use `None`
+    /// for properties of this type. This ensures that it will not be a breaking change
+    /// to add a hint for the type later, since it supports no operations and cannot
+    /// be named directly in user code.
+    type Hint;
+
+    /// Returns `ExportInfo` given an optional typed hint.
+    fn export_info(hint: Option<Self::Hint>) -> ExportInfo;
+}
 
 /// A handle that can register new classes to the engine during initialization.
 ///
@@ -124,7 +138,7 @@ impl InitHandle {
                         }
                     };
 
-                    let owner = match object::RawObject::<C::Base>::try_from_sys_ref(this) {
+                    let owner = match RawObject::<C::Base>::try_from_sys_ref(this) {
                         Some(owner) => owner,
                         None => {
                             godot_error!(

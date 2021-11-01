@@ -56,7 +56,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
 
             let with_usage = if config.no_editor {
-                Some(quote!(.with_usage(::gdnative::nativescript::export::property::Usage::NOEDITOR)))
+                Some(quote!(.with_usage(::gdnative::nativescript::export::PropertyUsage::NOEDITOR)))
             } else {
                 None
             };
