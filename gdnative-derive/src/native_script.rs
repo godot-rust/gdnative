@@ -22,9 +22,9 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 
     quote! {
         #derived
-        impl ::gdnative::prelude::NativeClass for #name {
+        impl ::gdnative::nativescript::NativeClass for #name {
             type Base = ::gdnative::api::Object;
-            type UserData = ::gdnative::prelude::LocalCellData<Self>;
+            type UserData = ::gdnative::nativescript::user_data::LocalCellData<Self>;
 
             fn class_name() -> &'static str {
                 unimplemented!()

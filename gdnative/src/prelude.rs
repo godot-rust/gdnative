@@ -1,8 +1,8 @@
 pub use gdnative_core::core_types::{
-    self, Aabb, Basis, ByteArray, Color, ColorArray, Dictionary, Float32Array, GodotError,
-    GodotString, Int32Array, NodePath, Plane, Quat, Rect2, Rid, StringArray, StringName, Transform,
-    Transform2D, TypedArray, Variant, VariantArray, VariantDispatch, VariantOperator, VariantType,
-    Vector2, Vector2Array, Vector3, Vector3Array,
+    Aabb, Basis, ByteArray, Color, ColorArray, Dictionary, Float32Array, GodotError, GodotString,
+    Int32Array, NodePath, Plane, Quat, Rect2, Rid, StringArray, StringName, Transform, Transform2D,
+    TypedArray, Variant, VariantArray, VariantDispatch, VariantOperator, VariantType, Vector2,
+    Vector2Array, Vector3, Vector3Array,
 };
 
 pub use gdnative_core::core_types::{
@@ -16,14 +16,19 @@ pub use gdnative_core::object::{
 };
 
 pub use gdnative_core::nativescript::{
-    self,
     export::{
         ClassBuilder, ExportInfo, InitHandle, Method, MethodBuilder, PropertyUsage, Signal,
         SignalArgument,
     },
-    user_data::{self, Aether, ArcData, LocalCellData, MutexData, RwLockData},
     Instance, NativeClass, NativeClassMethods, RefInstance,
 };
+
+// Re-export selected user_data types, but keep qualified due to rather generic names
+pub mod user_data {
+    pub use gdnative_core::nativescript::user_data::{
+        Aether, ArcData, LocalCellData, MutexData, RwLockData,
+    };
+}
 
 pub use gdnative_core::{
     godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
