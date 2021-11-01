@@ -1,8 +1,12 @@
+use syn::visit_mut::VisitMut;
+use syn::{Attribute, ItemFn, ItemImpl};
+
+/*
+Leaving code commented-out, as this might be very useful elsewhere
+
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::visit_mut::VisitMut;
-use syn::{Attribute, Item, ItemFn, ItemImpl};
-
+use syn::{Item};
 pub fn variant_collection_safety(
     _attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
@@ -31,6 +35,7 @@ pub fn variant_collection_safety(
     visit.visit_item_mut(&mut item);
     Ok(item.to_token_stream())
 }
+*/
 
 struct IncludeDocs<'a> {
     docs: &'a [&'a str],
