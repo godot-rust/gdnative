@@ -1,15 +1,10 @@
 use std::iter::{Extend, FromIterator};
 use std::marker::PhantomData;
 
-use crate::core_types::GodotString;
 use crate::private::get_api;
 use crate::sys;
 
-use crate::core_types::OwnedToVariant;
-use crate::core_types::ToVariant;
-use crate::core_types::ToVariantEq;
-use crate::core_types::Variant;
-use crate::core_types::VariantArray;
+use crate::core_types::{GodotString, OwnedToVariant, ToVariantEq, Variant, VariantArray};
 use crate::object::NewRef;
 use std::fmt;
 
@@ -56,9 +51,9 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[inline]
     pub fn contains<K>(&self, key: K) -> bool
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
     {
-        unsafe { (get_api().godot_dictionary_has)(self.sys(), key.to_variant().sys()) }
+        unsafe { (get_api().godot_dictionary_has)(self.sys(), key.owned_to_variant().sys()) }
     }
 
     /// Returns true if the `Dictionary` has all of the keys in the given array.
@@ -71,9 +66,9 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[inline]
     pub fn get<K>(&self, key: K) -> Option<Variant>
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
     {
-        let key = key.to_variant();
+        let key = key.owned_to_variant();
         if self.contains(&key) {
             // This should never return the default Nil, but there isn't a safe way to otherwise check
             // if the entry exists in a single API call.
@@ -87,14 +82,14 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[inline]
     pub fn get_or<K, D>(&self, key: K, default: D) -> Variant
     where
-        K: ToVariant + ToVariantEq,
-        D: ToVariant,
+        K: OwnedToVariant + ToVariantEq,
+        D: OwnedToVariant,
     {
         unsafe {
             Variant((get_api().godot_dictionary_get_with_default)(
                 self.sys(),
-                key.to_variant().sys(),
-                default.to_variant().sys(),
+                key.owned_to_variant().sys(),
+                default.owned_to_variant().sys(),
             ))
         }
     }
@@ -104,7 +99,7 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[inline]
     pub fn get_or_nil<K>(&self, key: K) -> Variant
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
     {
         self.get_or(key, Variant::new())
     }
@@ -117,10 +112,10 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[inline]
     pub fn update<K, V>(&self, key: K, val: V)
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
         V: OwnedToVariant,
     {
-        let key = key.to_variant();
+        let key = key.owned_to_variant();
         assert!(self.contains(&key), "Can only update entries that exist");
 
         unsafe {
@@ -145,11 +140,11 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[inline]
     pub unsafe fn get_ref<K>(&self, key: K) -> &Variant
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
     {
         Variant::cast_ref((get_api().godot_dictionary_operator_index_const)(
             self.sys(),
-            key.to_variant().sys(),
+            key.owned_to_variant().sys(),
         ))
     }
 
@@ -167,11 +162,11 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn get_mut_ref<K>(&self, key: K) -> &mut Variant
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
     {
         Variant::cast_mut_ref((get_api().godot_dictionary_operator_index)(
             self.sys_mut(),
-            key.to_variant().sys(),
+            key.owned_to_variant().sys(),
         ))
     }
 
@@ -308,9 +303,9 @@ impl<Access: LocalThreadAccess> Dictionary<Access> {
     #[inline]
     pub fn erase<K>(&self, key: K)
     where
-        K: ToVariant + ToVariantEq,
+        K: OwnedToVariant + ToVariantEq,
     {
-        unsafe { (get_api().godot_dictionary_erase)(self.sys_mut(), key.to_variant().sys()) }
+        unsafe { (get_api().godot_dictionary_erase)(self.sys_mut(), key.owned_to_variant().sys()) }
     }
 
     /// Clears the `Dictionary`, removing all key-value pairs.
