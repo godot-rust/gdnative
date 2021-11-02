@@ -238,7 +238,7 @@ fn test_derive_nativeclass_with_property_hooks() -> bool {
     println!(" -- test_derive_nativeclass_with_property_hooks");
 
     let ok = std::panic::catch_unwind(|| {
-        use gdnative::nativescript::user_data::MapMut;
+        use gdnative::export::user_data::MapMut;
 
         let thing = Instance::<PropertyHooks, _>::new();
         let (owner, script) = thing.decouple();

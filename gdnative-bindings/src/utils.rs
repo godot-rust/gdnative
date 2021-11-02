@@ -1,7 +1,7 @@
 //! Utility functions and extension traits that depend on generated bindings
 
 use super::generated::{Engine, Node, SceneTree};
-use gdnative_core::nativescript::{NativeClass, RefInstance};
+use gdnative_core::export::{NativeClass, RefInstance};
 use gdnative_core::object::ownership::Shared;
 use gdnative_core::object::{SubClass, TRef};
 

@@ -5,9 +5,9 @@ use std::sync::Arc;
 use futures_task::{LocalFutureObj, LocalSpawn, SpawnError};
 
 use gdnative_core::core_types::{ToVariant, Variant};
+use gdnative_core::export::{Method, Varargs};
+use gdnative_core::export::{NativeClass, RefInstance};
 use gdnative_core::log::{self, Site};
-use gdnative_core::nativescript::export::{Method, Varargs};
-use gdnative_core::nativescript::{NativeClass, RefInstance};
 use gdnative_core::object::ownership::Shared;
 
 use crate::rt::Context;

@@ -10,14 +10,24 @@
 //! out the [`core_types`][crate::core_types] and [`object`][crate::object] modules, respectively.
 
 mod class;
+mod class_builder;
 mod emplace;
 mod macros;
+mod method;
+mod property;
 
 pub(crate) mod class_registry;
 pub(crate) mod type_tag;
 
-pub mod export;
+pub use class::*;
+pub use method::*;
+pub use property::*;
+
 pub mod profiler;
 pub mod user_data;
 
+pub use crate::godot_wrap_method;
 pub use class::*;
+pub use class_builder::*;
+pub use method::*;
+pub use property::*;

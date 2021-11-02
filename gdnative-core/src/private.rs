@@ -114,8 +114,8 @@ pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
 pub unsafe fn cleanup_internal_state() {
     #[cfg(feature = "nativescript")]
     {
-        crate::nativescript::type_tag::cleanup();
-        crate::nativescript::class_registry::cleanup();
+        crate::export::type_tag::cleanup();
+        crate::export::class_registry::cleanup();
     }
     GODOT_API = None;
 }
@@ -226,7 +226,7 @@ make_method_table!(struct ReferenceMethodTable for Reference {
 });
 
 // Add this one here too. It's not easy to use this macro from the
-// nativescript module without making this macro public.
+// export module without making this macro public.
 #[cfg(feature = "nativescript")]
 make_method_table!(struct NativeScriptMethodTable for NativeScript {
     set_class_name,

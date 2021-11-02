@@ -4,18 +4,31 @@ use accessor::{Getter, RawGetter, RawSetter, Setter};
 use invalid_accessor::{InvalidGetter, InvalidSetter};
 
 use crate::core_types::*;
-use crate::nativescript::{Instance, NativeClass};
+use crate::export::{ClassBuilder, Instance, NativeClass};
 use crate::object::ownership::Shared;
 use crate::object::GodotObject;
 use crate::object::Ref;
 use crate::private::get_api;
 
-use super::{ClassBuilder, Export};
-
 mod accessor;
 mod invalid_accessor;
 
 pub mod hint;
+
+/// Trait for exportable types.
+pub trait Export: crate::core_types::ToVariant {
+    /// A type-specific hint type that is valid for the type being exported.
+    ///
+    /// If this type shows up as `NoHint`, a private, uninhabitable type indicating
+    /// that there are no hints available for the time being, users *must* use `None`
+    /// for properties of this type. This ensures that it will not be a breaking change
+    /// to add a hint for the type later, since it supports no operations and cannot
+    /// be named directly in user code.
+    type Hint;
+
+    /// Returns `ExportInfo` given an optional typed hint.
+    fn export_info(hint: Option<Self::Hint>) -> ExportInfo;
+}
 
 /// Metadata about the exported property.
 #[derive(Debug)]

@@ -25,7 +25,7 @@
 //! ```ignore
 //! #[derive(NativeClass)]
 //! #[inherit(gdnative::api::Node)]
-//! #[user_data(gdnative::nativescript::user_data::MutexData<HelloWorld>)]
+//! #[user_data(gdnative::export::user_data::MutexData<HelloWorld>)]
 //! struct HelloWorld;
 //! ```
 //!
@@ -69,7 +69,7 @@ use std::mem;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::nativescript::NativeClass;
+use crate::export::NativeClass;
 
 /// Trait for customizable user-data wrappers.
 ///

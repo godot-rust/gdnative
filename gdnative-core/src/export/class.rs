@@ -3,8 +3,8 @@ use std::ptr::NonNull;
 use crate::core_types::{
     FromVariant, FromVariantError, GodotString, OwnedToVariant, ToVariant, Variant,
 };
-use crate::nativescript::export::ClassBuilder;
-use crate::nativescript::user_data::{Map, MapMut, MapOwned, UserData};
+use crate::export::user_data::{Map, MapMut, MapOwned, UserData};
+use crate::export::ClassBuilder;
 use crate::object::bounds::{
     AssumeSafeLifetime, LifetimeConstraint, RefImplBound, SafeAsRaw, SafeDeref,
 };
@@ -746,7 +746,7 @@ fn try_get_user_data_ptr<T: NativeClass>(owner: &RawObject<T::Base>) -> Option<*
             return None;
         }
 
-        if !crate::nativescript::type_tag::check::<T>(type_tag) {
+        if !crate::export::type_tag::check::<T>(type_tag) {
             return None;
         }
 

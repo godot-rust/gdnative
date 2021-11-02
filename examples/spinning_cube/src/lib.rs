@@ -1,7 +1,7 @@
 use gdnative::api::MeshInstance;
 use gdnative::prelude::*;
 
-use gdnative::nativescript::export::hint::{EnumHint, IntHint, StringHint};
+use gdnative::export::hint::{EnumHint, IntHint, StringHint};
 
 #[derive(gdnative::derive::NativeClass)]
 #[inherit(MeshInstance)]

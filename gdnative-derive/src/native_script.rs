@@ -22,9 +22,9 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 
     quote! {
         #derived
-        impl ::gdnative::nativescript::NativeClass for #name {
+        impl ::gdnative::export::NativeClass for #name {
             type Base = ::gdnative::api::Object;
-            type UserData = ::gdnative::nativescript::user_data::LocalCellData<Self>;
+            type UserData = ::gdnative::export::user_data::LocalCellData<Self>;
 
             fn class_name() -> &'static str {
                 unimplemented!()
@@ -56,7 +56,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
 
             let with_usage = if config.no_editor {
-                Some(quote!(.with_usage(::gdnative::nativescript::export::PropertyUsage::NOEDITOR)))
+                Some(quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)))
             } else {
                 None
             };
@@ -106,14 +106,14 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
         } else {
             Some(quote! {
                 fn init(owner: ::gdnative::object::TRef<Self::Base>) -> Self {
-                    Self::new(::gdnative::nativescript::OwnerArg::from_safe_ref(owner))
+                    Self::new(::gdnative::export::OwnerArg::from_safe_ref(owner))
                 }
             })
         };
 
         quote!(
             #derived
-            impl ::gdnative::nativescript::NativeClass for #name {
+            impl ::gdnative::export::NativeClass for #name {
                 type Base = #base;
                 type UserData = #user_data;
 
@@ -123,7 +123,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
 
                 #init
 
-                fn register_properties(builder: &::gdnative::nativescript::export::ClassBuilder<Self>) {
+                fn register_properties(builder: &::gdnative::export::ClassBuilder<Self>) {
                     #(#properties)*;
                     #register_callback
                 }
@@ -163,7 +163,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
         .map(|attr| attr.parse_args::<Type>())
         .unwrap_or_else(|| {
             Ok(syn::parse2::<Type>(
-                quote! { ::gdnative::nativescript::user_data::DefaultUserData<#ident> },
+                quote! { ::gdnative::export::user_data::DefaultUserData<#ident> },
             )
             .expect("quoted tokens for default userdata should be a valid type"))
         })?;

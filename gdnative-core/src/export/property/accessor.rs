@@ -4,8 +4,8 @@ use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use crate::core_types::{FromVariant, ToVariant, Variant};
-use crate::nativescript::user_data::{Map, MapMut, UserData};
-use crate::nativescript::NativeClass;
+use crate::export::user_data::{Map, MapMut, UserData};
+use crate::export::NativeClass;
 use crate::object::{GodotObject, RawObject, TRef};
 
 /// Trait for raw property setters.

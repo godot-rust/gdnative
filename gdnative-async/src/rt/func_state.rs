@@ -1,11 +1,11 @@
 use gdnative_bindings::Reference;
 use gdnative_core::core_types::{ToVariant, Variant, VariantType};
-use gdnative_core::godot_site;
-use gdnative_core::nativescript::export::{
+use gdnative_core::export::user_data::{LocalCellData, Map, MapMut};
+use gdnative_core::export::{
     ClassBuilder, ExportInfo, PropertyUsage, Signal, SignalArgument, StaticArgs, StaticArgsMethod,
 };
-use gdnative_core::nativescript::user_data::{LocalCellData, Map, MapMut};
-use gdnative_core::nativescript::{Instance, NativeClass, NativeClassMethods, RefInstance};
+use gdnative_core::export::{Instance, NativeClass, NativeClassMethods, RefInstance};
+use gdnative_core::godot_site;
 use gdnative_core::object::ownership::{Shared, Unique};
 use gdnative_derive::FromVarargs;
 

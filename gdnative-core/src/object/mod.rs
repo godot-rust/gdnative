@@ -4,7 +4,7 @@
 //! In Godot, classes stand in an inheritance relationship, with the root at `Object`.
 //!
 //! If you are looking for how to manage user-defined types (native scripts),
-//! check out the [`nativescript`][crate::nativescript] module.
+//! check out the [`export`][crate::export] module.
 
 use std::borrow::Borrow;
 use std::ffi::CString;
@@ -15,7 +15,7 @@ use std::ops::Deref;
 use std::ptr::NonNull;
 
 #[cfg(feature = "nativescript")]
-use crate::nativescript::{Instance, NativeClass, RefInstance};
+use crate::export::{Instance, NativeClass, RefInstance};
 
 use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
 use crate::sys;

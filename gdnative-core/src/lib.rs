@@ -43,7 +43,7 @@ mod macros;
 pub mod core_types;
 
 #[cfg(feature = "nativescript")]
-pub mod nativescript;
+pub mod export;
 
 pub mod log;
 pub mod object;

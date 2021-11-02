@@ -3,7 +3,7 @@
 use std::mem;
 
 use crate::core_types::{FromVariant, ToVariant, Variant};
-use crate::nativescript::NativeClass;
+use crate::export::NativeClass;
 
 use super::accessor::{RawGetter, RawSetter};
 

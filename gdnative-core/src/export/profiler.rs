@@ -167,7 +167,7 @@ where
 ///
 /// ```rust
 /// # fn main() {
-/// use gdnative::nativescript::profiler::{profile, profile_sig};
+/// use gdnative::export::profiler::{profile, profile_sig};
 ///
 /// let answer = profile(profile_sig!("foo"), || 42);
 /// assert_eq!(answer, 42);
@@ -176,7 +176,7 @@ where
 #[macro_export]
 macro_rules! _profile_sig {
     ($tag:expr) => {
-        $crate::nativescript::profiler::Signature::new(file!(), line!(), $tag)
+        $crate::export::profiler::Signature::new(file!(), line!(), $tag)
     };
 }
 

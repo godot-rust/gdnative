@@ -37,37 +37,11 @@ use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
 
-use crate::core_types::{GodotString, ToVariant, Variant};
-use crate::nativescript::{class_registry, emplace};
-use crate::nativescript::{user_data::UserData, NativeClass, NativeClassMethods};
+use crate::core_types::{GodotString, Variant};
+use crate::export::user_data::UserData;
+use crate::export::*;
 use crate::object::{GodotObject, NewRef, RawObject, TRef};
 use crate::private::get_api;
-
-pub use method::*;
-pub use property::*;
-
-mod method;
-mod property;
-
-//pub use self::method::{
-//    Method, MethodBuilder, RpcMode, ScriptMethod, ScriptMethodAttributes, ScriptMethodFn, Varargs,
-//};
-//pub use self::property::{ExportInfo, PropertyBuilder, Usage as PropertyUsage};
-
-/// Trait for exportable types.
-pub trait Export: ToVariant {
-    /// A type-specific hint type that is valid for the type being exported.
-    ///
-    /// If this type shows up as `NoHint`, a private, uninhabitable type indicating
-    /// that there are no hints available for the time being, users *must* use `None`
-    /// for properties of this type. This ensures that it will not be a breaking change
-    /// to add a hint for the type later, since it supports no operations and cannot
-    /// be named directly in user code.
-    type Hint;
-
-    /// Returns `ExportInfo` given an optional typed hint.
-    fn export_info(hint: Option<Self::Hint>) -> ExportInfo;
-}
 
 /// A handle that can register new classes to the engine during initialization.
 ///
@@ -221,7 +195,7 @@ impl InitHandle {
             (get_api().godot_nativescript_set_type_tag)(
                 self.handle as *mut _,
                 class_name.as_ptr() as *const _,
-                crate::nativescript::type_tag::create::<C>(),
+                crate::export::type_tag::create::<C>(),
             );
 
             let builder = ClassBuilder {
@@ -240,8 +214,8 @@ impl InitHandle {
 
 #[derive(Debug)]
 pub struct ClassBuilder<C> {
-    init_handle: *mut libc::c_void,
-    class_name: CString,
+    pub(super) init_handle: *mut libc::c_void,
+    pub(super) class_name: CString,
     _marker: PhantomData<C>,
 }
 
@@ -306,7 +280,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// Basic usage:
     /// ```
     /// use gdnative::prelude::*;
-    /// use gdnative::nativescript::export::{RpcMode, Varargs};
+    /// use gdnative::export::{RpcMode, Varargs};
     ///
     /// #[derive(NativeClass)]
     /// #[register_with(Self::my_register)]

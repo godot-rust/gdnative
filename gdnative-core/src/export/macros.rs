@@ -1,6 +1,6 @@
 #![macro_use]
 
-/// Declare the API endpoint to initialize nativescript classes on startup.
+/// Declare the API endpoint to initialize export classes on startup.
 ///
 /// By default this declares an extern function named `godot_nativescript_init`.
 /// This can be overridden, for example:
@@ -16,14 +16,14 @@
 #[macro_export]
 macro_rules! godot_nativescript_init {
     () => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
+        fn godot_nativescript_init_empty(_init: $crate::export::InitHandle) {}
         $crate::godot_nativescript_init!(godot_nativescript_init_empty);
     };
     ($callback:ident) => {
         $crate::godot_nativescript_init!($callback as godot_nativescript_init);
     };
     (_ as $fn_name:ident) => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
+        fn godot_nativescript_init_empty(_init: $crate::export::InitHandle) {}
         $crate::godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
     };
     ($callback:ident as $fn_name:ident) => {
@@ -36,7 +36,7 @@ macro_rules! godot_nativescript_init {
             }
 
             let __result = ::std::panic::catch_unwind(|| {
-                $callback($crate::nativescript::export::InitHandle::new(handle));
+                $callback($crate::export::InitHandle::new(handle));
             });
 
             if __result.is_err() {
@@ -97,7 +97,7 @@ macro_rules! godot_wrap_method_inner {
             #[derive(Copy, Clone, Default)]
             struct ThisMethod;
 
-            use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+            use $crate::export::{NativeClass, Instance, RefInstance, OwnerArg};
             use ::gdnative::derive::FromVarargs;
 
             #[derive(FromVarargs)]
@@ -108,7 +108,7 @@ macro_rules! godot_wrap_method_inner {
             }
 
             #[allow(unused_variables, unused_assignments, unused_mut)]
-            impl $crate::nativescript::export::StaticArgsMethod<$type_name> for ThisMethod {
+            impl $crate::export::StaticArgsMethod<$type_name> for ThisMethod {
                 type Args = Args;
                 fn call(
                     &self,
@@ -139,7 +139,7 @@ macro_rules! godot_wrap_method_inner {
                 }
             }
 
-            $crate::nativescript::export::StaticArgs::new(ThisMethod)
+            $crate::export::StaticArgs::new(ThisMethod)
         }
     };
 }

@@ -15,17 +15,14 @@ pub use gdnative_core::object::{
     AsArg, GodotObject, Instanciable, NewRef, Null, QueueFree, Ref, SubClass, TRef,
 };
 
-pub use gdnative_core::nativescript::{
-    export::{
-        ClassBuilder, ExportInfo, InitHandle, Method, MethodBuilder, PropertyUsage, Signal,
-        SignalArgument,
-    },
-    Instance, NativeClass, NativeClassMethods, RefInstance,
+pub use gdnative_core::export::{
+    ClassBuilder, ExportInfo, InitHandle, Instance, Method, MethodBuilder, NativeClass,
+    NativeClassMethods, PropertyUsage, RefInstance, Signal, SignalArgument,
 };
 
 // Re-export selected user_data types, but keep qualified due to rather generic names
 pub mod user_data {
-    pub use gdnative_core::nativescript::user_data::{
+    pub use gdnative_core::export::user_data::{
         Aether, ArcData, LocalCellData, MutexData, RwLockData,
     };
 }
