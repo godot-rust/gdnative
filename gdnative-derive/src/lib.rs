@@ -39,7 +39,7 @@ mod variant;
 /// Will expand to
 /// ```
 /// use gdnative::prelude::*;
-/// struct Foo{}
+/// struct Foo {}
 /// impl NativeClass for Foo {
 ///     type Base = gdnative::api::Reference;
 ///     type UserData = gdnative::export::user_data::LocalCellData<Self>;
@@ -50,7 +50,7 @@ mod variant;
 /// impl gdnative::export::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
 ///         use gdnative::export::*;
-///         builder.build_method("foo", gdnative::macros::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
+///         builder.build_method("foo", gdnative::export::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
 ///     }

@@ -16,9 +16,11 @@ pub use gdnative_core::object::{
 };
 
 pub use gdnative_core::export::{
-    ClassBuilder, ExportInfo, InitHandle, Instance, Method, MethodBuilder, NativeClass,
-    NativeClassMethods, PropertyUsage, RefInstance, Signal, SignalArgument,
+    ClassBuilder, ExportInfo, Instance, Method, MethodBuilder, NativeClass, NativeClassMethods,
+    PropertyUsage, RefInstance, Signal, SignalArgument,
 };
+
+pub use gdnative_core::init::InitHandle;
 
 // Re-export selected user_data types, but keep qualified due to rather generic names
 pub mod user_data {

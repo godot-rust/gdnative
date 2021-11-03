@@ -128,7 +128,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
 
             quote_spanned!( sig_span=>
                 {
-                    let method = ::gdnative::macros::godot_wrap_method!(
+                    let method = ::gdnative::export::godot_wrap_method!(
                         #class_name,
                         fn #name ( #( #args )* ) -> #ret_ty
                     );

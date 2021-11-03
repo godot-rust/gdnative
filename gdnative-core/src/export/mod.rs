@@ -11,12 +11,12 @@
 
 mod class;
 mod class_builder;
-mod emplace;
 mod macros;
 mod method;
 mod property;
 
 pub(crate) mod class_registry;
+pub(crate) mod emplace;
 pub(crate) mod type_tag;
 
 pub use class::*;

@@ -4,8 +4,8 @@ use gdnative_bindings::Object;
 use gdnative_core::object::SubClass;
 
 use gdnative_core::core_types::{GodotError, Variant};
-use gdnative_core::export::InitHandle;
 use gdnative_core::export::{Instance, RefInstance};
+use gdnative_core::init::InitHandle;
 use gdnative_core::object::ownership::Shared;
 use gdnative_core::object::TRef;
 
