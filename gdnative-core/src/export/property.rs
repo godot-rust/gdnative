@@ -4,10 +4,9 @@ use accessor::{Getter, RawGetter, RawSetter, Setter};
 use invalid_accessor::{InvalidGetter, InvalidSetter};
 
 use crate::core_types::*;
-use crate::export::{ClassBuilder, Instance, NativeClass};
+use crate::export::{ClassBuilder, NativeClass};
 use crate::object::ownership::Shared;
-use crate::object::GodotObject;
-use crate::object::Ref;
+use crate::object::{GodotObject, Instance, Ref};
 use crate::private::get_api;
 
 mod accessor;

@@ -28,7 +28,8 @@ macro_rules! godot_wrap_method_inner {
             #[derive(Copy, Clone, Default)]
             struct ThisMethod;
 
-            use $crate::export::{NativeClass, Instance, RefInstance, OwnerArg};
+            use $crate::export::{NativeClass, OwnerArg};
+            use $crate::object::{Instance, RefInstance};
             use ::gdnative::derive::FromVarargs;
 
             #[derive(FromVarargs)]

@@ -1,20 +1,16 @@
 use std::marker::PhantomData;
 
+use func_state::FuncState;
 use gdnative_bindings::Object;
-use gdnative_core::object::SubClass;
-
 use gdnative_core::core_types::{GodotError, Variant};
-use gdnative_core::export::{Instance, RefInstance};
 use gdnative_core::init::InitHandle;
 use gdnative_core::object::ownership::Shared;
-use gdnative_core::object::TRef;
+use gdnative_core::object::{Instance, RefInstance, SubClass, TRef};
 
 use crate::future;
 
 mod bridge;
 mod func_state;
-
-use func_state::FuncState;
 
 /// Context for creating `yield`-like futures in async methods.
 pub struct Context {

@@ -14,21 +14,26 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
-use crate::export::{Instance, NativeClass, RefInstance};
-use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
-use crate::sys;
-use bounds::{AssumeSafeLifetime, LifetimeConstraint, PtrWrapper, RefKindSpec};
+use bounds::{
+    AssumeSafeLifetime, LifetimeConstraint, PtrWrapper, RefImplBound, RefKindSpec, SafeAsRaw,
+    SafeDeref,
+};
 use memory::{ManuallyManaged, RefCounted, RefKind};
 use ownership::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 
-pub use self::new_ref::NewRef;
-pub use self::raw::RawObject;
-use crate::object::bounds::{RefImplBound, SafeAsRaw, SafeDeref};
+use crate::export::NativeClass;
+use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
+use crate::sys;
+
+pub use instance::*;
+pub use new_ref::NewRef;
+pub use raw::RawObject;
 
 pub mod bounds;
 pub mod memory;
 pub mod ownership;
 
+mod instance;
 mod new_ref;
 mod raw;
 

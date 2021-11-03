@@ -6,10 +6,10 @@ use parking_lot::Mutex;
 use gdnative_bindings::{Object, Reference};
 use gdnative_core::core_types::{GodotError, Variant, VariantArray};
 use gdnative_core::export::user_data::{ArcData, Map};
-use gdnative_core::export::{ClassBuilder, Method, Varargs};
-use gdnative_core::export::{Instance, NativeClass, NativeClassMethods, RefInstance};
+use gdnative_core::export::{ClassBuilder, Method, NativeClass, NativeClassMethods, Varargs};
 use gdnative_core::godot_site;
-use gdnative_core::object::{ownership::Shared, TRef};
+use gdnative_core::object::ownership::Shared;
+use gdnative_core::object::{Instance, RefInstance, TRef};
 
 use crate::future::Resume;
 
