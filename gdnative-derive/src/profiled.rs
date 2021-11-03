@@ -111,8 +111,8 @@ pub(crate) fn derive_profiled(
 
     let stmts = std::mem::take(&mut item_fn.block.stmts);
     item_fn.block = Box::new(parse_quote!({
-        ::gdnative::export::profiler::profile(
-            ::gdnative::export::profiler::profile_sig!(#tag), move || {
+        ::gdnative::profiler::profile(
+            ::gdnative::profiler::profile_sig!(#tag), move || {
             #(#stmts)*
         })
     }));

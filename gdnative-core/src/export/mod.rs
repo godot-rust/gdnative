@@ -19,11 +19,6 @@ pub(crate) mod class_registry;
 pub(crate) mod emplace;
 pub(crate) mod type_tag;
 
-pub use class::*;
-pub use method::*;
-pub use property::*;
-
-pub mod profiler;
 pub mod user_data;
 
 pub use crate::godot_wrap_method;
