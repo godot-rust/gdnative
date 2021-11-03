@@ -14,9 +14,7 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
-#[cfg(feature = "nativescript")]
 use crate::export::{Instance, NativeClass, RefInstance};
-
 use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
 use crate::sys;
 use bounds::{AssumeSafeLifetime, LifetimeConstraint, PtrWrapper, RefKindSpec};
@@ -488,7 +486,6 @@ where
     ///
     /// The resulting `Instance` is not necessarily safe to use directly.
     #[inline]
-    #[cfg(feature = "nativescript")]
     pub fn cast_instance<C>(self) -> Option<Instance<C, Access>>
     where
         C: NativeClass<Base = T>,
@@ -502,7 +499,6 @@ where
     ///
     /// Returns `Err(self)` if the cast failed.
     #[inline]
-    #[cfg(feature = "nativescript")]
     pub fn try_cast_instance<C>(self) -> Result<Instance<C, Access>, Self>
     where
         C: NativeClass<Base = T>,
@@ -934,7 +930,6 @@ impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
 
     /// Convenience method to downcast to `RefInstance` where `self` is the base object.
     #[inline]
-    #[cfg(feature = "nativescript")]
     pub fn cast_instance<C>(self) -> Option<RefInstance<'a, C, Access>>
     where
         C: NativeClass<Base = T>,

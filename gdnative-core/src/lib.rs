@@ -42,9 +42,7 @@ mod macros;
 
 pub mod core_types;
 
-#[cfg(feature = "nativescript")]
 pub mod export;
-
 pub mod init;
 pub mod log;
 pub mod object;
