@@ -406,9 +406,8 @@ impl Ty {
                 }
             }
             ty => {
-                let module = format_ident!("{}", module_name_from_class_name(ty));
                 let ty = format_ident!("{}", ty);
-                Ty::Object(syn::parse_quote! { crate::generated::#module::#ty })
+                Ty::Object(syn::parse_quote! { crate::generated::#ty })
             }
         }
     }

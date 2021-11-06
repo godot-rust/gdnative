@@ -84,9 +84,8 @@ fn generate_class_bindings(
 ) -> TokenStream {
     // types and methods
     let types_and_methods = {
-        let documentation = generate_class_documentation(api, class);
-
-        let class_struct = generate_class_struct(class);
+        let class_doc = generate_class_documentation(api, class);
+        let class_struct = generate_class_struct(class, class_doc);
 
         let enums = generate_enums(class);
 
@@ -99,7 +98,6 @@ fn generate_class_bindings(
         let class_impl = generate_class_impl(class, icalls, docs);
 
         quote! {
-            #documentation
             #class_struct
             #enums
             #constants
@@ -195,17 +193,23 @@ pub(crate) mod test_prelude {
 
     #[test]
     fn sanity_test_generated_code() {
+        // Tests whether each generated snippet individually constitutes a valid AST representation of Rust code
+
         let api = Api::new(include_str!("../../gdnative-bindings/api.json"));
         let mut buffer = BufWriter::new(Vec::with_capacity(16384));
         for class in &api.classes {
             let mut icalls = HashMap::new();
 
-            let code = generate_class_documentation(&api, &class);
+            let code = generate_module_doc(&class);
             write!(&mut buffer, "{}", code).unwrap();
-            write!(&mut buffer, "{}", quote! { struct Docs {} }).unwrap();
             validate_and_clear_buffer!(buffer);
 
-            let code = generate_class_struct(&class);
+            let class_doc = generate_class_documentation(&api, &class);
+            write!(&mut buffer, "{}", code).unwrap();
+            write!(&mut buffer, "{}", quote! { struct StructWithDocs {} }).unwrap();
+            validate_and_clear_buffer!(buffer);
+
+            let code = generate_class_struct(&class, class_doc);
             write!(&mut buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 

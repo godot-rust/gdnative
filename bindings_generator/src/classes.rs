@@ -9,17 +9,22 @@ use quote::{format_ident, quote};
 
 use std::collections::HashMap;
 
-pub(crate) fn generate_class_struct(class: &GodotClass) -> TokenStream {
+pub(crate) fn generate_class_struct(class: &GodotClass, class_doc: TokenStream) -> TokenStream {
     let class_name = format_ident!("{}", &class.name);
 
     // dead_code: 'this' might not be read
+    // mod private: hide the type in the #module_name module, export it only in gdnative::api
     quote! {
-        #[allow(non_camel_case_types)]
-        #[derive(Debug)]
-        pub struct #class_name {
-            #[allow(dead_code)]
-            this: RawObject<Self>,
+        pub(crate) mod private {
+            #class_doc
+            #[allow(non_camel_case_types)]
+            #[derive(Debug)]
+            pub struct #class_name {
+                #[allow(dead_code)]
+                pub(crate) this: super::RawObject<Self>,
+            }
         }
+        use private::#class_name;
     }
 }
 

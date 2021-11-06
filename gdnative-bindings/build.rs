@@ -58,7 +58,7 @@ fn generate(
                 use super::*;
                 {content}
             }}
-            pub use crate::generated::{mod_name}::{class_name};
+            pub use crate::generated::{mod_name}::private::{class_name};
             "#,
             mod_name = module_name_from_class_name(class_name),
             class_name = class_name,
@@ -101,7 +101,7 @@ fn generate(
             r#"
             #[path = {:?}]
             pub mod {mod_name};
-            pub use crate::generated::{mod_name}::{class_name};
+            pub use crate::generated::{mod_name}::private::{class_name};
             "#,
             mod_path.display(),
             mod_name = mod_name,
