@@ -17,6 +17,17 @@ pub fn official_doc_url(class: &GodotClass) -> String {
     )
 }
 
+pub fn generate_module_doc(class: &GodotClass) -> TokenStream {
+    let module_doc = format!(
+        "This module contains types related to the API class [`{m}`][super::{m}].",
+        m = class.name
+    );
+
+    quote! {
+        #![doc=#module_doc]
+    }
+}
+
 pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStream {
     let has_parent = !class.base_class.is_empty();
     let singleton_str = if class.singleton { "singleton " } else { "" };
@@ -26,7 +37,7 @@ pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStrea
         "unsafe"
     };
 
-    let summary_doc = if &class.name == "Reference" {
+    let mut summary_doc = if &class.name == "Reference" {
         "Base class of all reference-counted types. Inherits `Object`.".into()
     } else if &class.name == "Object" {
         "The base class of most Godot classes.".into()
@@ -37,17 +48,19 @@ pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStrea
             name = class.name,
             base_class = class.base_class,
             ownership_type = ownership_type,
-            singleton = singleton_str
+            singleton = singleton_str,
         )
     } else {
         format!(
-            "`{api_type} {singleton}class {name}` ({ownership_type}).",
+            "`{api_type} {singleton}class {name}` ({ownership_type})",
             api_type = class.api_type,
             name = class.name,
             ownership_type = ownership_type,
             singleton = singleton_str,
         )
     };
+
+    append_related_module(&mut summary_doc, class);
 
     let official_docs = format!(
         r#"## Official documentation
@@ -144,4 +157,17 @@ fn list_base_classes(output: &mut impl Write, api: &Api, parent_name: &str) -> G
     }
 
     Ok(())
+}
+
+// If present, links to the module with related (C++: nested) types.
+fn append_related_module(string: &mut String, class: &GodotClass) {
+    use std::fmt::Write;
+    if class.has_related_module() {
+        write!(
+            string,
+            "\n\nThis class has related types in the [`{m}`][super::{m}] module.",
+            m = class.module()
+        )
+        .expect("append to string via write!");
+    }
 }

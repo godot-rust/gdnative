@@ -38,12 +38,12 @@ use std::io;
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 
-pub struct BindingResult {
-    pub class_bindings: HashMap<String, TokenStream>,
+pub struct BindingResult<'a> {
+    pub class_bindings: Vec<(&'a GodotClass, TokenStream)>,
     pub icalls: TokenStream,
 }
 
-pub fn generate_bindings(api: &Api, docs: Option<&GodotXmlDocs>) -> BindingResult {
+pub fn generate_bindings<'a>(api: &'a Api, docs: Option<&GodotXmlDocs>) -> BindingResult<'a> {
     let mut icalls = HashMap::new();
 
     let class_bindings = api
@@ -51,7 +51,7 @@ pub fn generate_bindings(api: &Api, docs: Option<&GodotXmlDocs>) -> BindingResul
         .iter()
         .map(|class| {
             (
-                class.name.clone(),
+                class,
                 generate_class_bindings(api, class, &mut icalls, docs),
             )
         })
@@ -84,6 +84,7 @@ fn generate_class_bindings(
 ) -> TokenStream {
     // types and methods
     let types_and_methods = {
+        let module_doc = generate_module_doc(class);
         let class_doc = generate_class_documentation(api, class);
         let class_struct = generate_class_struct(class, class_doc);
 
@@ -98,6 +99,7 @@ fn generate_class_bindings(
         let class_impl = generate_class_impl(class, icalls, docs);
 
         quote! {
+            #module_doc
             #class_struct
             #enums
             #constants
