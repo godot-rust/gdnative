@@ -26,14 +26,12 @@ pub use gdnative_core::object::{
     AsArg, GodotObject, Instance, Instanciable, NewRef, Null, QueueFree, Ref, RefInstance,
     SubClass, TRef,
 };
-pub use gdnative_core::{
-    godot_dbg, godot_error, godot_gdnative_init, godot_gdnative_terminate, godot_init,
-    godot_nativescript_init, godot_print, godot_site, godot_warn,
-};
+pub use gdnative_core::{godot_dbg, godot_error, godot_init, godot_print, godot_warn};
 pub use gdnative_derive::*;
 
-// Re-export selected user_data types, but keep qualified due to rather generic names
+/// User-data attributes from [`export::user_data`][crate::export::user_data] module.
 pub mod user_data {
+    // Re-export selected user_data types, but keep qualified due to rather generic names
     pub use gdnative_core::export::user_data::{
         Aether, ArcData, LocalCellData, MutexData, RwLockData,
     };
