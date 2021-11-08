@@ -12,7 +12,7 @@ pub fn class_doc_link(class: &GodotClass) -> String {
 
 pub fn official_doc_url(class: &GodotClass) -> String {
     format!(
-        "https://godot.readthedocs.io/en/latest/classes/class_{lower_case}.html",
+        "https://godot.readthedocs.io/en/stable/classes/class_{lower_case}.html",
         lower_case = class.name.to_lowercase(),
     )
 }
@@ -31,31 +31,31 @@ pub fn generate_module_doc(class: &GodotClass) -> TokenStream {
 pub fn generate_class_documentation(api: &Api, class: &GodotClass) -> TokenStream {
     let has_parent = !class.base_class.is_empty();
     let singleton_str = if class.singleton { "singleton " } else { "" };
-    let ownership_type = if class.is_refcounted() {
-        "reference counted"
+    let memory_type = if class.is_refcounted() {
+        "reference-counted"
     } else {
-        "unsafe"
+        "manually managed"
     };
 
     let mut summary_doc = if &class.name == "Reference" {
         "Base class of all reference-counted types. Inherits `Object`.".into()
     } else if &class.name == "Object" {
-        "The base class of most Godot classes.".into()
+        "The base class of all classes in the Godot hierarchy.".into()
     } else if has_parent {
         format!(
-            "`{api_type} {singleton}class {name}` inherits `{base_class}` ({ownership_type}).",
+            "`{api_type} {singleton}class {name}` inherits `{base_class}` ({memory_type}).",
             api_type = class.api_type,
             name = class.name,
             base_class = class.base_class,
-            ownership_type = ownership_type,
+            memory_type = memory_type,
             singleton = singleton_str,
         )
     } else {
         format!(
-            "`{api_type} {singleton}class {name}` ({ownership_type})",
+            "`{api_type} {singleton}class {name}` ({memory_type})",
             api_type = class.api_type,
             name = class.name,
-            ownership_type = ownership_type,
+            memory_type = memory_type,
             singleton = singleton_str,
         )
     };
@@ -79,7 +79,7 @@ The lifetime of this object is automatically managed through reference counting.
         format!(
             r#"## Memory management
 
-Non reference counted objects such as the ones of this type are usually owned by the engine.
+Non-reference-counted objects, such as the ones of this type, are usually owned by the engine.
 
 `{name}` is a reference-only type. Persistent references can
 only exist in the unsafe `Ref<{name}>` form.
@@ -126,7 +126,7 @@ This class is used to interact with Godot's editor."#
     let safety_doc = r#"
 ## Safety
 
-All types in the Godot API have "interior mutability" in Rust parlance.
+All types in the Godot API have _interior mutability_ in Rust parlance.
 To enforce that the official [thread-safety guidelines][thread-safety] are
 followed, the typestate pattern is used in the `Ref` and `TRef` smart pointers,
 and the `Instance` API. The typestate `Access` in these types tracks whether the
