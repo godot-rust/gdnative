@@ -35,16 +35,19 @@ macro_rules! godot_dbg {
     };
 }
 
-/// Creates a `gdnative::log::Site` value from the current position in code,
+/// Creates a [`Site`][crate::log::Site] value from the current position in code,
 /// optionally with a function path for identification.
 ///
 /// # Examples
 ///
 /// ```ignore
+/// use gdnative::log;
+///
 /// // WARN: <unset>: foo At: path/to/file.rs:123
-/// gdnative::log::warn(godot_site!(), "foo");
+/// log::warn(log::godot_site!(), "foo");
+///
 /// // WARN: Foo::my_func: bar At: path/to/file.rs:123
-/// gdnative::log::error(godot_site!(Foo::my_func), "bar");
+/// log::error(log::godot_site!(Foo::my_func), "bar");
 /// ```
 #[macro_export]
 macro_rules! godot_site {

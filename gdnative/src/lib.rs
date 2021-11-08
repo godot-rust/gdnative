@@ -60,11 +60,6 @@
 #[doc(inline)]
 pub use gdnative_core::{core_types, export, init, log, object, profiler};
 
-/// Collection of declarative `godot_*` macros, mostly for GDNative registration and output.
-pub mod macros {
-    pub use gdnative_core::{godot_dbg, godot_error, godot_print, godot_warn};
-}
-
 // Implementation details (e.g. used by macros).
 // However, do not re-export macros (on crate level), thus no wildcard
 #[doc(hidden)]
