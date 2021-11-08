@@ -166,6 +166,7 @@ fn rust_safe_name(name: &str) -> proc_macro2::Ident {
         "in" => format_ident!("_in"),
         "override" => format_ident!("_override"),
         "where" => format_ident!("_where"),
+        "enum" => format_ident!("_enum"),
         name => format_ident!("{}", name),
     }
 }

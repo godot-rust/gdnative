@@ -346,7 +346,7 @@ pub(crate) fn generate_methods(
 
         icalls.insert(icall_name.clone(), method_sig);
 
-        let rusty_name = format_ident!("{}", rusty_method_name);
+        let rusty_name = rust_safe_name(rusty_method_name);
 
         let maybe_unsafe: TokenStream;
         let maybe_unsafe_reason: &str;
