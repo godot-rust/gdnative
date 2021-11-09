@@ -50,18 +50,26 @@ fn generate(
     generated_file: &mut BufWriter<File>,
     binding_res: &BindingResult,
 ) {
-    for (class_name, code) in &binding_res.class_bindings {
+    // Note: 'use super::*;' needs to be after content, as the latter may contain #![doc] attributes,
+    // which need to be at the beginning of the module
+    for (class, code) in &binding_res.class_bindings {
+        let modifier = if class.has_related_module() {
+            "pub"
+        } else {
+            "pub(crate)"
+        };
         write!(
             generated_file,
             r#"
-            pub mod {mod_name} {{
-                use super::*;
+            {modifier} mod {mod_name} {{
                 {content}
+                use super::*;
             }}
-            pub use crate::generated::{mod_name}::{class_name};
+            pub use crate::generated::{mod_name}::private::{class_name};
             "#,
-            mod_name = module_name_from_class_name(class_name),
-            class_name = class_name,
+            modifier = modifier,
+            mod_name = module_name_from_class_name(&class.name),
+            class_name = class.name,
             content = code,
         )
         .unwrap();
@@ -76,16 +84,18 @@ fn generate(
     generated_file: &mut BufWriter<File>,
     binding_res: &BindingResult,
 ) {
-    for (class_name, code) in &binding_res.class_bindings {
-        let mod_name = module_name_from_class_name(class_name);
+    for (class, code) in &binding_res.class_bindings {
+        let mod_name = module_name_from_class_name(&class.name);
 
         let mod_path = out_path.join(format!("{}.rs", mod_name));
         let mut mod_output = BufWriter::new(File::create(&mod_path).unwrap());
 
         write!(
             &mut mod_output,
-            r#"use super::*;
-            {content}"#,
+            r#"
+            {content}
+            use super::*;
+            "#,
             content = code,
         )
         .unwrap();
@@ -96,16 +106,22 @@ fn generate(
             format_file(&mod_path);
         }
 
+        let modifier = if class.has_related_module() {
+            "pub"
+        } else {
+            "pub(crate)"
+        };
         writeln!(
             generated_file,
             r#"
             #[path = {:?}]
-            pub mod {mod_name};
-            pub use crate::generated::{mod_name}::{class_name};
+            {modifier} mod {mod_name};
+            pub use crate::generated::{mod_name}::private::{class_name};
             "#,
             mod_path.display(),
+            modifier = modifier,
             mod_name = mod_name,
-            class_name = class_name,
+            class_name = class.name,
         )
         .unwrap();
     }

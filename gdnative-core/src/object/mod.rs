@@ -4,7 +4,7 @@
 //! In Godot, classes stand in an inheritance relationship, with the root at `Object`.
 //!
 //! If you are looking for how to manage user-defined types (native scripts),
-//! check out the [`nativescript`][crate::nativescript] module.
+//! check out the [`export`][crate::export] module.
 
 use std::borrow::Borrow;
 use std::ffi::CString;
@@ -14,23 +14,26 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
-#[cfg(feature = "nativescript")]
-use crate::nativescript::{Instance, NativeClass, RefInstance};
-
-use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
-use crate::sys;
-use bounds::{AssumeSafeLifetime, LifetimeConstraint, PtrWrapper, RefKindSpec};
+use bounds::{
+    AssumeSafeLifetime, LifetimeConstraint, PtrWrapper, RefImplBound, RefKindSpec, SafeAsRaw,
+    SafeDeref,
+};
 use memory::{ManuallyManaged, RefCounted, RefKind};
 use ownership::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
 
-pub use self::new_ref::NewRef;
-pub use self::raw::RawObject;
-use crate::object::bounds::{RefImplBound, SafeAsRaw, SafeDeref};
+use crate::export::NativeClass;
+use crate::private::{get_api, ManuallyManagedClassPlaceholder, ReferenceCountedClassPlaceholder};
+use crate::sys;
+
+pub use instance::*;
+pub use new_ref::NewRef;
+pub use raw::RawObject;
 
 pub mod bounds;
 pub mod memory;
 pub mod ownership;
 
+mod instance;
 mod new_ref;
 mod raw;
 
@@ -488,7 +491,6 @@ where
     ///
     /// The resulting `Instance` is not necessarily safe to use directly.
     #[inline]
-    #[cfg(feature = "nativescript")]
     pub fn cast_instance<C>(self) -> Option<Instance<C, Access>>
     where
         C: NativeClass<Base = T>,
@@ -502,7 +504,6 @@ where
     ///
     /// Returns `Err(self)` if the cast failed.
     #[inline]
-    #[cfg(feature = "nativescript")]
     pub fn try_cast_instance<C>(self) -> Result<Instance<C, Access>, Self>
     where
         C: NativeClass<Base = T>,
@@ -934,7 +935,6 @@ impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
 
     /// Convenience method to downcast to `RefInstance` where `self` is the base object.
     #[inline]
-    #[cfg(feature = "nativescript")]
     pub fn cast_instance<C>(self) -> Option<RefInstance<'a, C, Access>>
     where
         C: NativeClass<Base = T>,

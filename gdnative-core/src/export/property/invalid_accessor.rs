@@ -3,10 +3,9 @@
 use std::mem;
 
 use crate::core_types::{FromVariant, ToVariant, Variant};
-use crate::nativescript::NativeClass;
-use crate::*;
+use crate::export::NativeClass;
 
-use super::{RawGetter, RawSetter};
+use super::accessor::{RawGetter, RawSetter};
 
 /// Default setter used for a new property indicating that no valid setter is present. Outputs errors when invoked.
 #[derive(Debug)]

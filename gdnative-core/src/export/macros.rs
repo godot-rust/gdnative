@@ -1,74 +1,5 @@
 #![macro_use]
 
-/// Declare the API endpoint to initialize nativescript classes on startup.
-///
-/// By default this declares an extern function named `godot_nativescript_init`.
-/// This can be overridden, for example:
-///
-/// ```ignore
-/// // Declares an extern function named custom_nativescript_init instead of
-/// // godot_nativescript_init.
-/// godot_gdnative_terminate!(my_registration_callback as custom_nativescript_init);
-/// ```
-///
-/// Overriding the default entry point names can be useful if several gdnative
-/// libraries are linked statically  to avoid name clashes.
-#[macro_export]
-macro_rules! godot_nativescript_init {
-    () => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
-        $crate::godot_nativescript_init!(godot_nativescript_init_empty);
-    };
-    ($callback:ident) => {
-        $crate::godot_nativescript_init!($callback as godot_nativescript_init);
-    };
-    (_ as $fn_name:ident) => {
-        fn godot_nativescript_init_empty(_init: $crate::nativescript::export::InitHandle) {}
-        $crate::godot_nativescript_init!(godot_nativescript_init_empty as $fn_name);
-    };
-    ($callback:ident as $fn_name:ident) => {
-        #[no_mangle]
-        #[doc(hidden)]
-        #[allow(unused_unsafe)]
-        pub unsafe extern "C" fn $fn_name(handle: *mut $crate::libc::c_void) {
-            if !$crate::private::is_api_bound() {
-                return;
-            }
-
-            let __result = ::std::panic::catch_unwind(|| {
-                $callback($crate::nativescript::export::InitHandle::new(handle));
-            });
-
-            if __result.is_err() {
-                $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
-            }
-        }
-    };
-}
-
-/// Declare all the API endpoints necessary to initialize a NativeScript library.
-///
-/// `godot_init!(init)` is a shorthand for:
-///
-/// ```ignore
-/// godot_gdnative_init!();
-/// godot_nativescript_init!(init);
-/// godot_gdnative_terminate!();
-/// ```
-///
-/// This declares three extern functions, named `godot_gdnative_init`,
-/// `godot_nativescript_init`, and `godot_gdnative_terminate`. If you need different prefixes
-/// to avoid name clashes when multiple GDNative libraries are linked statically, please use
-/// the respective macros directly.
-#[macro_export]
-macro_rules! godot_init {
-    ($callback:ident) => {
-        $crate::godot_gdnative_init!();
-        $crate::godot_nativescript_init!($callback);
-        $crate::godot_gdnative_terminate!();
-    };
-}
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! godot_wrap_method_parameter_count {
@@ -97,7 +28,8 @@ macro_rules! godot_wrap_method_inner {
             #[derive(Copy, Clone, Default)]
             struct ThisMethod;
 
-            use $crate::nativescript::{NativeClass, Instance, RefInstance, OwnerArg};
+            use $crate::export::{NativeClass, OwnerArg};
+            use $crate::object::{Instance, RefInstance};
             use ::gdnative::derive::FromVarargs;
 
             #[derive(FromVarargs)]
@@ -108,7 +40,7 @@ macro_rules! godot_wrap_method_inner {
             }
 
             #[allow(unused_variables, unused_assignments, unused_mut)]
-            impl $crate::nativescript::export::method::StaticArgsMethod<$type_name> for ThisMethod {
+            impl $crate::export::StaticArgsMethod<$type_name> for ThisMethod {
                 type Args = Args;
                 fn call(
                     &self,
@@ -139,7 +71,7 @@ macro_rules! godot_wrap_method_inner {
                 }
             }
 
-            $crate::nativescript::export::method::StaticArgs::new(ThisMethod)
+            $crate::export::StaticArgs::new(ThisMethod)
         }
     };
 }

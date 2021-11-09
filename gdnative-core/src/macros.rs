@@ -1,103 +1,5 @@
 #![macro_use]
 
-/// Declare the API endpoint to initialize the gdnative API on startup.
-///
-/// By default this declares an extern function named `godot_gdnative_init`.
-/// This can be overridden, for example:
-///
-/// ```ignore
-/// // Declares an extern function named custom_gdnative_init instead of
-/// // godot_gdnative_init.
-/// godot_gdnative_init!(my_init_callback as custom_gdnative_init);
-/// ```
-///
-/// Overriding the default entry point names can be useful if several gdnative
-/// libraries are linked statically  to avoid name clashes.
-#[macro_export]
-macro_rules! godot_gdnative_init {
-    () => {
-        fn godot_gdnative_init_empty(_options: &$crate::InitializeInfo) {}
-        $crate::godot_gdnative_init!(godot_gdnative_init_empty);
-    };
-    (_ as $fn_name:ident) => {
-        fn godot_gdnative_init_empty(_options: &$crate::InitializeInfo) {}
-        $crate::godot_gdnative_init!(godot_gdnative_init_empty as $fn_name);
-    };
-    ($callback:ident) => {
-        $crate::godot_gdnative_init!($callback as godot_gdnative_init);
-    };
-    ($callback:ident as $fn_name:ident) => {
-        #[no_mangle]
-        #[doc(hidden)]
-        #[allow(unused_unsafe)]
-        pub unsafe extern "C" fn $fn_name(options: *mut $crate::sys::godot_gdnative_init_options) {
-            if !$crate::private::bind_api(options) {
-                // Can't use godot_error here because the API is not bound.
-                // Init errors should be reported by bind_api.
-                return;
-            }
-
-            let __result = ::std::panic::catch_unwind(|| {
-                let callback_options = $crate::InitializeInfo::new(options);
-                $callback(&callback_options)
-            });
-            if __result.is_err() {
-                $crate::godot_error!("gdnative-core: gdnative_init callback panicked");
-            }
-        }
-    };
-}
-
-/// Declare the API endpoint invoked during shutdown.
-///
-/// By default this declares an extern function named `godot_gdnative_terminate`.
-/// This can be overridden, for example:
-///
-/// ```ignore
-/// // Declares an extern function named custom_gdnative_terminate instead of
-/// // godot_gdnative_terminate.
-/// godot_gdnative_terminate!(my_shutdown_callback as custom_gdnative_terminate);
-/// ```
-///
-/// Overriding the default entry point names can be useful if several gdnative
-/// libraries are linked statically  to avoid name clashes.
-#[macro_export]
-macro_rules! godot_gdnative_terminate {
-    () => {
-        fn godot_gdnative_terminate_empty(_term_info: &$crate::TerminateInfo) {}
-        $crate::godot_gdnative_terminate!(godot_gdnative_terminate_empty);
-    };
-    ($callback:ident) => {
-        $crate::godot_gdnative_terminate!($callback as godot_gdnative_terminate);
-    };
-    (_ as $fn_name:ident) => {
-        fn godot_gdnative_terminate_empty(_term_info: &$crate::TerminateInfo) {}
-        $crate::godot_gdnative_terminate!(godot_gdnative_terminate_empty as $fn_name);
-    };
-    ($callback:ident as $fn_name:ident) => {
-        #[no_mangle]
-        #[doc(hidden)]
-        #[allow(unused_unsafe)]
-        pub unsafe extern "C" fn $fn_name(
-            options: *mut $crate::sys::godot_gdnative_terminate_options,
-        ) {
-            if !$crate::private::is_api_bound() {
-                return;
-            }
-
-            let __result = ::std::panic::catch_unwind(|| {
-                let term_info = $crate::TerminateInfo::new(options);
-                $callback(&term_info)
-            });
-            if __result.is_err() {
-                $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
-            }
-
-            $crate::private::cleanup_internal_state();
-        }
-    };
-}
-
 /// Print a message using the engine's logging system (visible in the editor).
 #[macro_export]
 macro_rules! godot_print {
@@ -133,16 +35,19 @@ macro_rules! godot_dbg {
     };
 }
 
-/// Creates a `gdnative::log::Site` value from the current position in code,
+/// Creates a [`Site`][crate::log::Site] value from the current position in code,
 /// optionally with a function path for identification.
 ///
 /// # Examples
 ///
 /// ```ignore
+/// use gdnative::log;
+///
 /// // WARN: <unset>: foo At: path/to/file.rs:123
-/// gdnative::log::warn(godot_site!(), "foo");
+/// log::warn(log::godot_site!(), "foo");
+///
 /// // WARN: Foo::my_func: bar At: path/to/file.rs:123
-/// gdnative::log::error(godot_site!(Foo::my_func), "bar");
+/// log::error(log::godot_site!(Foo::my_func), "bar");
 /// ```
 #[macro_export]
 macro_rules! godot_site {

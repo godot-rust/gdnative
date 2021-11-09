@@ -1,4 +1,4 @@
-use gdnative::nativescript::user_data::Once;
+use gdnative::export::user_data::Once;
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {

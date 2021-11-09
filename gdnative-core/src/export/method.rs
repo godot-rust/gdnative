@@ -8,12 +8,11 @@ use std::fmt;
 use std::marker::PhantomData;
 
 use crate::core_types::{FromVariant, FromVariantError, Variant};
+use crate::export::class::NativeClass;
+use crate::export::ClassBuilder;
 use crate::log::Site;
-use crate::nativescript::class::{NativeClass, RefInstance};
 use crate::object::ownership::Shared;
-use crate::object::{Ref, TRef};
-
-use super::ClassBuilder;
+use crate::object::{Ref, RefInstance, TRef};
 
 /// Builder type used to register a method on a `NativeClass`.
 pub struct MethodBuilder<'a, C, F> {

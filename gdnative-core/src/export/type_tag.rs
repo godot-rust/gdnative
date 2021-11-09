@@ -3,7 +3,7 @@ use std::mem::{align_of, size_of};
 
 use indexmap::IndexSet;
 
-use crate::nativescript::NativeClass;
+use crate::export::NativeClass;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct Tag {

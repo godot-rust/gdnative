@@ -39,18 +39,18 @@ mod variant;
 /// Will expand to
 /// ```
 /// use gdnative::prelude::*;
-/// struct Foo{}
+/// struct Foo {}
 /// impl NativeClass for Foo {
 ///     type Base = gdnative::api::Reference;
-///     type UserData = gdnative::nativescript::user_data::LocalCellData<Self>;
+///     type UserData = gdnative::export::user_data::LocalCellData<Self>;
 ///     fn class_name() -> &'static str {
 ///         "Foo"
 ///     }
 /// }
-/// impl gdnative::nativescript::NativeClassMethods for Foo {
+/// impl gdnative::export::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
-///         use gdnative::nativescript::export::*;
-///         builder.build_method("foo", gdnative::macros::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
+///         use gdnative::export::*;
+///         builder.build_method("foo", gdnative::export::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
 ///     }
@@ -96,7 +96,7 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// A custom tag can also be provided using the `tag` option.
 ///
-/// See the `gdnative::nativescript::profiling` for a lower-level API to the profiler with
+/// See the `gdnative::export::profiler` for a lower-level API to the profiler with
 /// more control.
 ///
 /// # Examples
@@ -104,7 +104,7 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// ```ignore
 /// mod foo {
 ///     // This function will show up as `foo/bar` under Script Functions.
-///     #[gdnative::profiled]
+///     #[profiled]
 ///     fn bar() {
 ///         std::thread::sleep(std::time::Duration::from_millis(1));
 ///     }
@@ -113,7 +113,7 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```ignore
 /// // This function will show up as `my_custom_tag` under Script Functions.
-/// #[gdnative::profiled(tag = "my_custom_tag")]
+/// #[profiled(tag = "my_custom_tag")]
 /// fn baz() {
 ///     std::thread::sleep(std::time::Duration::from_millis(1));
 /// }
@@ -163,7 +163,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// use gdnative::prelude::*;
-/// use gdnative::nativescript::export::property::{RangeHint, FloatHint};
+/// use gdnative::export::hint::{RangeHint, FloatHint};
 ///
 /// #[derive(NativeClass)]
 /// #[inherit(Reference)]

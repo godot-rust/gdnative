@@ -272,10 +272,10 @@ fn init(handle: InitHandle) {
     test_vararray_return::register(handle);
 }
 
-fn terminate(_term_info: &gdnative::TerminateInfo) {
+fn terminate(_term_info: &gdnative::init::TerminateInfo) {
     gdnative::tasks::terminate_runtime();
 }
 
-gdnative::macros::godot_gdnative_init!();
-gdnative::macros::godot_nativescript_init!(init);
-gdnative::macros::godot_gdnative_terminate!(terminate);
+gdnative::init::godot_gdnative_init!();
+gdnative::init::godot_nativescript_init!(init);
+gdnative::init::godot_gdnative_terminate!(terminate);

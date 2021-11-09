@@ -1,4 +1,4 @@
-use gdnative::nativescript::export::property::hint::{ArrayHint, IntHint, RangeHint};
+use gdnative::export::hint::{ArrayHint, IntHint, RangeHint};
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]

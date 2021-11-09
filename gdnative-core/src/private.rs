@@ -33,10 +33,7 @@ pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
 
     ObjectMethodTable::get(get_api());
     ReferenceMethodTable::get(get_api());
-    #[cfg(feature = "nativescript")]
-    {
-        NativeScriptMethodTable::get(get_api());
-    }
+    NativeScriptMethodTable::get(get_api());
 
     true
 }
@@ -112,11 +109,9 @@ pub fn get_gdnative_library_sys() -> *mut sys::godot_object {
 /// This is intended to be an internal interface.
 #[inline]
 pub unsafe fn cleanup_internal_state() {
-    #[cfg(feature = "nativescript")]
-    {
-        crate::nativescript::type_tag::cleanup();
-        crate::nativescript::class_registry::cleanup();
-    }
+    crate::export::type_tag::cleanup();
+    crate::export::class_registry::cleanup();
+
     GODOT_API = None;
 }
 
@@ -226,8 +221,7 @@ make_method_table!(struct ReferenceMethodTable for Reference {
 });
 
 // Add this one here too. It's not easy to use this macro from the
-// nativescript module without making this macro public.
-#[cfg(feature = "nativescript")]
+// export module without making this macro public.
 make_method_table!(struct NativeScriptMethodTable for NativeScript {
     set_class_name,
     set_library,

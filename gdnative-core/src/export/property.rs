@@ -1,23 +1,21 @@
 //! Property registration.
 
+use accessor::{Getter, RawGetter, RawSetter, Setter};
+use invalid_accessor::{InvalidGetter, InvalidSetter};
+
 use crate::core_types::*;
-use crate::nativescript::{Instance, NativeClass};
+use crate::export::{ClassBuilder, NativeClass};
 use crate::object::ownership::Shared;
-use crate::object::GodotObject;
-use crate::object::Ref;
+use crate::object::{GodotObject, Instance, Ref};
 use crate::private::get_api;
 
-use super::ClassBuilder;
-
 mod accessor;
+mod invalid_accessor;
+
 pub mod hint;
 
-pub use hint::*;
-
-use accessor::{Getter, InvalidGetter, InvalidSetter, RawGetter, RawSetter, Setter};
-
 /// Trait for exportable types.
-pub trait Export: ToVariant {
+pub trait Export: crate::core_types::ToVariant {
     /// A type-specific hint type that is valid for the type being exported.
     ///
     /// If this type shows up as `NoHint`, a private, uninhabitable type indicating
@@ -73,7 +71,7 @@ pub struct PropertyBuilder<'a, C, T: Export, S = InvalidSetter<'a>, G = InvalidG
     getter: G,
     default: Option<T>,
     hint: Option<T::Hint>,
-    usage: Usage,
+    usage: PropertyUsage,
     class_builder: &'a ClassBuilder<C>,
 }
 
@@ -91,7 +89,7 @@ where
             getter: InvalidGetter::new(name),
             default: None,
             hint: None,
-            usage: Usage::DEFAULT,
+            usage: PropertyUsage::DEFAULT,
             class_builder,
         }
     }
@@ -283,14 +281,14 @@ where
 
     /// Sets a property usage.
     #[inline]
-    pub fn with_usage(mut self, usage: Usage) -> Self {
+    pub fn with_usage(mut self, usage: PropertyUsage) -> Self {
         self.usage = usage;
         self
     }
 }
 
 bitflags::bitflags! {
-    pub struct Usage: u32 {
+    pub struct PropertyUsage: u32 {
         const STORAGE = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_STORAGE as u32;
         const EDITOR = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_EDITOR as u32;
         const NETWORK = sys::godot_property_usage_flags_GODOT_PROPERTY_USAGE_NETWORK as u32;
@@ -315,7 +313,7 @@ bitflags::bitflags! {
     }
 }
 
-impl Usage {
+impl PropertyUsage {
     #[inline]
     pub fn to_sys(self) -> sys::godot_property_usage_flags {
         self.bits() as sys::godot_property_usage_flags
@@ -474,7 +472,7 @@ mod impl_export {
     }
 
     impl Export for VariantArray<Shared> {
-        type Hint = ArrayHint;
+        type Hint = hint::ArrayHint;
 
         #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {

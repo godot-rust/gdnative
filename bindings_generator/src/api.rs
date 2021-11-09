@@ -160,6 +160,11 @@ impl GodotClass {
     pub fn is_getter(&self, name: &str) -> bool {
         self.properties.iter().any(|p| p.getter == name)
     }
+
+    /// Whether there is a snake_case module containing related symbols (nested types in C++)
+    pub fn has_related_module(&self) -> bool {
+        !self.enums.is_empty()
+    }
 }
 
 pub type ConstantName = String;
@@ -406,9 +411,8 @@ impl Ty {
                 }
             }
             ty => {
-                let module = format_ident!("{}", module_name_from_class_name(ty));
                 let ty = format_ident!("{}", ty);
-                Ty::Object(syn::parse_quote! { crate::generated::#module::#ty })
+                Ty::Object(syn::parse_quote! { crate::generated::#ty })
             }
         }
     }
