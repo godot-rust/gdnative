@@ -12,7 +12,7 @@ use crate::private::get_api;
 /// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
 /// element types.
 ///
-/// `TypedArray` unifies all the different `Pool*Array` types exported by Godot. It can be used
+/// `PoolArray` unifies all the different `Pool*Array` types exported by Godot. It can be used
 /// in exported Rust methods as parameter and return types, as well as in exported properties.
 /// However, it is limited to the element types, for which a `Pool*Array` exists in GDScript,
 /// i.e. it cannot contain user-defined types.
@@ -25,7 +25,7 @@ use crate::private::get_api;
 /// When using this type, it's generally better to perform mutations in batch using `write`,
 /// or the `append` methods, as opposed to `push` or `set`, because the latter ones trigger
 /// CoW behavior each time they are called.
-pub struct TypedArray<T: Element> {
+pub struct PoolArray<T: Element> {
     inner: T::SysArray,
 }
 
@@ -36,7 +36,7 @@ pub type Read<'a, T> = Aligned<ReadGuard<'a, T>>;
 /// as opposed to every time with methods like `push`.
 pub type Write<'a, T> = Aligned<WriteGuard<'a, T>>;
 
-impl<T: Element> Drop for TypedArray<T> {
+impl<T: Element> Drop for PoolArray<T> {
     #[inline]
     fn drop(&mut self) {
         unsafe {
@@ -45,47 +45,47 @@ impl<T: Element> Drop for TypedArray<T> {
     }
 }
 
-impl<T: Element> Default for TypedArray<T> {
+impl<T: Element> Default for PoolArray<T> {
     #[inline]
     fn default() -> Self {
-        TypedArray::new()
+        PoolArray::new()
     }
 }
 
-impl<T: Element + fmt::Debug> fmt::Debug for TypedArray<T> {
+impl<T: Element + fmt::Debug> fmt::Debug for PoolArray<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.read().iter()).finish()
     }
 }
 
-impl<T: Element> Clone for TypedArray<T> {
+impl<T: Element> Clone for PoolArray<T> {
     #[inline]
     fn clone(&self) -> Self {
         self.new_ref()
     }
 }
 
-impl<T: Element> NewRef for TypedArray<T> {
+impl<T: Element> NewRef for PoolArray<T> {
     /// Creates a new reference to this reference-counted instance.
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {
             let mut inner = T::SysArray::default();
             (T::new_copy_fn(get_api()))(&mut inner, self.sys());
-            TypedArray { inner }
+            PoolArray { inner }
         }
     }
 }
 
-impl<T: Element> TypedArray<T> {
+impl<T: Element> PoolArray<T> {
     /// Creates an empty array.
     #[inline]
     pub fn new() -> Self {
         unsafe {
             let mut inner = T::SysArray::default();
             (T::new_fn(get_api()))(&mut inner);
-            TypedArray { inner }
+            PoolArray { inner }
         }
     }
 
@@ -95,11 +95,11 @@ impl<T: Element> TypedArray<T> {
         unsafe {
             let mut inner = T::SysArray::default();
             (T::new_with_array_fn(get_api()))(&mut inner, array.sys());
-            TypedArray { inner }
+            PoolArray { inner }
         }
     }
 
-    /// Creates a `TypedArray` moving elements from `src`.
+    /// Creates a `PoolArray` moving elements from `src`.
     #[inline]
     pub fn from_vec(mut src: Vec<T>) -> Self {
         let mut arr = Self::new();
@@ -261,12 +261,12 @@ impl<T: Element> TypedArray<T> {
     #[doc(hidden)]
     #[inline]
     pub fn from_sys(sys: T::SysArray) -> Self {
-        TypedArray { inner: sys }
+        PoolArray { inner: sys }
     }
 }
 
-impl<T: Element + Copy> TypedArray<T> {
-    /// Creates a new `TypedArray` by copying from `src`.
+impl<T: Element + Copy> PoolArray<T> {
+    /// Creates a new `PoolArray` by copying from `src`.
     ///
     /// # Panics
     ///
@@ -297,7 +297,7 @@ impl<T: Element + Copy> TypedArray<T> {
 // `FromIterator` and `Extend` implementations collect into `Vec` first, because Rust `Vec`s
 // are better at handling unknown lengths than the Godot arrays (`push` CoWs every time!)
 
-impl<T: Element> FromIterator<T> for TypedArray<T> {
+impl<T: Element> FromIterator<T> for PoolArray<T> {
     #[inline]
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let vec = iter.into_iter().collect::<Vec<_>>();
@@ -305,7 +305,7 @@ impl<T: Element> FromIterator<T> for TypedArray<T> {
     }
 }
 
-impl<T: Element> Extend<T> for TypedArray<T> {
+impl<T: Element> Extend<T> for PoolArray<T> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         let mut vec = iter.into_iter().collect::<Vec<_>>();
@@ -313,7 +313,7 @@ impl<T: Element> Extend<T> for TypedArray<T> {
     }
 }
 
-impl<T: Element + PartialEq> PartialEq for TypedArray<T> {
+impl<T: Element + PartialEq> PartialEq for PoolArray<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         if self.len() != other.len() {
@@ -326,7 +326,7 @@ impl<T: Element + PartialEq> PartialEq for TypedArray<T> {
         left.as_slice() == right.as_slice()
     }
 }
-impl<T: Element + Eq> Eq for TypedArray<T> {}
+impl<T: Element + Eq> Eq for PoolArray<T> {}
 
 /// RAII read guard.
 pub struct ReadGuard<'a, T: Element> {
@@ -437,7 +437,7 @@ impl<'a, T: Element> Drop for WriteGuard<'a, T> {
 }
 
 macros::decl_typed_array_element! {
-    /// Trait for element types that can be contained in `TypedArray`. This trait is sealed
+    /// Trait for element types that can be contained in `PoolArray`. This trait is sealed
     /// and has no public interface.
     pub trait Element: private::Sealed { .. }
 }
@@ -495,7 +495,7 @@ mod serialize {
     use std::fmt::Formatter;
     use std::marker::PhantomData;
 
-    impl<T: Serialize + Element> Serialize for TypedArray<T> {
+    impl<T: Serialize + Element> Serialize for PoolArray<T> {
         #[inline]
         fn serialize<S>(&self, ser: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
         where
@@ -510,7 +510,7 @@ mod serialize {
         }
     }
 
-    impl<'de, T: Deserialize<'de> + Element> Deserialize<'de> for TypedArray<T> {
+    impl<'de, T: Deserialize<'de> + Element> Deserialize<'de> for PoolArray<T> {
         #[inline]
         fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
         where
@@ -518,7 +518,7 @@ mod serialize {
         {
             struct TypedArrayVisitor<T>(PhantomData<T>);
             impl<'de, T: Deserialize<'de> + Element> Visitor<'de> for TypedArrayVisitor<T> {
-                type Value = TypedArray<T>;
+                type Value = PoolArray<T>;
 
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
                     formatter.write_str(std::any::type_name::<Self::Value>())

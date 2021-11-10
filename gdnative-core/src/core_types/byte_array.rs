@@ -1,7 +1,7 @@
-use crate::core_types::TypedArray;
+use crate::core_types::PoolArray;
 
 /// A reference-counted vector of `u8` that uses Godot's pool allocator.
-pub type ByteArray = TypedArray<u8>;
+pub type ByteArray = PoolArray<u8>;
 
 godot_test!(
     test_byte_array_access {

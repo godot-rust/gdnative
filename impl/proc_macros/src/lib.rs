@@ -8,18 +8,18 @@ extern crate quote;
 use proc_macro::TokenStream;
 
 mod doc;
-mod typed_array_element;
+mod pool_array_element;
 
 #[proc_macro]
 pub fn impl_typed_array_element(input: TokenStream) -> TokenStream {
-    self::typed_array_element::impl_element(input)
+    self::pool_array_element::impl_element(input)
         .unwrap_or_else(to_compile_errors)
         .into()
 }
 
 #[proc_macro]
 pub fn decl_typed_array_element(input: TokenStream) -> TokenStream {
-    self::typed_array_element::decl_element(input)
+    self::pool_array_element::decl_element(input)
         .unwrap_or_else(to_compile_errors)
         .into()
 }
