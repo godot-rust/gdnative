@@ -9,7 +9,7 @@ use crate::object::bounds::{
     AssumeSafeLifetime, LifetimeConstraint, RefImplBound, SafeAsRaw, SafeDeref,
 };
 use crate::object::memory::{ManuallyManaged, RefCounted};
-use crate::object::ownership::{NonUniqueThreadAccess, Shared, ThreadAccess, ThreadLocal, Unique};
+use crate::object::ownership::{NonUniqueOwnership, Ownership, Shared, ThreadLocal, Unique};
 use crate::object::{GodotObject, Instanciable, QueueFree, RawObject, Ref, TRef};
 use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 
@@ -20,8 +20,8 @@ use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 ///
 /// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
-pub struct Instance<T: NativeClass, Access: ThreadAccess> {
-    owner: Ref<T::Base, Access>,
+pub struct Instance<T: NativeClass, Own: Ownership> {
+    owner: Ref<T::Base, Own>,
     script: T::UserData,
 }
 
@@ -30,8 +30,8 @@ pub struct Instance<T: NativeClass, Access: ThreadAccess> {
 ///
 /// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
-pub struct TInstance<'a, T: NativeClass, Access: ThreadAccess> {
-    owner: TRef<'a, T::Base, Access>,
+pub struct TInstance<'a, T: NativeClass, Own: Ownership> {
+    owner: TRef<'a, T::Base, Own>,
     script: T::UserData,
 }
 
@@ -199,10 +199,10 @@ impl<T: NativeClass> Instance<T, Unique> {
     }
 }
 
-impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access> {
+impl<T: NativeClass, Own: Ownership> Instance<T, Own> {
     /// Returns the base object, dropping the script wrapper.
     #[inline]
-    pub fn into_base(self) -> Ref<T::Base, Access> {
+    pub fn into_base(self) -> Ref<T::Base, Own> {
         self.owner
     }
 
@@ -214,13 +214,13 @@ impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access> {
 
     /// Returns the base object and the script wrapper.
     #[inline]
-    pub fn decouple(self) -> (Ref<T::Base, Access>, T::UserData) {
+    pub fn decouple(self) -> (Ref<T::Base, Own>, T::UserData) {
         (self.owner, self.script)
     }
 
     /// Returns a reference to the base object.
     #[inline]
-    pub fn base(&self) -> &Ref<T::Base, Access> {
+    pub fn base(&self) -> &Ref<T::Base, Own> {
         &self.owner
     }
 
@@ -231,18 +231,18 @@ impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access> {
     }
 }
 
-impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access>
+impl<T: NativeClass, Own: Ownership> Instance<T, Own>
 where
-    RefImplBound: SafeAsRaw<<T::Base as GodotObject>::RefKind, Access>,
+    RefImplBound: SafeAsRaw<<T::Base as GodotObject>::RefKind, Own>,
 {
-    /// Try to downcast `Ref<T::Base, Access>` to `Instance<T>`, without changing the reference
+    /// Try to downcast `Ref<T::Base, Own>` to `Instance<T>`, without changing the reference
     /// count if reference-counted.
     ///
     /// # Errors
     ///
     /// Returns the original `Ref` if the cast failed.
     #[inline]
-    pub fn try_from_base(owner: Ref<T::Base, Access>) -> Result<Self, Ref<T::Base, Access>> {
+    pub fn try_from_base(owner: Ref<T::Base, Own>) -> Result<Self, Ref<T::Base, Own>> {
         let user_data = match try_get_user_data_ptr::<T>(owner.as_raw()) {
             Some(user_data) => user_data,
             None => return Err(owner),
@@ -253,17 +253,17 @@ where
         Ok(Instance { owner, script })
     }
 
-    /// Try to downcast `Ref<T::Base, Access>` to `Instance<T>`, without changing the reference
+    /// Try to downcast `Ref<T::Base, Own>` to `Instance<T>`, without changing the reference
     /// count if reference-counted. Shorthand for `Self::try_from_base().ok()`.
     #[inline]
-    pub fn from_base(owner: Ref<T::Base, Access>) -> Option<Self> {
+    pub fn from_base(owner: Ref<T::Base, Own>) -> Option<Self> {
         Self::try_from_base(owner).ok()
     }
 }
 
-impl<T: NativeClass, Access: ThreadAccess> Instance<T, Access>
+impl<T: NativeClass, Own: Ownership> Instance<T, Own>
 where
-    RefImplBound: SafeDeref<<T::Base as GodotObject>::RefKind, Access>,
+    RefImplBound: SafeDeref<<T::Base as GodotObject>::RefKind, Own>,
 {
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
@@ -271,7 +271,7 @@ where
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
-        F: FnOnce(&T, TRef<'_, T::Base, Access>) -> U,
+        F: FnOnce(&T, TRef<'_, T::Base, Own>) -> U,
     {
         self.script.map(|script| op(script, self.owner.as_ref()))
     }
@@ -282,7 +282,7 @@ where
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
-        F: FnOnce(&mut T, TRef<'_, T::Base, Access>) -> U,
+        F: FnOnce(&mut T, TRef<'_, T::Base, Own>) -> U,
     {
         self.script
             .map_mut(|script| op(script, self.owner.as_ref()))
@@ -294,7 +294,7 @@ where
     pub fn map_owned<F, U>(&self, op: F) -> Result<U, <T::UserData as MapOwned>::Err>
     where
         T::UserData: MapOwned,
-        F: FnOnce(T, TRef<'_, T::Base, Access>) -> U,
+        F: FnOnce(T, TRef<'_, T::Base, Own>) -> U,
     {
         self.script
             .map_owned(|script| op(script, self.owner.as_ref()))
@@ -434,10 +434,10 @@ where
     }
 }
 
-impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access> {
+impl<'a, T: NativeClass, Own: Ownership> TInstance<'a, T, Own> {
     /// Returns a reference to the base object with the same lifetime.
     #[inline]
-    pub fn base(&self) -> TRef<'a, T::Base, Access> {
+    pub fn base(&self) -> TRef<'a, T::Base, Own> {
         self.owner
     }
 
@@ -447,9 +447,9 @@ impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access> {
         &self.script
     }
 
-    /// Try to downcast `TRef<'a, T::Base, Access>` to `TInstance<T>`.
+    /// Try to downcast `TRef<'a, T::Base, Own>` to `TInstance<T>`.
     #[inline]
-    pub fn try_from_base(owner: TRef<'a, T::Base, Access>) -> Option<Self> {
+    pub fn try_from_base(owner: TRef<'a, T::Base, Own>) -> Option<Self> {
         let user_data = try_get_user_data_ptr::<T>(owner.as_raw())?;
         unsafe { Some(Self::from_raw_unchecked(owner, user_data)) }
     }
@@ -458,7 +458,7 @@ impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access> {
     #[doc(hidden)]
     #[inline]
     pub unsafe fn from_raw_unchecked(
-        owner: TRef<'a, T::Base, Access>,
+        owner: TRef<'a, T::Base, Own>,
         user_data: *mut libc::c_void,
     ) -> Self {
         let script = T::UserData::clone_from_user_data_unchecked(user_data);
@@ -466,13 +466,13 @@ impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access> {
     }
 }
 
-impl<'a, T: NativeClass, Access: NonUniqueThreadAccess> TInstance<'a, T, Access> {
+impl<'a, T: NativeClass, Own: NonUniqueOwnership> TInstance<'a, T, Own> {
     /// Persists this into a persistent `Instance` with the same thread access, without cloning
     /// the userdata wrapper.
     ///
     /// This is only available for non-`Unique` accesses.
     #[inline]
-    pub fn claim(self) -> Instance<T, Access> {
+    pub fn claim(self) -> Instance<T, Own> {
         Instance {
             owner: self.owner.claim(),
             script: self.script,
@@ -481,7 +481,7 @@ impl<'a, T: NativeClass, Access: NonUniqueThreadAccess> TInstance<'a, T, Access>
 }
 
 /// Methods for instances with reference-counted base classes.
-impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access>
+impl<'a, T: NativeClass, Own: Ownership> TInstance<'a, T, Own>
 where
     T::Base: GodotObject,
 {
@@ -491,7 +491,7 @@ where
     pub fn map<F, U>(&self, op: F) -> Result<U, <T::UserData as Map>::Err>
     where
         T::UserData: Map,
-        F: FnOnce(&T, TRef<'_, T::Base, Access>) -> U,
+        F: FnOnce(&T, TRef<'_, T::Base, Own>) -> U,
     {
         self.script.map(|script| op(script, self.owner))
     }
@@ -502,7 +502,7 @@ where
     pub fn map_mut<F, U>(&self, op: F) -> Result<U, <T::UserData as MapMut>::Err>
     where
         T::UserData: MapMut,
-        F: FnOnce(&mut T, TRef<'_, T::Base, Access>) -> U,
+        F: FnOnce(&mut T, TRef<'_, T::Base, Own>) -> U,
     {
         self.script.map_mut(|script| op(script, self.owner))
     }
@@ -513,16 +513,16 @@ where
     pub fn map_owned<F, U>(&self, op: F) -> Result<U, <T::UserData as MapOwned>::Err>
     where
         T::UserData: MapOwned,
-        F: FnOnce(T, TRef<'_, T::Base, Access>) -> U,
+        F: FnOnce(T, TRef<'_, T::Base, Own>) -> U,
     {
         self.script.map_owned(|script| op(script, self.owner))
     }
 }
 
-impl<T, Access: ThreadAccess> Clone for Instance<T, Access>
+impl<T, Own: Ownership> Clone for Instance<T, Own>
 where
     T: NativeClass,
-    Ref<T::Base, Access>: Clone,
+    Ref<T::Base, Own>: Clone,
 {
     #[inline]
     fn clone(&self) -> Self {
@@ -533,7 +533,7 @@ where
     }
 }
 
-impl<'a, T, Access: ThreadAccess> Clone for TInstance<'a, T, Access>
+impl<'a, T, Own: Ownership> Clone for TInstance<'a, T, Own>
 where
     T: NativeClass,
 {
@@ -546,10 +546,10 @@ where
     }
 }
 
-impl<T, Access: ThreadAccess> ToVariant for Instance<T, Access>
+impl<T, Own: Ownership> ToVariant for Instance<T, Own>
 where
     T: NativeClass,
-    Ref<T::Base, Access>: ToVariant,
+    Ref<T::Base, Own>: ToVariant,
 {
     #[inline]
     fn to_variant(&self) -> Variant {

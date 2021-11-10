@@ -42,7 +42,7 @@ pub mod user_data {
 // Important: the referred-to type (right-hand-side) should point into the full path, not the prelude re-export.
 
 #[deprecated(since = "0.10.0", note = "Confusing name; use TInstance instead.")]
-pub type RefInstance<'a, T, Access> = crate::object::TInstance<'a, T, Access>;
+pub type RefInstance<'a, T, Own> = crate::object::TInstance<'a, T, Own>;
 
 #[deprecated(
     since = "0.10.0",

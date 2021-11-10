@@ -30,15 +30,15 @@ use std::fmt;
 /// safe.
 ///
 /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
-pub struct VariantArray<Access: ThreadAccess = Shared> {
+pub struct VariantArray<Own: Ownership = Shared> {
     sys: sys::godot_array,
 
     /// Marker preventing the compiler from incorrectly deriving `Send` and `Sync`.
-    _marker: PhantomData<Access>,
+    _marker: PhantomData<Own>,
 }
 
 /// Operations allowed on all arrays at any point in time.
-impl<Access: ThreadAccess> VariantArray<Access> {
+impl<Own: Ownership> VariantArray<Own> {
     /// Sets the value of the element at the given offset.
     #[inline]
     pub fn set<T: OwnedToVariant>(&self, idx: i32, val: T) {
@@ -177,7 +177,7 @@ impl<Access: ThreadAccess> VariantArray<Access> {
     /// Modifying the same underlying collection while observing the safety assumptions will
     /// not violate memory safely, but may lead to surprising behavior in the iterator.
     #[inline]
-    pub fn iter(&self) -> Iter<'_, Access> {
+    pub fn iter(&self) -> Iter<'_, Own> {
         self.into_iter()
     }
 
@@ -217,7 +217,7 @@ impl<Access: ThreadAccess> VariantArray<Access> {
         }
     }
 
-    unsafe fn cast_access<A: ThreadAccess>(self) -> VariantArray<A> {
+    unsafe fn cast_access<A: Ownership>(self) -> VariantArray<A> {
         let sys = self.sys;
         std::mem::forget(self);
         VariantArray::from_sys(sys)
@@ -234,7 +234,7 @@ impl<Access: ThreadAccess> VariantArray<Access> {
 }
 
 /// Operations allowed on Dictionaries that can only be referenced to from the current thread.
-impl<Access: LocalThreadAccess> VariantArray<Access> {
+impl<Own: LocalThreadOwnership> VariantArray<Own> {
     /// Clears the array, resizing to 0.
     #[inline]
     pub fn clear(&self) {
@@ -297,7 +297,7 @@ impl<Access: LocalThreadAccess> VariantArray<Access> {
 }
 
 /// Operations allowed on non-unique arrays.
-impl<Access: NonUniqueThreadAccess> VariantArray<Access> {
+impl<Own: NonUniqueOwnership> VariantArray<Own> {
     /// Assume that this is the only reference to this array, on which
     /// operations that change the container size can be safely performed.
     ///
@@ -378,7 +378,7 @@ impl Default for VariantArray<ThreadLocal> {
     }
 }
 
-impl<Access: NonUniqueThreadAccess> NewRef for VariantArray<Access> {
+impl<Own: NonUniqueOwnership> NewRef for VariantArray<Own> {
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {
@@ -389,14 +389,14 @@ impl<Access: NonUniqueThreadAccess> NewRef for VariantArray<Access> {
     }
 }
 
-impl<Access: ThreadAccess> Drop for VariantArray<Access> {
+impl<Own: Ownership> Drop for VariantArray<Own> {
     #[inline]
     fn drop(&mut self) {
         unsafe { (get_api().godot_array_destroy)(self.sys_mut()) }
     }
 }
 
-impl<Access: ThreadAccess> fmt::Debug for VariantArray<Access> {
+impl<Own: Ownership> fmt::Debug for VariantArray<Own> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
@@ -404,12 +404,12 @@ impl<Access: ThreadAccess> fmt::Debug for VariantArray<Access> {
 }
 
 // #[derive(Debug)]
-pub struct Iter<'a, Access: ThreadAccess> {
-    arr: &'a VariantArray<Access>,
+pub struct Iter<'a, Own: Ownership> {
+    arr: &'a VariantArray<Own>,
     range: std::ops::Range<i32>,
 }
 
-impl<'a, Access: ThreadAccess> Iterator for Iter<'a, Access> {
+impl<'a, Own: Ownership> Iterator for Iter<'a, Own> {
     type Item = Variant;
 
     #[inline]
@@ -444,9 +444,9 @@ impl<'a, Access: ThreadAccess> Iterator for Iter<'a, Access> {
     }
 }
 
-impl<'a, Access: ThreadAccess> IntoIterator for &'a VariantArray<Access> {
+impl<'a, Own: Ownership> IntoIterator for &'a VariantArray<Own> {
     type Item = Variant;
-    type IntoIter = Iter<'a, Access>;
+    type IntoIter = Iter<'a, Own>;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         Iter {
@@ -518,7 +518,7 @@ impl<T: ToVariant> FromIterator<T> for VariantArray<Unique> {
     }
 }
 
-impl<T: ToVariant, Access: LocalThreadAccess> Extend<T> for VariantArray<Access> {
+impl<T: ToVariant, Own: LocalThreadOwnership> Extend<T> for VariantArray<Own> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for elem in iter {

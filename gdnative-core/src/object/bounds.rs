@@ -217,17 +217,17 @@ impl<'a, 'r: 'a> LifetimeConstraint<RefCounted> for AssumeSafeLifetime<'a, 'r> {
 
 /// Trait for combinations of `RefKind` and `ThreadAccess` that can be dereferenced safely.
 /// This is an internal interface.
-pub unsafe trait SafeDeref<Kind: RefKind, Access: ThreadAccess> {
+pub unsafe trait SafeDeref<Kind: RefKind, Own: Ownership> {
     /// Returns a safe reference to the underlying object.
     #[doc(hidden)]
-    fn impl_as_ref<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Access>) -> TRef<'_, T, Access>;
+    fn impl_as_ref<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Own>) -> TRef<'_, T, Own>;
 }
 
 /// Trait for persistent `Ref`s that point to valid objects. This is an internal interface.
-pub unsafe trait SafeAsRaw<Kind: RefKind, Access: ThreadAccess> {
+pub unsafe trait SafeAsRaw<Kind: RefKind, Own: Ownership> {
     /// Returns a raw reference to the underlying object.
     #[doc(hidden)]
-    fn impl_as_raw<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Access>) -> &RawObject<T>;
+    fn impl_as_raw<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Own>) -> &RawObject<T>;
 }
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -247,11 +247,9 @@ unsafe impl SafeDeref<ManuallyManaged, Unique> for RefImplBound {
     }
 }
 
-unsafe impl<Access: LocalThreadAccess> SafeDeref<RefCounted, Access> for RefImplBound {
+unsafe impl<Own: LocalThreadOwnership> SafeDeref<RefCounted, Own> for RefImplBound {
     #[inline]
-    fn impl_as_ref<T: GodotObject<RefKind = RefCounted>>(
-        this: &Ref<T, Access>,
-    ) -> TRef<'_, T, Access> {
+    fn impl_as_ref<T: GodotObject<RefKind = RefCounted>>(this: &Ref<T, Own>) -> TRef<'_, T, Own> {
         unsafe { this.assume_safe_unchecked() }
     }
 }
@@ -265,9 +263,9 @@ unsafe impl SafeAsRaw<ManuallyManaged, Unique> for RefImplBound {
     }
 }
 
-unsafe impl<Access: ThreadAccess> SafeAsRaw<RefCounted, Access> for RefImplBound {
+unsafe impl<Own: Ownership> SafeAsRaw<RefCounted, Own> for RefImplBound {
     #[inline]
-    fn impl_as_raw<T: GodotObject<RefKind = RefCounted>>(this: &Ref<T, Access>) -> &RawObject<T> {
+    fn impl_as_raw<T: GodotObject<RefKind = RefCounted>>(this: &Ref<T, Own>) -> &RawObject<T> {
         unsafe { this.as_raw_unchecked() }
     }
 }

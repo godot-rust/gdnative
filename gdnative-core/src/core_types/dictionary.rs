@@ -20,21 +20,21 @@ use crate::object::ownership::*;
 ///
 /// This is a reference-counted collection with "interior mutability" in Rust parlance.
 /// To enforce that the official [thread-safety guidelines][thread-safety] are
-/// followed this type uses the *typestate* pattern. The typestate `Access` tracks
+/// followed this type uses the *typestate* pattern. The typestate `Ownership` tracks
 /// whether there is thread-local or unique access (where pretty much all operations are safe)
 /// or whether the value might be "shared", in which case not all operations are
 /// safe.
 ///
 /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
-pub struct Dictionary<Access: ThreadAccess = Shared> {
+pub struct Dictionary<Own: Ownership = Shared> {
     sys: sys::godot_dictionary,
 
     /// Marker preventing the compiler from incorrectly deriving `Send` and `Sync`.
-    _marker: PhantomData<Access>,
+    _marker: PhantomData<Own>,
 }
 
 /// Operations allowed on all Dictionaries at any point in time.
-impl<Access: ThreadAccess> Dictionary<Access> {
+impl<Own: Ownership> Dictionary<Own> {
     /// Returns `true` if the `Dictionary` contains no elements.
     #[inline]
     pub fn is_empty(&self) -> bool {
@@ -58,7 +58,7 @@ impl<Access: ThreadAccess> Dictionary<Access> {
 
     /// Returns true if the `Dictionary` has all of the keys in the given array.
     #[inline]
-    pub fn contains_all<ArrAccess: ThreadAccess>(&self, keys: &VariantArray<ArrAccess>) -> bool {
+    pub fn contains_all<ArrayOws: Ownership>(&self, keys: &VariantArray<ArrayOws>) -> bool {
         unsafe { (get_api().godot_dictionary_has_all)(self.sys(), keys.sys()) }
     }
 
@@ -200,7 +200,7 @@ impl<Access: ThreadAccess> Dictionary<Access> {
     /// Modifying the same underlying collection while observing the safety assumptions will
     /// not violate memory safely, but may lead to surprising behavior in the iterator.
     #[inline]
-    pub fn iter(&self) -> Iter<Access> {
+    pub fn iter(&self) -> Iter<Own> {
         Iter::new(self)
     }
 
@@ -238,7 +238,7 @@ impl<Access: ThreadAccess> Dictionary<Access> {
         }
     }
 
-    unsafe fn cast_access<A: ThreadAccess>(self) -> Dictionary<A> {
+    unsafe fn cast_access<A: Ownership>(self) -> Dictionary<A> {
         let sys = self.sys;
         std::mem::forget(self);
         Dictionary::from_sys(sys)
@@ -264,7 +264,7 @@ impl Dictionary<ThreadLocal> {
 }
 
 /// Operations allowed on Dictionaries that are not unique.
-impl<Access: NonUniqueThreadAccess> Dictionary<Access> {
+impl<Own: NonUniqueOwnership> Dictionary<Own> {
     /// Assume that this is the only reference to this dictionary, on which
     /// operations that change the container size can be safely performed.
     ///
@@ -282,7 +282,7 @@ impl<Access: NonUniqueThreadAccess> Dictionary<Access> {
 }
 
 /// Operations allowed on Dictionaries that can only be referenced to from the current thread.
-impl<Access: LocalThreadAccess> Dictionary<Access> {
+impl<Own: LocalThreadOwnership> Dictionary<Own> {
     #[inline]
     /// Inserts or updates the value of the element corresponding to the key.
     pub fn insert<K, V>(&self, key: K, val: V)
@@ -340,7 +340,7 @@ impl Dictionary<Unique> {
     }
 }
 
-impl<Access: ThreadAccess> Drop for Dictionary<Access> {
+impl<Own: Ownership> Drop for Dictionary<Own> {
     #[inline]
     fn drop(&mut self) {
         unsafe { (get_api().godot_dictionary_destroy)(self.sys_mut()) }
@@ -368,7 +368,7 @@ impl Default for Dictionary<ThreadLocal> {
     }
 }
 
-impl<Access: NonUniqueThreadAccess> NewRef for Dictionary<Access> {
+impl<Own: NonUniqueOwnership> NewRef for Dictionary<Own> {
     #[inline]
     fn new_ref(&self) -> Self {
         unsafe {
@@ -393,15 +393,15 @@ impl From<Dictionary<Unique>> for Dictionary<ThreadLocal> {
     }
 }
 
-impl<Access: ThreadAccess> fmt::Debug for Dictionary<Access> {
+impl<Own: Ownership> fmt::Debug for Dictionary<Own> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_json().to_string().fmt(f)
     }
 }
 
-unsafe fn iter_next<Access: ThreadAccess>(
-    dic: &Dictionary<Access>,
+unsafe fn iter_next<Own: Ownership>(
+    dic: &Dictionary<Own>,
     last_key: &mut Option<Variant>,
 ) -> Option<(Variant, Variant)> {
     let last_ptr = last_key.as_ref().map_or(std::ptr::null(), Variant::sys);
@@ -421,14 +421,14 @@ unsafe fn iter_next<Access: ThreadAccess>(
 ///
 /// This struct is created by the `iter` method on `Dictionary<Unique>`.
 #[derive(Debug)]
-pub struct Iter<'a, Access: ThreadAccess> {
-    dic: &'a Dictionary<Access>,
+pub struct Iter<'a, Own: Ownership> {
+    dic: &'a Dictionary<Own>,
     last_key: Option<Variant>,
 }
 
-impl<'a, Access: ThreadAccess> Iter<'a, Access> {
+impl<'a, Own: Ownership> Iter<'a, Own> {
     /// Create an Iterator from a unique Dictionary.
-    fn new(dic: &'a Dictionary<Access>) -> Self {
+    fn new(dic: &'a Dictionary<Own>) -> Self {
         Iter {
             dic,
             last_key: None,
@@ -436,7 +436,7 @@ impl<'a, Access: ThreadAccess> Iter<'a, Access> {
     }
 }
 
-impl<'a, Access: ThreadAccess> Iterator for Iter<'a, Access> {
+impl<'a, Own: Ownership> Iterator for Iter<'a, Own> {
     type Item = (Variant, Variant);
 
     #[inline]
@@ -451,9 +451,9 @@ impl<'a, Access: ThreadAccess> Iterator for Iter<'a, Access> {
     }
 }
 
-impl<'a, Access: ThreadAccess> IntoIterator for &'a Dictionary<Access> {
+impl<'a, Own: Ownership> IntoIterator for &'a Dictionary<Own> {
     type Item = (Variant, Variant);
-    type IntoIter = Iter<'a, Access>;
+    type IntoIter = Iter<'a, Own>;
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -517,7 +517,7 @@ where
     }
 }
 
-impl<K, V, Access: LocalThreadAccess> Extend<(K, V)> for Dictionary<Access>
+impl<K, V, Own: LocalThreadOwnership> Extend<(K, V)> for Dictionary<Own>
 where
     K: ToVariantEq + OwnedToVariant,
     V: OwnedToVariant,
