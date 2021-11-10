@@ -933,13 +933,13 @@ impl<'a, T: GodotObject, Access: ThreadAccess> TRef<'a, T, Access> {
         TRef::new(self.obj.upcast())
     }
 
-    /// Convenience method to downcast to `RefInstance` where `self` is the base object.
+    /// Convenience method to downcast to `TInstance` where `self` is the base object.
     #[inline]
-    pub fn cast_instance<C>(self) -> Option<RefInstance<'a, C, Access>>
+    pub fn cast_instance<C>(self) -> Option<TInstance<'a, C, Access>>
     where
         C: NativeClass<Base = T>,
     {
-        RefInstance::try_from_base(self)
+        TInstance::try_from_base(self)
     }
 }
 

@@ -16,7 +16,7 @@ use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 /// A persistent reference to a GodotObject with a rust NativeClass attached.
 ///
 /// `Instance`s can be worked on directly using `map` and `map_mut` if the base object is
-/// reference-counted. Otherwise, use `assume_safe` to obtain a temporary `RefInstance`.
+/// reference-counted. Otherwise, use `assume_safe` to obtain a temporary `TInstance`.
 ///
 /// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
@@ -30,7 +30,7 @@ pub struct Instance<T: NativeClass, Access: ThreadAccess> {
 ///
 /// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
-pub struct RefInstance<'a, T: NativeClass, Access: ThreadAccess> {
+pub struct TInstance<'a, T: NativeClass, Access: ThreadAccess> {
     owner: TRef<'a, T::Base, Access>,
     script: T::UserData,
 }
@@ -312,11 +312,11 @@ impl<T: NativeClass> Instance<T, Shared> {
     /// It's safe to call `assume_safe` only if the constraints of `Ref::assume_safe`
     /// are satisfied for the base object.
     #[inline]
-    pub unsafe fn assume_safe<'a, 'r>(&'r self) -> RefInstance<'a, T, Shared>
+    pub unsafe fn assume_safe<'a, 'r>(&'r self) -> TInstance<'a, T, Shared>
     where
         AssumeSafeLifetime<'a, 'r>: LifetimeConstraint<<T::Base as GodotObject>::RefKind>,
     {
-        RefInstance {
+        TInstance {
             owner: self.owner.assume_safe(),
             script: self.script.clone(),
         }
@@ -434,7 +434,7 @@ where
     }
 }
 
-impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access> {
+impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access> {
     /// Returns a reference to the base object with the same lifetime.
     #[inline]
     pub fn base(&self) -> TRef<'a, T::Base, Access> {
@@ -447,7 +447,7 @@ impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access> {
         &self.script
     }
 
-    /// Try to downcast `TRef<'a, T::Base, Access>` to `RefInstance<T>`.
+    /// Try to downcast `TRef<'a, T::Base, Access>` to `TInstance<T>`.
     #[inline]
     pub fn try_from_base(owner: TRef<'a, T::Base, Access>) -> Option<Self> {
         let user_data = try_get_user_data_ptr::<T>(owner.as_raw())?;
@@ -462,11 +462,11 @@ impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access> {
         user_data: *mut libc::c_void,
     ) -> Self {
         let script = T::UserData::clone_from_user_data_unchecked(user_data);
-        RefInstance { owner, script }
+        TInstance { owner, script }
     }
 }
 
-impl<'a, T: NativeClass, Access: NonUniqueThreadAccess> RefInstance<'a, T, Access> {
+impl<'a, T: NativeClass, Access: NonUniqueThreadAccess> TInstance<'a, T, Access> {
     /// Persists this into a persistent `Instance` with the same thread access, without cloning
     /// the userdata wrapper.
     ///
@@ -481,7 +481,7 @@ impl<'a, T: NativeClass, Access: NonUniqueThreadAccess> RefInstance<'a, T, Acces
 }
 
 /// Methods for instances with reference-counted base classes.
-impl<'a, T: NativeClass, Access: ThreadAccess> RefInstance<'a, T, Access>
+impl<'a, T: NativeClass, Access: ThreadAccess> TInstance<'a, T, Access>
 where
     T::Base: GodotObject,
 {
@@ -533,13 +533,13 @@ where
     }
 }
 
-impl<'a, T, Access: ThreadAccess> Clone for RefInstance<'a, T, Access>
+impl<'a, T, Access: ThreadAccess> Clone for TInstance<'a, T, Access>
 where
     T: NativeClass,
 {
     #[inline]
     fn clone(&self) -> Self {
-        RefInstance {
+        TInstance {
             owner: self.owner,
             script: self.script.clone(),
         }

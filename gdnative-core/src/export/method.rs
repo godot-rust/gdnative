@@ -12,7 +12,7 @@ use crate::export::class::NativeClass;
 use crate::export::ClassBuilder;
 use crate::log::Site;
 use crate::object::ownership::Shared;
-use crate::object::{Ref, RefInstance, TRef};
+use crate::object::{Ref, TInstance, TRef};
 
 /// Builder type used to register a method on a `NativeClass`.
 pub struct MethodBuilder<'a, C, F> {
@@ -140,7 +140,7 @@ pub struct ScriptMethod<'l> {
 /// Safe low-level trait for stateful, variadic methods that can be called on a native script type.
 pub trait Method<C: NativeClass>: Send + Sync + 'static {
     /// Calls the method on `this` with `args`.
-    fn call(&self, this: RefInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant;
+    fn call(&self, this: TInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant;
 
     /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
     ///
@@ -157,7 +157,7 @@ struct Stateless<F> {
 }
 
 impl<C: NativeClass, F: Method<C> + Copy + Default> Method<C> for Stateless<F> {
-    fn call(&self, this: RefInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant {
         let f = F::default();
         f.call(this, args)
     }
@@ -182,7 +182,7 @@ impl<F> StaticArgs<F> {
 /// "static method".
 pub trait StaticArgsMethod<C: NativeClass>: Send + Sync + 'static {
     type Args: FromVarargs;
-    fn call(&self, this: RefInstance<'_, C, Shared>, args: Self::Args) -> Variant;
+    fn call(&self, this: TInstance<'_, C, Shared>, args: Self::Args) -> Variant;
 
     /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
     ///
@@ -195,7 +195,7 @@ pub trait StaticArgsMethod<C: NativeClass>: Send + Sync + 'static {
 
 impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
     #[inline]
-    fn call(&self, this: RefInstance<'_, C, Shared>, mut args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, C, Shared>, mut args: Varargs<'_>) -> Variant {
         match args.read_many::<F::Args>() {
             Ok(parsed) => {
                 if let Err(err) = args.done() {
@@ -583,7 +583,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
 
         let this: Ref<C::Base, Shared> = Ref::from_sys(this);
         let this: TRef<'_, C::Base, _> = this.assume_safe_unchecked();
-        let this: RefInstance<'_, C, _> = RefInstance::from_raw_unchecked(this, user_data);
+        let this: TInstance<'_, C, _> = TInstance::from_raw_unchecked(this, user_data);
 
         let args = Varargs::from_sys(num_args, args);
 
