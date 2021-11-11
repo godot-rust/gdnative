@@ -1,3 +1,4 @@
+use crate::core_types::Variant;
 use crate::object::NewRef;
 use crate::private::get_api;
 use crate::sys;
@@ -199,6 +200,41 @@ impl GodotString {
     #[inline]
     pub fn find_last(&self, what: &GodotString) -> i32 {
         unsafe { (get_api().godot_string_find_last)(&self.0, what.0) }
+    }
+
+    /// Formats the string by replacing all occurrences of a key in the string with the
+    /// corresponding value. The method can handle arrays or dictionaries for the key/value pairs.
+    ///
+    /// Arrays can be used as key, index, or mixed style (see below examples). Order only matters
+    /// when the index or mixed style of Array is used.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use gdnative::prelude::*;
+    /// // Array values, index style
+    /// let template = GodotString::from("{0} {1}");
+    /// let data = VariantArray::new();
+    /// data.push("foo");
+    /// data.push("bar");
+    ///
+    /// let formatted = template.format(&data.into_shared().to_variant());
+    /// godot_print!("{}", formatted); // "foo bar"
+    /// ```
+    ///
+    /// ```no_run
+    /// # use gdnative::prelude::*;
+    /// // Dictionary values
+    /// let template = GodotString::from("foo {bar}");
+    /// let data = Dictionary::new();
+    /// data.insert("bar", "baz");
+    ///
+    /// let formatted = template.format(&data.into_shared().to_variant());
+    /// godot_print!("{}", formatted); // "foo baz"
+    /// ```
+    #[inline]
+    pub fn format(&self, values: &Variant) -> Self {
+        Self(unsafe { (get_api().godot_string_format)(&self.0, &values.0) })
     }
 
     /// Returns the internal ffi representation of the string and consumes
@@ -663,7 +699,7 @@ mod serialize {
 }
 
 godot_test!(test_string {
-    use crate::core_types::{GodotString, Variant, VariantType, ToVariant};
+    use crate::core_types::{GodotString, Variant, VariantType, ToVariant, VariantArray, Dictionary};
 
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
@@ -708,4 +744,21 @@ godot_test!(test_string {
     }
 
     assert_eq!(foo.to_utf8().as_str(), "foo");
+
+    let fmt_string = GodotString::from("foo {bar}");
+    let fmt_data = Dictionary::new();
+    fmt_data.insert("bar", "baz");
+
+    let fmt = fmt_string.format(&fmt_data.into_shared().to_variant());
+    assert_eq!(fmt, GodotString::from("foo baz"));
+    assert_eq!(fmt_string, GodotString::from("foo {bar}"));
+
+    let fmt_string2 = GodotString::from("{0} {1}");
+    let fmt_data2 = VariantArray::new();
+    fmt_data2.push("foo");
+    fmt_data2.push("bar");
+
+    let fmt2 = fmt_string2.format(&fmt_data2.into_shared().to_variant());
+    assert_eq!(fmt2, GodotString::from("foo bar"));
+    assert_eq!(fmt_string2, GodotString::from("{0} {1}"));
 });
