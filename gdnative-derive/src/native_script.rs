@@ -1,6 +1,8 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
+use syn::parse::{Parse, ParseStream};
+use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{Data, DeriveInput, Fields, Ident, Meta, MetaList, NestedMeta, Path, Stmt, Type};
 
@@ -10,10 +12,23 @@ use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder};
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
     pub(crate) base: Type,
-    pub(crate) register_callback: Option<Path>,
+    pub(crate) register_callback: Option<Vec<Path>>,
     pub(crate) user_data: Type,
     pub(crate) properties: Vec<(Ident, PropertyAttrArgs)>,
     pub(crate) no_constructor: bool,
+}
+
+struct CallbackArgs {
+    paths: Vec<Path>,
+}
+
+impl Parse for CallbackArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let paths = Punctuated::<Path, Token![,]>::parse_terminated(input)?;
+        Ok(Self {
+            paths: paths.into_iter().collect(),
+        })
+    }
 }
 
 pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2 {
@@ -47,7 +62,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
         let user_data = data.user_data;
         let register_callback = data
             .register_callback
-            .map(|function_path| quote!(#function_path(builder);))
+            .map(|function_path| quote!(#(#function_path(builder));*))
             .unwrap_or(quote!({}));
         let properties = data.properties.into_iter().map(|(ident, config)| {
             let with_default = config
@@ -153,8 +168,9 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
         .attrs
         .iter()
         .find(|a| a.path.is_ident("register_with"))
-        .map(|attr| attr.parse_args::<Path>())
-        .transpose()?;
+        .map(|attr| attr.parse_args::<CallbackArgs>())
+        .transpose()?
+        .map(|cba| cba.paths);
 
     let user_data = input
         .attrs
