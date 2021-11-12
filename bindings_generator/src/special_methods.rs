@@ -52,7 +52,7 @@ pub fn generate_godot_object_impl(class: &GodotClass) -> TokenStream {
         impl gdnative_core::private::godot_object::Sealed for #class_name {}
 
         unsafe impl GodotObject for #class_name {
-            type RefKind = #memory;
+            type Memory = #memory;
 
             #[inline]
             fn class_name() -> &'static str {

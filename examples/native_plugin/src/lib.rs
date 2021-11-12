@@ -58,7 +58,7 @@ impl MyButton {
 
 unsafe fn load<T>(path: &str, hint: &str) -> Option<Ref<T, Shared>>
 where
-    T: GodotObject<RefKind = RefCounted> + SubClass<Resource>,
+    T: GodotObject<Memory = RefCounted> + SubClass<Resource>,
 {
     let resource = ResourceLoader::godot_singleton().load(path, hint, false)?;
     let resource = resource.assume_safe().claim();

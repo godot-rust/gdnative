@@ -140,7 +140,7 @@ impl Main {
 ///   scene as the root. For instance Spatial is used for this example.
 fn instance_scene<Root>(scene: &Ref<PackedScene, Shared>) -> Ref<Root, Unique>
 where
-    Root: gdnative::object::GodotObject<RefKind = ManuallyManaged> + SubClass<Node>,
+    Root: gdnative::object::GodotObject<Memory = ManuallyManaged> + SubClass<Node>,
 {
     let scene = unsafe { scene.assume_safe() };
 

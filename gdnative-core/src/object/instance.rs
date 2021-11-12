@@ -233,7 +233,7 @@ impl<T: NativeClass, Own: Ownership> Instance<T, Own> {
 
 impl<T: NativeClass, Own: Ownership> Instance<T, Own>
 where
-    RefImplBound: SafeAsRaw<<T::Base as GodotObject>::RefKind, Own>,
+    RefImplBound: SafeAsRaw<<T::Base as GodotObject>::Memory, Own>,
 {
     /// Try to downcast `Ref<T::Base, Own>` to `Instance<T>`, without changing the reference
     /// count if reference-counted.
@@ -263,7 +263,7 @@ where
 
 impl<T: NativeClass, Own: Ownership> Instance<T, Own>
 where
-    RefImplBound: SafeDeref<<T::Base as GodotObject>::RefKind, Own>,
+    RefImplBound: SafeDeref<<T::Base as GodotObject>::Memory, Own>,
 {
     /// Calls a function with a NativeClass instance and its owner, and returns its return
     /// value. Can be used on reference counted types for multiple times.
@@ -314,7 +314,7 @@ impl<T: NativeClass> Instance<T, Shared> {
     #[inline]
     pub unsafe fn assume_safe<'a, 'r>(&'r self) -> TInstance<'a, T, Shared>
     where
-        AssumeSafeLifetime<'a, 'r>: LifetimeConstraint<<T::Base as GodotObject>::RefKind>,
+        AssumeSafeLifetime<'a, 'r>: LifetimeConstraint<<T::Base as GodotObject>::Memory>,
     {
         TInstance {
             owner: self.owner.assume_safe(),
@@ -325,7 +325,7 @@ impl<T: NativeClass> Instance<T, Shared> {
 
 impl<T: NativeClass> Instance<T, Shared>
 where
-    T::Base: GodotObject<RefKind = ManuallyManaged>,
+    T::Base: GodotObject<Memory = ManuallyManaged>,
 {
     /// Returns `true` if the pointer currently points to a valid object of the correct type.
     /// **This does NOT guarantee that it's safe to use this pointer.**
@@ -342,7 +342,7 @@ where
 
 impl<T: NativeClass> Instance<T, Unique>
 where
-    T::Base: GodotObject<RefKind = ManuallyManaged>,
+    T::Base: GodotObject<Memory = ManuallyManaged>,
 {
     /// Frees the base object and user-data wrapper.
     ///
@@ -355,7 +355,7 @@ where
 
 impl<T: NativeClass> Instance<T, Unique>
 where
-    T::Base: GodotObject<RefKind = ManuallyManaged> + QueueFree,
+    T::Base: GodotObject<Memory = ManuallyManaged> + QueueFree,
 {
     /// Queues the base object and user-data wrapper for deallocation in the near future.
     /// This should be preferred to `free` for `Node`s.
@@ -380,7 +380,7 @@ impl<T: NativeClass> Instance<T, Unique> {
 
 impl<T: NativeClass> Instance<T, Unique>
 where
-    T::Base: GodotObject<RefKind = RefCounted>,
+    T::Base: GodotObject<Memory = RefCounted>,
 {
     /// Coverts into a `ThreadLocal` instance.
     #[inline]
@@ -414,7 +414,7 @@ impl<T: NativeClass> Instance<T, Shared> {
 
 impl<T: NativeClass> Instance<T, Shared>
 where
-    T::Base: GodotObject<RefKind = RefCounted>,
+    T::Base: GodotObject<Memory = RefCounted>,
 {
     /// Assume that all references to the underlying object is local to the current thread.
     ///
@@ -570,7 +570,7 @@ where
 impl<T> FromVariant for Instance<T, Shared>
 where
     T: NativeClass,
-    T::Base: GodotObject<RefKind = RefCounted>,
+    T::Base: GodotObject<Memory = RefCounted>,
 {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {

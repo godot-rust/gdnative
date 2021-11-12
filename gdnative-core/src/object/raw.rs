@@ -121,7 +121,7 @@ impl<T: GodotObject> RawObject<T> {
     }
 }
 
-impl<T: GodotObject<RefKind = RefCounted>> RawObject<T> {
+impl<T: GodotObject<Memory = RefCounted>> RawObject<T> {
     /// Increase the reference count of the object.
     #[inline]
     pub fn add_ref(&self) {

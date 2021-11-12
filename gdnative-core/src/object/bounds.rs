@@ -8,51 +8,51 @@ use crate::object::ownership::*;
 use crate::object::*;
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
-// Implementation for RefKind policy
+// Implementation for Memory policy
 
-/// Specialization trait depending on [`RefKind`]. This is an internal interface.
-pub trait RefKindSpec: Sized {
+/// Specialization trait depending on [`Memory`]. This is an internal interface.
+pub trait MemorySpec: Sized {
     /// Pointer wrapper that may be `Drop` or not.
     #[doc(hidden)]
     type PtrWrapper: PtrWrapper;
 
     #[doc(hidden)]
-    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<Memory = Self>>(
         ptr: NonNull<sys::godot_object>,
     ) -> Option<Ref<T, Unique>>
     where
-        Self: RefKind;
+        Self: Memory;
 
     #[doc(hidden)]
-    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_assume_safe<'a, T: GodotObject<Memory = Self>>(
         this: &Ref<T, Shared>,
     ) -> TRef<'a, T, Shared>
     where
-        Self: RefKind;
+        Self: Memory;
 
     #[doc(hidden)]
-    unsafe fn impl_assume_unique<T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_assume_unique<T: GodotObject<Memory = Self>>(
         this: Ref<T, Shared>,
     ) -> Ref<T, Unique>
     where
-        Self: RefKind;
+        Self: Memory;
 
     #[doc(hidden)]
-    unsafe fn maybe_add_ref<T: GodotObject<RefKind = Self>>(raw: &RawObject<T>)
+    unsafe fn maybe_add_ref<T: GodotObject<Memory = Self>>(raw: &RawObject<T>)
     where
-        Self: RefKind;
+        Self: Memory;
 
     #[doc(hidden)]
-    unsafe fn maybe_init_ref<T: GodotObject<RefKind = Self>>(raw: &RawObject<T>)
+    unsafe fn maybe_init_ref<T: GodotObject<Memory = Self>>(raw: &RawObject<T>)
     where
-        Self: RefKind;
+        Self: Memory;
 }
 
-impl RefKindSpec for ManuallyManaged {
+impl MemorySpec for ManuallyManaged {
     type PtrWrapper = Forget;
 
     #[inline(always)]
-    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<Memory = Self>>(
         ptr: NonNull<sys::godot_object>,
     ) -> Option<Ref<T, Unique>> {
         if RawObject::<ReferenceCountedClassPlaceholder>::try_from_sys_ref(ptr).is_some() {
@@ -71,7 +71,7 @@ impl RefKindSpec for ManuallyManaged {
     }
 
     #[inline(always)]
-    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_assume_safe<'a, T: GodotObject<Memory = Self>>(
         this: &Ref<T, Shared>,
     ) -> TRef<'a, T, Shared> {
         debug_assert!(
@@ -82,7 +82,7 @@ impl RefKindSpec for ManuallyManaged {
     }
 
     #[inline(always)]
-    unsafe fn impl_assume_unique<T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_assume_unique<T: GodotObject<Memory = Self>>(
         this: Ref<T, Shared>,
     ) -> Ref<T, Unique> {
         debug_assert!(
@@ -93,16 +93,16 @@ impl RefKindSpec for ManuallyManaged {
     }
 
     #[inline]
-    unsafe fn maybe_add_ref<T: GodotObject<RefKind = Self>>(_raw: &RawObject<T>) {}
+    unsafe fn maybe_add_ref<T: GodotObject<Memory = Self>>(_raw: &RawObject<T>) {}
     #[inline]
-    unsafe fn maybe_init_ref<T: GodotObject<RefKind = Self>>(_raw: &RawObject<T>) {}
+    unsafe fn maybe_init_ref<T: GodotObject<Memory = Self>>(_raw: &RawObject<T>) {}
 }
 
-impl RefKindSpec for RefCounted {
+impl MemorySpec for RefCounted {
     type PtrWrapper = UnRef;
 
     #[inline(always)]
-    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_from_maybe_ref_counted<T: GodotObject<Memory = Self>>(
         ptr: NonNull<sys::godot_object>,
     ) -> Option<Ref<T, Unique>> {
         if RawObject::<ReferenceCountedClassPlaceholder>::try_from_sys_ref(ptr).is_some() {
@@ -120,26 +120,26 @@ impl RefKindSpec for RefCounted {
     }
 
     #[inline(always)]
-    unsafe fn impl_assume_safe<'a, T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_assume_safe<'a, T: GodotObject<Memory = Self>>(
         this: &Ref<T, Shared>,
     ) -> TRef<'a, T, Shared> {
         this.assume_safe_unchecked()
     }
 
     #[inline(always)]
-    unsafe fn impl_assume_unique<T: GodotObject<RefKind = Self>>(
+    unsafe fn impl_assume_unique<T: GodotObject<Memory = Self>>(
         this: Ref<T, Shared>,
     ) -> Ref<T, Unique> {
         this.cast_access()
     }
 
     #[inline]
-    unsafe fn maybe_add_ref<T: GodotObject<RefKind = Self>>(raw: &RawObject<T>) {
+    unsafe fn maybe_add_ref<T: GodotObject<Memory = Self>>(raw: &RawObject<T>) {
         raw.add_ref();
     }
 
     #[inline]
-    unsafe fn maybe_init_ref<T: GodotObject<RefKind = Self>>(raw: &RawObject<T>) {
+    unsafe fn maybe_init_ref<T: GodotObject<Memory = Self>>(raw: &RawObject<T>) {
         raw.init_ref_count();
     }
 }
@@ -201,9 +201,9 @@ impl Drop for UnRef {
 
 /// Trait for constraining `assume_safe` lifetimes to the one of `&self` when `T` is
 /// reference-counted. This is an internal interface.
-pub trait LifetimeConstraint<Kind: RefKind> {}
+pub trait LifetimeConstraint<Kind: Memory> {}
 
-/// Type used to check lifetime constraint depending on `RefKind`. Internal interface.
+/// Type used to check lifetime constraint depending on `Memory`. Internal interface.
 #[doc(hidden)]
 pub struct AssumeSafeLifetime<'a, 'r> {
     _marker: PhantomData<(&'a (), &'r ())>,
@@ -215,19 +215,19 @@ impl<'a, 'r: 'a> LifetimeConstraint<RefCounted> for AssumeSafeLifetime<'a, 'r> {
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 // SafeDeref, SafeAsRaw
 
-/// Trait for combinations of `RefKind` and `ThreadAccess` that can be dereferenced safely.
+/// Trait for combinations of `Memory` and `Ownership` that can be dereferenced safely.
 /// This is an internal interface.
-pub unsafe trait SafeDeref<Kind: RefKind, Own: Ownership> {
+pub unsafe trait SafeDeref<Kind: Memory, Own: Ownership> {
     /// Returns a safe reference to the underlying object.
     #[doc(hidden)]
-    fn impl_as_ref<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Own>) -> TRef<'_, T, Own>;
+    fn impl_as_ref<T: GodotObject<Memory = Kind>>(this: &Ref<T, Own>) -> TRef<'_, T, Own>;
 }
 
 /// Trait for persistent `Ref`s that point to valid objects. This is an internal interface.
-pub unsafe trait SafeAsRaw<Kind: RefKind, Own: Ownership> {
+pub unsafe trait SafeAsRaw<Kind: Memory, Own: Ownership> {
     /// Returns a raw reference to the underlying object.
     #[doc(hidden)]
-    fn impl_as_raw<T: GodotObject<RefKind = Kind>>(this: &Ref<T, Own>) -> &RawObject<T>;
+    fn impl_as_raw<T: GodotObject<Memory = Kind>>(this: &Ref<T, Own>) -> &RawObject<T>;
 }
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ pub struct RefImplBound {
 
 unsafe impl SafeDeref<ManuallyManaged, Unique> for RefImplBound {
     #[inline]
-    fn impl_as_ref<T: GodotObject<RefKind = ManuallyManaged>>(
+    fn impl_as_ref<T: GodotObject<Memory = ManuallyManaged>>(
         this: &Ref<T, Unique>,
     ) -> TRef<'_, T, Unique> {
         unsafe { this.assume_safe_unchecked() }
@@ -249,14 +249,14 @@ unsafe impl SafeDeref<ManuallyManaged, Unique> for RefImplBound {
 
 unsafe impl<Own: LocalThreadOwnership> SafeDeref<RefCounted, Own> for RefImplBound {
     #[inline]
-    fn impl_as_ref<T: GodotObject<RefKind = RefCounted>>(this: &Ref<T, Own>) -> TRef<'_, T, Own> {
+    fn impl_as_ref<T: GodotObject<Memory = RefCounted>>(this: &Ref<T, Own>) -> TRef<'_, T, Own> {
         unsafe { this.assume_safe_unchecked() }
     }
 }
 
 unsafe impl SafeAsRaw<ManuallyManaged, Unique> for RefImplBound {
     #[inline]
-    fn impl_as_raw<T: GodotObject<RefKind = ManuallyManaged>>(
+    fn impl_as_raw<T: GodotObject<Memory = ManuallyManaged>>(
         this: &Ref<T, Unique>,
     ) -> &RawObject<T> {
         unsafe { this.as_raw_unchecked() }
@@ -265,7 +265,7 @@ unsafe impl SafeAsRaw<ManuallyManaged, Unique> for RefImplBound {
 
 unsafe impl<Own: Ownership> SafeAsRaw<RefCounted, Own> for RefImplBound {
     #[inline]
-    fn impl_as_raw<T: GodotObject<RefKind = RefCounted>>(this: &Ref<T, Own>) -> &RawObject<T> {
+    fn impl_as_raw<T: GodotObject<Memory = RefCounted>>(this: &Ref<T, Own>) -> &RawObject<T> {
         unsafe { this.as_raw_unchecked() }
     }
 }
