@@ -8,8 +8,8 @@ pub use gdnative_bindings::{
 };
 pub use gdnative_core::core_types::{
     Aabb, Basis, ByteArray, Color, ColorArray, Dictionary, Float32Array, GodotError, GodotString,
-    Int32Array, NodePath, Plane, Quat, Rect2, Rid, StringArray, StringName, Transform, Transform2D,
-    TypedArray, Variant, VariantArray, VariantDispatch, VariantOperator, VariantType, Vector2,
+    Int32Array, NodePath, Plane, PoolArray, Quat, Rect2, Rid, StringArray, StringName, Transform,
+    Transform2D, Variant, VariantArray, VariantDispatch, VariantOperator, VariantType, Vector2,
     Vector2Array, Vector3, Vector3Array,
 };
 pub use gdnative_core::core_types::{
@@ -23,8 +23,8 @@ pub use gdnative_core::init::InitHandle;
 pub use gdnative_core::object::{
     memory::{ManuallyManaged, RefCounted},
     ownership::{Shared, ThreadLocal, Unique},
-    AsArg, GodotObject, Instance, Instanciable, NewRef, Null, QueueFree, Ref, RefInstance,
-    SubClass, TRef,
+    AsArg, GodotObject, Instance, Instanciable, NewRef, Null, QueueFree, Ref, SubClass, TInstance,
+    TRef,
 };
 pub use gdnative_core::{godot_dbg, godot_error, godot_init, godot_print, godot_warn};
 pub use gdnative_derive::*;
@@ -36,3 +36,16 @@ pub mod user_data {
         Aether, ArcData, LocalCellData, MutexData, RwLockData,
     };
 }
+
+// Deprecated symbols. Keep them only in prelude, as all the other paths have changed anyway.
+// This way, old symbol names are still discoverable and users who used prelude won't have (as many) breaking changes.
+// Important: the referred-to type (right-hand-side) should point into the full path, not the prelude re-export.
+
+#[deprecated(since = "0.10.0", note = "Confusing name; use TInstance instead.")]
+pub type RefInstance<'a, T, Own> = crate::object::TInstance<'a, T, Own>;
+
+#[deprecated(
+    since = "0.10.0",
+    note = "Renamed for GDScript consistency; use PoolArray instead."
+)]
+pub type TypedArray<T> = crate::core_types::PoolArray<T>;

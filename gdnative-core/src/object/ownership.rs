@@ -19,30 +19,35 @@ pub struct Shared;
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ThreadLocal(std::marker::PhantomData<*const ()>);
 
-/// Trait to parametrize over the access markers [`Unique`], [`Shared`] and [`ThreadLocal`].
+/// Trait to parametrize over the ownership markers [`Unique`], [`Shared`] and [`ThreadLocal`].
 ///
 /// This trait is sealed and has no public members.
-pub trait ThreadAccess: private::Sealed {}
+///
+/// It specifies the ownership policy of godot-rust smart pointers such as [`Ref`][super::Ref].
+/// Ownership specifies how references _own_ an object, i.e. how they point to it and who is responsible
+/// for its destruction (in case of [`RefCounted`][super::memory::RefCounted]). Furthermore, it defines
+/// from where the object can be accessed, and if sharing the object across threads is possible.
+pub trait Ownership: private::Sealed {}
 
-/// Trait to parametrize over the access markers that are local to the current thread:
+/// Trait to parametrize over the ownership markers that are local to the current thread:
 /// [`Unique`] and [`ThreadLocal`].
-pub trait LocalThreadAccess: ThreadAccess {}
+pub trait LocalThreadOwnership: Ownership {}
 
-/// Trait to parametrize over the access markers that are not unique:
+/// Trait to parametrize over the ownership markers that are not unique:
 /// [`Shared`] and [`ThreadLocal`].
-pub trait NonUniqueThreadAccess: ThreadAccess {}
+pub trait NonUniqueOwnership: Ownership {}
 
-impl ThreadAccess for Unique {}
-impl LocalThreadAccess for Unique {}
+impl Ownership for Unique {}
+impl LocalThreadOwnership for Unique {}
 impl private::Sealed for Unique {}
 
-impl ThreadAccess for Shared {}
-impl NonUniqueThreadAccess for Shared {}
+impl Ownership for Shared {}
+impl NonUniqueOwnership for Shared {}
 impl private::Sealed for Shared {}
 
-impl ThreadAccess for ThreadLocal {}
-impl LocalThreadAccess for ThreadLocal {}
-impl NonUniqueThreadAccess for ThreadLocal {}
+impl Ownership for ThreadLocal {}
+impl LocalThreadOwnership for ThreadLocal {}
+impl NonUniqueOwnership for ThreadLocal {}
 impl private::Sealed for ThreadLocal {}
 
 mod private {

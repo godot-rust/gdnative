@@ -9,7 +9,7 @@ use gdnative_core::export::user_data::{ArcData, Map};
 use gdnative_core::export::{ClassBuilder, Method, NativeClass, NativeClassMethods, Varargs};
 use gdnative_core::godot_site;
 use gdnative_core::object::ownership::Shared;
-use gdnative_core::object::{Instance, RefInstance, TRef};
+use gdnative_core::object::{Instance, TInstance, TRef};
 
 use crate::future::Resume;
 
@@ -97,7 +97,7 @@ impl SignalBridge {
 struct OnSignalFn;
 
 impl Method<SignalBridge> for OnSignalFn {
-    fn call(&self, this: RefInstance<'_, SignalBridge, Shared>, args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, SignalBridge, Shared>, args: Varargs<'_>) -> Variant {
         let args = args.cloned().collect();
 
         let this_persist = this.clone().claim();

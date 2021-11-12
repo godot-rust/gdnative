@@ -5,7 +5,7 @@ use gdnative_bindings::Object;
 use gdnative_core::core_types::{GodotError, Variant};
 use gdnative_core::init::InitHandle;
 use gdnative_core::object::ownership::Shared;
-use gdnative_core::object::{Instance, RefInstance, SubClass, TRef};
+use gdnative_core::object::{Instance, SubClass, TInstance, TRef};
 
 use crate::future;
 
@@ -31,7 +31,7 @@ impl Context {
         self.func_state.clone()
     }
 
-    fn safe_func_state(&self) -> RefInstance<'_, FuncState, Shared> {
+    fn safe_func_state(&self) -> TInstance<'_, FuncState, Shared> {
         // SAFETY: FuncState objects are bound to their origin threads in Rust, and
         // Context is !Send, so this is safe to call within this type.
         // Non-Rust code is expected to be following the official guidelines as per

@@ -1,6 +1,6 @@
 use crate::export::user_data::UserData;
 use crate::export::ClassBuilder;
-use crate::object::ownership::{Shared, ThreadAccess, Unique};
+use crate::object::ownership::{Ownership, Shared, Unique};
 use crate::object::{GodotObject, Instance, Instanciable, TRef};
 
 /// Trait used for describing and initializing a Godot script class.
@@ -120,36 +120,36 @@ pub trait NativeClassMethods: NativeClass {
 /// undefined behavior.
 ///
 /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
-pub trait OwnerArg<'a, T: GodotObject, Access: ThreadAccess + 'static>: private::Sealed {
+pub trait OwnerArg<'a, T: GodotObject, Own: Ownership + 'static>: private::Sealed {
     #[doc(hidden)]
-    fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self;
+    fn from_safe_ref(owner: TRef<'a, T, Own>) -> Self;
 }
 
 impl<'a, T> private::Sealed for &'a T where T: GodotObject {}
-impl<'a, T, Access> OwnerArg<'a, T, Access> for &'a T
+impl<'a, T, Own> OwnerArg<'a, T, Own> for &'a T
 where
     T: GodotObject,
-    Access: ThreadAccess + 'static,
+    Own: Ownership + 'static,
 {
     #[inline]
-    fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self {
+    fn from_safe_ref(owner: TRef<'a, T, Own>) -> Self {
         owner.as_ref()
     }
 }
 
-impl<'a, T, Access> private::Sealed for TRef<'a, T, Access>
+impl<'a, T, Own> private::Sealed for TRef<'a, T, Own>
 where
     T: GodotObject,
-    Access: ThreadAccess + 'static,
+    Own: Ownership + 'static,
 {
 }
-impl<'a, T, Access> OwnerArg<'a, T, Access> for TRef<'a, T, Access>
+impl<'a, T, Own> OwnerArg<'a, T, Own> for TRef<'a, T, Own>
 where
     T: GodotObject,
-    Access: ThreadAccess + 'static,
+    Own: Ownership + 'static,
 {
     #[inline]
-    fn from_safe_ref(owner: TRef<'a, T, Access>) -> Self {
+    fn from_safe_ref(owner: TRef<'a, T, Own>) -> Self {
         owner
     }
 }

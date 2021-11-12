@@ -29,7 +29,7 @@ macro_rules! godot_wrap_method_inner {
             struct ThisMethod;
 
             use $crate::export::{NativeClass, OwnerArg};
-            use $crate::object::{Instance, RefInstance};
+            use $crate::object::{Instance, TInstance};
             use ::gdnative::derive::FromVarargs;
 
             #[derive(FromVarargs)]
@@ -44,7 +44,7 @@ macro_rules! godot_wrap_method_inner {
                 type Args = Args;
                 fn call(
                     &self,
-                    this: RefInstance<'_, $type_name, $crate::object::ownership::Shared>,
+                    this: TInstance<'_, $type_name, $crate::object::ownership::Shared>,
                     Args { $($pname,)* $($opt_pname,)* }: Args,
                 ) -> $crate::core_types::Variant {
                     this

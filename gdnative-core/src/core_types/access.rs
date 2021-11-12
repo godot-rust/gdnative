@@ -50,12 +50,12 @@ pub unsafe trait Guard: private::Sealed {
 pub unsafe trait WritePtr: Guard + private::Sealed {}
 
 pub(crate) mod private {
-    use crate::core_types::typed_array::Element;
+    use crate::core_types::pool_array::Element;
 
     pub trait Sealed {}
 
-    impl<'a, T: Element> Sealed for crate::core_types::typed_array::ReadGuard<'a, T> {}
-    impl<'a, T: Element> Sealed for crate::core_types::typed_array::WriteGuard<'a, T> {}
+    impl<'a, T: Element> Sealed for crate::core_types::pool_array::ReadGuard<'a, T> {}
+    impl<'a, T: Element> Sealed for crate::core_types::pool_array::WriteGuard<'a, T> {}
 }
 
 impl<G: Guard> MaybeUnaligned<G> {

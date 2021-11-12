@@ -1,8 +1,8 @@
 use crate::core_types::GodotString;
-use crate::core_types::TypedArray;
+use crate::core_types::PoolArray;
 
 /// A reference-counted vector of `GodotString` that uses Godot's pool allocator.
-pub type StringArray = TypedArray<GodotString>;
+pub type StringArray = PoolArray<GodotString>;
 
 godot_test!(
     test_string_array_access {
