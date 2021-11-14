@@ -125,7 +125,7 @@ impl Method<SignalBridge> for OnSignalFn {
             })
             .unwrap();
 
-        Variant::new()
+        Variant::nil()
     }
 
     fn site() -> Option<gdnative_core::log::Site<'static>> {

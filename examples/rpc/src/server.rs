@@ -38,7 +38,7 @@ impl Server {
         owner.rpc_id(
             tree.get_rpc_sender_id(),
             "return_greeting",
-            &[Variant::from_str("hello")],
+            &[Variant::new("hello")],
         );
     }
 }

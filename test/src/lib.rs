@@ -75,7 +75,7 @@ pub extern "C" fn run_tests(
     status &= test_variant_ops::run_tests();
     status &= test_vararray_return::run_tests();
 
-    gdnative::core_types::Variant::from_bool(status).forget()
+    gdnative::core_types::Variant::new(status).forget()
 }
 
 fn test_underscore_method_binding() -> bool {
@@ -84,7 +84,7 @@ fn test_underscore_method_binding() -> bool {
     let ok = std::panic::catch_unwind(|| {
         let script = gdnative::api::NativeScript::new();
         let result = script._new(&[]);
-        assert_eq!(Variant::new(), result);
+        assert_eq!(Variant::nil(), result);
     })
     .is_ok();
 
@@ -139,7 +139,7 @@ impl Foo {
 
     #[export]
     fn choose_variant(&self, _owner: &Reference, a: i32, what: Variant, b: f64) -> Variant {
-        let what = what.try_to_string().expect("should be string");
+        let what = what.try_to::<String>().expect("should be string");
         match what.as_str() {
             "int" => a.to_variant(),
             "float" => b.to_variant(),
@@ -157,7 +157,7 @@ fn test_rust_class_construction() -> bool {
         assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
         let base = foo.into_base();
-        assert_eq!(Some(42), unsafe { base.call("answer", &[]).try_to_i64() });
+        assert_eq!(Some(42), unsafe { base.call("answer", &[]).to() });
 
         let foo = Instance::<Foo, _>::try_from_base(base).expect("should be able to downcast");
         assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));

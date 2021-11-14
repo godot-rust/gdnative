@@ -106,14 +106,14 @@ impl<C: NativeClass, F: AsyncMethod<C>> Method<C> for Async<F> {
                         Self::site().unwrap_or_default(),
                         format_args!("unable to spawn future: {}", err),
                     );
-                    Variant::new()
+                    Variant::nil()
                 }
                 None => {
                     log::error(
                         Self::site().unwrap_or_default(),
                         format_args!("implementation did not spawn a future"),
                     );
-                    Variant::new()
+                    Variant::nil()
                 }
             }
         } else {
@@ -121,7 +121,7 @@ impl<C: NativeClass, F: AsyncMethod<C>> Method<C> for Async<F> {
                 Self::site().unwrap_or_default(),
                 "a global executor must be set before any async methods can be called on this thread",
             );
-            Variant::new()
+            Variant::nil()
         }
     }
 }

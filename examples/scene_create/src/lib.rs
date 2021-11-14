@@ -140,13 +140,9 @@ fn update_panel(owner: &Spatial, num_children: i64) {
         let panel_node = unsafe { panel_node.assume_safe() };
 
         // Put the Node
-        let mut as_variant = Variant::from_object(panel_node);
-        let result = unsafe {
-            as_variant.call(
-                "set_num_children",
-                &[Variant::from_u64(num_children as u64)],
-            )
-        };
+        let mut as_variant = Variant::new(panel_node);
+        let result =
+            unsafe { as_variant.call("set_num_children", &[Variant::new(num_children as u64)]) };
 
         match result {
             Ok(_) => godot_print!("Called Panel OK."),

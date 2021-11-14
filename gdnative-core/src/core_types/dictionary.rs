@@ -95,13 +95,13 @@ impl<Own: Ownership> Dictionary<Own> {
     }
 
     /// Returns a copy of the element corresponding to the key, or `Nil` if it doesn't exist.
-    /// Shorthand for `self.get_or(key, Variant::new())`.
+    /// Shorthand for `self.get_or(key, Variant::nil())`.
     #[inline]
     pub fn get_or_nil<K>(&self, key: K) -> Variant
     where
         K: OwnedToVariant + ToVariantEq,
     {
-        self.get_or(key, Variant::new())
+        self.get_or(key, Variant::nil())
     }
 
     /// Update an existing element corresponding to the key.
@@ -534,12 +534,12 @@ godot_test!(test_dictionary {
     use std::collections::HashSet;
 
     use crate::core_types::VariantType;
-    let foo = Variant::from_str("foo");
-    let bar = Variant::from_str("bar");
-    let nope = Variant::from_str("nope");
+    let foo = Variant::new("foo");
+    let bar = Variant::new("bar");
+    let nope = Variant::new("nope");
 
-    let x = Variant::from_i64(42);
-    let y = Variant::from_i64(1337);
+    let x = Variant::new(42);
+    let y = Variant::new(1337);
 
     let dict = Dictionary::new();
 
@@ -551,7 +551,7 @@ godot_test!(test_dictionary {
     assert!(!dict.contains(&nope));
 
     let keys_array = dict.keys();
-    let baz = Variant::from_str("baz");
+    let baz = Variant::new("baz");
     keys_array.push(&baz);
     dict.insert(&baz, &x);
 
@@ -561,14 +561,14 @@ godot_test!(test_dictionary {
 
     assert!(!dict.contains_all(&keys_array));
 
-    let variant = Variant::from_dictionary(&dict.duplicate().into_shared());
+    let variant = Variant::new(&dict.duplicate().into_shared());
     assert!(variant.get_type() == VariantType::Dictionary);
 
     let dict2 = dict.duplicate();
     assert!(dict2.contains(&foo));
     assert!(dict2.contains(&bar));
 
-    if let Some(dic_variant) = variant.try_to_dictionary() {
+    if let Ok(dic_variant) = variant.try_to::<Dictionary>() {
         assert!(dic_variant.len() == dict.len());
     } else {
         panic!("variant should be a Dictionary");

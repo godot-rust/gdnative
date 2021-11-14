@@ -82,25 +82,27 @@ fn test_derive_to_variant() -> bool {
         };
 
         let variant = data.to_variant();
-        let dictionary = variant.try_to_dictionary().expect("should be dictionary");
-        assert_eq!(Some(42), dictionary.get("foo").and_then(|v| v.try_to_i64()));
+        let dictionary = variant
+            .try_to::<Dictionary>()
+            .expect("should be dictionary");
+        assert_eq!(Some(42), dictionary.get("foo").and_then(|v| v.to::<i64>()));
         assert_eq!(
             Some(54.0),
-            dictionary.get("bar").and_then(|v| v.try_to_f64())
+            dictionary.get("bar").and_then(|v| v.to::<f64>())
         );
         assert_eq!(
             Some("*mut ()".into()),
-            dictionary.get("ptr").and_then(|v| v.try_to_string())
+            dictionary.get("ptr").and_then(|v| v.to::<String>())
         );
         assert!(!dictionary.contains("skipped"));
 
         let enum_dict = dictionary
             .get("baz")
-            .and_then(|v| v.try_to_dictionary())
+            .and_then(|v| v.to::<Dictionary>())
             .expect("should be dictionary");
         assert_eq!(
             Some(true),
-            enum_dict.get("Foo").and_then(|v| v.try_to_bool())
+            enum_dict.get("Foo").and_then(|v| v.to::<bool>())
         );
 
         assert_eq!(
@@ -116,11 +118,11 @@ fn test_derive_to_variant() -> bool {
 
         let data = ToVarTuple::<f64, i128>(1, 2, false);
         let variant = data.to_variant();
-        let tuple_array = variant.try_to_array().expect("should be array");
+        let tuple_array = variant.to::<VariantArray>().expect("should be array");
 
         assert_eq!(2, tuple_array.len());
-        assert_eq!(Some(1), tuple_array.get(0).try_to_i64());
-        assert_eq!(Some(false), tuple_array.get(1).try_to_bool());
+        assert_eq!(Some(1), tuple_array.get(0).to::<i64>());
+        assert_eq!(Some(false), tuple_array.get(1).to::<bool>());
         assert_eq!(
             Ok(ToVarTuple::<f64, i128>(1, 0, false)),
             ToVarTuple::from_variant(&variant)
@@ -149,17 +151,17 @@ fn test_derive_owned_to_variant() -> bool {
         };
 
         let variant = data.owned_to_variant();
-        let dictionary = variant.try_to_dictionary().expect("should be dictionary");
+        let dictionary = variant.to::<Dictionary>().expect("should be dictionary");
         let array = dictionary
             .get("arr")
-            .and_then(|v| v.try_to_array())
+            .and_then(|v| v.to::<VariantArray>())
             .expect("should be array");
         assert_eq!(3, array.len());
         assert_eq!(
             &[1, 2, 3],
             array
                 .iter()
-                .map(|v| v.try_to_i64().unwrap())
+                .map(|v| v.to::<i64>().unwrap())
                 .collect::<Vec<_>>()
                 .as_slice()
         );
@@ -306,7 +308,7 @@ fn test_derive_nativeclass_without_constructor() -> bool {
         assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
         let base = foo.into_base();
-        assert_eq!(Some(54), unsafe { base.call("answer", &[]).try_to_i64() });
+        assert_eq!(Some(54), unsafe { base.call("answer", &[]).to::<i64>() });
 
         let foo = Instance::<EmplacementOnly, _>::try_from_base(base)
             .expect("should be able to downcast");

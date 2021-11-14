@@ -695,13 +695,13 @@ godot_test!(test_string {
     assert_eq!(index_string[1], 'a');
     assert_eq!(index_string[2], 'r');
 
-    let variant = Variant::from_godot_string(&foo);
+    let variant = Variant::new(&foo);
     assert!(variant.get_type() == VariantType::GodotString);
 
     let variant2: Variant = "foo".to_variant();
     assert!(variant == variant2);
 
-    if let Some(foo_variant) = variant.try_to_godot_string() {
+    if let Ok(foo_variant) = variant.try_to::<GodotString>() {
         assert!(foo_variant == foo);
     } else {
         panic!("variant should be a GodotString");

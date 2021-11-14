@@ -35,7 +35,7 @@ impl NativeClass for RegisterSignal {
             name: "progress",
             args: &[SignalArgument {
                 name: "amount",
-                default: Variant::new(),
+                default: Variant::nil(),
                 export_info: ExportInfo::new(VariantType::I64),
                 usage: PropertyUsage::DEFAULT,
             }],
@@ -90,21 +90,15 @@ fn test_register_property() -> bool {
 
         let base = obj.into_base();
 
-        assert_eq!(Some(42), unsafe {
-            base.call("get_value", &[]).try_to_i64()
-        });
+        assert_eq!(Some(42), unsafe { base.call("get_value", &[]).to() });
 
         base.set("value", 54.to_variant());
 
-        assert_eq!(Some(54), unsafe {
-            base.call("get_value", &[]).try_to_i64()
-        });
+        assert_eq!(Some(54), unsafe { base.call("get_value", &[]).to() });
 
         unsafe { base.call("set_value", &[4242.to_variant()]) };
 
-        assert_eq!(Some(4242), unsafe {
-            base.call("get_value", &[]).try_to_i64()
-        });
+        assert_eq!(Some(4242), unsafe { base.call("get_value", &[]).to() });
     })
     .is_ok();
 
@@ -190,7 +184,7 @@ fn test_advanced_methods() -> bool {
             i32::from_variant(unsafe {
                 &thing.call(
                     "add_ints",
-                    &[1.to_variant(), 2.to_variant(), Variant::new()],
+                    &[1.to_variant(), 2.to_variant(), Variant::nil()],
                 )
             })
             .unwrap()
@@ -212,7 +206,7 @@ fn test_advanced_methods() -> bool {
             f32::from_variant(unsafe {
                 &thing.call(
                     "add_floats",
-                    &[(5.0).to_variant(), (-2.5).to_variant(), Variant::new()],
+                    &[(5.0).to_variant(), (-2.5).to_variant(), Variant::nil()],
                 )
             })
             .unwrap()
@@ -224,7 +218,7 @@ fn test_advanced_methods() -> bool {
                 &[
                     Vector2::new(5.0, -5.0).to_variant(),
                     Vector2::new(-2.5, 2.5).to_variant(),
-                    Variant::new(),
+                    Variant::nil(),
                 ],
             )
         })

@@ -177,7 +177,7 @@ impl<T: NativeClass> Instance<T, Unique> {
             let variant = Variant::from_sys(variant);
 
             let owner = variant
-                .try_to_object::<T::Base>()
+                .to_object::<T::Base>()
                 .expect("the engine should return a base object of the correct type")
                 .assume_unique();
 

@@ -70,7 +70,7 @@ extern "C" fn invalid_getter(
         property_name,
         class_name
     );
-    Variant::new().forget()
+    Variant::nil().forget()
 }
 
 extern "C" fn invalid_free_func(data: *mut libc::c_void) {

@@ -143,7 +143,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     ///     fn call(&self, this: TInstance<'_, MyType, Shared>, _args: Varargs<'_>) -> Variant {
     ///         this.map(|obj: &MyType, _| {
     ///             let result = obj.my_method();
-    ///             Variant::from_i64(result)
+    ///             Variant::new(result)
     ///         }).expect("method call succeeds")
     ///     }
     /// }

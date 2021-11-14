@@ -59,18 +59,11 @@ fn test_variant_call_args() -> bool {
 
         assert_eq!(Some(42), call_i64(&mut base, "zero", &[]));
 
-        assert_eq!(
-            Some(126),
-            call_i64(&mut base, "one", &[Variant::from_i64(3)])
-        );
+        assert_eq!(Some(126), call_i64(&mut base, "one", &[Variant::new(3)]));
 
         assert_eq!(
             Some(-10),
-            call_i64(
-                &mut base,
-                "two",
-                &[Variant::from_i64(-1), Variant::from_i64(32)]
-            )
+            call_i64(&mut base, "two", &[Variant::new(-1), Variant::new(32)])
         );
 
         assert_eq!(
@@ -78,11 +71,7 @@ fn test_variant_call_args() -> bool {
             call_i64(
                 &mut base,
                 "three",
-                &[
-                    Variant::from_i64(-2),
-                    Variant::from_i64(4),
-                    Variant::from_i64(8),
-                ]
+                &[Variant::new(-2), Variant::new(4), Variant::new(8),]
             )
         );
     })
@@ -98,5 +87,5 @@ fn test_variant_call_args() -> bool {
 fn call_i64(variant: &mut Variant, method: &str, args: &[Variant]) -> Option<i64> {
     let result = unsafe { variant.call(method, args) };
 
-    result.unwrap().try_to_i64()
+    result.unwrap().to()
 }
