@@ -628,11 +628,6 @@ mod varargs_call {
                             let #name: Variant = Variant::from_object_ptr(#name);
                         }
                     }
-                    Ty::String => {
-                        quote! {
-                            let #name: Variant = Variant::from_godot_string(&#name);
-                        }
-                    }
                     _ => {
                         quote! {
                            let #name: Variant = (&#name).to_variant();
@@ -704,11 +699,6 @@ mod varcall {
                 Ty::Object(_) => {
                     quote! {
                         let #name: Variant = Variant::from_object_ptr(#name);
-                    }
-                }
-                Ty::String => {
-                    quote! {
-                        let #name: Variant = Variant::from_godot_string(&#name);
                     }
                 }
                 _ => {

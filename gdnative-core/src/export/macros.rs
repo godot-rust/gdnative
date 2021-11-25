@@ -62,7 +62,7 @@ macro_rules! godot_wrap_method_inner {
                         .unwrap_or_else(|err| {
                             $crate::godot_error!("gdnative-core: method call failed with error: {}", err);
                             $crate::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                            $crate::core_types::Variant::new()
+                            $crate::core_types::Variant::nil()
                         })
                 }
 

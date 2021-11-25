@@ -36,7 +36,7 @@ impl NativeClass for FuncState {
             name: "completed",
             args: &[SignalArgument {
                 name: "value",
-                default: Variant::new(),
+                default: Variant::nil(),
                 export_info: ExportInfo::new(VariantType::Nil),
                 usage: PropertyUsage::DEFAULT,
             }],

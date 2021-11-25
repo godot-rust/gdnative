@@ -200,7 +200,7 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
             Ok(parsed) => {
                 if let Err(err) = args.done() {
                     err.with_site(F::site().unwrap_or_default()).log_error();
-                    return Variant::new();
+                    return Variant::nil();
                 }
                 F::call(&self.f, this, parsed)
             }
@@ -208,7 +208,7 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
                 for err in errors {
                     err.with_site(F::site().unwrap_or_default()).log_error();
                 }
-                Variant::new()
+                Variant::nil()
             }
         }
     }
@@ -561,7 +561,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                 C::class_name(),
             ),
         );
-        return Variant::new().forget();
+        return Variant::nil().forget();
     }
 
     let this = match std::ptr::NonNull::new(this) {
@@ -574,7 +574,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                     C::class_name(),
                 ),
             );
-            return Variant::new().forget();
+            return Variant::nil().forget();
         }
     };
 
@@ -596,7 +596,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                 F::site().unwrap_or_default(),
                 "gdnative-core: method panicked (check stderr for output)",
             );
-            Variant::new()
+            Variant::nil()
         })
         .forget()
 }

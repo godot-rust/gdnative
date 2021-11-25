@@ -55,7 +55,7 @@ fn test_owner_free_ub() -> bool {
             let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
 
             assert_eq!(Some(true), unsafe {
-                bar.base().call("set_script_is_not_ub", &[]).try_to_bool()
+                bar.base().call("set_script_is_not_ub", &[]).to()
             });
 
             bar.into_base().free();
@@ -65,7 +65,7 @@ fn test_owner_free_ub() -> bool {
             let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
 
             assert_eq!(Some(true), unsafe {
-                bar.base().call("free_is_not_ub", &[]).try_to_bool()
+                bar.base().call("free_is_not_ub", &[]).to()
             });
         }
 

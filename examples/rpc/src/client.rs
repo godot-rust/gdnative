@@ -46,7 +46,7 @@ impl ServerPuppet {
 
     #[export]
     fn on_connected_to_server(&mut self, owner: TRef<Node>) {
-        owner.rpc("greet_server", &[Variant::from_str("hello")]);
+        owner.rpc("greet_server", &[Variant::new("hello")]);
     }
 
     #[export(rpc = "puppet")]

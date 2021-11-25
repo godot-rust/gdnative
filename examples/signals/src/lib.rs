@@ -22,7 +22,7 @@ impl SignalEmitter {
             // Argument list used by the editor for GUI and generation of GDScript handlers. It can be omitted if the signal is only used from code.
             args: &[SignalArgument {
                 name: "data",
-                default: Variant::from_i64(100),
+                default: Variant::new(100),
                 export_info: ExportInfo::new(VariantType::I64),
                 usage: PropertyUsage::DEFAULT,
             }],
@@ -48,7 +48,7 @@ impl SignalEmitter {
         if self.data % 2 == 0 {
             owner.emit_signal("tick", &[]);
         } else {
-            owner.emit_signal("tick_with_data", &[Variant::from_i64(self.data)]);
+            owner.emit_signal("tick_with_data", &[Variant::new(self.data)]);
         }
     }
 }
@@ -96,7 +96,7 @@ impl SignalSubscriber {
     fn notify_with_data(&mut self, owner: &Label, data: Variant) {
         let msg = format!(
             "Received signal \"tick_with_data\" with data {}",
-            data.try_to_u64().unwrap()
+            data.try_to::<u64>().unwrap()
         );
 
         owner.set_text(msg);

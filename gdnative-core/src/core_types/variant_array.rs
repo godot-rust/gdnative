@@ -528,9 +528,9 @@ impl<T: ToVariant, Own: LocalThreadOwnership> Extend<T> for VariantArray<Own> {
 }
 
 godot_test!(test_array {
-    let foo = Variant::from_str("foo");
-    let bar = Variant::from_str("bar");
-    let nope = Variant::from_str("nope");
+    let foo = Variant::new("foo");
+    let bar = Variant::new("bar");
+    let nope = Variant::new("nope");
 
     let array = VariantArray::new(); // []
 
@@ -555,9 +555,9 @@ godot_test!(test_array {
     array.pop(); // [&bar]
     array.pop(); // []
 
-    let x = Variant::from_i64(42);
-    let y = Variant::from_i64(1337);
-    let z = Variant::from_i64(512);
+    let x = Variant::new(42);
+    let y = Variant::new(1337);
+    let z = Variant::new(512);
 
     array.insert(0, &x); // [&x]
     array.insert(0, &y); // [&y, &x]
@@ -590,13 +590,13 @@ godot_test!(test_array {
 
     let array3 = VariantArray::new(); // []
 
-    array3.push(&Variant::from_i64(42));
-    array3.push(&Variant::from_i64(1337));
-    array3.push(&Variant::from_i64(512));
+    array3.push(&Variant::new(42));
+    array3.push(&Variant::new(1337));
+    array3.push(&Variant::new(512));
 
     assert_eq!(
         &[42, 1337, 512],
-        array3.iter().map(|v| v.try_to_i64().unwrap()).collect::<Vec<_>>().as_slice(),
+        array3.iter().map(|v| v.try_to::<i64>().unwrap()).collect::<Vec<_>>().as_slice(),
     );
 
     let array4 = VariantArray::new(); // []
@@ -606,20 +606,23 @@ godot_test!(test_array {
     array5.push(array4); // [[&foo, &bar]]
 
     let array6 = array5.duplicate_deep(); // [[&foo, &bar]]
-    unsafe { array5.get(0).to_array().assume_unique().pop(); } // [[&foo]]
+    unsafe { array5.get(0).coerce_to::<VariantArray>().assume_unique().pop(); } // [[&foo]]
 
-    assert!(!array5.get(0).to_array().contains(&bar));
-    assert!(array6.get(0).to_array().contains(&bar));
+    assert!(!array5.get(0).coerce_to::<VariantArray>().contains(&bar));
+    assert!(array6.get(0).coerce_to::<VariantArray>().contains(&bar));
 });
 
 godot_test!(
     test_array_debug {
         use std::panic::catch_unwind;
 
+        println!("  -- expected 4 'Index 3 out of bounds (len 3)' error messages for edge cases");
+        println!("  -- the test is successful when and only when these errors are shown");
+
         let arr = VariantArray::new(); // []
-        arr.push(&Variant::from_str("hello world"));
-        arr.push(&Variant::from_bool(true));
-        arr.push(&Variant::from_i64(42));
+        arr.push(&Variant::new("hello world"));
+        arr.push(&Variant::new(true));
+        arr.push(&Variant::new(42));
 
         assert_eq!(format!("{:?}", arr), "[GodotString(hello world), Bool(True), I64(42)]");
 
@@ -637,7 +640,7 @@ godot_test!(
 
 // TODO: clear arrays without affecting clones
 //godot_test!(test_array_clone_clear {
-//    let foo = Variant::from_str("foo");
+//    let foo = Variant::new("foo");
 //    let mut array = VariantArray::new();
 //
 //    array.push(&foo);
