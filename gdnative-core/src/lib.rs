@@ -23,7 +23,7 @@
 #![allow(
     clippy::transmute_ptr_to_ptr,
     clippy::missing_safety_doc,
-    clippy::if_then_panic
+    clippy::non_send_fields_in_send_ty
 )]
 #![cfg_attr(feature = "gd_test", allow(clippy::blacklisted_name))]
 

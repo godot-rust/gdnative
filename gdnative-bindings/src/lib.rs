@@ -5,6 +5,8 @@
 #![allow(unused_unsafe)]
 // False positives on generated drops that enforce lifetime
 #![allow(clippy::drop_copy)]
+// False positives on thread-safe singletons
+#![allow(clippy::non_send_fields_in_send_ty)]
 // Disable non-critical lints for generated code
 #![allow(clippy::style, clippy::complexity, clippy::perf)]
 
