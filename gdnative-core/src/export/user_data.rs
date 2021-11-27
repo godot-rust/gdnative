@@ -522,10 +522,16 @@ impl<T> Clone for ArcData<T> {
 }
 
 /// User-data wrapper analogous to a `Arc<RefCell<T>>`, that is restricted to the thread
-/// where it was originally created.
+/// where it was originally created. The destructor of `T` is not guaranteed to be run if
+/// this is actually shared across multiple threads.
 ///
 /// This works by checking `ThreadId` before touching the underlying reference. If the id
 /// doesn't match the original thread, `map` and `map_mut` will return an error.
+///
+/// Since it isn't possible to control where the last reference is dropped, the destructor
+/// isn't run if the last reference is dropped on a different thread than the one where the
+/// wrapper was originally created. To ensure that values are cleaned up properly, keep the
+/// game single-threaded, or use a real thread-safe wrapper such as [`MutexData`] instead.
 #[derive(Debug)]
 pub struct LocalCellData<T> {
     inner: Arc<local_cell::LocalCell<T>>,
@@ -535,12 +541,23 @@ pub use self::local_cell::LocalCellError;
 
 mod local_cell {
     use std::cell::{Ref, RefCell, RefMut};
+    use std::mem::ManuallyDrop;
     use std::thread::{self, ThreadId};
 
     #[derive(Debug)]
     pub struct LocalCell<T> {
         thread_id: ThreadId,
-        cell: RefCell<T>,
+        cell: RefCell<ManuallyDrop<T>>,
+    }
+
+    impl<T> Drop for LocalCell<T> {
+        fn drop(&mut self) {
+            if self.thread_id == thread::current().id() {
+                unsafe {
+                    ManuallyDrop::drop(self.cell.get_mut());
+                }
+            }
+        }
     }
 
     /// Error indicating that a borrow has failed.
@@ -578,12 +595,12 @@ mod local_cell {
         pub fn new(val: T) -> Self {
             LocalCell {
                 thread_id: thread::current().id(),
-                cell: RefCell::new(val),
+                cell: RefCell::new(ManuallyDrop::new(val)),
             }
         }
 
         #[inline]
-        fn inner(&self) -> Result<&RefCell<T>, LocalCellError> {
+        fn inner(&self) -> Result<&RefCell<ManuallyDrop<T>>, LocalCellError> {
             let current = thread::current().id();
 
             if self.thread_id == current {
@@ -597,13 +614,13 @@ mod local_cell {
         }
 
         #[inline]
-        pub fn try_borrow(&self) -> Result<Ref<T>, LocalCellError> {
+        pub fn try_borrow(&self) -> Result<Ref<ManuallyDrop<T>>, LocalCellError> {
             let inner = self.inner()?;
             inner.try_borrow().map_err(|_| LocalCellError::BorrowFailed)
         }
 
         #[inline]
-        pub fn try_borrow_mut(&self) -> Result<RefMut<T>, LocalCellError> {
+        pub fn try_borrow_mut(&self) -> Result<RefMut<ManuallyDrop<T>>, LocalCellError> {
             let inner = self.inner()?;
             inner
                 .try_borrow_mut()

@@ -623,7 +623,7 @@ impl Default for Variant {
 impl fmt::Debug for Variant {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:?}({})", self.get_type(), self.to_string())
+        write!(f, "{:?}({})", self.get_type(), self)
     }
 }
 

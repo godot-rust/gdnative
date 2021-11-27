@@ -360,10 +360,7 @@ fn test_transform2d_behavior_impl() {
     let rotation_rust = new_transform_rust.rotation();
     let rotation_godot = unsafe { (api.godot_transform2d_get_rotation)(new_transform_rust.sys()) };
 
-    assert!(
-        (rotation_rust - rotation_godot) < f32::EPSILON,
-        "Rotation getters should return equal results"
-    );
+    approx::assert_relative_eq!(rotation_rust, rotation_godot);
 
     let scale_rust = new_transform_rust.scale();
     let scale_godot =
