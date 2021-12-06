@@ -140,7 +140,7 @@ pub struct ScriptMethod<'l> {
 /// Safe low-level trait for stateful, variadic methods that can be called on a native script type.
 pub trait Method<C: NativeClass>: Send + Sync + 'static {
     /// Calls the method on `this` with `args`.
-    fn call(&self, this: TInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant;
+    fn call(&self, this: TInstance<'_, C>, args: Varargs<'_>) -> Variant;
 
     /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
     ///
@@ -157,7 +157,7 @@ struct Stateless<F> {
 }
 
 impl<C: NativeClass, F: Method<C> + Copy + Default> Method<C> for Stateless<F> {
-    fn call(&self, this: TInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, C>, args: Varargs<'_>) -> Variant {
         let f = F::default();
         f.call(this, args)
     }
@@ -182,7 +182,7 @@ impl<F> StaticArgs<F> {
 /// "static method".
 pub trait StaticArgsMethod<C: NativeClass>: Send + Sync + 'static {
     type Args: FromVarargs;
-    fn call(&self, this: TInstance<'_, C, Shared>, args: Self::Args) -> Variant;
+    fn call(&self, this: TInstance<'_, C>, args: Self::Args) -> Variant;
 
     /// Returns an optional site where this method is defined. Used for logging errors in FFI wrappers.
     ///
@@ -195,7 +195,7 @@ pub trait StaticArgsMethod<C: NativeClass>: Send + Sync + 'static {
 
 impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
     #[inline]
-    fn call(&self, this: TInstance<'_, C, Shared>, mut args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, C>, mut args: Varargs<'_>) -> Variant {
         match args.read_many::<F::Args>() {
             Ok(parsed) => {
                 if let Err(err) = args.done() {
