@@ -1,4 +1,4 @@
-use super::Vector2;
+use crate::core_types::Vector2;
 
 /// Clamp method for f32.
 /// NOTE: This method was copied as-is from std. This was done to avoid compatibility issues

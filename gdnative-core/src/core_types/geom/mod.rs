@@ -3,9 +3,15 @@
 mod aabb;
 mod basis;
 mod plane;
+mod quat;
+mod rect2;
 mod transform;
+mod transform2d;
 
-pub use self::aabb::Aabb;
-pub use self::basis::Basis;
-pub use self::plane::Plane;
-pub use self::transform::Transform;
+pub use aabb::*;
+pub use basis::*;
+pub use plane::*;
+pub use quat::*;
+pub use rect2::*;
+pub use transform::*;
+pub use transform2d::*;
