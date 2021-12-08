@@ -8,7 +8,6 @@ use gdnative_core::core_types::{GodotError, Variant, VariantArray};
 use gdnative_core::export::user_data::{ArcData, Map};
 use gdnative_core::export::{ClassBuilder, Method, NativeClass, NativeClassMethods, Varargs};
 use gdnative_core::godot_site;
-use gdnative_core::object::ownership::Shared;
 use gdnative_core::object::{Instance, TInstance, TRef};
 
 use crate::future::Resume;
@@ -26,7 +25,7 @@ pub(super) fn terminate() {
 #[derive(Default)]
 struct Pool {
     busy: HashMap<i64, Entry>,
-    free: Vec<(i64, Instance<SignalBridge, Shared>)>,
+    free: Vec<(i64, Instance<SignalBridge>)>,
     next_id: i64,
 }
 
@@ -42,7 +41,7 @@ struct Entry {
     resume: Resume<Vec<Variant>>,
 
     // Just need to keep this alive.
-    _obj: Instance<SignalBridge, Shared>,
+    _obj: Instance<SignalBridge>,
 }
 
 pub(super) struct SignalBridge {
@@ -97,7 +96,7 @@ impl SignalBridge {
 struct OnSignalFn;
 
 impl Method<SignalBridge> for OnSignalFn {
-    fn call(&self, this: TInstance<'_, SignalBridge, Shared>, args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, SignalBridge>, args: Varargs<'_>) -> Variant {
         let args = args.cloned().collect();
 
         let this_persist = this.clone().claim();

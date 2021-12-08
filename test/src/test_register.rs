@@ -139,7 +139,7 @@ where
     C: NativeClass,
 {
     type Args = AddArgs<T>;
-    fn call(&self, _this: TInstance<'_, C, Shared>, args: AddArgs<T>) -> Variant {
+    fn call(&self, _this: TInstance<'_, C>, args: AddArgs<T>) -> Variant {
         let AddArgs { a, b, c } = args;
 
         let mut acc = a;

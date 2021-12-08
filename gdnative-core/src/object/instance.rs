@@ -20,7 +20,7 @@ use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 ///
 /// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
-pub struct Instance<T: NativeClass, Own: Ownership> {
+pub struct Instance<T: NativeClass, Own: Ownership = Shared> {
     owner: Ref<T::Base, Own>,
     script: T::UserData,
 }
@@ -30,7 +30,7 @@ pub struct Instance<T: NativeClass, Own: Ownership> {
 ///
 /// See the type-level documentation on `Ref` for more information on typed thread accesses.
 #[derive(Debug)]
-pub struct TInstance<'a, T: NativeClass, Own: Ownership> {
+pub struct TInstance<'a, T: NativeClass, Own: Ownership = Shared> {
     owner: TRef<'a, T::Base, Own>,
     script: T::UserData,
 }

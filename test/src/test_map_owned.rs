@@ -24,7 +24,7 @@ struct VecBuilder {
 #[methods]
 impl VecBuilder {
     #[export]
-    fn append(mut self, _owner: TRef<Reference>, mut numbers: Vec<i32>) -> Instance<Self, Shared> {
+    fn append(mut self, _owner: TRef<Reference>, mut numbers: Vec<i32>) -> Instance<Self> {
         self.v.append(&mut numbers);
         Instance::emplace(Self { v: self.v }).into_shared()
     }

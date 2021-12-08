@@ -26,7 +26,7 @@ struct Greeter {
     // All these traits are implemented for `Instance<T, Shared>` where the base class of `T` is reference-counted.
     // `Resource` inherits from `Reference`, so all native scripts extending `Resource` have reference-counted base classes.
     #[property]
-    greeting_resource: Option<Instance<GreetingResource, Shared>>,
+    greeting_resource: Option<Instance<GreetingResource>>,
 }
 
 #[methods]

@@ -140,7 +140,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// // Now, wrap the method (this can do anything and does not need to actually call a method)
     /// struct MyMethod;
     /// impl Method<MyType> for MyMethod {
-    ///     fn call(&self, this: TInstance<'_, MyType, Shared>, _args: Varargs<'_>) -> Variant {
+    ///     fn call(&self, this: TInstance<'_, MyType>, _args: Varargs<'_>) -> Variant {
     ///         this.map(|obj: &MyType, _| {
     ///             let result = obj.my_method();
     ///             Variant::new(result)

@@ -7,7 +7,6 @@ use futures_task::{LocalFutureObj, LocalSpawn, SpawnError};
 use gdnative_core::core_types::{ToVariant, Variant};
 use gdnative_core::export::{Method, NativeClass, Varargs};
 use gdnative_core::log::{self, Site};
-use gdnative_core::object::ownership::Shared;
 use gdnative_core::object::TInstance;
 
 use crate::rt::Context;
@@ -41,7 +40,7 @@ pub trait AsyncMethod<C: NativeClass>: Send + Sync + 'static {
 pub struct Spawner<'a, C: NativeClass> {
     sp: &'static dyn LocalSpawn,
     ctx: Context,
-    this: TInstance<'a, C, Shared>,
+    this: TInstance<'a, C>,
     args: Varargs<'a>,
     result: &'a mut Option<Result<(), SpawnError>>,
     /// Remove Send and Sync
@@ -54,7 +53,7 @@ impl<'a, C: NativeClass> Spawner<'a, C> {
     /// future types.
     pub fn spawn<F, R>(self, f: F)
     where
-        F: FnOnce(Arc<Context>, TInstance<'_, C, Shared>, Varargs<'_>) -> R,
+        F: FnOnce(Arc<Context>, TInstance<'_, C>, Varargs<'_>) -> R,
         R: Future<Output = Variant> + 'static,
     {
         let ctx = Arc::new(self.ctx);
@@ -84,7 +83,7 @@ impl<F> Async<F> {
 }
 
 impl<C: NativeClass, F: AsyncMethod<C>> Method<C> for Async<F> {
-    fn call(&self, this: TInstance<'_, C, Shared>, args: Varargs<'_>) -> Variant {
+    fn call(&self, this: TInstance<'_, C>, args: Varargs<'_>) -> Variant {
         if let Some(sp) = crate::executor::local_spawn() {
             let ctx = Context::new();
             let func_state = ctx.func_state();

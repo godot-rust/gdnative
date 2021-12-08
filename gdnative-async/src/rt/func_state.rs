@@ -6,7 +6,7 @@ use gdnative_core::export::{
     SignalArgument, StaticArgs, StaticArgsMethod,
 };
 use gdnative_core::godot_site;
-use gdnative_core::object::ownership::{Shared, Unique};
+use gdnative_core::object::ownership::Unique;
 use gdnative_core::object::{Instance, TInstance};
 use gdnative_derive::FromVarargs;
 
@@ -57,7 +57,7 @@ impl FuncState {
     }
 }
 
-pub(super) fn resolve(this: TInstance<'_, FuncState, Shared>, value: Variant) {
+pub(super) fn resolve(this: TInstance<'_, FuncState>, value: Variant) {
     this.script()
         .map_mut(|s| {
             match s.kind {
@@ -80,7 +80,7 @@ pub(super) fn resolve(this: TInstance<'_, FuncState, Shared>, value: Variant) {
     this.base().emit_signal("completed", &[value]);
 }
 
-pub(super) fn make_resumable(this: TInstance<'_, FuncState, Shared>, resume: Resume<Variant>) {
+pub(super) fn make_resumable(this: TInstance<'_, FuncState>, resume: Resume<Variant>) {
     let kind = this
         .script()
         .map_mut(|s| std::mem::replace(&mut s.kind, Kind::Resumable(resume)))
@@ -113,7 +113,7 @@ struct IsValidArgs {
 
 impl StaticArgsMethod<FuncState> for IsValidFn {
     type Args = IsValidArgs;
-    fn call(&self, this: TInstance<'_, FuncState, Shared>, args: Self::Args) -> Variant {
+    fn call(&self, this: TInstance<'_, FuncState>, args: Self::Args) -> Variant {
         if args.extended_check.is_some() {
             gdnative_core::log::warn(
                 Self::site().unwrap(),
@@ -145,7 +145,7 @@ struct ResumeArgs {
 
 impl StaticArgsMethod<FuncState> for ResumeFn {
     type Args = ResumeArgs;
-    fn call(&self, this: TInstance<'_, FuncState, Shared>, args: Self::Args) -> Variant {
+    fn call(&self, this: TInstance<'_, FuncState>, args: Self::Args) -> Variant {
         this.map_mut(
             |s, owner| match std::mem::replace(&mut s.kind, Kind::Pending) {
                 Kind::Resumable(resume) => {

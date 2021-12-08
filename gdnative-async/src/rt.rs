@@ -4,7 +4,6 @@ use func_state::FuncState;
 use gdnative_bindings::Object;
 use gdnative_core::core_types::{GodotError, Variant};
 use gdnative_core::init::InitHandle;
-use gdnative_core::object::ownership::Shared;
 use gdnative_core::object::{Instance, SubClass, TInstance, TRef};
 
 use crate::future;
@@ -14,7 +13,7 @@ mod func_state;
 
 /// Context for creating `yield`-like futures in async methods.
 pub struct Context {
-    func_state: Instance<FuncState, Shared>,
+    func_state: Instance<FuncState>,
     /// Remove Send and Sync
     _marker: PhantomData<*const ()>,
 }
@@ -27,11 +26,11 @@ impl Context {
         }
     }
 
-    pub(crate) fn func_state(&self) -> Instance<FuncState, Shared> {
+    pub(crate) fn func_state(&self) -> Instance<FuncState> {
         self.func_state.clone()
     }
 
-    fn safe_func_state(&self) -> TInstance<'_, FuncState, Shared> {
+    fn safe_func_state(&self) -> TInstance<'_, FuncState> {
         // SAFETY: FuncState objects are bound to their origin threads in Rust, and
         // Context is !Send, so this is safe to call within this type.
         // Non-Rust code is expected to be following the official guidelines as per
