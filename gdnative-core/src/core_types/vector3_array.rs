@@ -2,6 +2,8 @@ use crate::core_types::PoolArray;
 use crate::core_types::Vector3;
 
 /// A reference-counted vector of `Vector3` that uses Godot's pool allocator.
+///
+/// See [`PoolVector3Array`](https://docs.godotengine.org/en/stable/classes/class_poolvector3array.html) in Godot.
 pub type Vector3Array = PoolArray<Vector3>;
 
 godot_test!(

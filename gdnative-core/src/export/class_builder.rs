@@ -30,9 +30,6 @@
 //! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
 //! in the godot-rust repository.
 
-// Temporary for unsafe method registration
-#![allow(deprecated)]
-
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
@@ -56,58 +53,6 @@ impl<C: NativeClass> ClassBuilder<C> {
             class_name,
             _marker: PhantomData,
         }
-    }
-
-    #[inline]
-    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
-    pub fn add_method_advanced(&self, method: ScriptMethod) {
-        let method_name = CString::new(method.name).unwrap();
-
-        let rpc = match method.attributes.rpc_mode {
-            RpcMode::Master => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTER,
-            RpcMode::Remote => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTE,
-            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPET,
-            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTESYNC,
-            RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
-            RpcMode::MasterSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTERSYNC,
-            RpcMode::PuppetSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPETSYNC,
-        };
-
-        let attr = sys::godot_method_attributes { rpc_type: rpc };
-
-        let method_desc = sys::godot_instance_method {
-            method: method.method_ptr,
-            method_data: method.method_data,
-            free_func: method.free_func,
-        };
-
-        unsafe {
-            (get_api().godot_nativescript_register_method)(
-                self.init_handle,
-                self.class_name.as_ptr() as *const _,
-                method_name.as_ptr() as *const _,
-                attr,
-                method_desc,
-            );
-        }
-    }
-
-    #[inline]
-    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
-    pub fn add_method_with_rpc_mode(&self, name: &str, method: ScriptMethodFn, rpc_mode: RpcMode) {
-        self.add_method_advanced(ScriptMethod {
-            name,
-            method_ptr: Some(method),
-            attributes: ScriptMethodAttributes { rpc_mode },
-            method_data: ptr::null_mut(),
-            free_func: None,
-        });
-    }
-
-    #[inline]
-    #[deprecated(note = "Unsafe registration is deprecated. Use `build_method` instead.")]
-    pub fn add_method(&self, name: &str, method: ScriptMethodFn) {
-        self.add_method_with_rpc_mode(name, method, RpcMode::Disabled);
     }
 
     /// Returns a `MethodBuilder` which can be used to add a method to the class being
@@ -183,7 +128,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     ///
     ///     fn my_register(builder: &ClassBuilder<MyType>) {
     ///         builder
-    ///             .add_property("foo")
+    ///             .build_property("foo")
     ///             .with_default(5)
     ///             .with_hint((-10..=30).into())
     ///             .with_getter(MyType::get_foo)
@@ -193,7 +138,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// }
     /// ```
     #[inline]
-    pub fn add_property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>
+    pub fn build_property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>
     where
         T: Export,
     {
@@ -234,6 +179,38 @@ impl<C: NativeClass> ClassBuilder<C> {
                     num_default_args: 0,
                     default_args: ptr::null_mut(),
                 },
+            );
+        }
+    }
+
+    pub(crate) fn add_method(&self, method: ScriptMethod) {
+        let method_name = CString::new(method.name).unwrap();
+
+        let rpc = match method.attributes.rpc_mode {
+            RpcMode::Master => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTER,
+            RpcMode::Remote => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTE,
+            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPET,
+            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTESYNC,
+            RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
+            RpcMode::MasterSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTERSYNC,
+            RpcMode::PuppetSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPETSYNC,
+        };
+
+        let attr = sys::godot_method_attributes { rpc_type: rpc };
+
+        let method_desc = sys::godot_instance_method {
+            method: method.method_ptr,
+            method_data: method.method_data,
+            free_func: method.free_func,
+        };
+
+        unsafe {
+            (get_api().godot_nativescript_register_method)(
+                self.init_handle,
+                self.class_name.as_ptr() as *const _,
+                method_name.as_ptr() as *const _,
+                attr,
+                method_desc,
             );
         }
     }

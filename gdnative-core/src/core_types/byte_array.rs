@@ -1,6 +1,8 @@
 use crate::core_types::PoolArray;
 
 /// A reference-counted vector of `u8` that uses Godot's pool allocator.
+///
+/// See [`PoolByteArray`](https://docs.godotengine.org/en/stable/classes/class_poolbytearray.html) in Godot.
 pub type ByteArray = PoolArray<u8>;
 
 godot_test!(

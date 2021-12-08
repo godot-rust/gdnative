@@ -2,6 +2,8 @@ use crate::core_types::GodotString;
 use crate::core_types::PoolArray;
 
 /// A reference-counted vector of `GodotString` that uses Godot's pool allocator.
+///
+/// See [`PoolStringArray`](https://docs.godotengine.org/en/stable/classes/class_poolstringarray.html) in Godot.
 pub type StringArray = PoolArray<GodotString>;
 
 godot_test!(

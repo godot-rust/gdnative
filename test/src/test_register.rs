@@ -61,7 +61,7 @@ impl NativeClass for RegisterProperty {
     }
     fn register_properties(builder: &ClassBuilder<Self>) {
         builder
-            .add_property("value")
+            .build_property("value")
             .with_default(42)
             .with_setter(RegisterProperty::set_value)
             .with_getter(RegisterProperty::get_value)

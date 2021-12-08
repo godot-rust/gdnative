@@ -14,25 +14,28 @@ impl ExportsArrays {
 
     fn register(builder: &ClassBuilder<Self>) {
         builder
-            .add_property::<VariantArray>("single_array")
+            .build_property::<VariantArray>("single_array")
             .with_setter(ExportsArrays::set_single_array)
             .done();
+
         builder
-            .add_property::<VariantArray>("single_array_range")
+            .build_property::<VariantArray>("single_array_range")
             .with_setter(ExportsArrays::set_single_array_range)
             .with_hint(ArrayHint::with_element_hint::<i64>(IntHint::Range(
                 RangeHint::new(-5, 5),
             )))
             .done();
+
         builder
-            .add_property::<VariantArray>("double_array")
+            .build_property::<VariantArray>("double_array")
             .with_setter(ExportsArrays::set_double_array)
             .with_hint(ArrayHint::with_element_hint::<VariantArray>(
                 ArrayHint::new(),
             ))
             .done();
+
         builder
-            .add_property::<VariantArray>("double_array_range")
+            .build_property::<VariantArray>("double_array_range")
             .with_setter(ExportsArrays::set_double_array_range)
             .with_hint(ArrayHint::with_element_hint::<VariantArray>(
                 ArrayHint::with_element_hint::<i64>(IntHint::Range(RangeHint::new(-5, 5))),

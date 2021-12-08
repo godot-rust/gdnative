@@ -177,7 +177,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///     }
 ///     fn my_register_function(builder: &ClassBuilder<Foo>) {
 ///         builder.add_signal(Signal { name: "foo", args: &[] });
-///         builder.add_property::<f32>("bar")
+///         builder.build_property::<f32>("bar")
 ///             .with_getter(|_, _| 42.0)
 ///             .with_hint(FloatHint::Range(RangeHint::new(0.0, 100.0)))
 ///             .done();

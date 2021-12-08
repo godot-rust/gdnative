@@ -1,8 +1,5 @@
 //! Method registration
 
-// Temporary for unsafe method registration
-#![allow(deprecated)]
-
 use std::borrow::Cow;
 use std::fmt;
 use std::marker::PhantomData;
@@ -59,7 +56,7 @@ where
             free_func: Some(free_func::<F>),
         };
 
-        self.class_builder.add_method_advanced(script_method);
+        self.class_builder.add_method(script_method);
     }
 }
 
@@ -86,14 +83,11 @@ where
             free_func: None,
         };
 
-        self.class_builder.add_method_advanced(script_method);
+        self.class_builder.add_method(script_method);
     }
 }
 
-#[deprecated(
-    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
-)]
-pub type ScriptMethodFn = unsafe extern "C" fn(
+type ScriptMethodFn = unsafe extern "C" fn(
     *mut sys::godot_object,
     *mut libc::c_void,
     *mut libc::c_void,
@@ -118,17 +112,11 @@ impl Default for RpcMode {
     }
 }
 
-#[deprecated(
-    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
-)]
-pub struct ScriptMethodAttributes {
+pub(crate) struct ScriptMethodAttributes {
     pub rpc_mode: RpcMode,
 }
 
-#[deprecated(
-    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
-)]
-pub struct ScriptMethod<'l> {
+pub(crate) struct ScriptMethod<'l> {
     pub name: &'l str,
     pub method_ptr: Option<ScriptMethodFn>,
     pub attributes: ScriptMethodAttributes,
