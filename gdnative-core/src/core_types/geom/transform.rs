@@ -23,22 +23,8 @@ impl Default for Transform {
 }
 
 impl Transform {
-    #[doc(hidden)]
-    #[inline]
-    pub fn sys(&self) -> *const sys::godot_transform {
-        unsafe {
-            std::mem::transmute::<*const Transform, *const sys::godot_transform>(self as *const _)
-        }
-    }
-
-    #[doc(hidden)]
-    #[inline]
-    pub fn from_sys(c: sys::godot_transform) -> Self {
-        unsafe { std::mem::transmute::<sys::godot_transform, Self>(c) }
-    }
-
-    pub const IDENTITY: Transform = Transform {
-        basis: Basis::identity(),
+    pub const IDENTITY: Self = Self {
+        basis: Basis::IDENTITY,
         origin: Vector3::ZERO,
     };
 
@@ -58,7 +44,7 @@ impl Transform {
 
     /// Returns this transform, with its origin moved by a certain `translation`
     #[inline]
-    pub fn translated(&self, translation: Vector3) -> Transform {
+    pub fn translated(&self, translation: Vector3) -> Self {
         Self {
             origin: self.origin + translation,
             basis: self.basis,
@@ -85,10 +71,10 @@ impl Transform {
     /// transformation is composed of rotation and translation (no scaling, use
     /// affine_inverse for transforms with scaling).
     #[inline]
-    pub fn inverse(&self) -> Transform {
+    pub fn inverse(&self) -> Self {
         let basis_inv = self.basis.transposed();
         let origin_inv = basis_inv.xform(-self.origin);
-        Transform {
+        Self {
             origin: origin_inv,
             basis: basis_inv,
         }
@@ -97,10 +83,10 @@ impl Transform {
     /// Returns the inverse of the transform, under the assumption that the
     /// transformation is composed of rotation, scaling and translation.
     #[inline]
-    pub fn affine_inverse(&self) -> Transform {
+    pub fn affine_inverse(&self) -> Self {
         let basis_inv = self.basis.inverted();
         let origin_inv = basis_inv.xform(-self.origin);
-        Transform {
+        Self {
             origin: origin_inv,
             basis: basis_inv,
         }
@@ -113,7 +99,7 @@ impl Transform {
     /// fully aligned to the target by a further rotation around an axis
     /// perpendicular to both the target and up vectors.
     #[inline]
-    pub fn looking_at(&self, target: Vector3, up: Vector3) -> Transform {
+    pub fn looking_at(&self, target: Vector3, up: Vector3) -> Self {
         let up = up.normalized();
         let v_z = (self.origin - target).normalized();
         let v_x = up.cross(v_z);
@@ -123,6 +109,20 @@ impl Transform {
             basis: Basis::from_elements([v_x, v_y, v_z]).transposed(),
             origin: self.origin,
         }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys(&self) -> *const sys::godot_transform {
+        unsafe {
+            std::mem::transmute::<*const Transform, *const sys::godot_transform>(self as *const _)
+        }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn from_sys(c: sys::godot_transform) -> Self {
+        unsafe { std::mem::transmute::<sys::godot_transform, Self>(c) }
     }
 }
 

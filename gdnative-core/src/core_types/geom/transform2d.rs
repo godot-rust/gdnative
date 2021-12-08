@@ -26,27 +26,17 @@ pub struct Transform2D {
     /// The x basis vector of the transform. Objects will move along this vector when
     /// moving on the X axis in the coordinate space of this transform
     pub x: Vector2,
+
     /// The y basis vector of the transform. Objects will move along this vector when
     /// moving on the Y axis in the coordinate space of this transform.
     pub y: Vector2,
+
     /// The origin of the transform. The coordinate space defined by this transform
     /// starts at this point.
     pub origin: Vector2,
 }
 
 impl Transform2D {
-    fn basis_determinant(&self) -> f32 {
-        self.x.x * self.y.y - self.x.y * self.y.x
-    }
-
-    fn tdotx(&self, v: Vector2) -> f32 {
-        self.x.x * v.x + self.y.x * v.y
-    }
-
-    fn tdoty(&self, v: Vector2) -> f32 {
-        self.x.y * v.x + self.y.y * v.y
-    }
-
     /// Represents the identity transform.
     pub const IDENTITY: Self = Self {
         x: Vector2::new(1.0, 0.0),
@@ -56,8 +46,8 @@ impl Transform2D {
 
     /// Constructs the transform from 3 Vector2 values representing x, y, and the origin (the three column vectors).
     #[inline]
-    pub fn from_axis_origin(x_axis: Vector2, y_axis: Vector2, origin: Vector2) -> Transform2D {
-        Transform2D {
+    pub fn from_axis_origin(x_axis: Vector2, y_axis: Vector2, origin: Vector2) -> Self {
+        Self {
             x: x_axis,
             y: y_axis,
             origin,
@@ -70,7 +60,7 @@ impl Transform2D {
         translation: Vector2,
         rotation: f32,
         scale: Vector2,
-    ) -> Transform2D {
+    ) -> Self {
         Self::IDENTITY
             .translated(translation)
             .rotated(rotation)
@@ -79,7 +69,7 @@ impl Transform2D {
 
     /// Returns the inverse of the transform, under the assumption that the transformation is composed of rotation, scaling and translation.
     #[inline]
-    pub fn affine_inverse(&self) -> Transform2D {
+    pub fn affine_inverse(&self) -> Self {
         let mut inverted = *self;
 
         let det = self.basis_determinant();
@@ -127,7 +117,7 @@ impl Transform2D {
     ///
     /// Unlike rotated() and scaled(), this does not use matrix multiplication.
     #[inline]
-    pub fn translated(&self, translation: Vector2) -> Transform2D {
+    pub fn translated(&self, translation: Vector2) -> Self {
         Self {
             origin: self.origin + self.basis_xform(translation),
             ..*self
@@ -155,8 +145,8 @@ impl Transform2D {
 
     /// Rotates the transform by the given angle (in radians), using matrix multiplication.
     #[inline]
-    pub fn rotated(&self, rotation: f32) -> Transform2D {
-        let mut tr = Transform2D::IDENTITY;
+    pub fn rotated(&self, rotation: f32) -> Self {
+        let mut tr = Self::IDENTITY;
         tr.set_rotation(rotation);
         tr * *self
     }
@@ -177,24 +167,17 @@ impl Transform2D {
 
     /// Scales the transform by the given scale factor, using matrix multiplication.
     #[inline]
-    pub fn scaled(&self, scale: Vector2) -> Transform2D {
+    pub fn scaled(&self, scale: Vector2) -> Self {
         let mut new = *self;
         new.scale_basis(scale);
         new.origin *= scale;
         new
     }
 
-    fn scale_basis(&mut self, scale: Vector2) {
-        self.x.x *= scale.x;
-        self.x.y *= scale.y;
-        self.y.x *= scale.x;
-        self.y.y *= scale.y;
-    }
-
     /// Returns a transform interpolated between this transform and another by a given weight (on the range of 0.0 to 1.0).
     /// NOTE: This method assumes both Transform2Ds are affine transformations.
     #[inline]
-    pub fn interpolate_with(&self, other: Transform2D, weight: f32) -> Transform2D {
+    pub fn interpolate_with(&self, other: Self, weight: f32) -> Self {
         // extract parameters
         let p1 = self.origin;
         let p2 = other.origin;
@@ -255,6 +238,25 @@ impl Transform2D {
     #[inline]
     pub fn from_sys(c: sys::godot_transform2d) -> Self {
         unsafe { std::mem::transmute::<sys::godot_transform2d, Self>(c) }
+    }
+
+    fn basis_determinant(&self) -> f32 {
+        self.x.x * self.y.y - self.x.y * self.y.x
+    }
+
+    fn tdotx(&self, v: Vector2) -> f32 {
+        self.x.x * v.x + self.y.x * v.y
+    }
+
+    fn tdoty(&self, v: Vector2) -> f32 {
+        self.x.y * v.x + self.y.y * v.y
+    }
+
+    fn scale_basis(&mut self, scale: Vector2) {
+        self.x.x *= scale.x;
+        self.x.y *= scale.y;
+        self.y.x *= scale.x;
+        self.y.y *= scale.y;
     }
 }
 

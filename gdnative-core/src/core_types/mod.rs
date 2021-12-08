@@ -38,12 +38,9 @@ pub use geom::*;
 pub use int32_array::*;
 pub use node_path::*;
 pub use pool_array::*; // TODO rename Element to something more specific
-pub use quat::*;
-pub use rect2::*;
 pub use rid::*;
 pub use string::*;
 pub use string_array::*;
-pub use transform2d::*;
 pub use variant::*;
 pub use variant_array::*;
 pub use vector2::*;

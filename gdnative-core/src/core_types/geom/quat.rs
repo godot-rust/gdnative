@@ -1,4 +1,4 @@
-use super::{Basis, IsEqualApprox, Vector3, CMP_EPSILON};
+use crate::core_types::{Basis, IsEqualApprox, Vector3, CMP_EPSILON};
 use glam::EulerRot;
 use std::ops::{Mul, Neg};
 
