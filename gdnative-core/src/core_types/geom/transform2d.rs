@@ -16,19 +16,42 @@ fn clamp(num: f32, min: f32, max: f32) -> f32 {
     x
 }
 
-/// A 2×3 matrix (2 rows, 3 columns) used for 2D linear transformations. It can represent
-/// transformations such as translation, rotation, or scaling. It consists of three
-/// Vector2 values: x axis, y axis, and the origin.
+/// Affine 2D transform (2x3 matrix).
+///
+/// Represents transformations such as translation, rotation, or scaling.
+///
+/// Expressed as a 2x3 matrix, this transform consists of 2 basis (column) vectors `a` and `b`,
+/// as well as an origin `o`; more information in [`Self::from_basis_origin()`]:
+/// ```text
+/// [ a.x  b.x  o.x ]
+/// [ a.y  b.y  o.y ]
+/// ```
+///
+/// Given linear independence, every point in the transformed coordinate system can be expressed as
+/// `p = xa + yb + o`, where `x`, `y` are the scaling factors and `o` is the origin.
+///
+///
+/// See also [Transform2D](https://docs.godotengine.org/en/stable/classes/class_transform2d.html) in the Godot API doc.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct Transform2D {
-    /// The x basis vector of the transform. Objects will move along this vector when
-    /// moving on the X axis in the coordinate space of this transform
+    /// The first basis vector of the transform.
+    ///
+    /// When transforming the X unit vector `(1, 0)` under this transform, the resulting point is represented by `a`.
+    /// Objects will move along `a` when moving on the X axis in the coordinate space of this transform.
+    ///
+    /// (This field is called `x` in Godot, but was renamed to avoid confusion with the `x` vector component and
+    /// less readable expressions such as `x.y`, `y.x`).
     pub x: Vector2,
 
-    /// The y basis vector of the transform. Objects will move along this vector when
-    /// moving on the Y axis in the coordinate space of this transform.
+    /// The second basis vector of the transform.
+    ///
+    /// When transforming the Y unit vector `(0, 1)` under this transform, the resulting point is represented by `b`.
+    /// Objects will move along `b` when moving on the Y axis in the coordinate space of this transform.
+    ///
+    /// (This field is called `y` in Godot, but was renamed to avoid confusion with the `y` vector component and
+    /// less readable expressions such as `x.y`, `y.x`).
     pub y: Vector2,
 
     /// The origin of the transform. The coordinate space defined by this transform
@@ -44,12 +67,27 @@ impl Transform2D {
         origin: Vector2::new(0.0, 0.0),
     };
 
-    /// Constructs the transform from 3 Vector2 values representing x, y, and the origin (the three column vectors).
+    /// Creates a new transform from three basis vectors and the coordinate system's origin.
+    ///
+    /// Each vector represents a basis vector in the *transformed* coordinate system.
+    /// For example, `a` is the result of transforming the X unit vector `(1, 0)`.
+    /// The 2 vectors need to be linearly independent.
+    ///
+    /// Basis vectors are stored as column vectors in the matrix.
+    /// The construction `Transform2D::from_basis_origin(a, b, o)` will create the following 3x4 matrix:
+    /// ```text
+    /// [ a.x  b.x  o.x ]
+    /// [ a.y  b.y  o.y ]
+    /// ```
     #[inline]
-    pub fn from_axis_origin(x_axis: Vector2, y_axis: Vector2, origin: Vector2) -> Self {
+    pub const fn from_basis_origin(
+        basis_vector_a: Vector2,
+        basis_vector_b: Vector2,
+        origin: Vector2,
+    ) -> Self {
         Self {
-            x: x_axis,
-            y: y_axis,
+            x: basis_vector_a,
+            y: basis_vector_b,
             origin,
         }
     }
@@ -290,7 +328,7 @@ fn test_transform2d_behavior_impl() {
     // This test compares the Transform2D implementation against the Godot API,
     // making sure behavior is consistent between the two.
 
-    let new_transform_rust = Transform2D::from_axis_origin(
+    let new_transform_rust = Transform2D::from_basis_origin(
         Vector2::new(42.0, 0.0),
         Vector2::new(0.0, 23.0),
         Vector2::new(5.0, 8.0),
@@ -373,7 +411,7 @@ fn test_transform2d_behavior_impl() {
         "Scale getters should return equal results"
     );
 
-    let other_transform_rust = Transform2D::from_axis_origin(
+    let other_transform_rust = Transform2D::from_basis_origin(
         Vector2::new(10.0, 0.0),
         Vector2::new(0.0, 15.0),
         Vector2::new(5.0, 13.0),

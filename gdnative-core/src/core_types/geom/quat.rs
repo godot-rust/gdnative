@@ -2,6 +2,11 @@ use crate::core_types::{Basis, IsEqualApprox, Vector3, CMP_EPSILON};
 use glam::EulerRot;
 use std::ops::{Mul, Neg};
 
+/// Quaternion, used to represent 3D rotations.
+///
+/// Quaternions need to be [normalized][Self::normalized()] before all operations.
+///
+/// See also [Quat](https://docs.godotengine.org/en/stable/classes/class_quat.html) in the Godot API doc.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
@@ -248,11 +253,11 @@ mod test {
     #[test]
     fn to_basis() {
         let quat = Quat::new(0.485489, 0.142796, -0.862501, 0.001113);
-        let expect = Basis::from_elements([
+        let expect = Basis::from_rows(
             Vector3::new(-0.528598, 0.140572, -0.837152),
             Vector3::new(0.136732, -0.959216, -0.247404),
             Vector3::new(-0.837788, -0.245243, 0.487819),
-        ]);
+        );
         let basis = Basis::from_quat(quat);
         assert!(basis.is_equal_approx(&expect));
     }
