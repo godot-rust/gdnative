@@ -14,9 +14,9 @@ use glam::Mat3;
 pub struct Basis {
     /// Matrix rows. These are **not** the basis vectors!
     ///
-    /// This is a transposed view for performance. <br>
-    /// To read basis vectors, see [`x()`][Self::x], [`y()`][Self::y], [`z()`][Self::z]. <br>
-    /// To write them, see [`set_x()`][Self::set_x], [`set_y()`][Self::set_x], [`set_z()`][Self::set_x].
+    /// This is a transposed view for performance.<br>
+    /// To read basis vectors, see [`a()`][Self::a], [`b()`][Self::b], [`c()`][Self::c].<br>
+    /// To write them, see [`set_a()`][Self::set_a], [`set_b()`][Self::set_b], [`set_c()`][Self::set_c].
     pub elements: [Vector3; 3],
 }
 
@@ -51,7 +51,7 @@ impl Basis {
     /// Constructs a basis matrix from 3 linearly independent basis vectors (matrix columns).
     ///
     /// This is the typical way to construct a basis. If you want to fill in the elements one-by-one,
-    /// consider using [`Self::from_rows()`] instead.
+    /// consider using [`Self::from_rows()`].
     #[inline]
     pub const fn from_basis_vectors(a: Vector3, b: Vector3, c: Vector3) -> Self {
         Self {
@@ -78,7 +78,8 @@ impl Basis {
     ///     Vector3::new(a.z, b.z, c.z),
     /// );
     /// ```
-    /// In that case, the vectors `a`, `b` and `c` are the basis vectors.
+    /// The vectors `a`, `b` and `c` are the basis vectors.<br>
+    /// In this particular case, you could also use [`Self::from_basis_vectors(a, b, c)`][Self::from_basis_vectors()] instead.
     #[inline]
     pub const fn from_rows(
         x_components: Vector3,
@@ -221,13 +222,13 @@ impl Basis {
 
         let s: f32 = 1.0 / det;
 
-        self.set_x(Vector3::new(co[0] * s, co[1] * s, co[2] * s));
-        self.set_y(Vector3::new(
+        self.set_a(Vector3::new(co[0] * s, co[1] * s, co[2] * s));
+        self.set_b(Vector3::new(
             (x.z * z.y - x.y * z.z) * s,
             (x.x * z.z - x.z * z.x) * s,
             (x.y * z.x - x.x * z.y) * s,
         ));
-        self.set_z(Vector3::new(
+        self.set_c(Vector3::new(
             (x.y * y.z - x.z * y.y) * s,
             (x.z * y.x - x.x * y.z) * s,
             (x.x * y.y - x.y * y.x) * s,
@@ -287,9 +288,9 @@ impl Basis {
         );
 
         // Gram-Schmidt Process
-        let mut x = self.x();
-        let mut y = self.y();
-        let mut z = self.z();
+        let mut x = self.a();
+        let mut y = self.b();
+        let mut z = self.c();
 
         x = x.normalized();
         y = y - x * (x.dot(y));
@@ -297,9 +298,9 @@ impl Basis {
         z = z - x * (x.dot(z)) - y * (y.dot(z));
         z = z.normalized();
 
-        self.set_x(x);
-        self.set_y(y);
-        self.set_z(z);
+        self.set_a(x);
+        self.set_b(y);
+        self.set_c(z);
     }
 
     #[inline]
@@ -308,9 +309,7 @@ impl Basis {
         m.is_equal_approx(&Self::IDENTITY)
     }
 
-    /// Returns an orthonormalized version of the matrix.
-    ///
-    /// See [`Basis::orthonormalize()`](#method.orthonormalize)
+    /// Returns an orthonormalized version of the matrix: 3 orthogonal basis vectors of unit length.
     #[inline]
     pub fn orthonormalized(&self) -> Self {
         let mut copy = *self;
@@ -326,25 +325,27 @@ impl Basis {
             && self.elements[2].is_equal_approx(other.elements[2])
     }
 
-    /// Multiplies the matrix from left by the rotation matrix: M -> R.M
+    /// Multiplies the matrix from left with the rotation matrix: M -> R·M
     ///
     /// The main use of `Basis` is as a `Transform.basis`, which is used as the transformation matrix
     /// of the 3D object. `rotated()` here refers to rotation of the object (which is `R * self`), not the matrix itself.
     #[inline]
     pub fn rotated(&self, axis: Vector3, phi: f32) -> Self {
-        let rot = Basis::from_axis_angle(axis, phi);
-        rot * (*self)
+        let mut copy = *self;
+        copy.rotate(axis, phi);
+        copy
     }
 
     /// Rotates the matrix.
     ///
     /// If object rotation is needed, see [`Basis::rotated()`]
     #[inline]
-    #[allow(unused)] // useful to have around, if more methods are added
     fn rotate(&mut self, axis: Vector3, phi: f32) {
-        *self = self.rotated(axis, phi);
+        let rot = Self::from_axis_angle(axis, phi);
+        *self = rot * *self;
     }
 
+    /// Returns true if this basis represents a rotation matrix (orthogonal and no scaling).
     #[inline]
     fn is_rotation(&self) -> bool {
         let det = self.determinant();
@@ -356,11 +357,8 @@ impl Basis {
     pub fn scale(&self) -> Vector3 {
         let det = self.determinant();
         let det_sign = if det < 0.0 { -1.0 } else { 1.0 };
-        Vector3::new(
-            Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x).length(),
-            Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y).length(),
-            Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z).length(),
-        ) * det_sign
+
+        Vector3::new(self.a().length(), self.b().length(), self.c().length()) * det_sign
     }
 
     /// Introduce an additional scaling specified by the given 3D scaling factor.
@@ -371,7 +369,7 @@ impl Basis {
         copy
     }
 
-    /// Multiplies the matrix from left by the scaIling matrix: M -> S.M
+    /// Multiplies the matrix from left with the scaling matrix: M -> S·M
     ///
     /// See the comment for [Basis::rotated](#method.rotated) for further explanation.
     #[inline]
@@ -511,68 +509,64 @@ impl Basis {
     /// Note: This results in a multiplication by the inverse of the matrix only if it represents a rotation-reflection.
     #[inline]
     pub fn xform_inv(&self, v: Vector3) -> Vector3 {
-        Vector3::new(
-            (self.elements[0].x * v.x) + (self.elements[1].x * v.y) + (self.elements[2].x * v.z),
-            (self.elements[0].y * v.x) + (self.elements[1].y * v.y) + (self.elements[2].y * v.z),
-            (self.elements[0].z * v.x) + (self.elements[1].z * v.y) + (self.elements[2].z * v.z),
-        )
+        Vector3::new(self.a().dot(v), self.b().dot(v), self.c().dot(v))
     }
 
     /// Transposed dot product with the **X basis vector** of the matrix.
     #[inline]
     pub(crate) fn tdotx(&self, v: Vector3) -> f32 {
-        self.x().dot(v)
+        self.a().dot(v)
     }
 
     /// Transposed dot product with the **Y basis vector** of the matrix.
     #[inline]
     pub(crate) fn tdoty(&self, v: Vector3) -> f32 {
-        self.y().dot(v)
+        self.b().dot(v)
     }
 
     /// Transposed dot product with the **Z basis vector** of the matrix.
     #[inline]
     pub(crate) fn tdotz(&self, v: Vector3) -> f32 {
-        self.z().dot(v)
+        self.c().dot(v)
     }
 
-    /// Get the **X basis vector** (first column vector of the matrix).
+    /// Get the **1st basis vector** (first column vector of the matrix).
     #[inline]
-    pub fn x(&self) -> Vector3 {
+    pub fn a(&self) -> Vector3 {
         Vector3::new(self.elements[0].x, self.elements[1].x, self.elements[2].x)
     }
 
-    /// Set the **X basis vector** (first column vector of the matrix).
+    /// Set the **1st basis vector** (first column vector of the matrix).
     #[inline]
-    pub fn set_x(&mut self, v: Vector3) {
+    pub fn set_a(&mut self, v: Vector3) {
         self.elements[0].x = v.x;
         self.elements[1].x = v.y;
         self.elements[2].x = v.z;
     }
 
-    /// Get the **Y basis vector** (second column vector of the matrix).
+    /// Get the **2nd basis vector** (second column vector of the matrix).
     #[inline]
-    pub fn y(&self) -> Vector3 {
+    pub fn b(&self) -> Vector3 {
         Vector3::new(self.elements[0].y, self.elements[1].y, self.elements[2].y)
     }
 
-    /// Set the **Y basis vector** (second column vector of the matrix).
+    /// Set the **2nd basis vector** (second column vector of the matrix).
     #[inline]
-    pub fn set_y(&mut self, v: Vector3) {
+    pub fn set_b(&mut self, v: Vector3) {
         self.elements[0].y = v.x;
         self.elements[1].y = v.y;
         self.elements[2].y = v.z;
     }
 
-    /// Get the **Z basis vector** (third column vector of the matrix).
+    /// Get the **3rd basis vector** (third column vector of the matrix).
     #[inline]
-    pub fn z(&self) -> Vector3 {
+    pub fn c(&self) -> Vector3 {
         Vector3::new(self.elements[0].z, self.elements[1].z, self.elements[2].z)
     }
 
-    /// Set the **Z basis vector** (third column vector of the matrix).
+    /// Set the **3rd basis vector** (third column vector of the matrix).
     #[inline]
-    pub fn set_z(&mut self, v: Vector3) {
+    pub fn set_c(&mut self, v: Vector3) {
         self.elements[0].z = v.x;
         self.elements[1].z = v.y;
         self.elements[2].z = v.z;
@@ -657,9 +651,9 @@ mod tests {
             ],
         };
 
-        assert!(basis.x() == Vector3::new(1.0, 4.0, 7.0));
-        assert!(basis.y() == Vector3::new(2.0, 5.0, 8.0));
-        assert!(basis.z() == Vector3::new(3.0, 6.0, 9.0));
+        assert!(basis.a() == Vector3::new(1.0, 4.0, 7.0));
+        assert!(basis.b() == Vector3::new(2.0, 5.0, 8.0));
+        assert!(basis.c() == Vector3::new(3.0, 6.0, 9.0));
     }
 
     #[test]
@@ -668,9 +662,9 @@ mod tests {
             elements: [Vector3::ZERO, Vector3::ZERO, Vector3::ZERO],
         };
 
-        basis.set_x(Vector3::new(1.0, 4.0, 7.0));
-        basis.set_y(Vector3::new(2.0, 5.0, 8.0));
-        basis.set_z(Vector3::new(3.0, 6.0, 9.0));
+        basis.set_a(Vector3::new(1.0, 4.0, 7.0));
+        basis.set_b(Vector3::new(2.0, 5.0, 8.0));
+        basis.set_c(Vector3::new(3.0, 6.0, 9.0));
 
         assert!(basis.elements[0] == Vector3::new(1.0, 2.0, 3.0));
         assert!(basis.elements[1] == Vector3::new(4.0, 5.0, 6.0));

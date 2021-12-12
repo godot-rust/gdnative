@@ -69,8 +69,8 @@ impl Foo {
             },
             vec3: Vector3::BACK,
             xform_2d: Transform2D {
-                x: Vector2::RIGHT,
-                y: Vector2::DOWN,
+                a: Vector2::RIGHT,
+                b: Vector2::DOWN,
                 origin: Vector2::ZERO,
             },
             plane: Plane {

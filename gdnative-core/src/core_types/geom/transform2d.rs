@@ -30,7 +30,6 @@ fn clamp(num: f32, min: f32, max: f32) -> f32 {
 /// Given linear independence, every point in the transformed coordinate system can be expressed as
 /// `p = xa + yb + o`, where `x`, `y` are the scaling factors and `o` is the origin.
 ///
-///
 /// See also [Transform2D](https://docs.godotengine.org/en/stable/classes/class_transform2d.html) in the Godot API doc.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -43,7 +42,7 @@ pub struct Transform2D {
     ///
     /// (This field is called `x` in Godot, but was renamed to avoid confusion with the `x` vector component and
     /// less readable expressions such as `x.y`, `y.x`).
-    pub x: Vector2,
+    pub a: Vector2,
 
     /// The second basis vector of the transform.
     ///
@@ -52,7 +51,7 @@ pub struct Transform2D {
     ///
     /// (This field is called `y` in Godot, but was renamed to avoid confusion with the `y` vector component and
     /// less readable expressions such as `x.y`, `y.x`).
-    pub y: Vector2,
+    pub b: Vector2,
 
     /// The origin of the transform. The coordinate space defined by this transform
     /// starts at this point.
@@ -62,8 +61,8 @@ pub struct Transform2D {
 impl Transform2D {
     /// Represents the identity transform.
     pub const IDENTITY: Self = Self {
-        x: Vector2::new(1.0, 0.0),
-        y: Vector2::new(0.0, 1.0),
+        a: Vector2::new(1.0, 0.0),
+        b: Vector2::new(0.0, 1.0),
         origin: Vector2::new(0.0, 0.0),
     };
 
@@ -86,8 +85,8 @@ impl Transform2D {
         origin: Vector2,
     ) -> Self {
         Self {
-            x: basis_vector_a,
-            y: basis_vector_b,
+            a: basis_vector_a,
+            b: basis_vector_b,
             origin,
         }
     }
@@ -114,9 +113,9 @@ impl Transform2D {
         debug_assert!(det != 0.0, "The determinant cannot be zero");
         let idet = 1.0 / det;
 
-        std::mem::swap(&mut inverted.x.x, &mut inverted.y.y);
-        inverted.x *= Vector2::new(idet, -idet);
-        inverted.y *= Vector2::new(-idet, idet);
+        std::mem::swap(&mut inverted.a.x, &mut inverted.b.y);
+        inverted.a *= Vector2::new(idet, -idet);
+        inverted.b *= Vector2::new(-idet, idet);
         inverted.origin = inverted.basis_xform(-inverted.origin);
 
         inverted
@@ -127,7 +126,7 @@ impl Transform2D {
     /// This method does not account for translation (the origin vector).
     #[inline]
     pub fn basis_xform(&self, v: Vector2) -> Vector2 {
-        Vector2::new(self.x.dot(v), self.y.dot(v))
+        Vector2::new(self.a.dot(v), self.b.dot(v))
     }
 
     /// Returns a vector transformed (multiplied) by the inverse basis matrix.
@@ -148,7 +147,7 @@ impl Transform2D {
     #[inline]
     pub fn xform_inv(&self, v: Vector2) -> Vector2 {
         let v = v - self.origin;
-        Vector2::new(self.x.dot(v), self.y.dot(v))
+        Vector2::new(self.a.dot(v), self.b.dot(v))
     }
 
     /// Translates the transform by the given offset, relative to the transform's basis vectors.
@@ -165,7 +164,7 @@ impl Transform2D {
     /// Returns the transform's rotation (in radians).
     #[inline]
     pub fn rotation(&self) -> f32 {
-        f32::atan2(self.x.y, self.x.x)
+        f32::atan2(self.a.y, self.a.x)
     }
 
     /// Sets the transform's rotation (argument `rotation` in radians).
@@ -174,10 +173,10 @@ impl Transform2D {
         let scale = self.scale();
         let cr = f32::cos(rotation);
         let sr = f32::sin(rotation);
-        self.x.x = cr;
-        self.x.y = sr;
-        self.y.x = -sr;
-        self.y.y = cr;
+        self.a.x = cr;
+        self.a.y = sr;
+        self.b.x = -sr;
+        self.b.y = cr;
         self.set_scale(scale);
     }
 
@@ -193,14 +192,14 @@ impl Transform2D {
     #[inline]
     pub fn scale(&self) -> Vector2 {
         let det_sign = self.basis_determinant().signum();
-        Vector2::new(self.x.length(), det_sign * self.y.length())
+        Vector2::new(self.a.length(), det_sign * self.b.length())
     }
 
     /// Sets the transform's scale.
     #[inline]
     pub fn set_scale(&mut self, scale: Vector2) {
-        self.x = self.x.normalized() * scale.x;
-        self.y = self.y.normalized() * scale.y;
+        self.a = self.a.normalized() * scale.x;
+        self.b = self.b.normalized() * scale.y;
     }
 
     /// Scales the transform by the given scale factor, using matrix multiplication.
@@ -251,8 +250,8 @@ impl Transform2D {
     /// Returns true if this transform and transform are approximately equal, by calling is_equal_approx on each component.
     #[inline]
     pub fn is_equal_approx(&self, other: Transform2D) -> bool {
-        self.x.is_equal_approx(other.x)
-            && self.y.is_equal_approx(other.y)
+        self.a.is_equal_approx(other.a)
+            && self.b.is_equal_approx(other.b)
             && self.origin.is_equal_approx(other.origin)
     }
 
@@ -279,22 +278,22 @@ impl Transform2D {
     }
 
     fn basis_determinant(&self) -> f32 {
-        self.x.x * self.y.y - self.x.y * self.y.x
+        self.a.x * self.b.y - self.a.y * self.b.x
     }
 
     fn tdotx(&self, v: Vector2) -> f32 {
-        self.x.x * v.x + self.y.x * v.y
+        self.a.x * v.x + self.b.x * v.y
     }
 
     fn tdoty(&self, v: Vector2) -> f32 {
-        self.x.y * v.x + self.y.y * v.y
+        self.a.y * v.x + self.b.y * v.y
     }
 
     fn scale_basis(&mut self, scale: Vector2) {
-        self.x.x *= scale.x;
-        self.x.y *= scale.y;
-        self.y.x *= scale.x;
-        self.y.y *= scale.y;
+        self.a.x *= scale.x;
+        self.a.y *= scale.y;
+        self.b.x *= scale.x;
+        self.b.y *= scale.y;
     }
 }
 
@@ -307,15 +306,15 @@ impl std::ops::Mul<Transform2D> for Transform2D {
 
         new.origin = new.xform(rhs.origin);
 
-        let x0 = new.tdotx(rhs.x);
-        let x1 = new.tdoty(rhs.x);
-        let y0 = new.tdotx(rhs.y);
-        let y1 = new.tdoty(rhs.y);
+        let x0 = new.tdotx(rhs.a);
+        let x1 = new.tdoty(rhs.a);
+        let y0 = new.tdotx(rhs.b);
+        let y1 = new.tdoty(rhs.b);
 
-        new.x.x = x0;
-        new.x.y = x1;
-        new.y.x = y0;
-        new.y.y = y1;
+        new.a.x = x0;
+        new.a.y = x1;
+        new.b.x = y0;
+        new.b.y = y1;
 
         new
     }
