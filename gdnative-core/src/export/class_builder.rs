@@ -76,7 +76,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     ///
     ///     fn my_register(builder: &ClassBuilder<MyType>) {
     ///         builder
-    ///             .build_method("my_method", MyMethod)
+    ///             .method("my_method", MyMethod)
     ///             .with_rpc_mode(RpcMode::RemoteSync)
     ///             .done();
     ///     }
@@ -95,11 +95,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// ```
     ///
     #[inline]
-    pub fn build_method<'a, F: Method<C>>(
-        &'a self,
-        name: &'a str,
-        method: F,
-    ) -> MethodBuilder<'a, C, F> {
+    pub fn method<'a, F: Method<C>>(&'a self, name: &'a str, method: F) -> MethodBuilder<'a, C, F> {
         MethodBuilder::new(self, name, method)
     }
 
@@ -128,7 +124,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     ///
     ///     fn my_register(builder: &ClassBuilder<MyType>) {
     ///         builder
-    ///             .build_property("foo")
+    ///             .property("foo")
     ///             .with_default(5)
     ///             .with_hint((-10..=30).into())
     ///             .with_getter(MyType::get_foo)
@@ -138,7 +134,7 @@ impl<C: NativeClass> ClassBuilder<C> {
     /// }
     /// ```
     #[inline]
-    pub fn build_property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>
+    pub fn property<'a, T>(&'a self, name: &'a str) -> PropertyBuilder<'a, C, T>
     where
         T: Export,
     {

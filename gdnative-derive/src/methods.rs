@@ -133,7 +133,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                         fn #name ( #( #args )* ) -> #ret_ty
                     );
 
-                    #builder.build_method(#name_string, method)
+                    #builder.method(#name_string, method)
                         .with_rpc_mode(#rpc)
                         .done_stateless();
                 }

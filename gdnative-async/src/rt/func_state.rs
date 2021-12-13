@@ -169,10 +169,10 @@ impl StaticArgsMethod<FuncState> for ResumeFn {
 impl NativeClassMethods for FuncState {
     fn register(builder: &ClassBuilder<Self>) {
         builder
-            .build_method("is_valid", StaticArgs::new(IsValidFn))
+            .method("is_valid", StaticArgs::new(IsValidFn))
             .done_stateless();
         builder
-            .build_method("resume", StaticArgs::new(ResumeFn))
+            .method("resume", StaticArgs::new(ResumeFn))
             .done_stateless();
     }
 }

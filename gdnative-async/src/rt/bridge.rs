@@ -134,8 +134,6 @@ impl Method<SignalBridge> for OnSignalFn {
 
 impl NativeClassMethods for SignalBridge {
     fn register(builder: &ClassBuilder<Self>) {
-        builder
-            .build_method("_on_signal", OnSignalFn)
-            .done_stateless();
+        builder.method("_on_signal", OnSignalFn).done_stateless();
     }
 }

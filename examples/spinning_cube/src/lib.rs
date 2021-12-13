@@ -15,7 +15,7 @@ struct RustTest {
 
 fn register_properties(builder: &ClassBuilder<RustTest>) {
     builder
-        .build_property::<String>("test/test_enum")
+        .property::<String>("test/test_enum")
         .with_hint(StringHint::Enum(EnumHint::new(vec![
             "Hello".into(),
             "World".into(),
@@ -25,7 +25,7 @@ fn register_properties(builder: &ClassBuilder<RustTest>) {
         .done();
 
     builder
-        .build_property("test/test_flags")
+        .property("test/test_flags")
         .with_hint(IntHint::Flags(EnumHint::new(vec![
             "A".into(),
             "B".into(),
