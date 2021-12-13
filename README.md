@@ -12,19 +12,22 @@
 
 ## Stability
 
-The bindings cover most of the exposed API of Godot 3.2, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
+The bindings cover most of the exposed API of Godot 3.4, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
 
 ## Engine compatibility
 
-We are committed to keeping compatibility with the latest stable patch releases of all minor versions of the engine, starting from Godot 3.2.
+We are committed to keeping compatibility with the latest stable patch releases of all minor versions of the engine, starting from Godot 3.2:
+* Godot 3.4 (works out-of-the-box)
+* Godot 3.3 (needs api.json adjustment)
+* Godot 3.2 (needs api.json adjustment)
 
-The current minimum compatible version, with `api.json` replacement, is Godot 3.2. Godot 3.3 is supported as well. Changes to this will be considered a breaking change, and will be called out in the release notes.
+For versions 3.2 and 3.3, some extra steps are needed, see _Custom builds_ below.
 
-The bindings do _**not**_ support Godot 4.0 currently. Support is planned as the native extensions become more stable.
+The bindings do _**not**_ support in-development Godot 4 versions at the moment. Support is planned as the native extensions become more stable.
 
 ## Requirements
 
-The generator makes use of `bindgen`, which depends on Clang. Instructions for installing `bindgen`'s dependencies for popular OSes can be found in their documentation: https://rust-lang.github.io/rust-bindgen/requirements.html.
+The generator makes use of `bindgen`, which depends on Clang. Instructions for installing `bindgen`'s dependencies for popular OSes can be found [in their documentation](https://rust-lang.github.io/rust-bindgen/requirements.html).
 
 `bindgen` may complain about a missing `llvm-config` binary, but it is not actually required to build the `gdnative` crate. If you see a warning about `llvm-config` and a failed build, it's likely that you're having a different problem!
 
@@ -40,9 +43,21 @@ This means that `bindgen` was unable to find the C system headers for your platf
 
 ## Usage
 
-### Godot 3.2.3-stable
+### Latest `master` version + Godot 3.4
 
 After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
+
+```toml
+[dependencies]
+gdnative = { git = "https://github.com/godot-rust/godot-rust.git" }
+
+[lib]
+crate-type = ["cdylib"]
+```
+
+### Godot 3.2.3-stable
+
+To access the last released version on crates.io, use the following. If you are starting, we recommend using the `master` version at this point, as there have been significant API changes since v0.9.3.
 
 ```toml
 [dependencies]
@@ -52,13 +67,15 @@ gdnative = "0.9.3"
 crate-type = ["cdylib"]
 ```
 
-### Other versions or custom builds
+### Custom builds
 
-The bindings are currently generated from the API description of Godot 3.2.3-stable by default. To use the bindings with another version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-bindings.html) in the user guide.
+To use the bindings with a non-default Godot version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-godot.html) in the user guide.
 
-### Async / "`yield`" support
+In short, you will need to generate `api.json` manually, using `godot --gdnative-generate-json-api api.json` to replace the file in the `gdnative-bindings` directory.
 
-Async support is a work-in-progress, with a low-level API available in the `gdnative-async` crate. This crate is re-exported as `gdnative::tasks`, if the `async` feature is enabled on `gdnative`.
+### Async / `yield` support
+
+Async support is a work-in-progress, with a low-level API available in the `gdnative-async` crate. This crate is re-exported as `gdnative::tasks`, if the `async` feature is enabled on `gdnative`. See [this page](https://godot-rust.github.io/book/recipes/async-tokio.html) in the book for an introduction to use the async feature with Tokio.
 
 ## Example
 
@@ -107,14 +124,19 @@ godot_init!(init);
 
 The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
-- [/examples/hello_world](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console
-- [/examples/spinning_cube/](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spinning our own node in place, exposing editor properties.
-- [/examples/scene_create](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Shows you how to load, instance and place scenes using Rust code
-- [/examples/signals](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Shows you how to handle signals.
-- [/examples/resource](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Shows you how to create and use custom resources.
-- [/examples/native_plugin](https://github.com/godot-rust/godot-rust/tree/master/examples/native_plugin) - Shows you how to create custom node plugins.
+- [**hello_world**](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console.
+- [**spinning_cube**](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spin our own node in place, exposing editor properties.
+- [**scene_create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Load, instance and place scenes using Rust code.
+- [**array_export**](https://github.com/godot-rust/godot-rust/tree/master/examples/array_export) - Export more complex properties (here arrays) from Rust.
+- [**dodge_the_creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge_the_creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
+- [**signals**](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Connect and emit signals.
+- [**resource**](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Create and use custom resources.
+- [**rpc**](https://github.com/godot-rust/godot-rust/tree/master/examples/rpc) - Simple peer-to-peer networking.
+- [**native_plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native_plugin) - Create custom node plugins.
 
 ## Third-party resources
+
+See also (work-in-progress): [Third-party projects](https://godot-rust.github.io/book/projects.html) in the book.
 
 ### Tools and integrations
 
@@ -139,4 +161,4 @@ See the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
+Any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.

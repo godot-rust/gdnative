@@ -47,16 +47,17 @@ impl Player {
         let input = Input::godot_singleton();
         let mut velocity = Vector2::new(0.0, 0.0);
 
-        if Input::is_action_pressed(input, "ui_right") {
+        // Note: exact=false by default, in Rust we have to provide it explicitly
+        if Input::is_action_pressed(input, "ui_right", false) {
             velocity.x += 1.0
         }
-        if Input::is_action_pressed(input, "ui_left") {
+        if Input::is_action_pressed(input, "ui_left", false) {
             velocity.x -= 1.0
         }
-        if Input::is_action_pressed(input, "ui_down") {
+        if Input::is_action_pressed(input, "ui_down", false) {
             velocity.y += 1.0
         }
-        if Input::is_action_pressed(input, "ui_up") {
+        if Input::is_action_pressed(input, "ui_up", false) {
             velocity.y -= 1.0
         }
 
