@@ -1348,7 +1348,7 @@ from_variant_from_sys!(
     impl FromVariant for Dictionary<Shared> as Dictionary : godot_variant_as_dictionary;
 );
 
-impl<T: crate::core_types::pool_array::Element> ToVariant for PoolArray<T> {
+impl<T: crate::core_types::PoolElement> ToVariant for PoolArray<T> {
     #[inline]
     fn to_variant(&self) -> Variant {
         unsafe {
@@ -1359,9 +1359,9 @@ impl<T: crate::core_types::pool_array::Element> ToVariant for PoolArray<T> {
         }
     }
 }
-impl<T: crate::core_types::pool_array::Element + Eq> ToVariantEq for PoolArray<T> {}
+impl<T: crate::core_types::PoolElement + Eq> ToVariantEq for PoolArray<T> {}
 
-impl<T: crate::core_types::pool_array::Element> FromVariant for PoolArray<T> {
+impl<T: crate::core_types::PoolElement> FromVariant for PoolArray<T> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         unsafe {
