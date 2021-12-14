@@ -136,7 +136,7 @@ impl MethodSig {
 }
 
 fn skip_method(method: &GodotMethod, name: &str) -> bool {
-    const METHODS: &[&str] = &["free", "reference", "unreference"];
+    const METHODS: &[&str] = &["free", "reference", "unreference", "init_ref"];
     METHODS.contains(&name) || method.is_virtual
 }
 
