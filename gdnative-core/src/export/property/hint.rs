@@ -265,8 +265,6 @@ pub enum FloatHint<T> {
     Range(RangeHint<T>),
     /// Hints that an integer or float property should be within an exponential range.
     ExpRange(RangeHint<T>),
-    /// Hints that an integer, float or string property is an enumerated value to pick in a list.
-    Enum(EnumHint),
     /// Hints that a float property should be edited via an exponential easing function.
     ExpEasing(ExpEasingHint),
 }
@@ -282,13 +280,11 @@ where
         let hint_kind = match &self {
             FH::Range(_) => sys::godot_property_hint_GODOT_PROPERTY_HINT_RANGE,
             FH::ExpRange(_) => sys::godot_property_hint_GODOT_PROPERTY_HINT_EXP_RANGE,
-            FH::Enum(_) => sys::godot_property_hint_GODOT_PROPERTY_HINT_ENUM,
             FH::ExpEasing(_) => sys::godot_property_hint_GODOT_PROPERTY_HINT_EXP_EASING,
         };
 
         let hint_string = match self {
             FH::Range(range) | FH::ExpRange(range) => range.to_godot_hint_string(),
-            FH::Enum(e) => e.to_godot_hint_string(),
             FH::ExpEasing(e) => e.to_godot_hint_string(),
         };
 
@@ -317,13 +313,6 @@ where
     #[inline]
     fn from(range: RangeInclusive<T>) -> Self {
         Self::Range(range.into())
-    }
-}
-
-impl<T> From<EnumHint> for FloatHint<T> {
-    #[inline]
-    fn from(hint: EnumHint) -> Self {
-        Self::Enum(hint)
     }
 }
 
