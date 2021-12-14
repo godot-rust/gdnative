@@ -1,5 +1,7 @@
+use crate::export::user_data::Map;
+use crate::export::NativeClass;
 use crate::object::ownership::{Ownership, Shared, Unique};
-use crate::object::{GodotObject, Null, Ref, SubClass, TRef};
+use crate::object::{GodotObject, Instance, Null, Ref, SubClass, TInstance, TRef};
 
 /// Trait for safe conversion from Godot object references into API method arguments. This is
 /// a sealed trait with no public interface.
@@ -41,10 +43,18 @@ mod private {
     pub trait Sealed {}
 }
 
+// Null
 impl<'a, T> private::Sealed for Null<T> {}
+
+// Temporary references (shared ownership)
 impl<'a, T: GodotObject> private::Sealed for TRef<'a, T, Shared> {}
-impl<T: GodotObject, Own: Ownership> private::Sealed for Ref<T, Own> {}
 impl<'a, T: GodotObject> private::Sealed for &'a Ref<T, Shared> {}
+impl<'a, T: NativeClass> private::Sealed for TInstance<'a, T, Shared> {}
+impl<'a, T: NativeClass> private::Sealed for &'a Instance<T, Shared> {}
+
+// Persistent references (any ownership)
+impl<T: GodotObject, Own: Ownership> private::Sealed for Ref<T, Own> {}
+impl<T: NativeClass, Own: Ownership> private::Sealed for Instance<T, Own> {}
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 // Null
@@ -124,4 +134,49 @@ impl<T: GodotObject> AsVariant for Ref<T, Shared> {
 
 impl<'a, T: GodotObject> AsVariant for &'a Ref<T, Shared> {
     type Target = T;
+}
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+// TInstance
+
+impl<'a, T, U> AsArg<U> for TInstance<'a, T, Shared>
+where
+    T: NativeClass,
+    T::Base: GodotObject + SubClass<U>,
+    T::UserData: Map,
+    U: GodotObject,
+{
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_base_ptr()
+    }
+}
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+// Instance
+
+impl<T, U, Own: Ownership> AsArg<U> for Instance<T, Own>
+where
+    T: NativeClass,
+    T::Base: GodotObject + SubClass<U>,
+    T::UserData: Map,
+    U: GodotObject,
+{
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_base_ptr()
+    }
+}
+
+impl<'a, T, U> AsArg<U> for &'a Instance<T, Shared>
+where
+    T: NativeClass,
+    T::Base: GodotObject + SubClass<U>,
+    T::UserData: Map,
+    U: GodotObject,
+{
+    #[inline]
+    fn as_arg_ptr(&self) -> *mut sys::godot_object {
+        self.as_base_ptr()
+    }
 }

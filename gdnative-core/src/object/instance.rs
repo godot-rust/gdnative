@@ -229,6 +229,11 @@ impl<T: NativeClass, Own: Ownership> Instance<T, Own> {
     pub fn script(&self) -> &T::UserData {
         &self.script
     }
+
+    /// Convert to a nullable raw pointer. Used for AsArg.
+    pub(super) fn as_base_ptr(&self) -> *mut sys::godot_object {
+        self.owner.as_ptr()
+    }
 }
 
 impl<T: NativeClass, Own: Ownership> Instance<T, Own>
@@ -463,6 +468,11 @@ impl<'a, T: NativeClass, Own: Ownership> TInstance<'a, T, Own> {
     ) -> Self {
         let script = T::UserData::clone_from_user_data_unchecked(user_data);
         TInstance { owner, script }
+    }
+
+    /// Convert to a nullable raw pointer. Used for AsArg.
+    pub(super) fn as_base_ptr(&self) -> *mut sys::godot_object {
+        self.owner.as_ptr()
     }
 }
 
