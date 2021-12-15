@@ -16,10 +16,7 @@ pub struct Player {
 #[methods]
 impl Player {
     fn register_player(builder: &ClassBuilder<Self>) {
-        builder.add_signal(Signal {
-            name: "hit",
-            args: &[],
-        });
+        builder.signal("hit").done()
     }
 
     fn new(_owner: &Area2D) -> Self {

@@ -12,8 +12,9 @@ use crate::object::ownership::Shared;
 use crate::object::{Ref, TInstance, TRef};
 
 /// Builder type used to register a method on a `NativeClass`.
+#[must_use = "MethodBuilder left unbuilt -- did you forget to call done() or done_stateless()?"]
 pub struct MethodBuilder<'a, C, F> {
-    class_builder: &'a super::ClassBuilder<C>,
+    class_builder: &'a ClassBuilder<C>,
     name: &'a str,
     method: F,
 
@@ -66,7 +67,7 @@ where
     F: Method<C> + Copy + Default,
 {
     /// Register the method as a stateless method. Stateless methods do not have data
-    /// pointers and destructors and is thus slightly lighter. This is intended for ZSTs,
+    /// pointers and destructors and are thus slightly lighter. This is intended for ZSTs,
     /// but can be used with any `Method` type with `Copy + Default`.
     #[inline]
     pub fn done_stateless(self) {

@@ -31,15 +31,10 @@ impl NativeClass for RegisterSignal {
         RegisterSignal
     }
     fn register_properties(builder: &ClassBuilder<Self>) {
-        builder.add_signal(Signal {
-            name: "progress",
-            args: &[SignalArgument {
-                name: "amount",
-                default: Variant::nil(),
-                export_info: ExportInfo::new(VariantType::I64),
-                usage: PropertyUsage::DEFAULT,
-            }],
-        });
+        builder
+            .signal("progress")
+            .with_param("amount", VariantType::I64)
+            .done();
     }
 }
 
