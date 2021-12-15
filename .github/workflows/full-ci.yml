@@ -32,7 +32,7 @@ env:
 
   # Local variables
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
-  GODOT_VER: '3.3'
+  GODOT_VER: "3.4"
   GODOT_REL: stable
 
 on:
