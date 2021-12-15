@@ -524,15 +524,14 @@ impl Variant {
         unsafe { &mut *(ptr as *mut variant::Variant) }
     }
 
-    /// Returns the internal ffi representation of the variant and consumes
-    /// the rust object without running the destructor.
+    /// Returns the internal FFI representation of the variant and consumes
+    /// the Rust object without running the destructor.
     ///
-    /// This should be only used when certain that the receiving side is
-    /// responsible for running the destructor for the object, otherwise
-    /// it is leaked.
+    /// The returned object has no `Drop` implementation. The caller is
+    /// responsible of manually ensuring destruction.
     #[inline]
     #[doc(hidden)]
-    pub fn forget(self) -> sys::godot_variant {
+    pub fn leak(self) -> sys::godot_variant {
         let v = self.0;
         forget(self);
         v

@@ -549,7 +549,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                 C::class_name(),
             ),
         );
-        return Variant::nil().forget();
+        return Variant::nil().leak();
     }
 
     let this = match std::ptr::NonNull::new(this) {
@@ -562,7 +562,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                     C::class_name(),
                 ),
             );
-            return Variant::nil().forget();
+            return Variant::nil().leak();
         }
     };
 
@@ -586,7 +586,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
             );
             Variant::nil()
         })
-        .forget()
+        .leak()
 }
 
 unsafe extern "C" fn free_func<F>(method_data: *mut libc::c_void) {
