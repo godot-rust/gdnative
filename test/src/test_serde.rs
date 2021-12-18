@@ -69,8 +69,8 @@ impl Foo {
             },
             vec3: Vector3::BACK,
             xform_2d: Transform2D {
-                x: Vector2::RIGHT,
-                y: Vector2::DOWN,
+                a: Vector2::RIGHT,
+                b: Vector2::DOWN,
                 origin: Vector2::ZERO,
             },
             plane: Plane {
@@ -82,7 +82,7 @@ impl Foo {
                 position: Vector3::new(8.2, 9.8, 10.11),
                 size: Vector3::new(12.13, 14.15, 16.17),
             },
-            basis: Basis::identity().rotated(Vector3::UP, std::f32::consts::TAU / 3.0),
+            basis: Basis::IDENTITY.rotated(Vector3::UP, std::f32::consts::TAU / 3.0),
             xform: Transform {
                 basis: Basis::from_euler(Vector3::new(18.19, -20.21, 22.23)),
                 origin: Vector3::new(24.25, 26.27, 28.29),

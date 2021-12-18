@@ -10,30 +10,18 @@ pub struct Plane {
 }
 
 impl Plane {
-    #[doc(hidden)]
-    #[inline]
-    pub fn sys(&self) -> *const sys::godot_plane {
-        unsafe { std::mem::transmute::<*const Plane, *const sys::godot_plane>(self as *const _) }
-    }
-
-    #[doc(hidden)]
-    #[inline]
-    pub fn from_sys(c: sys::godot_plane) -> Self {
-        unsafe { std::mem::transmute::<sys::godot_plane, Self>(c) }
-    }
-
     /// Creates a new `Plane` from the ['Vector3'](./type.Vector3.html) normal and the distance from the origin.
     #[inline]
-    pub fn new(normal: Vector3, d: f32) -> Plane {
-        Plane { normal, d }
+    pub fn new(normal: Vector3, d: f32) -> Self {
+        Self { normal, d }
     }
 
     /// Creates a new `Plane` from four floats.
     /// a, b, c are used for the normal ['Vector3'](./type.Vector3.html).
     /// d is the distance from the origin.
     #[inline]
-    pub fn from_coordinates(a: f32, b: f32, c: f32, d: f32) -> Plane {
-        Plane {
+    pub fn from_coordinates(a: f32, b: f32, c: f32, d: f32) -> Self {
+        Self {
             normal: Vector3::new(a, b, c),
             d,
         }
@@ -42,13 +30,13 @@ impl Plane {
     /// Creates a new `Plane` from three [`Vector3`](./type.Vector3.html), given in clockwise order.
     /// If all three points are collinear, returns `None`.
     #[inline]
-    pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Option<Plane> {
+    pub fn from_points(a: Vector3, b: Vector3, c: Vector3) -> Option<Self> {
         let normal = (a - c).cross(a - b).normalized();
 
         if normal.x.is_nan() || normal.y.is_nan() || normal.z.is_nan() {
             None
         } else {
-            Some(Plane {
+            Some(Self {
                 normal,
                 d: normal.dot(a),
             })
@@ -151,7 +139,7 @@ impl Plane {
 
     /// Returns the `Plane` normalized.
     #[inline]
-    pub fn normalize(mut self) -> Plane {
+    pub fn normalize(mut self) -> Self {
         let l = self.normal.length();
 
         if l == 0.0 {
@@ -169,6 +157,18 @@ impl Plane {
     #[inline]
     pub fn project(&self, point: Vector3) -> Vector3 {
         point - self.normal * self.distance_to(point)
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn sys(&self) -> *const sys::godot_plane {
+        unsafe { std::mem::transmute::<*const Plane, *const sys::godot_plane>(self as *const _) }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn from_sys(c: sys::godot_plane) -> Self {
+        unsafe { std::mem::transmute::<sys::godot_plane, Self>(c) }
     }
 }
 

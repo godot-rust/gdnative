@@ -3,6 +3,9 @@ use super::IsEqualApprox;
 use glam::Vec3A;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+/// 3D vector class.
+///
+/// See also [Vector3](https://docs.godotengine.org/en/stable/classes/class_vector3.html) in the Godot API doc.
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
@@ -260,7 +263,7 @@ impl Vector3 {
     /// Returns the outer product with `b`.
     #[inline]
     pub fn outer(self, b: Self) -> Basis {
-        Basis::from_elements([b * self.x, b * self.y, b * self.z])
+        Basis::from_rows(b * self.x, b * self.y, b * self.z)
     }
 
     /// Returns a vector composed of the `rem_euclid` of this vector's components and `mod`.
@@ -296,7 +299,7 @@ impl Vector3 {
     /// vector.
     #[inline]
     pub fn rotated(self, axis: Self, phi: f32) -> Self {
-        Basis::from_axis_angle(&axis, phi) * self
+        Basis::from_axis_angle(axis, phi) * self
     }
 
     /// Returns this vector with all components rounded to the nearest integer, with halfway cases

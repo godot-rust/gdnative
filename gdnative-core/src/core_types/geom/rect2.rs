@@ -1,4 +1,4 @@
-use super::Vector2;
+use crate::core_types::Vector2;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

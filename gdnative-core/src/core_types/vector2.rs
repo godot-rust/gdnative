@@ -2,6 +2,9 @@ use super::IsEqualApprox;
 use glam::Vec2;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+/// 2D vector class.
+///
+/// See also [Vector2](https://docs.godotengine.org/en/stable/classes/class_vector2.html) in the Godot API doc.
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
