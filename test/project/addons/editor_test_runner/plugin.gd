@@ -15,7 +15,7 @@ func _enter_tree():
 		print("Opening editor normally for the test project. To run tests, pass `--run-editor-tests` to the executable.")
 
 func _run_tests():
-	print(" -- Rust gdnative test suite:")
+	print(" -- Rust GDNative test suite (called from editor):")
 	gdn = GDNative.new()
 	var status = false;
 
@@ -26,12 +26,13 @@ func _run_tests():
 
 		gdn.terminate()
 	else:
-		print(" -- Could not load the gdnative library.")
+		print(" -- Could not load the GDNative library.")
 
+	print()
 	if status:
-		print(" -- Test run completed successfully.")
+		print(" All tests PASSED.")
 	else:
-		print(" -- Test run completed with errors.")
+		print(" Tests FAILED.")
 		OS.exit_code = 1
 
 	print(" -- exiting.")

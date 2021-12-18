@@ -2,6 +2,7 @@
 
 use gdnative::prelude::*;
 
+mod test_as_arg;
 mod test_async;
 mod test_constructor;
 mod test_derive;
@@ -63,17 +64,18 @@ pub extern "C" fn run_tests(
     status &= test_rust_class_construction();
     status &= test_from_instance_id();
 
+    status &= test_as_arg::run_tests();
     status &= test_async::run_tests();
+    status &= test_constructor::run_tests();
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
-    status &= test_constructor::run_tests();
     status &= test_map_owned::run_tests();
     status &= test_register::run_tests();
     status &= test_return_leak::run_tests();
     status &= test_serde::run_tests();
+    status &= test_vararray_return::run_tests();
     status &= test_variant_call_args::run_tests();
     status &= test_variant_ops::run_tests();
-    status &= test_vararray_return::run_tests();
 
     gdnative::core_types::Variant::new(status).forget()
 }
@@ -260,16 +262,17 @@ fn init(handle: InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
 
+    test_as_arg::register(handle);
     test_async::register(handle);
+    test_constructor::register(handle);
     test_derive::register(handle);
     test_free_ub::register(handle);
-    test_constructor::register(handle);
     test_map_owned::register(handle);
     test_register::register(handle);
     test_return_leak::register(handle);
+    test_vararray_return::register(handle);
     test_variant_call_args::register(handle);
     test_variant_ops::register(handle);
-    test_vararray_return::register(handle);
 }
 
 fn terminate(_term_info: &gdnative::init::TerminateInfo) {
