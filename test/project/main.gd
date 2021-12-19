@@ -3,7 +3,7 @@ extends Node
 var gdn
 
 func _ready():
-	print(" -- Rust gdnative test suite:")
+	print(" -- Rust GDNative test suite:")
 	_timeout()
 
 	gdn = GDNative.new()
@@ -24,12 +24,13 @@ func _ready():
 
 		gdn.terminate()
 	else:
-		print(" -- Could not load the gdnative library.")
+		print(" -- Could not load the GDNative library.")
 
+	print()
 	if status:
-		print(" -- Test run completed successfully.")
+		print(" All tests PASSED.")
 	else:
-		print(" -- Test run completed with errors.")
+		print(" Tests FAILED.")
 		OS.exit_code = 1
 
 	print(" -- exiting.")
