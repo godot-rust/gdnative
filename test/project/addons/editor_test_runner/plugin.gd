@@ -15,6 +15,8 @@ func _enter_tree():
 		print("Opening editor normally for the test project. To run tests, pass `--run-editor-tests` to the executable.")
 
 func _run_tests():
+	var version = Engine.get_version_info()
+	print(" -- Running on Godot ", version["string"])
 	print(" -- Rust GDNative test suite (called from editor):")
 	gdn = GDNative.new()
 	var status = false;

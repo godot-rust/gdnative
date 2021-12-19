@@ -12,8 +12,7 @@ env:
 
   # Local variables
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
-  GODOT_VER: "3.4"
-  GODOT_REL: stable
+  GODOT_VER: "3.4.1"
   GDRUST_FEATURES: "gdnative/async,gdnative/serde"
 
 on:
@@ -35,12 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust
+      - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
           rust: stable
           components: rustfmt
-      - name: Check rustfmt
+      - name: "Check rustfmt"
         run: cargo fmt --all -- --check;
 
   clippy:
@@ -48,71 +47,33 @@ jobs:
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust
+      - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
           rust: stable
           components: clippy
-      - name: Check clippy
+      - name: "Check clippy"
         run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
 
   unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust
+      - name: "Install Rust"
         uses: ./.github/composite/rust
-      - name: Compile tests
+      - name: "Compile tests"
         run: cargo test --workspace --features ${GDRUST_FEATURES} --no-run;
-      - name: Test
+      - name: "Test"
         run: cargo test --workspace --features ${GDRUST_FEATURES};
 
   integration-test-godot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust
-        uses: ./.github/composite/rust
-      - name: Check cache for installed Godot version
-        id: cache-godot
-        uses: actions/cache@v2
+      - name: "Run Godot integration test"
+        uses: ./.github/composite/godot
         with:
-          path: ${{ runner.temp }}/godot_bin
-          key: godot-${{ runner.os }}-v${{ env.GODOT_VER }}-${{ env.GODOT_REL }}
-      - name: Install Godot
-        if: steps.cache-godot.outputs.cache-hit != 'true'
-        run: |
-          wget "https://downloads.tuxfamily.org/godotengine/$GODOT_VER/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64.zip" -O /tmp/godot.zip
-          unzip /tmp/godot.zip -d ${{ runner.temp }}/godot_bin
-      - name: Build godot-rust
-        run: |
-          cd test;
-          cargo build;
-      - name: Run Godot integration tests
-        run: |
-          cd test;
-          mkdir -p ./project/lib;
-          cp ../target/debug/libgdnative_test.so ./project/lib/;
-          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");
-          if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
-            exit 1;
-          fi;
-          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log");
-          if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
-            exit 1;
-          fi;
-          cargo build --features=type_tag_fallback;
-          mkdir -p ./project/lib;
-          cp ../target/debug/libgdnative_test.so ./project/lib/;
-          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");
-          if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
-            exit 1;
-          fi;
-          "${{ runner.temp }}/godot_bin/Godot_v${GODOT_VER}-${GODOT_REL}_linux_headless.64" -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log");
-          if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
-            exit 1;
-          fi;
-          
+          godot_ver: ${{ env.GODOT_VER }}
 
 # Not really needed, since bors is not involved. Just needs an extra runner and makes the tests run longer.
 

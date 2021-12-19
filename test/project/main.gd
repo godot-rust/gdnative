@@ -3,6 +3,8 @@ extends Node
 var gdn
 
 func _ready():
+	var version = Engine.get_version_info()
+	print(" -- Running on Godot ", version["string"])
 	print(" -- Rust GDNative test suite:")
 	_timeout()
 
