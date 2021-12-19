@@ -1,6 +1,4 @@
-#[cfg(feature = "bindings")]
 pub use gdnative_bindings::utils::*;
-#[cfg(feature = "bindings")]
 pub use gdnative_bindings::{
     Button, CanvasItem, CanvasLayer, ColorRect, Control, Image, Input, InputEvent, InputEventKey,
     KinematicBody, KinematicBody2D, Label, Node, Node2D, Object, PackedScene, Reference,
