@@ -13,21 +13,21 @@ edition = "2018"
 
 [features]
 # Public
+default = []
 async = ["gdnative-async"]
 custom-godot = ["gdnative-bindings/custom-godot"]
-default = []
-formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_file"]
+formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one-class-one-file"]
 serde = ["gdnative-core/serde"]
 
 # Internal
-gd_test = ["gdnative-core/gd_test"]
-type_tag_fallback = ["gdnative-core/type_tag_fallback"]
+gd-test = ["gdnative-core/gd-test"]
+type-tag-fallback = ["gdnative-core/type-tag-fallback"]
 
 [dependencies]
 gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }
 gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
 gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
-gdnative-async = { optional = true, path = "../gdnative-async", version = "=0.9.3" }
+gdnative-async = { path = "../gdnative-async", version = "=0.9.3", optional = true }
 
 [dev-dependencies]
 trybuild = "1.0.50"

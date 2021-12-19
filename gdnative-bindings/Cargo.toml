@@ -12,7 +12,7 @@ edition = "2018"
 
 [features]
 formatted = []
-one_class_one_file = []
+one-class-one-file = []
 custom-godot = ["which"]
 
 [dependencies]

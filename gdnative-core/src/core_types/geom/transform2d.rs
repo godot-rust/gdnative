@@ -320,7 +320,7 @@ impl std::ops::Mul<Transform2D> for Transform2D {
     }
 }
 
-#[cfg(feature = "gd_test")]
+#[cfg(feature = "gd-test")]
 fn test_transform2d_behavior_impl() {
     let api = crate::private::get_api();
 

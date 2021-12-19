@@ -68,7 +68,7 @@ runs:
         if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
           exit 1;
         fi;
-        cargo build --features=type_tag_fallback;
+        cargo build --features type-tag-fallback;
         mkdir -p ./project/lib;
         cp ../target/debug/libgdnative_test.so ./project/lib/;
         ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");

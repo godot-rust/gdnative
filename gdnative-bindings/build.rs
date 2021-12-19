@@ -50,7 +50,7 @@ fn main() {
 }
 
 /// Output all the class bindings into the `generated.rs` file.
-#[cfg(not(feature = "one_class_one_file"))]
+#[cfg(not(feature = "one-class-one-file"))]
 fn generate(
     _out_path: &std::path::Path,
     generated_file: &mut BufWriter<File>,
@@ -84,7 +84,7 @@ fn generate(
 
 /// Output one file for each class and add `mod` and `use` declarations in
 /// the `generated.rs` file.
-#[cfg(feature = "one_class_one_file")]
+#[cfg(feature = "one-class-one-file")]
 fn generate(
     out_path: &std::path::Path,
     generated_file: &mut BufWriter<File>,

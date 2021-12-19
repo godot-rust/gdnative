@@ -23,8 +23,8 @@ impl Tag {
 }
 
 /// Whether the type tag can be transmuted to `usize`. `true` if the layouts are compatible
-/// on the platform, and `type_tag_fallback` is not enabled.
-const USE_TRANSMUTE: bool = cfg!(not(feature = "type_tag_fallback"))
+/// on the platform, and `type-tag-fallback` is not enabled.
+const USE_TRANSMUTE: bool = cfg!(not(feature = "type-tag-fallback"))
     && size_of::<Tag>() == size_of::<usize>()
     && align_of::<Tag>() == align_of::<usize>();
 

@@ -10,11 +10,11 @@ crate-type = ["cdylib"]
 
 [features]
 default = []
-type_tag_fallback = ["gdnative/type_tag_fallback"]
+type-tag-fallback = ["gdnative/type-tag-fallback"]
 custom-godot = ["gdnative/custom-godot"]
 
 [dependencies]
-gdnative = { path = "../gdnative", features = ["gd_test", "serde", "async"] }
+gdnative = { path = "../gdnative", features = ["gd-test", "serde", "async"] }
 gdnative-derive = { path = "../gdnative-derive" }
 approx = "0.5.0"
 ron = "0.7.0"
