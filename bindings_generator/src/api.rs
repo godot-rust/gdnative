@@ -1,4 +1,4 @@
-use heck::CamelCase as _;
+use heck::ToPascalCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
@@ -38,7 +38,7 @@ impl Api {
         api
     }
 
-    pub fn find_class<'a, 'b>(&'a self, name: &'b str) -> Option<&'a GodotClass> {
+    pub fn find_class(&self, name: &str) -> Option<&GodotClass> {
         for class in &self.classes {
             if class.name == name {
                 return Some(class);
@@ -400,7 +400,7 @@ impl Ty {
                 // Enums may reference known types (above list), check if it's a known type first
                 let mut split = ty[5..].split("::");
                 let class_name = split.next().unwrap();
-                let name = format_ident!("{}", split.next().unwrap().to_camel_case());
+                let name = format_ident!("{}", split.next().unwrap().to_pascal_case());
                 let module = format_ident!("{}", module_name_from_class_name(class_name));
                 // Is it a known type?
                 match Ty::from_src(class_name) {
