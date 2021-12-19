@@ -105,7 +105,7 @@ jobs:
           - rust: { toolchain: 'nightly' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
-            rust: { toolchain: '1.48', postfix: ' (msrv 1.48)' }
+            rust: { toolchain: '1.51', postfix: ' (msrv 1.51)' }
             testflags: '-- --skip ui_tests'
     runs-on: ${{ matrix.os.id }}
     steps:
@@ -233,17 +233,21 @@ jobs:
       fail-fast: false # cancel all jobs as soon as one fails?
       matrix:
         include:
+          # Latest Godot with different Rust versions
           - rust: stable
             godot: "3.4.1"
             postfix: ''
           - rust: nightly
             godot: "3.4.1"
             postfix: ' (nightly)'
-          - rust: '1.48'
+          - rust: '1.51'
             godot: "3.4.1"
-            postfix: ' (msrv 1.48)'
+            postfix: ' (msrv 1.51)'
+
+          # Test with older engine version
+          # Note: headless versions of Godot <= 3.3 may crash with a bug, see feature description in lib.rs
           - rust: stable
-            godot: "3.2"
+            godot: "3.3.1"
             postfix: ''
             build_args: '--features custom-godot'
 
