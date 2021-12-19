@@ -3,7 +3,7 @@ use crate::class_docs::GodotXmlDocs;
 use crate::methods;
 use crate::special_methods;
 
-use heck::CamelCase as _;
+use heck::ToPascalCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
@@ -145,16 +145,16 @@ pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
 
 fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
     // In order to not pollute the API with more Result types,
-    // rename the Result enum used by Search to SearchResult
-    // to_camel_case() is used to make the enums more Rust like.
+    // rename the Result enum used by Search to SearchResult.
+    // to_pascal_case() is used to make the enums more rust-like.
     // DOFBlurQuality => DofBlurQuality
     match enum_name {
         "Result" => {
             let mut res = String::from(class_name);
             res.push_str(enum_name);
-            res.to_camel_case()
+            res.to_pascal_case()
         }
-        _ => enum_name.to_camel_case(),
+        _ => enum_name.to_pascal_case(),
     }
 }
 
