@@ -1,8 +1,8 @@
-use crate::core_types::GodotString;
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
 
+use crate::core_types::{GodotString, VariantType};
 use crate::export::*;
 use crate::object::NewRef;
 use crate::private::get_api;
@@ -176,13 +176,13 @@ impl<C: NativeClass> ClassBuilder<C> {
 
             let mut sys_args = args_and_hints
                 .iter()
-                .map(|(arg, hint_string)| sys::godot_signal_argument {
-                    name: arg.name.to_sys(),
-                    type_: arg.default.get_type() as i32,
-                    hint: arg.export_info.hint_kind,
+                .map(|(param, hint_string)| sys::godot_signal_argument {
+                    name: param.name.to_sys(),
+                    type_: Self::get_param_type(param) as i32,
+                    hint: param.export_info.hint_kind,
                     hint_string: hint_string.to_sys(),
-                    usage: arg.usage.to_sys(),
-                    default_value: arg.default.to_sys(),
+                    usage: param.usage.to_sys(),
+                    default_value: param.default.to_sys(),
                 })
                 .collect::<Vec<_>>();
 
@@ -197,6 +197,16 @@ impl<C: NativeClass> ClassBuilder<C> {
                     default_args: ptr::null_mut(),
                 },
             );
+        }
+    }
+
+    /// Returns the declared parameter type, or the default value's type, or Nil (in that order)
+    fn get_param_type(arg: &SignalParam) -> VariantType {
+        let export_type = arg.export_info.variant_type;
+        if export_type != VariantType::Nil {
+            export_type
+        } else {
+            arg.default.get_type()
         }
     }
 
