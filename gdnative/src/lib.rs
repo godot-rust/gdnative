@@ -40,11 +40,16 @@
 //! on `Ref`.
 //!
 //! ## Feature flags
-//!
-//! * `bindings` -- *enabled* by default. Includes the crates.io version of the bindings in the
-//!   `api` module. Disable if you want to use a custom Godot version.
+//! Functionality  toggles:
+//! * `async` -- *disabled* by default. Enables asyn functionality, see [`tasks`] module for details.
 //! * `serde` -- *disabled* by default. Enable for `serde` support. See also
 //!   [`Variant`](core_types::Variant).
+//!
+//! Affecting bindings generation:
+//! * `bindings` -- *enabled* by default. Includes the crates.io version of the bindings in the
+//!   `api` module. Disable if you want to use a custom Godot version.
+//! * `custom-godot` -- *disabled* by default. When active, looks for a `GODOT_BIN` environment
+//!   variable pointing to the Godot executable, or a `godot` executable in the path.
 //! * `formatted` -- *disabled* by default. Enable if the generated binding source code should
 //!   be human-readable.
 //!

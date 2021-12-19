@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
+    let just_generated_api = generate_api_if_needed();
+
     let api_data = std::fs::read_to_string("api.json").expect("Unable to read api.json");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -39,8 +41,12 @@ fn main() {
     // Ignoring all but build.rs will keep from needless rebuilds.
     // Manually rebuilding the crate will ignore this.
     println!("cargo:rerun-if-changed=docs/");
-    println!("cargo:rerun-if-changed=api.json");
     println!("cargo:rerun-if-changed=build.rs");
+
+    // Avoid endless recompiling, if this script generates api.json
+    if !just_generated_api {
+        println!("cargo:rerun-if-changed=api.json");
+    }
 }
 
 /// Output all the class bindings into the `generated.rs` file.
@@ -146,4 +152,44 @@ fn format_file(output_rs: &Path) {
             println!("Error: {}", err);
         }
     }
+}
+
+#[cfg(feature = "custom-godot")]
+fn generate_api_if_needed() -> bool {
+    let source: String;
+    let godot_bin: PathBuf;
+
+    if let Ok(string) = env::var("GODOT_BIN") {
+        source = format!("GODOT_BIN executable '{}'", string);
+        godot_bin = PathBuf::from(string);
+    } else if let Ok(path) = which::which("godot") {
+        source = "executable 'godot'".to_string();
+        godot_bin = path;
+    } else {
+        panic!(
+            "Feature 'custom-godot' requires an accessible 'godot' executable or \
+             a GODOT_BIN environment variable (with the path to the executable)."
+        );
+    };
+
+    // TODO call 'godot --version' and ensure >= 3.2 && < 4.0
+
+    let status = Command::new(godot_bin)
+        .arg("--gdnative-generate-json-api")
+        .arg("api.json")
+        .status()
+        .unwrap_or_else(|err| panic!("Failed to invoke {}; error {}", source, err));
+
+    assert!(
+        status.success(),
+        "Custom Godot command exited with status {}",
+        status.code().map_or("?".to_string(), |f| f.to_string())
+    );
+
+    true
+}
+
+#[cfg(not(feature = "custom-godot"))]
+fn generate_api_if_needed() -> bool {
+    false
 }

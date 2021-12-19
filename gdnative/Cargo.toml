@@ -12,14 +12,17 @@ readme = "../README.md"
 edition = "2018"
 
 [features]
+# Public
+async = ["gdnative-async", "bindings"]
+bindings = ["gdnative-bindings"]
+custom-godot = ["gdnative-bindings/custom-godot"]
 default = ["bindings"]
 formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_file"]
 serde = ["gdnative-core/serde"]
 
+# Internal
 gd_test = ["gdnative-core/gd_test"]
 type_tag_fallback = ["gdnative-core/type_tag_fallback"]
-bindings = ["gdnative-bindings"]
-async = ["gdnative-async", "bindings"]
 
 [dependencies]
 gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }

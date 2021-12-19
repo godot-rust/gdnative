@@ -18,8 +18,8 @@ The bindings cover most of the exposed API of Godot 3.4, and are being used on a
 
 We are committed to keeping compatibility with the latest stable patch releases of all minor versions of the engine, starting from Godot 3.2:
 * Godot 3.4 (works out-of-the-box)
-* Godot 3.3 (needs api.json adjustment)
-* Godot 3.2 (needs api.json adjustment)
+* Godot 3.3 (needs feature `custom-godot`)
+* Godot 3.2 (needs feature `custom-godot`)
 
 For versions 3.2 and 3.3, some extra steps are needed, see _Custom builds_ below.
 
@@ -45,6 +45,7 @@ This means that `bindgen` was unable to find the C system headers for your platf
 
 ### Latest `master` version + Godot 3.4
 
+This is the recommended way of using godot-rust, if you want to benefit from latest features.
 After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
 
 ```toml
@@ -57,7 +58,7 @@ crate-type = ["cdylib"]
 
 ### Godot 3.2.3-stable
 
-To access the last released version on crates.io, use the following. If you are starting, we recommend using the `master` version at this point, as there have been significant API changes since v0.9.3.
+To access the last released version on crates.io, use the following. Note that there have been significant API changes since v0.9.3 -- if you are starting to use godot-rust, we recommend using the `master` version instead.
 
 ```toml
 [dependencies]
@@ -69,9 +70,7 @@ crate-type = ["cdylib"]
 
 ### Custom builds
 
-To use the bindings with a non-default Godot version or a custom build, see [Using custom builds of Godot](https://godot-rust.github.io/book/advanced-guides/custom-godot.html) in the user guide.
-
-In short, you will need to generate `api.json` manually, using `godot --gdnative-generate-json-api api.json` to replace the file in the `gdnative-bindings` directory.
+To use the bindings with a different Godot version or a custom build of the engine, see [Custom Godot builds](https://godot-rust.github.io/book/advanced-guides/custom-godot.html) in the user guide.
 
 ### Async / `yield` support
 
