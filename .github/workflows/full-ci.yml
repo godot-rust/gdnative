@@ -34,6 +34,7 @@ env:
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
   GODOT_VER: "3.4"
   GODOT_REL: stable
+  GDRUST_FEATURES: "gdnative/async,gdnative/serde"
 
 on:
   push:
@@ -77,7 +78,7 @@ jobs:
           rust: ${{ matrix.rust.toolchain }}
           components: clippy
       - name: Check clippy
-        run: cargo clippy --workspace --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+        run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
 
   test:
     name: test-${{ matrix.os.name }}${{ matrix.rust.postfix }}
@@ -119,9 +120,9 @@ jobs:
         uses: ./.github/composite/llvm
         if: ${{ matrix.os.id == 'windows-latest' }}
       - name: Compile tests
-        run: cargo test --workspace --all-features --no-run;
+        run: cargo test --workspace --features ${GDRUST_FEATURES} --no-run;
       - name: Test
-        run: cargo test --workspace --all-features ${{ matrix.testflags }};
+        run: cargo test --workspace --features ${GDRUST_FEATURES} ${{ matrix.testflags }};
 
   build-release:
     name: build-release-${{ matrix.os.name }}

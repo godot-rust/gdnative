@@ -34,5 +34,6 @@ gdnative-async = { optional = true, path = "../gdnative-async", version = "=0.9.
 trybuild = "1.0.50"
 rustversion = "1.0.5"
 
+# See https://docs.rs/about/metadata
 [package.metadata.docs.rs]
-all-features = true
+features = ["async", "serde"]

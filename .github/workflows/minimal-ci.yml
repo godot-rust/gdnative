@@ -14,6 +14,7 @@ env:
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
   GODOT_VER: "3.4"
   GODOT_REL: stable
+  GDRUST_FEATURES: "gdnative/async,gdnative/serde"
 
 on:
   pull_request:
@@ -53,7 +54,7 @@ jobs:
           rust: stable
           components: clippy
       - name: Check clippy
-        run: cargo clippy --workspace --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+        run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
 
   unit-test:
     runs-on: ubuntu-latest
@@ -62,9 +63,9 @@ jobs:
       - name: Install Rust
         uses: ./.github/composite/rust
       - name: Compile tests
-        run: cargo test --workspace --all-features --no-run;
+        run: cargo test --workspace --features ${GDRUST_FEATURES} --no-run;
       - name: Test
-        run: cargo test --workspace --all-features;
+        run: cargo test --workspace --features ${GDRUST_FEATURES};
 
   integration-test-godot:
     runs-on: ubuntu-latest

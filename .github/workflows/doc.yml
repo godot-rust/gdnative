@@ -14,13 +14,14 @@ on:
 
 
 env:
-  GDNATIVE_LIB_RS_PREFIX: |-
+  GDRUST_LIB_RS_PREFIX: |-
       //! _**Note:** This documentation refers to the [latest GitHub version](https://github.com/godot-rust/godot-rust) and is subject to change._<br>
       //! _For stable releases, visit [docs.rs/gdnative](https://docs.rs/gdnative)._
       //! <br><br>
       //!
-  GDNATIVE_DOC_REPO: git@github.com:godot-rust/docs.git
-  GDNATIVE_DOC_BRANCH: gh-pages
+  GDRUST_DOC_REPO: git@github.com:godot-rust/docs.git
+  GDRUST_DOC_BRANCH: gh-pages
+  GDRUST_FEATURES: "async,serde"
 
 
 # In the very unlikely cases where two PRs are merged, and the first 'doc' job is still running when the 2nd 'full-ci' starts,
@@ -46,13 +47,13 @@ jobs:
       - name: "Pre-process input"
         run: |
           mv ${GITHUB_WORKSPACE}/gdnative/src/lib.rs tmp_lib.rs
-          (echo "${GDNATIVE_LIB_RS_PREFIX}"; cat tmp_lib.rs) > ${GITHUB_WORKSPACE}/gdnative/src/lib.rs
+          (echo "${GDRUST_LIB_RS_PREFIX}"; cat tmp_lib.rs) > ${GITHUB_WORKSPACE}/gdnative/src/lib.rs
 
       - name: "Generate documentation"
         uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: -p gdnative --lib --no-deps --all-features
+          args: -p gdnative --lib --no-deps --features ${GDRUST_FEATURES}
 
       # For email address, see https://github.community/t/github-actions-bot-email-address/17204
       # As search-index.js changes every time, even if source hasn't changed, this will not need 'git commit --allow-empty'
@@ -65,25 +66,25 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           mkdir doc && cd doc
-          git clone --single-branch --branch ${GDNATIVE_DOC_BRANCH} --no-checkout ${GDNATIVE_DOC_REPO} . \
-            || (git init -b ${GDNATIVE_DOC_BRANCH} && git remote add origin ${GDNATIVE_DOC_REPO})
+          git clone --single-branch --branch ${GDRUST_DOC_BRANCH} --no-checkout ${GDRUST_DOC_REPO} . \
+            || (git init -b ${GDRUST_DOC_BRANCH} && git remote add origin ${GDRUST_DOC_REPO})
 
           mv ${GITHUB_WORKSPACE}/target/doc/* .
           mv ${GITHUB_WORKSPACE}/.github/workflows/doc/* .
 
-          GDNATIVE_VERSION=$(grep -Po '^version = "\K[^"]*' ${GITHUB_WORKSPACE}/gdnative/Cargo.toml)
-          GDNATIVE_SHORT_SHA=$(git rev-parse --short "${GITHUB_SHA}")
+          GDRUST_VERSION=$(grep -Po '^version = "\K[^"]*' ${GITHUB_WORKSPACE}/gdnative/Cargo.toml)
+          GDRUST_SHORT_SHA=$(git rev-parse --short "${GITHUB_SHA}")
 
-          find gdnative -name .html -o -type f -print0 | xargs -0 sed -i 's/'"${GDNATIVE_VERSION}"'/master/g'
+          find gdnative -name .html -o -type f -print0 | xargs -0 sed -i 's/'"${GDRUST_VERSION}"'/master/g'
 
           git add --all
-          git commit -m "Sync doc from ${GDNATIVE_SHORT_SHA}
+          git commit -m "Sync doc from ${GDRUST_SHORT_SHA}
 
           Revision in godot-rust: ${GITHUB_SHA}"
 
       - name: "Upload"
         working-directory: doc
-        run: git push origin ${GDNATIVE_DOC_BRANCH}
+        run: git push origin ${GDRUST_DOC_BRANCH}
 
       - name: "Cleanup"
         run: shred -u ~/.ssh/id_rsa
