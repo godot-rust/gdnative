@@ -25,7 +25,7 @@ use crate::private::get_api;
 /// When using this type, it's generally better to perform mutations in batch using `write`,
 /// or the `append` methods, as opposed to `push` or `set`, because the latter ones trigger
 /// CoW behavior each time they are called.
-pub struct PoolArray<T: Element> {
+pub struct PoolArray<T: PoolElement> {
     inner: T::SysArray,
 }
 
@@ -36,7 +36,7 @@ pub type Read<'a, T> = Aligned<ReadGuard<'a, T>>;
 /// as opposed to every time with methods like `push`.
 pub type Write<'a, T> = Aligned<WriteGuard<'a, T>>;
 
-impl<T: Element> Drop for PoolArray<T> {
+impl<T: PoolElement> Drop for PoolArray<T> {
     #[inline]
     fn drop(&mut self) {
         unsafe {
@@ -45,28 +45,28 @@ impl<T: Element> Drop for PoolArray<T> {
     }
 }
 
-impl<T: Element> Default for PoolArray<T> {
+impl<T: PoolElement> Default for PoolArray<T> {
     #[inline]
     fn default() -> Self {
         PoolArray::new()
     }
 }
 
-impl<T: Element + fmt::Debug> fmt::Debug for PoolArray<T> {
+impl<T: PoolElement + fmt::Debug> fmt::Debug for PoolArray<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.read().iter()).finish()
     }
 }
 
-impl<T: Element> Clone for PoolArray<T> {
+impl<T: PoolElement> Clone for PoolArray<T> {
     #[inline]
     fn clone(&self) -> Self {
         self.new_ref()
     }
 }
 
-impl<T: Element> NewRef for PoolArray<T> {
+impl<T: PoolElement> NewRef for PoolArray<T> {
     /// Creates a new reference to this reference-counted instance.
     #[inline]
     fn new_ref(&self) -> Self {
@@ -78,7 +78,7 @@ impl<T: Element> NewRef for PoolArray<T> {
     }
 }
 
-impl<T: Element> PoolArray<T> {
+impl<T: PoolElement> PoolArray<T> {
     /// Creates an empty array.
     #[inline]
     pub fn new() -> Self {
@@ -265,7 +265,7 @@ impl<T: Element> PoolArray<T> {
     }
 }
 
-impl<T: Element + Copy> PoolArray<T> {
+impl<T: PoolElement + Copy> PoolArray<T> {
     /// Creates a new `PoolArray` by copying from `src`.
     ///
     /// # Panics
@@ -297,7 +297,7 @@ impl<T: Element + Copy> PoolArray<T> {
 // `FromIterator` and `Extend` implementations collect into `Vec` first, because Rust `Vec`s
 // are better at handling unknown lengths than the Godot arrays (`push` CoWs every time!)
 
-impl<T: Element> FromIterator<T> for PoolArray<T> {
+impl<T: PoolElement> FromIterator<T> for PoolArray<T> {
     #[inline]
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let vec = iter.into_iter().collect::<Vec<_>>();
@@ -305,7 +305,7 @@ impl<T: Element> FromIterator<T> for PoolArray<T> {
     }
 }
 
-impl<T: Element> Extend<T> for PoolArray<T> {
+impl<T: PoolElement> Extend<T> for PoolArray<T> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         let mut vec = iter.into_iter().collect::<Vec<_>>();
@@ -313,7 +313,7 @@ impl<T: Element> Extend<T> for PoolArray<T> {
     }
 }
 
-impl<T: Element + PartialEq> PartialEq for PoolArray<T> {
+impl<T: PoolElement + PartialEq> PartialEq for PoolArray<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         if self.len() != other.len() {
@@ -326,16 +326,16 @@ impl<T: Element + PartialEq> PartialEq for PoolArray<T> {
         left.as_slice() == right.as_slice()
     }
 }
-impl<T: Element + Eq> Eq for PoolArray<T> {}
+impl<T: PoolElement + Eq> Eq for PoolArray<T> {}
 
 /// RAII read guard.
-pub struct ReadGuard<'a, T: Element> {
+pub struct ReadGuard<'a, T: PoolElement> {
     access: *mut T::SysReadAccess,
     len: usize,
     _marker: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T: Element> ReadGuard<'a, T> {
+impl<'a, T: PoolElement> ReadGuard<'a, T> {
     #[inline]
     unsafe fn new(arr: *const T::SysArray) -> Self {
         let len = (T::size_fn(get_api()))(arr) as usize;
@@ -349,7 +349,7 @@ impl<'a, T: Element> ReadGuard<'a, T> {
     }
 }
 
-unsafe impl<'a, T: Element> crate::core_types::access::Guard for ReadGuard<'a, T> {
+unsafe impl<'a, T: PoolElement> crate::core_types::access::Guard for ReadGuard<'a, T> {
     type Target = T;
 
     #[inline]
@@ -366,7 +366,7 @@ unsafe impl<'a, T: Element> crate::core_types::access::Guard for ReadGuard<'a, T
     }
 }
 
-impl<'a, T: Element> Drop for ReadGuard<'a, T> {
+impl<'a, T: PoolElement> Drop for ReadGuard<'a, T> {
     #[inline]
     fn drop(&mut self) {
         unsafe {
@@ -375,7 +375,7 @@ impl<'a, T: Element> Drop for ReadGuard<'a, T> {
     }
 }
 
-impl<'a, T: Element> Clone for ReadGuard<'a, T> {
+impl<'a, T: PoolElement> Clone for ReadGuard<'a, T> {
     #[inline]
     fn clone(&self) -> Self {
         let access = unsafe { (T::read_access_copy_fn(get_api()))(self.access) };
@@ -389,13 +389,13 @@ impl<'a, T: Element> Clone for ReadGuard<'a, T> {
 }
 
 /// RAII write guard.
-pub struct WriteGuard<'a, T: Element> {
+pub struct WriteGuard<'a, T: PoolElement> {
     access: *mut T::SysWriteAccess,
     len: usize,
     _marker: std::marker::PhantomData<&'a T>,
 }
 
-impl<'a, T: Element> WriteGuard<'a, T> {
+impl<'a, T: PoolElement> WriteGuard<'a, T> {
     #[inline]
     unsafe fn new(arr: *mut T::SysArray) -> Self {
         let len = (T::size_fn(get_api()))(arr) as usize;
@@ -409,7 +409,7 @@ impl<'a, T: Element> WriteGuard<'a, T> {
     }
 }
 
-unsafe impl<'a, T: Element> crate::core_types::access::Guard for WriteGuard<'a, T> {
+unsafe impl<'a, T: PoolElement> crate::core_types::access::Guard for WriteGuard<'a, T> {
     type Target = T;
 
     #[inline]
@@ -425,9 +425,9 @@ unsafe impl<'a, T: Element> crate::core_types::access::Guard for WriteGuard<'a, 
     }
 }
 
-unsafe impl<'a, T: Element> crate::core_types::access::WritePtr for WriteGuard<'a, T> {}
+unsafe impl<'a, T: PoolElement> crate::core_types::access::WritePtr for WriteGuard<'a, T> {}
 
-impl<'a, T: Element> Drop for WriteGuard<'a, T> {
+impl<'a, T: PoolElement> Drop for WriteGuard<'a, T> {
     #[inline]
     fn drop(&mut self) {
         unsafe {
@@ -439,41 +439,41 @@ impl<'a, T: Element> Drop for WriteGuard<'a, T> {
 macros::decl_typed_array_element! {
     /// Trait for element types that can be contained in `PoolArray`. This trait is sealed
     /// and has no public interface.
-    pub trait Element: private::Sealed { .. }
+    pub trait PoolElement: private::Sealed { .. }
 }
 
 macros::impl_typed_array_element! {
-    impl Element for u8 => byte { .. }
+    impl PoolElement for u8 => byte { .. }
 }
 macros::impl_typed_array_element! {
-    impl Element for i32 => int { .. }
+    impl PoolElement for i32 => int { .. }
 }
 macros::impl_typed_array_element! {
-    impl Element for f32 => real { .. }
+    impl PoolElement for f32 => real { .. }
 }
 macros::impl_typed_array_element! {
-    impl Element for GodotString
+    impl PoolElement for GodotString
         as sys::godot_string
         ref *const sys::godot_string
         => string
     { .. }
 }
 macros::impl_typed_array_element! {
-    impl Element for Vector2
+    impl PoolElement for Vector2
         as sys::godot_vector2
         ref *const sys::godot_vector2
         => vector2
     { .. }
 }
 macros::impl_typed_array_element! {
-    impl Element for Vector3
+    impl PoolElement for Vector3
         as sys::godot_vector3
         ref *const sys::godot_vector3
         => vector3
     { .. }
 }
 macros::impl_typed_array_element! {
-    impl Element for Color
+    impl PoolElement for Color
         as sys::godot_color
         ref *const sys::godot_color
         => color
@@ -495,7 +495,7 @@ mod serialize {
     use std::fmt::Formatter;
     use std::marker::PhantomData;
 
-    impl<T: Serialize + Element> Serialize for PoolArray<T> {
+    impl<T: Serialize + PoolElement> Serialize for PoolArray<T> {
         #[inline]
         fn serialize<S>(&self, ser: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
         where
@@ -510,14 +510,14 @@ mod serialize {
         }
     }
 
-    impl<'de, T: Deserialize<'de> + Element> Deserialize<'de> for PoolArray<T> {
+    impl<'de, T: Deserialize<'de> + PoolElement> Deserialize<'de> for PoolArray<T> {
         #[inline]
         fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
         where
             D: Deserializer<'de>,
         {
             struct TypedArrayVisitor<T>(PhantomData<T>);
-            impl<'de, T: Deserialize<'de> + Element> Visitor<'de> for TypedArrayVisitor<T> {
+            impl<'de, T: Deserialize<'de> + PoolElement> Visitor<'de> for TypedArrayVisitor<T> {
                 type Value = PoolArray<T>;
 
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {

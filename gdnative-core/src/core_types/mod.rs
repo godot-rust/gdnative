@@ -37,7 +37,7 @@ pub use float32_array::*;
 pub use geom::*;
 pub use int32_array::*;
 pub use node_path::*;
-pub use pool_array::*; // TODO rename Element to something more specific
+pub use pool_array::*;
 pub use rid::*;
 pub use string::*;
 pub use string_array::*;

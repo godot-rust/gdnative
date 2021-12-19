@@ -77,7 +77,7 @@ pub extern "C" fn run_tests(
     status &= test_variant_call_args::run_tests();
     status &= test_variant_ops::run_tests();
 
-    gdnative::core_types::Variant::new(status).forget()
+    gdnative::core_types::Variant::new(status).leak()
 }
 
 fn test_underscore_method_binding() -> bool {

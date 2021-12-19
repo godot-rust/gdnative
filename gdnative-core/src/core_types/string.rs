@@ -237,15 +237,14 @@ impl GodotString {
         Self(unsafe { (get_api().godot_string_format)(&self.0, &values.0) })
     }
 
-    /// Returns the internal ffi representation of the string and consumes
-    /// the rust object without running the destructor.
+    /// Returns the internal FFI representation of the string and consumes
+    /// the Rust object without running the destructor.
     ///
-    /// This should be only used when certain that the receiving side is
-    /// responsible for running the destructor for the object, otherwise
-    /// it is leaked.
+    /// The returned object has no `Drop` implementation. The caller is
+    /// responsible of manually ensuring destruction.
     #[doc(hidden)]
     #[inline]
-    pub fn forget(self) -> sys::godot_string {
+    pub fn leak(self) -> sys::godot_string {
         let v = self.0;
         forget(self);
         v
@@ -285,7 +284,7 @@ impl GodotString {
     pub fn clone_from_sys(sys: sys::godot_string) -> Self {
         let sys_string = GodotString(sys);
         let this = sys_string.clone();
-        sys_string.forget();
+        sys_string.leak();
         this
     }
 

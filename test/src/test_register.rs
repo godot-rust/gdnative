@@ -31,15 +31,10 @@ impl NativeClass for RegisterSignal {
         RegisterSignal
     }
     fn register_properties(builder: &ClassBuilder<Self>) {
-        builder.add_signal(Signal {
-            name: "progress",
-            args: &[SignalArgument {
-                name: "amount",
-                default: Variant::nil(),
-                export_info: ExportInfo::new(VariantType::I64),
-                usage: PropertyUsage::DEFAULT,
-            }],
-        });
+        builder
+            .signal("progress")
+            .with_param("amount", VariantType::I64)
+            .done();
     }
 }
 
@@ -61,7 +56,7 @@ impl NativeClass for RegisterProperty {
     }
     fn register_properties(builder: &ClassBuilder<Self>) {
         builder
-            .add_property("value")
+            .property("value")
             .with_default(42)
             .with_setter(RegisterProperty::set_value)
             .with_getter(RegisterProperty::get_value)
@@ -155,15 +150,15 @@ where
 
 fn register_methods(builder: &ClassBuilder<AdvancedMethods>) {
     builder
-        .build_method("add_ints", StaticArgs::new(StatefulMixin { d: 42 }))
+        .method("add_ints", StaticArgs::new(StatefulMixin { d: 42 }))
         .done();
 
     builder
-        .build_method("add_floats", StaticArgs::new(StatefulMixin { d: 4.0 }))
+        .method("add_floats", StaticArgs::new(StatefulMixin { d: 4.0 }))
         .done();
 
     builder
-        .build_method(
+        .method(
             "add_vectors",
             StaticArgs::new(StatefulMixin {
                 d: Vector2::new(1.0, 2.0),

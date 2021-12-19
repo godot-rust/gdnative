@@ -50,7 +50,7 @@ mod variant;
 /// impl gdnative::export::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
 ///         use gdnative::export::*;
-///         builder.build_method("foo", gdnative::export::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
+///         builder.method("foo", gdnative::export::godot_wrap_method!(Foo, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
 ///     }
@@ -176,8 +176,8 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///         Self {}
 ///     }
 ///     fn my_register_function(builder: &ClassBuilder<Foo>) {
-///         builder.add_signal(Signal { name: "foo", args: &[] });
-///         builder.add_property::<f32>("bar")
+///         builder.signal("my_sig").done();
+///         builder.property::<f32>("my_prop")
 ///             .with_getter(|_, _| 42.0)
 ///             .with_hint(FloatHint::Range(RangeHint::new(0.0, 100.0)))
 ///             .done();

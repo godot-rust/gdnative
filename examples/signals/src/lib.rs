@@ -12,21 +12,13 @@ struct SignalEmitter {
 #[methods]
 impl SignalEmitter {
     fn register_signals(builder: &ClassBuilder<Self>) {
-        builder.add_signal(Signal {
-            name: "tick",
-            args: &[],
-        });
+        builder.signal("tick").done();
 
-        builder.add_signal(Signal {
-            name: "tick_with_data",
+        builder
+            .signal("tick_with_data")
             // Argument list used by the editor for GUI and generation of GDScript handlers. It can be omitted if the signal is only used from code.
-            args: &[SignalArgument {
-                name: "data",
-                default: Variant::new(100),
-                export_info: ExportInfo::new(VariantType::I64),
-                usage: PropertyUsage::DEFAULT,
-            }],
-        });
+            .with_param_default("data", Variant::new(100))
+            .done();
     }
 
     fn new(_owner: &Node) -> Self {

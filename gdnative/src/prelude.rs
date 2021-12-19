@@ -17,7 +17,7 @@ pub use gdnative_core::core_types::{
 };
 pub use gdnative_core::export::{
     ClassBuilder, ExportInfo, Method, MethodBuilder, NativeClass, NativeClassMethods,
-    PropertyUsage, Signal, SignalArgument,
+    PropertyUsage, SignalBuilder, SignalParam,
 };
 pub use gdnative_core::init::InitHandle;
 pub use gdnative_core::object::{

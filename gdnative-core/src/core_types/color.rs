@@ -15,18 +15,6 @@ pub struct Color {
 }
 
 impl Color {
-    #[deprecated]
-    #[inline]
-    pub fn rgba(r: f32, g: f32, b: f32, a: f32) -> Color {
-        Color { r, g, b, a }
-    }
-
-    #[deprecated]
-    #[inline]
-    pub fn rgb(r: f32, g: f32, b: f32) -> Color {
-        Color { r, g, b, a: 1.0 }
-    }
-
     #[inline]
     pub fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Color {
         Color { r, g, b, a }

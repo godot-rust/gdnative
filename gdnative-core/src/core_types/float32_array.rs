@@ -1,6 +1,8 @@
 use crate::core_types::PoolArray;
 
 /// A reference-counted vector of `f32` that uses Godot's pool allocator.
+///
+/// See [`PoolRealArray`](https://docs.godotengine.org/en/stable/classes/class_poolrealarray.html) in Godot.
 pub type Float32Array = PoolArray<f32>;
 
 godot_test!(

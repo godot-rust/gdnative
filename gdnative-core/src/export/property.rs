@@ -64,7 +64,7 @@ impl ExportInfo {
 
 /// Builder type used to register a property on a `NativeClass`.
 #[derive(Debug)]
-#[must_use]
+#[must_use = "PropertyBuilder left unbuilt -- did you forget to call done()?"]
 pub struct PropertyBuilder<'a, C, T: Export, S = InvalidSetter<'a>, G = InvalidGetter<'a>> {
     name: &'a str,
     setter: S,
@@ -161,6 +161,8 @@ where
 
     /// Provides a setter function with the signature `fn(&C, owner: C::Base, value: T)`
     /// where `C` is the `NativeClass` type being registered and `T` is the type of the property.
+    ///
+    /// "shr" stands for "shared reference", as opposed to the more common `&mut self`.
     #[inline]
     pub fn with_shr_setter<NS>(
         self,

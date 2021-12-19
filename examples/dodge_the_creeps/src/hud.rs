@@ -9,10 +9,7 @@ pub struct Hud;
 #[methods]
 impl Hud {
     fn register_hud(builder: &ClassBuilder<Self>) {
-        builder.add_signal(Signal {
-            name: "start_game",
-            args: &[],
-        });
+        builder.signal("start_game").done();
     }
 
     fn new(_owner: &CanvasLayer) -> Self {

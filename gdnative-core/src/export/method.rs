@@ -1,8 +1,5 @@
 //! Method registration
 
-// Temporary for unsafe method registration
-#![allow(deprecated)]
-
 use std::borrow::Cow;
 use std::fmt;
 use std::marker::PhantomData;
@@ -15,8 +12,9 @@ use crate::object::ownership::Shared;
 use crate::object::{Ref, TInstance, TRef};
 
 /// Builder type used to register a method on a `NativeClass`.
+#[must_use = "MethodBuilder left unbuilt -- did you forget to call done() or done_stateless()?"]
 pub struct MethodBuilder<'a, C, F> {
-    class_builder: &'a super::ClassBuilder<C>,
+    class_builder: &'a ClassBuilder<C>,
     name: &'a str,
     method: F,
 
@@ -59,7 +57,7 @@ where
             free_func: Some(free_func::<F>),
         };
 
-        self.class_builder.add_method_advanced(script_method);
+        self.class_builder.add_method(script_method);
     }
 }
 
@@ -69,7 +67,7 @@ where
     F: Method<C> + Copy + Default,
 {
     /// Register the method as a stateless method. Stateless methods do not have data
-    /// pointers and destructors and is thus slightly lighter. This is intended for ZSTs,
+    /// pointers and destructors and are thus slightly lighter. This is intended for ZSTs,
     /// but can be used with any `Method` type with `Copy + Default`.
     #[inline]
     pub fn done_stateless(self) {
@@ -86,14 +84,11 @@ where
             free_func: None,
         };
 
-        self.class_builder.add_method_advanced(script_method);
+        self.class_builder.add_method(script_method);
     }
 }
 
-#[deprecated(
-    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
-)]
-pub type ScriptMethodFn = unsafe extern "C" fn(
+type ScriptMethodFn = unsafe extern "C" fn(
     *mut sys::godot_object,
     *mut libc::c_void,
     *mut libc::c_void,
@@ -118,17 +113,11 @@ impl Default for RpcMode {
     }
 }
 
-#[deprecated(
-    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
-)]
-pub struct ScriptMethodAttributes {
+pub(crate) struct ScriptMethodAttributes {
     pub rpc_mode: RpcMode,
 }
 
-#[deprecated(
-    note = "Unsafe registration is deprecated. Use the safe, higher-level `MethodBuilder` API instead."
-)]
-pub struct ScriptMethod<'l> {
+pub(crate) struct ScriptMethod<'l> {
     pub name: &'l str,
     pub method_ptr: Option<ScriptMethodFn>,
     pub attributes: ScriptMethodAttributes,
@@ -561,7 +550,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                 C::class_name(),
             ),
         );
-        return Variant::nil().forget();
+        return Variant::nil().leak();
     }
 
     let this = match std::ptr::NonNull::new(this) {
@@ -574,7 +563,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                     C::class_name(),
                 ),
             );
-            return Variant::nil().forget();
+            return Variant::nil().leak();
         }
     };
 
@@ -598,7 +587,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
             );
             Variant::nil()
         })
-        .forget()
+        .leak()
 }
 
 unsafe extern "C" fn free_func<F>(method_data: *mut libc::c_void) {

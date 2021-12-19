@@ -1,9 +1,8 @@
 use gdnative_bindings::Reference;
-use gdnative_core::core_types::{ToVariant, Variant, VariantType};
+use gdnative_core::core_types::{ToVariant, Variant};
 use gdnative_core::export::user_data::{LocalCellData, Map, MapMut};
 use gdnative_core::export::{
-    ClassBuilder, ExportInfo, NativeClass, NativeClassMethods, PropertyUsage, Signal,
-    SignalArgument, StaticArgs, StaticArgsMethod,
+    ClassBuilder, NativeClass, NativeClassMethods, StaticArgs, StaticArgsMethod,
 };
 use gdnative_core::godot_site;
 use gdnative_core::object::ownership::Unique;
@@ -32,20 +31,12 @@ impl NativeClass for FuncState {
     }
 
     fn register_properties(builder: &ClassBuilder<Self>) {
-        builder.add_signal(Signal {
-            name: "completed",
-            args: &[SignalArgument {
-                name: "value",
-                default: Variant::nil(),
-                export_info: ExportInfo::new(VariantType::Nil),
-                usage: PropertyUsage::DEFAULT,
-            }],
-        });
+        builder
+            .signal("completed")
+            .with_param_untyped("value")
+            .done();
 
-        builder.add_signal(Signal {
-            name: "resumable",
-            args: &[],
-        });
+        builder.signal("resumable").done();
     }
 }
 
@@ -169,10 +160,10 @@ impl StaticArgsMethod<FuncState> for ResumeFn {
 impl NativeClassMethods for FuncState {
     fn register(builder: &ClassBuilder<Self>) {
         builder
-            .build_method("is_valid", StaticArgs::new(IsValidFn))
+            .method("is_valid", StaticArgs::new(IsValidFn))
             .done_stateless();
         builder
-            .build_method("resume", StaticArgs::new(ResumeFn))
+            .method("resume", StaticArgs::new(ResumeFn))
             .done_stateless();
     }
 }

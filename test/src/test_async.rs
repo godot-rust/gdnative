@@ -93,7 +93,5 @@ impl AsyncMethod<AsyncMethods> for ResumeAddFn {
 }
 
 fn register_methods(builder: &ClassBuilder<AsyncMethods>) {
-    builder
-        .build_method("resume_add", Async::new(ResumeAddFn))
-        .done();
+    builder.method("resume_add", Async::new(ResumeAddFn)).done();
 }

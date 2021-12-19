@@ -296,7 +296,7 @@ where
                     "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
                     C::class_name(),
                 );
-                return Variant::nil().forget();
+                return Variant::nil().leak();
             }
 
             let this = match NonNull::new(this) {
@@ -306,7 +306,7 @@ where
                         "gdnative-core: owner pointer for {} is null",
                         C::class_name(),
                     );
-                    return Variant::nil().forget();
+                    return Variant::nil().leak();
                 }
             };
 
@@ -316,17 +316,17 @@ where
                 let func = &*(method as *const F);
 
                 match <(SelfArg, RetKind)>::map_get(&user_data, func, owner) {
-                    Ok(variant) => variant.forget(),
+                    Ok(variant) => variant.leak(),
                     Err(err) => {
                         godot_error!("gdnative-core: cannot call property getter: {:?}", err);
-                        Variant::nil().forget()
+                        Variant::nil().leak()
                     }
                 }
             });
 
             result.unwrap_or_else(|_| {
                 godot_error!("gdnative-core: property getter panicked (check stderr for output)");
-                Variant::nil().forget()
+                Variant::nil().leak()
             })
         }
         get.get_func = Some(invoke::<SelfArg, RetKind, C, F, T>);
