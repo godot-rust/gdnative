@@ -523,10 +523,10 @@ mod api_wrapper {
             }
         }
         quote! {
-            pub unsafe fn from_raw(core_api_struct: *const godot_gdnative_core_api_struct) -> Result<Self, InitError> {
+            pub unsafe fn from_raw(core_api_struct: *const godot_gdnative_core_api_struct) -> std::result::Result<Self, InitError> {
                 #godot_apis
                 #struct_field_bindings
-                Ok(GodotApi{
+                std::result::Result::Ok(GodotApi{
                     #constructed_struct_fields
                 })
             }

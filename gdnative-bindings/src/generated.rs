@@ -4,7 +4,6 @@ use libc;
 use libc::c_char;
 use std::mem;
 use std::ptr;
-use std::sync::Once;
 
 use gdnative_core::core_types::*;
 use gdnative_core::object::*;

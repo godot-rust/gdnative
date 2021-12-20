@@ -231,7 +231,7 @@ impl VariantRepr {
                             ::gdnative::core_types::VariantArray::from_variant(#variant)
                                 .map_err(|__err| FVE::InvalidStructRepr {
                                     expected: VariantStructRepr::Tuple,
-                                    error: Box::new(__err),
+                                    error: std::boxed::Box::new(__err),
                                 })
                                 .and_then(|__array| {
                                     let __expected = #expected_len;
@@ -245,11 +245,11 @@ impl VariantRepr {
                                             let #non_skipped_idents = #non_skipped_exprs
                                                 .map_err(|err| FVE::InvalidItem {
                                                     index: __index as usize,
-                                                    error: Box::new(err),
+                                                    error: std::boxed::Box::new(err),
                                                 })?;
                                         )*
                                         #(
-                                            let #skipped_idents = ::std::default::Default::default();
+                                            let #skipped_idents = std::default::Default::default();
                                         )*
                                         Ok(#ctor( #(#ctor_idents),* ))
                                     }
@@ -290,7 +290,7 @@ impl VariantRepr {
                         ::gdnative::core_types::Dictionary::from_variant(#variant)
                             .map_err(|__err| FVE::InvalidStructRepr {
                                 expected: VariantStructRepr::Struct,
-                                error: Box::new(__err),
+                                error: std::boxed::Box::new(__err),
                             })
                             .and_then(|__dict| {
                                 #(
@@ -299,11 +299,11 @@ impl VariantRepr {
                                     let #non_skipped_idents = #exprs
                                         .map_err(|err| FVE::InvalidField {
                                             field_name: __field_name,
-                                            error: Box::new(err),
+                                            error: std::boxed::Box::new(err),
                                         })?;
                                 )*
                                 #(
-                                    let #skipped_idents = ::std::default::Default::default();
+                                    let #skipped_idents = std::default::Default::default();
                                 )*
                                 Ok(#ctor { #( #ctor_idents ),* })
                             })

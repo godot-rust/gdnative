@@ -390,13 +390,13 @@ pub fn decl_element(input: proc_macro::TokenStream) -> Result<TokenStream, syn::
         #(#attrs)*
         pub trait #trait_name: private::Sealed {
             #[doc(hidden)]
-            type SysArray: Default;
+            type SysArray: std::default::Default;
             #[doc(hidden)]
             type SysReadAccess;
             #[doc(hidden)]
             type SysWriteAccess;
             #[doc(hidden)]
-            type SysTy: Default;
+            type SysTy: std::default::Default;
             #[doc(hidden)]
             type SysRefTy;
 

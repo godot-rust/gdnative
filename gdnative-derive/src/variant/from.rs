@@ -65,14 +65,14 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
                     let __dict = ::gdnative::core_types::Dictionary::from_variant(#input_ident)
                         .map_err(|__err| FVE::InvalidEnumRepr {
                             expected: VariantEnumRepr::ExternallyTagged,
-                            error: Box::new(__err),
+                            error: std::boxed::Box::new(__err),
                         })?;
 
                     let __keys = __dict.keys();
                     if __keys.len() != 1 {
                         Err(FVE::InvalidEnumRepr {
                             expected: VariantEnumRepr::ExternallyTagged,
-                            error: Box::new(FVE::InvalidLength {
+                            error: std::boxed::Box::new(FVE::InvalidLength {
                                 expected: 1,
                                 len: __keys.len() as usize,
                             }),
@@ -82,7 +82,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
                         let __key = String::from_variant(&__keys.get(0))
                             .map_err(|__err| FVE::InvalidEnumRepr {
                                 expected: VariantEnumRepr::ExternallyTagged,
-                                error: Box::new(__err),
+                                error: std::boxed::Box::new(__err),
                             })?;
                         match __key.as_str() {
                             #(
@@ -90,7 +90,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
                                     let #var_input_ident_iter = &__dict.get_or_nil(&__keys.get(0));
                                     (#var_from_variants).map_err(|err| FVE::InvalidEnumVariant {
                                         variant: #ref_var_ident_string_literals,
-                                        error: Box::new(err),
+                                        error: std::boxed::Box::new(err),
                                     })
                                 },
                             )*
