@@ -38,8 +38,8 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
                     impl #generics ::gdnative::export::FromVarargs for #ident #generics #where_clause {
                         fn read<'a>(
                             #input_ident: &mut ::gdnative::export::Varargs<'a>,
-                        ) -> Result<Self, Vec<::gdnative::export::ArgumentError<'a>>> {
-                            Ok(#ident)
+                        ) -> std::result::Result<Self, std::vec::Vec<::gdnative::export::ArgumentError<'a>>> {
+                            std::result::Result::Ok(#ident)
                         }
                     }
                 })
@@ -116,8 +116,8 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
             impl #generics ::gdnative::export::FromVarargs for #ident #generics #where_clause {
                 fn read<'a>(
                     #input_ident: &mut ::gdnative::export::Varargs<'a>,
-                ) -> Result<Self, Vec<::gdnative::export::ArgumentError<'a>>> {
-                    let mut __errors = Vec::new();
+                ) -> std::result::Result<Self,std::vec:: Vec<::gdnative::export::ArgumentError<'a>>> {
+                    let mut __errors = std::vec::Vec::new();
 
                     #(
                         let #req_var_idents = #input_ident.read()
@@ -140,14 +140,14 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
                     )*
 
                     if !__errors.is_empty() {
-                        return Err(__errors);
+                        return std::result::Result::Err(__errors);
                     }
 
                     #(
                         let #req_var_idents = #req_var_idents.unwrap();
                     )*
 
-                    Ok(#ident {
+                    std::result::Result::Ok(#ident {
                         #(#req_var_idents,)*
                         #(#opt_var_idents,)*
                     })

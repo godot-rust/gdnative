@@ -218,7 +218,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
             pub fn get(gd_api: &GodotApi) -> &'static Self {
                 unsafe {
                     let table = Self::get_mut();
-                    static INIT: ::std::sync::Once = Once::new();
+                    static INIT: std::sync::Once = std::sync::Once::new();
                     INIT.call_once(|| {
                         #method_table::init(table, gd_api);
                     });
@@ -618,7 +618,7 @@ mod varargs_call {
         let arg_count = sig.arguments.len();
         let method_body = {
             let args_buffer = quote! {
-                let mut argument_buffer: Vec<*const sys::godot_variant> = Vec::with_capacity(#arg_count + varargs.len());
+                let mut argument_buffer: std::vec::Vec<*const sys::godot_variant> = std::vec::Vec::with_capacity(#arg_count + varargs.len());
             };
 
             let args = arguments.clone().map(|(name, ty)| {
