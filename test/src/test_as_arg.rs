@@ -1,5 +1,5 @@
 use gdnative::derive::{methods, NativeClass};
-use gdnative::prelude::NodeExt;
+use gdnative::prelude::NodeResolveExt;
 use gdnative::prelude::*;
 use std::ops::Deref;
 
