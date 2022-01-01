@@ -158,16 +158,28 @@ fn generate_class_bindings(
     }
 }
 
+#[rustfmt::skip]
 fn rust_safe_name(name: &str) -> proc_macro2::Ident {
+    // Keywords obtained from https://doc.rust-lang.org/reference/keywords.html
     match name {
-        "use" => format_ident!("_use"),
-        "type" => format_ident!("_type"),
-        "loop" => format_ident!("_loop"),
-        "in" => format_ident!("_in"),
-        "override" => format_ident!("_override"),
-        "where" => format_ident!("_where"),
-        "enum" => format_ident!("_enum"),
-        name => format_ident!("{}", name),
+        // Lexer 2015
+        "as" | "break" | "const" | "continue" | "crate" | "else" | "enum" | "extern" | "false" | "fn" | "for" |
+        "if" | "impl" | "in" | "let" | "loop" | "match" | "mod" | "move" | "mut" | "pub" | "ref" | "return" |
+        "self" | "Self" | "static" | "struct" | "super" | "trait" | "true" | "type" | "unsafe" | "use" |
+        "where" | "while" |
+        
+        // Lexer 2018
+        "async" | "await" | "dyn" |
+        
+        // Lexer 2018+
+        "try" |
+        
+        // Reserved words
+        "abstract" | "become" | "box" | "do" | "final" | "macro" | "override" | "priv" | "typeof" |
+        "unsized" | "virtual" | "yield"
+          => format_ident!("{}_", name),
+
+        _ => format_ident!("{}", name)
     }
 }
 
