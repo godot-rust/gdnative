@@ -1,9 +1,9 @@
-use heck::ToPascalCase as _;
+use super::classes::generate_enum_name;
+use miniserde::Deserialize;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::collections::{HashMap, HashSet};
 
-use miniserde::Deserialize;
 miniserde::make_place!(Place);
 
 pub struct Api {
@@ -400,7 +400,8 @@ impl Ty {
                 // Enums may reference known types (above list), check if it's a known type first
                 let mut split = ty[5..].split("::");
                 let class_name = split.next().unwrap();
-                let name = format_ident!("{}", split.next().unwrap().to_pascal_case());
+                let enum_raw_name = split.next().unwrap();
+                let name = format_ident!("{}", generate_enum_name(class_name, enum_raw_name));
                 let module = format_ident!("{}", module_name_from_class_name(class_name));
                 // Is it a known type?
                 match Ty::from_src(class_name) {
