@@ -53,7 +53,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: -p gdnative --lib --no-deps --features ${GDRUST_FEATURES}
+          args: -p gdnative --lib --no-deps --features ${{ env.GDRUST_FEATURES }}
 
       # For email address, see https://github.community/t/github-actions-bot-email-address/17204
       # As search-index.js changes every time, even if source hasn't changed, this will not need 'git commit --allow-empty'
