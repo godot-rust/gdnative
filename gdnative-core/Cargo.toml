@@ -12,8 +12,8 @@ edition = "2018"
 
 [features]
 default = []
-gd_test = []
-type_tag_fallback = []
+gd-test = []
+type-tag-fallback = []
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.9.3" }

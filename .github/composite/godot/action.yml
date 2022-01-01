@@ -1,0 +1,82 @@
+name: godot
+description: "Run Godot integration tests"
+
+inputs:
+  godot_ver:
+    required: true
+    description: "Godot version (e.g. '3.2')"
+
+  rust_toolchain:
+    required: false
+    default: 'stable'
+    description: "Rust toolchain specifier (e.g. 'nightly')"
+
+  rust_extra_args:
+    required: false
+    default: ''
+    description: "Extra command line arguments for 'cargo build', e.g. features"
+
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - name: Install Rust
+      uses: ./.github/composite/rust
+      with:
+        rust: ${{ inputs.rust_toolchain }}
+    - name: "Check cache for installed Godot version"
+      id: "cache-godot"
+      uses: actions/cache@v2
+      with:
+        path: ${{ runner.temp }}/godot_bin
+        key: godot-${{ runner.os }}-v${{ inputs.godot_ver }}
+    - name: "Install Godot"
+      if: steps.cache-godot.outputs.cache-hit != 'true'
+      run: |
+        wget --no-verbose "https://downloads.tuxfamily.org/godotengine/${{ inputs.godot_ver }}/Godot_v${{ inputs.godot_ver }}-stable_linux_headless.64.zip" -O /tmp/godot.zip
+        unzip -o /tmp/godot.zip -d ${{ runner.temp }}/godot_bin
+      shell: bash
+    - name: "Set environment variable"
+      run: |
+        echo "GODOT_BIN=${{ runner.temp }}/godot_bin/Godot_v${{ inputs.godot_ver }}-stable_linux_headless.64" >> $GITHUB_ENV
+      shell: bash
+    - name: "Build godot-rust"
+      run: |
+        echo "File size of api.json -- before:"
+        stat -c %s gdnative-bindings/api.json
+        
+        #echo "CRC32 of api.json: "
+        #crc32 gdnative-bindings/api.json
+        cd test
+        cargo build ${{ inputs.rust_extra_args }}
+        
+        cd ..
+        echo "File size of api.json -- after:"
+        stat -c %s gdnative-bindings/api.json
+      shell: bash
+    - name: "Run Godot integration tests"
+      run: |
+        cd test;
+        mkdir -p ./project/lib;
+        cp ../target/debug/libgdnative_test.so ./project/lib/;
+        ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");
+        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+          exit 1;
+        fi;
+        ${GODOT_BIN} -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log");
+        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+          exit 1;
+        fi;
+        cargo build --features type-tag-fallback;
+        mkdir -p ./project/lib;
+        cp ../target/debug/libgdnative_test.so ./project/lib/;
+        ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");
+        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+          exit 1;
+        fi;
+        ${GODOT_BIN} -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log");
+        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+          exit 1;
+        fi;
+      shell: bash

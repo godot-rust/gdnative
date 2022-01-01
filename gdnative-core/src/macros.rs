@@ -211,7 +211,7 @@ macro_rules! impl_basic_traits_as_sys {
 macro_rules! godot_test {
     ($($test_name:ident $body:block)*) => {
         $(
-            #[cfg(feature = "gd_test")]
+            #[cfg(feature = "gd-test")]
             #[doc(hidden)]
             #[inline]
             pub fn $test_name() -> bool {

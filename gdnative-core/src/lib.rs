@@ -25,7 +25,7 @@
     clippy::missing_safety_doc,
     clippy::non_send_fields_in_send_ty
 )]
-#![cfg_attr(feature = "gd_test", allow(clippy::blacklisted_name))]
+#![cfg_attr(feature = "gd-test", allow(clippy::blacklisted_name))]
 
 #[doc(hidden)]
 pub extern crate gdnative_sys as sys;
@@ -33,7 +33,7 @@ pub extern crate gdnative_sys as sys;
 #[doc(hidden)]
 pub extern crate libc;
 
-#[cfg(feature = "gd_test")]
+#[cfg(feature = "gd-test")]
 #[macro_use]
 extern crate approx;
 

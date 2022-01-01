@@ -22,9 +22,8 @@
 //!
 //! The `api` module contains high-level wrappers for all the API types generated from a
 //! JSON description of the API. The generated types are tied to a specific version, which
-//! is currently `3.2.3-stable` for the crates.io version. If you want to use the bindings
-//! with another version of the engine, see the instructions [here][custom-version] on
-//! generating custom bindings.
+//! is currently `3.2.3-stable` for the crates.io version. If you want to use the bindings with
+//! another version of the engine, read the notes on the `custom-godot` feature flag below.
 //!
 //! ### Memory management
 //!
@@ -40,16 +39,38 @@
 //! on `Ref`.
 //!
 //! ## Feature flags
+//! All features are disabled by default.
 //!
-//! * `bindings` -- *enabled* by default. Includes the crates.io version of the bindings in the
-//!   `api` module. Disable if you want to use a custom Godot version.
-//! * `serde` -- *disabled* by default. Enable for `serde` support. See also
-//!   [`Variant`](core_types::Variant).
-//! * `formatted` -- *disabled* by default. Enable if the generated binding source code should
-//!   be human-readable.
+//! Functionality toggles:
+//!
+//! * **`async`**<br>
+//!   Activates async functionality, see [`tasks`] module for details.
+//!
+//! * **`serde`**<br>
+//!   Enable for `serde` support of several core types. See also [`Variant`](core_types::Variant).
+//!
+//! Bindings generation:
+//!
+//! * **`custom-godot`**<br>
+//!   When active, tries to locate a Godot executable on your system, in this order:
+//!   1. If a `GODOT_BIN` environment variable is defined, it will interpret it as a path to the binary
+//!      (not directory).
+//!   2. An executable called `godot`, accessible in your system's PATH, is used.
+//!   3. If neither of the above is found, an error is generated.
+//!
+//!   The symbols in [`api`] will be generated in a way compatible with that engine version.
+//!   This allows to use Godot versions older than the currently supported ones. Note that there
+//!   are some bugs for Godot versions prior to 3.3.1.
+//!
+//!   See [Custom Godot builds][custom-godot] for detailed instructions.
+//!
+//! * **`formatted`**<br>
+//!   Enable if the generated binding source code should be human-readable and split
+//!   into multiple files. This can also help IDEs that struggle with a single huge file.
 //!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
-//! [custom-version]: https://github.com/godot-rust/godot-rust/#other-versions-or-custom-builds
+//! [custom-godot]: https://godot-rust.github.io/book/advanced-guides/custom-godot.html
+//!
 //!
 
 // TODO: add logo using #![doc(html_logo_url = "https://<url>")]
@@ -74,10 +95,8 @@ pub mod prelude;
 
 /// Bindings for the Godot Class API.
 #[doc(inline)]
-#[cfg(feature = "bindings")]
 pub use gdnative_bindings as api;
 
-/// Support for async code
 #[doc(inline)]
 #[cfg(feature = "async")]
 pub use gdnative_async as tasks;

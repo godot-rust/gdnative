@@ -12,24 +12,27 @@ readme = "../README.md"
 edition = "2018"
 
 [features]
-default = ["bindings"]
-formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one_class_one_file"]
+# Public
+default = []
+async = ["gdnative-async"]
+custom-godot = ["gdnative-bindings/custom-godot"]
+formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one-class-one-file"]
 serde = ["gdnative-core/serde"]
 
-gd_test = ["gdnative-core/gd_test"]
-type_tag_fallback = ["gdnative-core/type_tag_fallback"]
-bindings = ["gdnative-bindings"]
-async = ["gdnative-async", "bindings"]
+# Internal
+gd-test = ["gdnative-core/gd-test"]
+type-tag-fallback = ["gdnative-core/type-tag-fallback"]
 
 [dependencies]
 gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }
 gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
-gdnative-bindings = { optional = true, path = "../gdnative-bindings", version = "=0.9.3" }
-gdnative-async = { optional = true, path = "../gdnative-async", version = "=0.9.3" }
+gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
+gdnative-async = { path = "../gdnative-async", version = "=0.9.3", optional = true }
 
 [dev-dependencies]
 trybuild = "1.0.50"
 rustversion = "1.0.5"
 
+# See https://docs.rs/about/metadata
 [package.metadata.docs.rs]
-all-features = true
+features = ["async", "serde"]

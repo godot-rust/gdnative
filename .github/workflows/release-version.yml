@@ -8,6 +8,9 @@ on:
       - '0.9.[0-9]+'
       - '0.10.[0-9]+'
 
+env:
+  GDRUST_FEATURES: "gdnative/async,gdnative/serde"
+
 defaults:
   run:
     shell: bash
@@ -18,17 +21,20 @@ jobs:
     environment: Deploy
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f
         with:
           profile: minimal
           toolchain: stable
           components: rustfmt, clippy
-      - name: Sanity tests
+
+      - name: "Sanity tests"
         run: |
           cargo fmt --all -- --check;
-          cargo clippy --all --all-features -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
-          cargo test --all --all-features;
-      - name: Publishing to crates.io
+          cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+          cargo test --workspace --features ${GDRUST_FEATURES};
+
+      - name: "Publish to crates.io"
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
         run: |

@@ -1,21 +1,5 @@
 use crate::core_types::Vector2;
 
-/// Clamp method for f32.
-/// NOTE: This method was copied as-is from std. This was done to avoid compatibility issues
-/// with newer rustc versions and should be removed in favor of f32::clamp once that is stable.
-#[inline]
-fn clamp(num: f32, min: f32, max: f32) -> f32 {
-    assert!(min <= max);
-    let mut x = num;
-    if x < min {
-        x = min;
-    }
-    if x > max {
-        x = max;
-    }
-    x
-}
-
 /// Affine 2D transform (2x3 matrix).
 ///
 /// Represents transformations such as translation, rotation, or scaling.
@@ -228,7 +212,7 @@ impl Transform2D {
         // slerp rotation
         let v1 = Vector2::new(f32::cos(r1), f32::sin(r1));
         let v2 = Vector2::new(f32::cos(r2), f32::sin(r2));
-        let dot = clamp(v1.dot(v2), -1.0, 1.0);
+        let dot = v1.dot(v2).clamp(-1.0, 1.0);
 
         let v = if dot > 0.9995 {
             //linearly interpolate to avoid numerical precision issues
@@ -320,7 +304,7 @@ impl std::ops::Mul<Transform2D> for Transform2D {
     }
 }
 
-#[cfg(feature = "gd_test")]
+#[cfg(feature = "gd-test")]
 fn test_transform2d_behavior_impl() {
     let api = crate::private::get_api();
 

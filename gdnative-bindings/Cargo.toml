@@ -12,7 +12,8 @@ edition = "2018"
 
 [features]
 formatted = []
-one_class_one_file = []
+one-class-one-file = []
+custom-godot = ["which"]
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "0.9.3" }
@@ -23,3 +24,4 @@ bitflags = "1.3.2"
 [build-dependencies]
 heck = "0.4.0"
 gdnative_bindings_generator = { path = "../bindings_generator", version = "=0.9.3" }
+which = { optional = true, version = "4.2.2" }
