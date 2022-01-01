@@ -1,15 +1,16 @@
 //! # Rust bindings for the Godot game engine
 //!
-//! This crate contains high-level wrappers around the Godot game engine's gdnative API.
+//! This crate contains high-level wrappers around the Godot game engine's GDNative API.
 //! Some of the types were automatically generated from the engine's JSON API description,
 //! and some other types are hand made wrappers around the core C types.
 //!
-//! ## Memory management for core types
+//! ## Core types
 //!
-//! Wrappers for most core types expose safe Rust interfaces, and it's unnecessary to mind
-//! memory management most of the times. The exceptions are `VariantArray` and `Dictionary`,
-//! internally reference-counted collections with "interior mutability" in Rust parlance. These
-//! types are modelled using the "typestate" pattern to enforce that the official
+//! Wrappers for most core types expose safe Rust interfaces, and it's unnecessary
+//! to mind memory management most of the times. The exceptions are
+//! [`VariantArray`](core_types::VariantArray) and [`Dictionary`](core_types::Dictionary),
+//! internally reference-counted collections with _interior mutability_ in Rust parlance.
+//! These types are modelled using the _typestate_ pattern to enforce that the official
 //! [thread-safety guidelines][thread-safety]. For more information, read the type-level
 //! documentation for these types.
 //!
@@ -20,23 +21,24 @@
 //!
 //! ## Generated API types
 //!
-//! The `api` module contains high-level wrappers for all the API types generated from a
-//! JSON description of the API. The generated types are tied to a specific version, which
-//! is currently `3.2.3-stable` for the crates.io version. If you want to use the bindings with
-//! another version of the engine, read the notes on the `custom-godot` feature flag below.
+//! The [`api`] module contains high-level wrappers for all the API types generated from a
+//! JSON description of the API. The generated types are tied to a specific version, typically
+//! the latest Godot 3.x release (at the time of the godot-rust release).
+//! If you want to use the bindings with another version of the engine, read the notes on
+//! the `custom-godot` feature flag below.
 //!
 //! ### Memory management
 //!
 //! API types may be reference-counted or manually-managed. This is indicated by the
 //! `RefCounted` and `ManuallyManaged` marker traits.
 //!
-//! The API types can exist in three reference forms: bare, `TRef` and `Ref`. Bare references
-//! to API types, like `&'a Node`, represent valid and safe references to Godot objects.
+//! The API types can exist in three reference forms: bare, [`TRef`](object::TRef) and [`Ref`](object::Ref).
+//! Bare references to API types, like `&'a Node`, represent valid and safe references to Godot objects.
 //! As such, API methods may be called safely on them. `TRef` adds typestate tracking, which
 //! enable additional abilities like being able to be passed to the engine. `Ref`, or
-//! "persistent" references, have `'static` lifetime, but are not always safe to use. For more
-//! information on how to use persistent references safely, see the type-level documentation
-//! on `Ref`.
+//! _persistent_ references, have `'static` lifetime, but are not always safe to use. For more
+//! information on how to use persistent references safely, see the [`object`] module documentation
+//! or the corresponding [book chapter][gdnative-overview].
 //!
 //! ## Feature flags
 //! All features are disabled by default.
@@ -59,8 +61,7 @@
 //!   3. If neither of the above is found, an error is generated.
 //!
 //!   The symbols in [`api`] will be generated in a way compatible with that engine version.
-//!   This allows to use Godot versions older than the currently supported ones. Note that there
-//!   are some bugs for Godot versions prior to 3.3.1.
+//!   This allows to use Godot versions older than the currently supported ones.
 //!
 //!   See [Custom Godot builds][custom-godot] for detailed instructions.
 //!
@@ -69,6 +70,7 @@
 //!   into multiple files. This can also help IDEs that struggle with a single huge file.
 //!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
+//! [gdnative-overview]: https://godot-rust.github.io/book/gdnative-overview.html
 //! [custom-godot]: https://godot-rust.github.io/book/advanced-guides/custom-godot.html
 //!
 //!
