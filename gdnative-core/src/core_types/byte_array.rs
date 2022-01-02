@@ -40,6 +40,9 @@ godot_test!(
 
         // the write shouldn't have affected the original array
         assert_eq!(&[0, 1, 2, 3, 4, 5, 6, 7], original_read.as_slice());
+
+        // check to_vec()
+        assert_eq!(arr.to_vec(), vec![0, 1, 2, 3, 4, 5, 6, 7]);
     }
 );
 
