@@ -324,7 +324,7 @@ impl GodotArgument {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum Ty {
     Void,
     String,
