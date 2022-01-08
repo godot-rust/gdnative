@@ -1,32 +1,57 @@
 use crate::private::get_api;
 use crate::sys;
 use std::cmp::Ordering;
-use std::cmp::{Eq, PartialEq};
 use std::mem::transmute;
 
-/// The RID type is used to access the unique integer ID of a resource.
-/// They are opaque, so they do not grant access to the associated resource by themselves.
+// Note: for safety design, consult:
+// * https://github.com/godotengine/godot/blob/3.x/core/rid.h
+// * https://github.com/godotengine/godot/blob/3.x/modules/gdnative/include/gdnative/rid.h
+
+/// A RID ("resource ID") is an opaque handle that refers to a Godot `Resource`.
+///
+/// RIDs do not grant access to the resource itself. Instead, they can be used in lower-level resource APIs
+/// such as the [servers]. See also [Godot API docs for `RID`][docs].
+///
+/// Note that RIDs are highly unsafe to work with (especially with a Release build of Godot):
+/// * They are untyped, i.e. Godot does not recognize if they represent the correct resource type.
+/// * The internal handle is interpreted as a raw pointer by Godot, meaning that passing an invalid or wrongly
+///   typed RID is instant undefined behavior.
+///
+/// For this reason, GDNative methods accepting `Rid` parameters are marked `unsafe`.
+///
+/// [servers]: https://docs.godotengine.org/en/stable/tutorials/optimization/using_servers.html
+/// [docs]: https://docs.godotengine.org/en/stable/classes/class_rid.html
 #[derive(Copy, Clone, Debug)]
 pub struct Rid(pub(crate) sys::godot_rid);
 
 impl Rid {
+    /// Creates an empty, invalid RID.
     #[inline]
     pub fn new() -> Self {
         Rid::default()
     }
 
+    /// Returns the ID of the referenced resource.
+    ///
+    /// # Panics
+    /// When this instance is empty, i.e. `self.is_occupied()` is false.
+    ///
+    /// # Safety
+    /// RIDs are untyped and interpreted as raw pointers by the engine.
+    /// If this method is called on an invalid resource ID, the behavior is undefined.
+    /// This can happen when the resource behind the RID is no longer alive.
     #[inline]
-    pub fn get_id(self) -> i32 {
-        unsafe { (get_api().godot_rid_get_id)(&self.0) }
+    pub unsafe fn get_id(self) -> i32 {
+        assert!(self.is_occupied());
+        (get_api().godot_rid_get_id)(&self.0)
     }
 
+    /// Check if this RID is non-empty. This does **not** mean it's valid or safe to use!
+    ///
+    /// This simply checks if the handle has not been initialized with the empty default.
+    /// It does not give any indication about whether it points to a valid resource.
     #[inline]
-    pub fn operator_less(self, b: Rid) -> bool {
-        unsafe { (get_api().godot_rid_operator_less)(&self.0, &b.0) }
-    }
-
-    #[inline]
-    pub fn is_valid(self) -> bool {
+    pub fn is_occupied(self) -> bool {
         self.to_u64() != 0
     }
 
@@ -73,14 +98,12 @@ impl_basic_traits_as_sys! {
 impl PartialOrd for Rid {
     #[inline]
     fn partial_cmp(&self, other: &Rid) -> Option<Ordering> {
-        unsafe {
-            let native = (get_api().godot_rid_operator_less)(&self.0, &other.0);
-
-            if native {
-                Some(Ordering::Less)
-            } else {
-                Some(Ordering::Greater)
-            }
+        if PartialEq::eq(self, other) {
+            Some(Ordering::Equal)
+        } else if unsafe { (get_api().godot_rid_operator_less)(self.sys(), other.sys()) } {
+            Some(Ordering::Less)
+        } else {
+            Some(Ordering::Greater)
         }
     }
 }

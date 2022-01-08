@@ -1,4 +1,4 @@
-//! Functionality for user-defined types exported to the engine (native scripts)
+//! Functionality for user-defined types exported to the engine (native scripts).
 //!
 //! NativeScript allows users to have their own scripts in a native language (in this case Rust).
 //! It is _not_ the same as GDNative, the native interface to call into Godot.
@@ -8,32 +8,7 @@
 //! If you are looking for how to manage Godot core types or classes (objects), check
 //! out the [`core_types`][crate::core_types] and [`object`][crate::object] modules, respectively.
 //!
-//! ## Init and exit hooks
-//!
-//! Three endpoints are automatically invoked by the engine during startup and shutdown:
-//!
-//! * [`godot_gdnative_init`],
-//! * [`godot_nativescript_init`],
-//! * [`godot_gdnative_terminate`],
-//!
-//! All three must be present. To quickly define all three endpoints using the default names,
-//! use [`godot_init`].
-//!
-//! ## Registering script classes
-//!
-//! [`InitHandle`] is the registry of all your exported symbols.
-//! To register script classes, call [`InitHandle::add_class()`] or [`InitHandle::add_tool_class()`]
-//! in your [`godot_nativescript_init`] or [`godot_init`] callback:
-//!
-//! ```ignore
-//! use gdnative::prelude::*;
-//!
-//! fn init(handle: InitHandle) {
-//!     handle.add_class::<HelloWorld>();
-//! }
-//!
-//! godot_init!(init);
-//! ```
+//! To handle initialization and shutdown of godot-rust, take a look at the [`init`][crate::init] module.
 //!
 //! For full examples, see [`examples`](https://github.com/godot-rust/godot-rust/tree/master/examples)
 //! in the godot-rust repository.

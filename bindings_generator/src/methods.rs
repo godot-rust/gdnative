@@ -344,20 +344,19 @@ pub(crate) fn generate_methods(
         let icall_name = method_sig.function_name();
         let icall = format_ident!("{}", icall_name);
 
-        icalls.insert(icall_name.clone(), method_sig);
-
-        let rusty_name = rust_safe_name(rusty_method_name);
-
         let maybe_unsafe: TokenStream;
         let maybe_unsafe_reason: &str;
-        if UNSAFE_OBJECT_METHODS.contains(&(&class.name, method_name)) {
+        if let Some(unsafe_reason) = unsafe_reason(class, method_name, &method_sig) {
             maybe_unsafe = quote! { unsafe };
-            maybe_unsafe_reason = "\n# Safety\nThis function bypasses Rust's static type checks \
-                (aliasing, thread boundaries, calls to free(), ...).";
+            maybe_unsafe_reason = unsafe_reason;
         } else {
             maybe_unsafe = TokenStream::default();
             maybe_unsafe_reason = "";
-        };
+        }
+
+        icalls.insert(icall_name.clone(), method_sig);
+
+        let rusty_name = rust_safe_name(rusty_method_name);
 
         let method_bind_fetch = {
             let method_table = format_ident!("{}MethodTable", class.name);
@@ -392,6 +391,27 @@ pub(crate) fn generate_methods(
     }
 
     result
+}
+
+/// Returns a message as to why this method would be unsafe; or None if the method is safe
+fn unsafe_reason(
+    class: &GodotClass,
+    method_name: &str,
+    method_sig: &MethodSig,
+) -> Option<&'static str> {
+    if UNSAFE_OBJECT_METHODS.contains(&(&class.name, method_name)) {
+        Some(
+            "\n# Safety\
+             \nThis function bypasses Rust's static type checks (aliasing, thread boundaries, calls to free(), ...).",
+        )
+    } else if method_sig.arguments.contains(&Ty::Rid) {
+        Some(
+            "\n# Safety\
+             \nThis function has parameters of type `Rid` (resource ID). \
+             RIDs are untyped and interpreted as raw pointers by the engine, so passing an incorrect RID can cause UB.")
+    } else {
+        None
+    }
 }
 
 fn ret_recover(ty: &Ty, icall_ty: IcallType) -> TokenStream {
