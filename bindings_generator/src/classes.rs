@@ -143,7 +143,7 @@ pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
     }
 }
 
-fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
+pub(crate) fn generate_enum_name(class_name: &str, enum_name: &str) -> String {
     // In order to not pollute the API with more Result types,
     // rename the Result enum used by Search to SearchResult.
     // to_pascal_case() is used to make the enums more rust-like.
