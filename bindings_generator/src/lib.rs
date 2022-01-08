@@ -13,28 +13,41 @@
 //! must be taken to ensure that the version of the generator matches the one specified in
 //! the `Cargo.toml` of the `gdnative` crate exactly, even for updates that are considered
 //! non-breaking in the `gdnative` crate.
-use proc_macro2::TokenStream;
 
-use quote::{format_ident, quote};
-
-pub mod api;
 mod class_docs;
 mod classes;
-pub mod dependency;
 mod documentation;
 mod methods;
 mod special_methods;
 
-pub use crate::api::*;
-pub use crate::class_docs::*;
+#[cfg(feature = "custom-godot")]
+mod godot_api_json;
+mod godot_version;
+
+pub mod api;
+pub mod dependency;
+
 use crate::classes::*;
-pub use crate::dependency::*;
 use crate::documentation::*;
 use crate::methods::*;
 use crate::special_methods::*;
-
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
 use std::collections::HashMap;
 use std::io;
+
+pub use api::*;
+pub use class_docs::*;
+pub use dependency::*;
+
+#[cfg(feature = "custom-godot")]
+pub use godot_api_json::*;
+pub use godot_version::*;
+
+#[cfg(not(feature = "custom-godot"))]
+pub fn generate_json_if_needed() -> bool {
+    false
+}
 
 pub type GeneratorResult<T = ()> = Result<T, io::Error>;
 

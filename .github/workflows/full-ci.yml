@@ -244,10 +244,9 @@ jobs:
             godot: "3.4.1"
             postfix: ' (msrv 1.51)'
 
-          # Test with older engine version
-          # Note: headless versions of Godot <= 3.3 may crash with a bug, see feature description in lib.rs
+          # Test with oldest supported engine version
           - rust: stable
-            godot: "3.3.1"
+            godot: "3.2"
             postfix: ''
             build_args: '--features custom-godot'
 
