@@ -9,6 +9,13 @@ use crate::core_types::{Color, GodotString, VariantArray, Vector2, Vector3};
 use crate::object::NewRef;
 use crate::private::get_api;
 
+/// A RAII read access for Godot pool arrays.
+pub type Read<'a, T> = Aligned<ReadGuard<'a, T>>;
+
+/// A RAII write access for Godot pool arrays. This will only lock the CoW container once,
+/// as opposed to every time with methods like `push()`.
+pub type Write<'a, T> = Aligned<WriteGuard<'a, T>>;
+
 /// A reference-counted CoW typed vector using Godot's pool allocator, generic over possible
 /// element types.
 ///
@@ -19,63 +26,19 @@ use crate::private::get_api;
 /// If you need other types, look into [`VariantArray`](struct.VariantArray.html) or directly use
 /// `Vec<T>` for type safety.
 ///
-/// This type is CoW. The `Clone` implementation of this type creates a new reference without
-/// copying the contents.
+/// This type is CoW (copy-on-write). The `Clone` implementation of this type creates a new
+/// reference without copying the contents.
 ///
-/// When using this type, it's generally better to perform mutations in batch using `write`,
-/// or the `append` methods, as opposed to `push` or `set`, because the latter ones trigger
+/// If you need to read elements, e.g. for iteration or conversion to another collection,
+/// the [`read()`][Self::read] method provides a view that dereferences to `&[T]`.
+/// Analogously, [`write()`][Self::write] provides a writable view that dereferences to `&mut [T]`.
+///
+/// For element mutations, it's usually recommended to do process them in batch using
+/// [`write()`][Self::write] or the [`append()`][Self::append] methods, as opposed to
+/// [`push()`][Self::push] or [`set()`][Self::set], because the latter ones trigger
 /// CoW behavior each time they are called.
 pub struct PoolArray<T: PoolElement> {
     inner: T::SysArray,
-}
-
-/// A RAII read access for Godot typed arrays.
-pub type Read<'a, T> = Aligned<ReadGuard<'a, T>>;
-
-/// A RAII write access for Godot typed arrays. This will only lock the CoW container once,
-/// as opposed to every time with methods like `push`.
-pub type Write<'a, T> = Aligned<WriteGuard<'a, T>>;
-
-impl<T: PoolElement> Drop for PoolArray<T> {
-    #[inline]
-    fn drop(&mut self) {
-        unsafe {
-            (T::destroy_fn(get_api()))(self.sys_mut());
-        }
-    }
-}
-
-impl<T: PoolElement> Default for PoolArray<T> {
-    #[inline]
-    fn default() -> Self {
-        PoolArray::new()
-    }
-}
-
-impl<T: PoolElement + fmt::Debug> fmt::Debug for PoolArray<T> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.read().iter()).finish()
-    }
-}
-
-impl<T: PoolElement> Clone for PoolArray<T> {
-    #[inline]
-    fn clone(&self) -> Self {
-        self.new_ref()
-    }
-}
-
-impl<T: PoolElement> NewRef for PoolArray<T> {
-    /// Creates a new reference to this reference-counted instance.
-    #[inline]
-    fn new_ref(&self) -> Self {
-        unsafe {
-            let mut inner = T::SysArray::default();
-            (T::new_copy_fn(get_api()))(&mut inner, self.sys());
-            PoolArray { inner }
-        }
-    }
 }
 
 impl<T: PoolElement> PoolArray<T> {
@@ -100,6 +63,22 @@ impl<T: PoolElement> PoolArray<T> {
     }
 
     /// Creates a `PoolArray` moving elements from `src`.
+    ///
+    /// If your source type isn't precisely a `Vec<T>`, keep in mind that `PoolElement` implements the
+    /// `FromIterator` trait, which allows it to be constructed from iterators, typically through `collect()`.
+    ///
+    /// For example:
+    /// ```no_run
+    /// // Int32Array is a type alias for PoolArray<i32>
+    /// use gdnative::core_types::Int32Array;
+    ///
+    /// // Collect from range
+    /// let arr = (0..4).collect::<Int32Array>();
+    ///
+    /// // Type conversion
+    /// let vec: Vec<u32> = vec![1, 1, 2, 3, 5]; // note: unsigned
+    /// let arr = vec.iter().map(|&e| e as i32).collect::<Int32Array>();
+    /// ```
     #[inline]
     pub fn from_vec(mut src: Vec<T>) -> Self {
         let mut arr = Self::new();
@@ -107,10 +86,24 @@ impl<T: PoolElement> PoolArray<T> {
         arr
     }
 
+    /// Copies all elements to a `Vec`, leaving this instance untouched.
+    ///
+    /// Equivalent to `self.read().to_vec()`. Only use this if your destination type is precisely
+    /// a `Vec<T>`. Otherwise, call [`read()`][Self::read] which can be used as a slice.
+    ///
+    #[inline]
+    pub fn to_vec(&self) -> Vec<T>
+    where
+        T: Clone,
+    {
+        let guard = self.read();
+        guard.to_vec()
+    }
+
     /// Appends an element to the end of the array.
     ///
-    /// Calling `push` triggers copy-on-write behavior. To insert a large number of elements,
-    /// consider using `resize` and `write`.
+    /// Calling `push()` triggers copy-on-write behavior. To insert a large number of elements,
+    /// consider using [`append()`][Self::append], [`resize()`][Self::resize] or [`write()`][Self::write].
     #[inline]
     pub fn push(&mut self, val: T) {
         self.push_ref(&val)
@@ -118,8 +111,8 @@ impl<T: PoolElement> PoolArray<T> {
 
     /// Appends an element to the end of the array by reference.
     ///
-    /// Calling `push` triggers copy-on-write behavior. To insert a large number of elements,
-    /// consider using `resize` and `write`.
+    /// Calling `push_ref()` triggers copy-on-write behavior. To insert a large number of elements,
+    /// consider using [`append()`][Self::append], [`resize()`][Self::resize] or [`write()`][Self::write].
     #[inline]
     pub fn push_ref(&mut self, val: &T) {
         unsafe {
@@ -225,7 +218,10 @@ impl<T: PoolElement> PoolArray<T> {
         self.len() == 0
     }
 
-    /// Returns a RAII read access into this array.
+    /// Returns a scoped read-only view into this array.
+    ///
+    /// The returned read guard implements `Deref` with target type `[T]`, i.e. can be dereferenced to `&[T]`.
+    /// This means all non-mutating (`&self`) slice methods can be used, see [here](struct.Aligned.html#deref-methods).
     #[inline]
     pub fn read(&self) -> Read<'_, T> {
         unsafe {
@@ -235,8 +231,11 @@ impl<T: PoolElement> PoolArray<T> {
         }
     }
 
-    /// Returns a RAII write access into this array. This triggers CoW once per lock, instead
+    /// Returns a scoped read-write view into this array. This triggers CoW once per lock, instead
     /// of once each mutation.
+    ///
+    /// The returned write guard implements `DerefMut` with target type `[T]`, i.e. can be dereferenced to `&mut [T]`.
+    /// This means all mutating and read-only slice methods can be used, see [here](struct.Aligned.html#deref-methods).
     #[inline]
     pub fn write(&mut self) -> Write<'_, T> {
         unsafe {
@@ -268,6 +267,8 @@ impl<T: PoolElement> PoolArray<T> {
 impl<T: PoolElement + Copy> PoolArray<T> {
     /// Creates a new `PoolArray` by copying from `src`.
     ///
+    /// Equivalent to
+    ///
     /// # Panics
     ///
     /// If the length of `src` does not fit in `i32`.
@@ -291,6 +292,48 @@ impl<T: PoolElement + Copy> PoolArray<T> {
 
         let mut write = self.write();
         write[start..].copy_from_slice(src)
+    }
+}
+
+impl<T: PoolElement> Drop for PoolArray<T> {
+    #[inline]
+    fn drop(&mut self) {
+        unsafe {
+            (T::destroy_fn(get_api()))(self.sys_mut());
+        }
+    }
+}
+
+impl<T: PoolElement> Default for PoolArray<T> {
+    #[inline]
+    fn default() -> Self {
+        PoolArray::new()
+    }
+}
+
+impl<T: PoolElement + fmt::Debug> fmt::Debug for PoolArray<T> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.read().iter()).finish()
+    }
+}
+
+impl<T: PoolElement> Clone for PoolArray<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        self.new_ref()
+    }
+}
+
+impl<T: PoolElement> NewRef for PoolArray<T> {
+    /// Creates a new reference to this reference-counted instance.
+    #[inline]
+    fn new_ref(&self) -> Self {
+        unsafe {
+            let mut inner = T::SysArray::default();
+            (T::new_copy_fn(get_api()))(&mut inner, self.sys());
+            PoolArray { inner }
+        }
     }
 }
 
