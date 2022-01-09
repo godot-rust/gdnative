@@ -148,7 +148,15 @@ impl<T: NativeClass> Instance<T, Unique> {
                 std::ptr::null_mut(),
             );
 
-            let script_class_name = GodotString::from(class_registry::class_name_or_default::<T>());
+            let script_class_name = class_registry::class_name::<T>()
+                .map(GodotString::from)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "`{type_name}` must be registered before it can be used; call `handle.add_class::<{type_name}>()` in your `nativescript_init` callback",
+                        type_name = std::any::type_name::<T>(),
+                    );
+                });
+
             let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
             (gd_api.godot_method_bind_ptrcall)(
                 nativescript_methods.set_class_name,
@@ -169,8 +177,6 @@ impl<T: NativeClass> Instance<T, Unique> {
                 0,
                 std::ptr::null_mut(),
             );
-
-            debug_assert!(class_registry::is_class_registered::<T>(), "`{type_name}` must be registered before it can be used; call `handle.add_class::<{type_name}>()` in your `nativescript_init` callback", type_name = std::any::type_name::<T>());
 
             assert!(
                 emplace::take::<T>().is_none(),
