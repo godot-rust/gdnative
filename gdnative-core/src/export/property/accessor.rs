@@ -5,7 +5,7 @@ use std::ptr::NonNull;
 
 use crate::core_types::{FromVariant, ToVariant, Variant};
 use crate::export::user_data::{Map, MapMut, UserData};
-use crate::export::NativeClass;
+use crate::export::{class_registry, NativeClass};
 use crate::object::{GodotObject, RawObject, TRef};
 
 /// Trait for raw property setters.
@@ -219,7 +219,7 @@ where
             if class.is_null() {
                 godot_error!(
                     "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-                    C::class_name(),
+                    class_registry::class_name_or_default::<C>(),
                 );
                 return;
             }
@@ -229,7 +229,7 @@ where
                 None => {
                     godot_error!(
                         "gdnative-core: owner pointer for {} is null",
-                        C::class_name(),
+                        class_registry::class_name_or_default::<C>(),
                     );
                     return;
                 }
@@ -294,7 +294,7 @@ where
             if class.is_null() {
                 godot_error!(
                     "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-                    C::class_name(),
+                    class_registry::class_name_or_default::<C>(),
                 );
                 return Variant::nil().leak();
             }
@@ -304,7 +304,7 @@ where
                 None => {
                     godot_error!(
                         "gdnative-core: owner pointer for {} is null",
-                        C::class_name(),
+                        class_registry::class_name_or_default::<C>(),
                     );
                     return Variant::nil().leak();
                 }

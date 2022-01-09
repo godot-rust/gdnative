@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use gdnative::export::{StaticArgs, StaticArgsMethod};
+use gdnative::export::{StaticArgs, StaticArgsMethod, StaticallyNamed};
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
@@ -24,9 +24,6 @@ struct RegisterSignal;
 impl NativeClass for RegisterSignal {
     type Base = Reference;
     type UserData = user_data::Aether<RegisterSignal>;
-    fn class_name() -> &'static str {
-        "RegisterSignal"
-    }
     fn init(_owner: TRef<Reference>) -> RegisterSignal {
         RegisterSignal
     }
@@ -36,6 +33,10 @@ impl NativeClass for RegisterSignal {
             .with_param("amount", VariantType::I64)
             .done();
     }
+}
+
+impl StaticallyNamed for RegisterSignal {
+    const CLASS_NAME: &'static str = "RegisterSignal";
 }
 
 #[methods]
@@ -48,9 +49,6 @@ struct RegisterProperty {
 impl NativeClass for RegisterProperty {
     type Base = Reference;
     type UserData = user_data::MutexData<RegisterProperty>;
-    fn class_name() -> &'static str {
-        "RegisterProperty"
-    }
     fn init(_owner: TRef<Reference>) -> RegisterProperty {
         RegisterProperty { value: 42 }
     }
@@ -62,6 +60,10 @@ impl NativeClass for RegisterProperty {
             .with_getter(RegisterProperty::get_value)
             .done();
     }
+}
+
+impl StaticallyNamed for RegisterProperty {
+    const CLASS_NAME: &'static str = "RegisterProperty";
 }
 
 #[methods]

@@ -1,4 +1,5 @@
 use crate::*;
+use std::borrow::Cow;
 use std::default::Default;
 use std::fmt;
 use std::mem::{forget, transmute};
@@ -884,7 +885,7 @@ pub enum FromVariantError {
     },
 
     /// Given object is not an instance of the expected NativeClass.
-    InvalidInstance { expected: &'static str },
+    InvalidInstance { expected: Cow<'static, str> },
     /// Collection contains an invalid field.
     InvalidField {
         field_name: &'static str,

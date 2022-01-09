@@ -3,6 +3,8 @@
 use std::any::Any;
 use std::cell::RefCell;
 
+use crate::export::class_registry;
+
 use super::NativeClass;
 
 thread_local! {
@@ -39,7 +41,7 @@ pub fn take<T: NativeClass>() -> Option<T> {
             Ok(script) => *script,
             Err(any) => panic!(
                 "expecting {} in the emplacement cell, got {:?} (this is a bug in the bindings)",
-                T::class_name(),
+                class_registry::class_name_or_default::<T>(),
                 any.type_id(),
             ),
         })

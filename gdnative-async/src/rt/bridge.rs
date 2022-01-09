@@ -52,11 +52,6 @@ impl NativeClass for SignalBridge {
     type Base = Reference;
     type UserData = ArcData<SignalBridge>;
 
-    fn class_name() -> &'static str {
-        // Sort of just praying that there will be no duplicates of this.
-        "__GDNATIVE_ASYNC_INTERNAL__SignalBridge"
-    }
-
     fn register_properties(_builder: &ClassBuilder<Self>) {}
 }
 

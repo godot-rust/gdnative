@@ -1,4 +1,5 @@
 use gdnative::api;
+use gdnative::export::StaticallyNamed;
 use gdnative::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::Arc;
@@ -27,11 +28,11 @@ impl NativeClass for Probe {
     type Base = api::AnimationNodeAdd2;
     type UserData = user_data::RwLockData<Probe>;
 
-    fn class_name() -> &'static str {
-        "ReturnLeakProbe"
-    }
-
     fn register_properties(_builder: &ClassBuilder<Self>) {}
+}
+
+impl StaticallyNamed for Probe {
+    const CLASS_NAME: &'static str = "ReturnLeakProbe";
 }
 
 impl Drop for Probe {

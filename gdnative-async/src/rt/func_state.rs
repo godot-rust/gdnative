@@ -25,11 +25,6 @@ impl NativeClass for FuncState {
     type Base = Reference;
     type UserData = LocalCellData<FuncState>;
 
-    fn class_name() -> &'static str {
-        // Sort of just praying that there will be no duplicates of this.
-        "__GDNATIVE_ASYNC_INTERNAL__FuncState"
-    }
-
     fn register_properties(builder: &ClassBuilder<Self>) {
         builder
             .signal("completed")

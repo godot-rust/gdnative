@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 
 use crate::core_types::{FromVariant, FromVariantError, Variant};
 use crate::export::class::NativeClass;
-use crate::export::ClassBuilder;
+use crate::export::{class_registry, ClassBuilder};
 use crate::log::Site;
 use crate::object::ownership::Shared;
 use crate::object::{Ref, TInstance, TRef};
@@ -547,7 +547,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
             F::site().unwrap_or_default(),
             format_args!(
                 "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-                C::class_name(),
+                class_registry::class_name_or_default::<C>(),
             ),
         );
         return Variant::nil().leak();
@@ -560,7 +560,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
                 F::site().unwrap_or_default(),
                 format_args!(
                     "gdnative-core: base object pointer for {} is null (probably a bug in Godot)",
-                    C::class_name(),
+                    class_registry::class_name_or_default::<C>(),
                 ),
             );
             return Variant::nil().leak();

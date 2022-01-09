@@ -1,3 +1,4 @@
+use gdnative::export::StaticallyNamed;
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
@@ -17,13 +18,14 @@ struct VariantCallArgs;
 impl NativeClass for VariantCallArgs {
     type Base = Reference;
     type UserData = user_data::MutexData<VariantCallArgs>;
-    fn class_name() -> &'static str {
-        "VariantCallArgs"
-    }
     fn init(_owner: TRef<Reference>) -> VariantCallArgs {
         VariantCallArgs
     }
     fn register_properties(_builder: &ClassBuilder<Self>) {}
+}
+
+impl StaticallyNamed for VariantCallArgs {
+    const CLASS_NAME: &'static str = "VariantCallArgs";
 }
 
 #[methods]

@@ -1,5 +1,5 @@
 use crate::export::user_data::UserData;
-use crate::export::ClassBuilder;
+use crate::export::{class_registry, ClassBuilder};
 use crate::object::ownership::{Ownership, Shared, Unique};
 use crate::object::{GodotObject, Instance, Instanciable, TRef};
 
@@ -43,12 +43,6 @@ pub trait NativeClass: Sized + 'static {
     /// See module-level documentation on `user_data` for more info.
     type UserData: UserData<Target = Self>;
 
-    /// The name of the class.
-    ///
-    /// In GDNative+NativeScript many classes can be defined in one dynamic library.
-    /// To identify which class has to be used, a library-unique name has to be given.
-    fn class_name() -> &'static str;
-
     /// Function that creates a value of `Self`, used for the script-instance. The default
     /// implementation simply panics.
     ///
@@ -62,7 +56,7 @@ pub trait NativeClass: Sized + 'static {
     fn init(_owner: TRef<'_, Self::Base, Shared>) -> Self {
         panic!(
             "{} does not have a zero-argument constructor",
-            Self::class_name()
+            class_registry::class_name_or_default::<Self>()
         )
     }
 
@@ -101,6 +95,17 @@ pub trait NativeClass: Sized + 'static {
     {
         Instance::emplace(self)
     }
+}
+
+/// A NativeScript "class" that is statically named. [`NativeClass`] types that implement this
+/// trait can be registered using  [`InitHandle::add_class`].
+pub trait StaticallyNamed: NativeClass {
+    /// The name of the class.
+    ///
+    /// This name must be unique for the dynamic library. For generic or library code where this
+    /// is hard to satisfy, consider using [`InitHandle::add_class_as`] to provide a name
+    /// at registration time instead.
+    const CLASS_NAME: &'static str;
 }
 
 /// Trait used to provide information of Godot-exposed methods of a script class.

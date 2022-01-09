@@ -9,6 +9,7 @@ use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder};
 
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
+    pub(crate) godot_name: Option<String>,
     pub(crate) base: Type,
     pub(crate) register_callback: Option<Path>,
     pub(crate) user_data: Type,
@@ -20,19 +21,30 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
     let derived = crate::automatically_derived();
     let name = &derive_input.ident;
 
+    let maybe_statically_named = if derive_input.generics.params.is_empty() {
+        let name_str = name.to_string();
+        Some(quote! {
+            #derived
+            impl ::gdnative::export::StaticallyNamed for #name {
+                const CLASS_NAME: &'static str = #name_str;
+            }
+        })
+    } else {
+        None
+    };
+
     quote! {
         #derived
         impl ::gdnative::export::NativeClass for #name {
             type Base = ::gdnative::api::Object;
             type UserData = ::gdnative::export::user_data::LocalCellData<Self>;
 
-            fn class_name() -> &'static str {
-                unimplemented!()
-            }
             fn init(owner: ::gdnative::object::TRef<'_, Self::Base, Shared>) -> Self {
                 unimplemented!()
             }
         }
+
+        #maybe_statically_named
     }
 }
 
@@ -98,8 +110,14 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             })
         });
 
-        // string variant needed for the `class_name` function.
-        let name_str = quote!(#name).to_string();
+        let maybe_statically_named = data.godot_name.map(|name_str| {
+            quote! {
+                #derived
+                impl ::gdnative::export::StaticallyNamed for #name {
+                    const CLASS_NAME: &'static str = #name_str;
+                }
+            }
+        });
 
         let init = if data.no_constructor {
             None
@@ -117,10 +135,6 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                 type Base = #base;
                 type UserData = #user_data;
 
-                fn class_name() -> &'static str {
-                    #name_str
-                }
-
                 #init
 
                 fn register_properties(builder: &::gdnative::export::ClassBuilder<Self>) {
@@ -128,6 +142,8 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     #register_callback
                 }
             }
+
+            #maybe_statically_named
         )
     };
 
@@ -147,6 +163,12 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
         attr.parse_args::<Type>()?
     } else {
         syn::parse2::<Type>(quote! { ::gdnative::api::Reference }).unwrap()
+    };
+
+    let godot_name = if input.generics.params.is_empty() {
+        Some(ident.to_string())
+    } else {
+        None
     };
 
     let register_callback = input
@@ -235,6 +257,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
 
     Ok(DeriveData {
         name: ident,
+        godot_name,
         base,
         register_callback,
         user_data,
