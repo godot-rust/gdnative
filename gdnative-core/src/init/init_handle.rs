@@ -1,7 +1,10 @@
 use crate::export::user_data::UserData;
-use crate::export::{class_registry, emplace, ClassBuilder, NativeClass, NativeClassMethods};
+use crate::export::{
+    class_registry, emplace, ClassBuilder, NativeClass, NativeClassMethods, StaticallyNamed,
+};
 use crate::object::{GodotObject, RawObject, TRef};
 use crate::private::get_api;
+use std::borrow::Cow;
 use std::ffi::CString;
 use std::ptr;
 
@@ -26,33 +29,60 @@ impl InitHandle {
     #[inline]
     pub fn add_class<C>(self)
     where
-        C: NativeClassMethods,
+        C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class::<C>(false)
+        self.add_maybe_tool_class_as::<C>(Cow::Borrowed(C::CLASS_NAME), false)
     }
 
     /// Registers a new tool class to the engine.
     #[inline]
     pub fn add_tool_class<C>(self)
     where
-        C: NativeClassMethods,
+        C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class::<C>(true)
+        self.add_maybe_tool_class_as::<C>(Cow::Borrowed(C::CLASS_NAME), true)
     }
 
+    /// Registers a new class to the engine
+    ///
+    /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
+    /// name provided at registration.
     #[inline]
-    fn add_maybe_tool_class<C>(self, is_tool: bool)
+    pub fn add_class_as<C>(self, name: String)
     where
         C: NativeClassMethods,
     {
-        if !class_registry::register_class::<C>() {
+        self.add_maybe_tool_class_as::<C>(Cow::Owned(name), false)
+    }
+
+    /// Registers a new tool class to the engine
+    ///
+    /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
+    /// name provided at registration.
+    #[inline]
+    pub fn add_tool_class_as<C>(self, name: String)
+    where
+        C: NativeClassMethods,
+    {
+        self.add_maybe_tool_class_as::<C>(Cow::Owned(name), true)
+    }
+
+    #[inline]
+    fn add_maybe_tool_class_as<C>(self, name: Cow<'static, str>, is_tool: bool)
+    where
+        C: NativeClassMethods,
+    {
+        let c_class_name = CString::new(&*name).unwrap();
+
+        if let Some(class_info) = class_registry::register_class_as::<C>(name) {
             panic!(
-                "`{type_name}` has already been registered",
-                type_name = std::any::type_name::<C>()
+                "`{type_name}` has already been registered as `{old_name}`",
+                type_name = std::any::type_name::<C>(),
+                old_name = class_info.name,
             );
         }
+
         unsafe {
-            let class_name = CString::new(C::class_name()).unwrap();
             let base_name = CString::new(C::Base::class_name()).unwrap();
 
             let create = {
@@ -67,7 +97,7 @@ impl InitHandle {
                         None => {
                             godot_error!(
                                 "gdnative-core: error constructing {}: owner pointer is null",
-                                C::class_name(),
+                                class_registry::class_name_or_default::<C>(),
                             );
 
                             return ptr::null_mut();
@@ -79,7 +109,7 @@ impl InitHandle {
                         None => {
                             godot_error!(
                                 "gdnative-core: error constructing {}: incompatible owner type, expecting {}",
-                                C::class_name(),
+                                class_registry::class_name_or_default::<C>(),
                                 C::Base::class_name(),
                             );
                             return ptr::null_mut();
@@ -94,7 +124,7 @@ impl InitHandle {
                         Err(_) => {
                             godot_error!(
                                 "gdnative-core: error constructing {}: constructor panicked",
-                                C::class_name(),
+                                class_registry::class_name_or_default::<C>(),
                             );
                             return ptr::null_mut();
                         }
@@ -120,7 +150,7 @@ impl InitHandle {
                     if user_data.is_null() {
                         godot_error!(
                             "gdnative-core: user data pointer for {} is null (did the constructor fail?)",
-                            C::class_name(),
+                            class_registry::class_name_or_default::<C>(),
                         );
                         return;
                     }
@@ -139,7 +169,7 @@ impl InitHandle {
             if is_tool {
                 (get_api().godot_nativescript_register_tool_class)(
                     self.handle as *mut _,
-                    class_name.as_ptr() as *const _,
+                    c_class_name.as_ptr() as *const _,
                     base_name.as_ptr() as *const _,
                     create,
                     destroy,
@@ -147,7 +177,7 @@ impl InitHandle {
             } else {
                 (get_api().godot_nativescript_register_class)(
                     self.handle as *mut _,
-                    class_name.as_ptr() as *const _,
+                    c_class_name.as_ptr() as *const _,
                     base_name.as_ptr() as *const _,
                     create,
                     destroy,
@@ -156,11 +186,11 @@ impl InitHandle {
 
             (get_api().godot_nativescript_set_type_tag)(
                 self.handle as *mut _,
-                class_name.as_ptr() as *const _,
+                c_class_name.as_ptr() as *const _,
                 crate::export::type_tag::create::<C>(),
             );
 
-            let builder = ClassBuilder::new(self.handle, class_name);
+            let builder = ClassBuilder::new(self.handle, c_class_name);
 
             C::register_properties(&builder);
 

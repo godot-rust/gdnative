@@ -43,9 +43,9 @@ mod variant;
 /// impl NativeClass for Foo {
 ///     type Base = gdnative::api::Reference;
 ///     type UserData = gdnative::export::user_data::LocalCellData<Self>;
-///     fn class_name() -> &'static str {
-///         "Foo"
-///     }
+/// }
+/// impl gdnative::export::StaticallyNamed for Foo {
+///     const CLASS_NAME: &'static str = "Foo";
 /// }
 /// impl gdnative::export::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {

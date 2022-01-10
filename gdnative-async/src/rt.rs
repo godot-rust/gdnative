@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::marker::PhantomData;
 
 use func_state::FuncState;
@@ -89,9 +90,25 @@ impl Context {
 
 /// Adds required supporting NativeScript classes to `handle`. This must be called once and
 /// only once per initialization.
+///
+/// This registers the internal types under an unspecified prefix, with the intention to avoid
+/// collision with user types. Users may provide a custom prefix using
+/// [`register_runtime_with_prefix`], should it be necessary to name these types.
 pub fn register_runtime(handle: &InitHandle) {
-    handle.add_class::<bridge::SignalBridge>();
-    handle.add_class::<func_state::FuncState>();
+    register_runtime_with_prefix(handle, "__GDNATIVE_ASYNC_INTERNAL__")
+}
+
+/// Adds required supporting NativeScript classes to `handle`. This must be called once and
+/// only once per initialization.
+///
+/// The user should ensure that no other NativeScript types is registered under the
+/// provided prefix.
+pub fn register_runtime_with_prefix<S>(handle: &InitHandle, prefix: S)
+where
+    S: Display,
+{
+    handle.add_class_as::<bridge::SignalBridge>(format!("{}SignalBridge", prefix));
+    handle.add_class_as::<func_state::FuncState>(format!("{}FuncState", prefix));
 }
 
 /// Releases all observers still in use. This should be called in the

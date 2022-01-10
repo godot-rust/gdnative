@@ -137,18 +137,29 @@ impl<T: NativeClass> Instance<T, Unique> {
                 );
             native_script.init_ref_count();
 
-            let script_class_name = GodotString::from(T::class_name());
-            let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
+            // `set_library` should be called before `set_class_name` to trigger class registration
+            // before trying to fetch the class name, in case the first NativeScript instance of this
+            // library is being constructed from Rust.
+            let mut args: [*const libc::c_void; 1] = [crate::private::get_gdnative_library_sys()];
             (gd_api.godot_method_bind_ptrcall)(
-                nativescript_methods.set_class_name,
+                nativescript_methods.set_library,
                 native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
             );
 
-            let mut args: [*const libc::c_void; 1] = [crate::private::get_gdnative_library_sys()];
+            let script_class_name = class_registry::class_name::<T>()
+                .map(GodotString::from)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "`{type_name}` must be registered before it can be used; call `handle.add_class::<{type_name}>()` in your `nativescript_init` callback",
+                        type_name = std::any::type_name::<T>(),
+                    );
+                });
+
+            let mut args: [*const libc::c_void; 1] = [script_class_name.sys() as *const _];
             (gd_api.godot_method_bind_ptrcall)(
-                nativescript_methods.set_library,
+                nativescript_methods.set_class_name,
                 native_script.sys().as_ptr(),
                 args.as_mut_ptr(),
                 std::ptr::null_mut(),
@@ -166,8 +177,6 @@ impl<T: NativeClass> Instance<T, Unique> {
                 0,
                 std::ptr::null_mut(),
             );
-
-            debug_assert!(class_registry::is_class_registered::<T>(), "`{type_name}` must be registered before it can be used; call `handle.add_class::<{type_name}>()` in your `nativescript_init` callback", type_name = std::any::type_name::<T>());
 
             assert!(
                 emplace::take::<T>().is_none(),
@@ -586,7 +595,7 @@ where
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         let owner = Ref::<T::Base, Shared>::from_variant(variant)?;
         Self::from_base(owner).ok_or(FromVariantError::InvalidInstance {
-            expected: T::class_name(),
+            expected: class_registry::class_name_or_default::<T>(),
         })
     }
 }
