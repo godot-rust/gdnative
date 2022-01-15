@@ -1,5 +1,5 @@
 error: unknown argument, expected one of:
-    to_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip
+           to_variant_with, from_variant_with, with, skip_to_variant, skip_from_variant, skip
  --> $DIR/from_variant_fail_07.rs:5:15
   |
 5 |     #[variant(aoeu = "aoeu")]

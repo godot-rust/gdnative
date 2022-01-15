@@ -1,6 +1,6 @@
 error: Missing macro arguments
-    expecting #[variant(...)]. See documentation:
-    https://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes
+           expecting #[variant(...)]. See documentation:
+           https://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes
  --> $DIR/from_variant_fail_01.rs:5:7
   |
 5 |     #[variant]
