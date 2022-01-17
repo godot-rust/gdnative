@@ -16,7 +16,6 @@ pub(crate) fn run_tests() -> bool {
     status &= test_ron();
     status &= test_json();
     status &= test_yaml();
-    status &= test_cbor();
     status &= test_msgpack();
     status &= test_bincode();
 
@@ -227,32 +226,6 @@ fn test_yaml() -> bool {
 
     if !ok {
         godot_error!("     !! Test test_yaml failed");
-    }
-
-    ok
-}
-
-fn test_cbor() -> bool {
-    println!("   -- test_cbor");
-
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
-
-        let cbor_bytes = serde_cbor::to_vec(&foo).expect("Foo to CBOR");
-        let result = serde_cbor::from_slice::<Foo>(&cbor_bytes).expect("Foo from CBOR");
-        assert_eq!(foo, result);
-
-        let cbor_bytes =
-            serde_cbor::to_vec(&foo.to_variant().dispatch()).expect("Dispatch to CBOR");
-        let disp =
-            serde_cbor::from_slice::<VariantDispatch>(&cbor_bytes).expect("Dispatch from CBOR");
-        let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from CBOR");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("     !! Test test_cbor failed");
     }
 
     ok
