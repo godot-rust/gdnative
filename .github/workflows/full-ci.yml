@@ -195,35 +195,18 @@ jobs:
         #  rust: ${{ matrix.rust.toolchain }}
       - name: "Install Java + NDK"
         run: |
-          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64;
-          export ANDROID_SDK_ROOT=/opt/ndk/android-ndk-r21d;
           # aarch64 and armv7 cover most Android phones & tablets.;
           rustup target add aarch64-linux-android armv7-linux-androideabi;
           sudo apt-get update;
-          sudo apt-get install openjdk-8-jdk;
           sudo apt-get install llvm-dev libclang-dev clang g++-multilib gcc-multilib libc6-dev libc6-dev-arm64-cross;
-          # Downloading NDK. This file is huge (1Gb) maybe extract only what's needed and repackage.;
-          # See https://developer.android.com/ndk/downloads for updates.;
-          # The Android SDK which comes with Android Studio is not required. Only Java + NDK are.;
-          mkdir /opt/ndk
-          install -d /opt/ndk;
-          cd /opt/ndk && wget -nc -nv https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip && cd $GITHUB_WORKSPACE;
-          echo "bcf4023eb8cb6976a4c7cff0a8a8f145f162bf4d  /opt/ndk/android-ndk-r21d-linux-x86_64.zip" >> /opt/ndk/SHA1SUM.txt;
-          sha1sum --check /opt/ndk/SHA1SUM.txt;
-          cd /opt/ndk && unzip -q android-ndk-r21d-linux-x86_64.zip && cd $GITHUB_WORKSPACE;
-          # Using clang linker from NDK when building Android programs.;
-          install -d $HOME/.cargo;
-          echo >> $HOME/.cargo/config;
-          echo "[target.aarch64-linux-android]" >> $HOME/.cargo/config;
-          find /opt/ndk -name aarch64-linux-android21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config;
-          echo >> $HOME/.cargo/config;
-          echo "[target.armv7-linux-androideabi]" >> $HOME/.cargo/config;
-          find /opt/ndk -name armv7a-linux-androideabi21-clang++ -printf 'linker = "%p"\n' >> $HOME/.cargo/config;
-          echo >> $HOME/.cargo/config;
       - name: "Build Rust for targets: aarch64-linux-android, armv7-linux-androideabi"
         run: |
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++
+          export CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=$ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++
           cargo build --target aarch64-linux-android --release;
           cargo build --target armv7-linux-androideabi --release;
+        env:
+          ANDROID_NDK_VERSION: 21.4.7075529
 
   integration-test-godot:
     name: itest-godot-${{ matrix.godot }}${{ matrix.postfix }}
