@@ -25,7 +25,7 @@ pub(crate) fn expand_to_variant(
     let return_expr = match repr {
         Repr::Struct(var_repr) => {
             let destructure_pattern = var_repr.destructure_pattern();
-            let to_variant = var_repr.to_variant(trait_kind)?;
+            let to_variant = var_repr.make_to_variant_expr(trait_kind)?;
             quote! {
                 {
                     let #ident #destructure_pattern = self;
@@ -43,7 +43,7 @@ pub(crate) fn expand_to_variant(
                     .iter()
                     .map(|(var_ident, var_repr)| {
                         let destructure_pattern = var_repr.destructure_pattern();
-                        let to_variant = var_repr.to_variant(trait_kind)?;
+                        let to_variant = var_repr.make_to_variant_expr(trait_kind)?;
                         let var_ident_string = format!("{}", var_ident);
                         let var_ident_string_literal = Literal::string(&var_ident_string);
                         let tokens = quote! {
