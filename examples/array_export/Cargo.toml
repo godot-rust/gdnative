@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["The godot-rust developers"]
 publish = false
 edition = "2018"
+license = "MIT"
 
 [lib]
 crate-type = ["cdylib"]

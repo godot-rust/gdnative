@@ -33,6 +33,7 @@ env:
   # Local variables
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
   GDRUST_FEATURES: "gdnative/async,gdnative/serde"
+  CARGO_DENY_VERSION: "0.11.0"
 
 on:
   push:
@@ -77,6 +78,21 @@ jobs:
           components: clippy
       - name: "Check clippy"
         run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    needs: rustfmt
+    steps:
+      - uses: actions/checkout@v2
+      # Note: manually downloading is ~30s faster than https://github.com/EmbarkStudios/cargo-deny-action
+      - name: "Install cargo-deny"
+        run: |
+          wget --no-verbose https://github.com/EmbarkStudios/cargo-deny/releases/download/$CARGO_DENY_VERSION/cargo-deny-$CARGO_DENY_VERSION-x86_64-unknown-linux-musl.tar.gz -O cargo-deny.tar.gz
+          tar -zxvf cargo-deny.tar.gz
+          mkdir -p $HOME/.cargo/bin
+          mv cargo-deny-$CARGO_DENY_VERSION-x86_64-unknown-linux-musl/cargo-deny $HOME/.cargo/bin
+      - name: "Check cargo-deny"
+        run: cargo deny check --config tools/deny.toml
 
   test:
     name: test-${{ matrix.os.name }}${{ matrix.rust.postfix }}
@@ -271,6 +287,7 @@ jobs:
     needs:
       #- rustfmt
       - clippy
+      - cargo-deny
       - test
       - integration-test-godot
       - build-release
