@@ -165,14 +165,16 @@ allow = [
     #{ name = "ansi_term", version = "=0.11.0" },
 ]
 # List of crates to deny
+# Each entry the name of a crate and a version range. If version is
+# not specified, all versions will be matched.
+#{ name = "ansi_term", version = "=0.11.0" },
+#
+# Wrapper crates can optionally be specified to allow the crate when it
+# is a direct dependency of the otherwise banned crate
+#{ name = "ansi_term", version = "=0.11.0", wrappers = [] },
 deny = [
-    # Each entry the name of a crate and a version range. If version is
-    # not specified, all versions will be matched.
-    #{ name = "ansi_term", version = "=0.11.0" },
-    #
-    # Wrapper crates can optionally be specified to allow the crate when it
-    # is a direct dependency of the otherwise banned crate
-    #{ name = "ansi_term", version = "=0.11.0", wrappers = [] },
+    # unmaintained since Feb 20 + https://github.com/noamtashma/owning-ref-unsoundness
+    { name = "owning_ref" },
 ]
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
