@@ -22,7 +22,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
 
     let return_expr = match repr {
         Repr::Struct(var_repr) => {
-            let from_variant = var_repr.from_variant(&input_ident, &quote! { #ident })?;
+            let from_variant = var_repr.make_from_variant_expr(&input_ident, &quote! { #ident })?;
             quote! {
                 {
                     #from_variant
@@ -54,7 +54,8 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
             let var_from_variants = variants
                 .iter()
                 .map(|(var_ident, var_repr)| {
-                    var_repr.from_variant(&var_input_ident, &quote! { #ident::#var_ident })
+                    var_repr
+                        .make_from_variant_expr(&var_input_ident, &quote! { #ident::#var_ident })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 

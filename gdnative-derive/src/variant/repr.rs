@@ -101,7 +101,7 @@ impl VariantRepr {
         }
     }
 
-    pub(crate) fn to_variant(
+    pub(crate) fn make_to_variant_expr(
         &self,
         trait_kind: ToVariantTrait,
     ) -> Result<TokenStream2, syn::Error> {
@@ -119,13 +119,13 @@ impl VariantRepr {
                             "cannot skip the only field in a tuple",
                         ));
                     }
-                    field.to_variant(trait_kind)
+                    field.make_to_variant_expr(trait_kind)
                 } else {
                     let exprs = fields.iter().filter_map(|f| {
                         if f.attr.skip_to_variant {
                             None
                         } else {
-                            Some(f.to_variant(trait_kind))
+                            Some(f.make_to_variant_expr(trait_kind))
                         }
                     });
 
@@ -150,7 +150,7 @@ impl VariantRepr {
                 let name_string_literals =
                     name_strings.iter().map(|string| Literal::string(string));
 
-                let exprs = fields.iter().map(|f| f.to_variant(trait_kind));
+                let exprs = fields.iter().map(|f| f.make_to_variant_expr(trait_kind));
 
                 quote! {
                     {
@@ -170,7 +170,7 @@ impl VariantRepr {
         Ok(tokens)
     }
 
-    pub(crate) fn from_variant(
+    pub(crate) fn make_from_variant_expr(
         &self,
         variant: &Ident,
         ctor: &TokenStream2,
@@ -199,7 +199,7 @@ impl VariantRepr {
                             "cannot skip the only field in a tuple",
                         ));
                     }
-                    let expr = field.from_variant(&quote!(#variant));
+                    let expr = field.make_from_variant_expr(&quote!(#variant));
                     quote! {
                         {
                             #expr.map(#ctor)
@@ -224,7 +224,7 @@ impl VariantRepr {
                     let expr_variant = &quote!(&__array.get(__index));
                     let non_skipped_exprs = non_skipped_fields
                         .iter()
-                        .map(|f| f.from_variant(expr_variant));
+                        .map(|f| f.make_from_variant_expr(expr_variant));
 
                     quote! {
                         {
@@ -283,7 +283,7 @@ impl VariantRepr {
                 let expr_variant = &quote!(&__dict.get_or_nil(&__key));
                 let exprs = non_skipped_fields
                     .iter()
-                    .map(|f| f.from_variant(expr_variant));
+                    .map(|f| f.make_from_variant_expr(expr_variant));
 
                 quote! {
                     {
@@ -317,7 +317,7 @@ impl VariantRepr {
 }
 
 impl Field {
-    fn to_variant(&self, trait_kind: ToVariantTrait) -> TokenStream2 {
+    fn make_to_variant_expr(&self, trait_kind: ToVariantTrait) -> TokenStream2 {
         let Field { ident, attr, .. } = self;
         if let Some(to_variant_with) = &attr.to_variant_with {
             quote!(#to_variant_with(#ident))
@@ -327,7 +327,7 @@ impl Field {
         }
     }
 
-    fn from_variant(&self, variant: &TokenStream2) -> TokenStream2 {
+    fn make_from_variant_expr(&self, variant: &TokenStream2) -> TokenStream2 {
         if let Some(from_variant_with) = &self.attr.from_variant_with {
             quote!(#from_variant_with(#variant))
         } else {
