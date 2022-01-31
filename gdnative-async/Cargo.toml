@@ -19,7 +19,7 @@ gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
 futures-task = "0.3.17"
 atomic-waker = "1.0.0"
 once_cell = "1.8.0"
-parking_lot = "0.11.2"
+parking_lot = "0.12.0"
 crossbeam-channel = "0.5.1"
 crossbeam-utils = "0.8.5"
 
