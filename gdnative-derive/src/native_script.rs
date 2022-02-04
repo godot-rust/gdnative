@@ -2,10 +2,10 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Fields, Ident, Meta, MetaList, NestedMeta, Path, Stmt, Type};
+use syn::{Data, DeriveInput, Expr, Fields, Ident, Meta, MetaList, NestedMeta, Path, Stmt, Type};
 
 mod property_args;
-use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder};
+use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder, PropertyGet, PropertySet};
 
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
@@ -66,28 +66,61 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                 .default
                 .map(|default_value| quote!(.with_default(#default_value)));
             let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
-
             let with_usage = if config.no_editor {
                 Some(quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)))
             } else {
                 None
             };
-
+            // if both of them are not set, i.e. `#[property]`. implicitly use both getter/setter
+            let (get, set) = if config.get.is_none() && config.set.is_none() {
+                (Some(PropertyGet::Default), Some(PropertySet::Default))
+            } else {
+                (config.get, config.set)
+            };
             let before_get: Option<Stmt> = config
                 .before_get
                 .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-
             let after_get: Option<Stmt> = config
                 .after_get
                 .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-
+            let with_getter = get.map(|get| {
+                let register_fn = match get {
+                    PropertyGet::Owned(_) => quote!(with_getter),
+                    _ => quote!(with_ref_getter),
+                };
+                let get: Expr = match get {
+                    PropertyGet::Default => parse_quote!(&this.#ident),
+                    PropertyGet::Owned(path_expr) | PropertyGet::Ref(path_expr) => {
+                        parse_quote!(#path_expr(this, _owner))
+                    }
+                };
+                quote!(
+                    .#register_fn(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
+                        #before_get
+                        let res = #get;
+                        #after_get
+                        res
+                    })
+                )
+            });
             let before_set: Option<Stmt> = config
                 .before_set
                 .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-
             let after_set: Option<Stmt> = config
                 .after_set
                 .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+            let with_setter = set.map(|set| {
+                let set: Stmt = match set {
+                    PropertySet::Default => parse_quote!(this.#ident = v;),
+                    PropertySet::WithPath(path_expr) => parse_quote!(#path_expr(this, _owner, v);),
+                };
+                quote!(
+                .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
+                    #before_set
+                    #set
+                    #after_set
+                }))
+            });
 
             let label = config.path.unwrap_or_else(|| format!("{}", ident));
             quote!({
@@ -95,17 +128,8 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     #with_default
                     #with_hint
                     #with_usage
-                    .with_ref_getter(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
-                        #before_get
-                        let res = &this.#ident;
-                        #after_get
-                        res
-                    })
-                    .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
-                        #before_set
-                        this.#ident = v;
-                        #after_set
-                    })
+                    #with_getter
+                    #with_setter
                     .done();
             })
         });
@@ -221,8 +245,8 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
 
                 match meta {
                     Meta::List(MetaList { nested, .. }) => {
-                        let attr_args_builder =
-                            property_args.get_or_insert_with(PropertyAttrArgsBuilder::default);
+                        let attr_args_builder = property_args
+                            .get_or_insert_with(|| PropertyAttrArgsBuilder::new(&field.ty));
 
                         for arg in &nested {
                             if let NestedMeta::Meta(Meta::NameValue(ref pair)) = arg {
@@ -236,7 +260,8 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
                         }
                     }
                     Meta::Path(_) => {
-                        property_args.get_or_insert_with(PropertyAttrArgsBuilder::default);
+                        property_args
+                            .get_or_insert_with(|| PropertyAttrArgsBuilder::new(&field.ty));
                     }
                     m => {
                         let msg = format!("Unexpected meta variant: {:?}", m);
@@ -335,6 +360,51 @@ mod tests {
 
         let input: DeriveInput = syn::parse2(input).unwrap();
 
+        parse_derive_input(&input).unwrap();
+    }
+
+    #[test]
+    fn derive_property_get_set() {
+        let input: TokenStream2 = syn::parse_str(
+            r#"
+            #[inherit(Node)]
+            struct Foo {
+                #[property(get = "get_bar", set = "set_bar")]
+                bar: i64,
+            }"#,
+        )
+        .unwrap();
+        let input: DeriveInput = syn::parse2(input).unwrap();
+        parse_derive_input(&input).unwrap();
+    }
+
+    #[test]
+    fn derive_property_default_get_set() {
+        let input: TokenStream2 = syn::parse_str(
+            r#"
+            #[inherit(Node)]
+            struct Foo {
+                #[property(get, set)]
+                bar: i64,
+            }"#,
+        )
+        .unwrap();
+        let input: DeriveInput = syn::parse2(input).unwrap();
+        parse_derive_input(&input).unwrap();
+    }
+
+    #[test]
+    fn derive_property_default_get_ref() {
+        let input: TokenStream2 = syn::parse_str(
+            r#"
+            #[inherit(Node)]
+            struct Foo {
+                #[property(get_ref = "Self::get_bar")]
+                bar: i64,
+            }"#,
+        )
+        .unwrap();
+        let input: DeriveInput = syn::parse2(input).unwrap();
         parse_derive_input(&input).unwrap();
     }
 }
