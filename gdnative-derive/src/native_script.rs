@@ -61,78 +61,112 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             .register_callback
             .map(|function_path| quote!(#function_path(builder);))
             .unwrap_or(quote!({}));
-        let properties = data.properties.into_iter().map(|(ident, config)| {
-            let with_default = config
-                .default
-                .map(|default_value| quote!(.with_default(#default_value)));
-            let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
-            let with_usage = if config.no_editor {
-                Some(quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)))
-            } else {
-                None
-            };
-            // if both of them are not set, i.e. `#[property]`. implicitly use both getter/setter
-            let (get, set) = if config.get.is_none() && config.set.is_none() {
-                (Some(PropertyGet::Default), Some(PropertySet::Default))
-            } else {
-                (config.get, config.set)
-            };
-            let before_get: Option<Stmt> = config
-                .before_get
-                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-            let after_get: Option<Stmt> = config
-                .after_get
-                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-            let with_getter = get.map(|get| {
-                let register_fn = match get {
-                    PropertyGet::Owned(_) => quote!(with_getter),
-                    _ => quote!(with_ref_getter),
+        let properties = data
+            .properties
+            .into_iter()
+            .map(|(ident, config)| {
+                let with_default = config
+                    .default
+                    .map(|default_value| quote!(.with_default(#default_value)));
+                let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
+                let with_usage = if config.no_editor {
+                    Some(quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)))
+                } else {
+                    None
                 };
-                let get: Expr = match get {
-                    PropertyGet::Default => parse_quote!(&this.#ident),
-                    PropertyGet::Owned(path_expr) | PropertyGet::Ref(path_expr) => {
-                        parse_quote!(#path_expr(this, _owner))
-                    }
+                // check whether this property type is `Property<T>`. if so, extract T from it.
+                let property_ty = match config.ty {
+                    Type::Path(ref path) => path
+                        .path
+                        .segments
+                        .iter()
+                        .last()
+                        .filter(|seg| seg.ident == "Property")
+                        .and_then(|seg| match seg.arguments {
+                            syn::PathArguments::AngleBracketed(ref params) => params.args.first(),
+                            _ => None,
+                        })
+                        .and_then(|arg| match arg {
+                            syn::GenericArgument::Type(ref ty) => Some(ty),
+                            _ => None,
+                        })
+                        .map(|ty| quote!(::<#ty>)),
+                    _ => None,
                 };
-                quote!(
-                    .#register_fn(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
-                        #before_get
-                        let res = #get;
-                        #after_get
-                        res
-                    })
-                )
-            });
-            let before_set: Option<Stmt> = config
-                .before_set
-                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-            let after_set: Option<Stmt> = config
-                .after_set
-                .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-            let with_setter = set.map(|set| {
-                let set: Stmt = match set {
-                    PropertySet::Default => parse_quote!(this.#ident = v;),
-                    PropertySet::WithPath(path_expr) => parse_quote!(#path_expr(this, _owner, v);),
+                // #[property] is not attached on `Property<T>`
+                if property_ty.is_none()
+                // custom getter used
+                && config.get.as_ref().map(|get| !matches!(get, PropertyGet::Default)).unwrap_or(false)
+                // custom setter used
+                && config.set.as_ref().map(|set| !matches!(set, PropertySet::Default)).unwrap_or(false)
+                {
+                    return Err(syn::Error::new(
+                        ident.span(),
+                        "The `#[property]` attribute can only be used on a field of type `Property`, \
+                        if a path is provided for both get/set method(s)."
+                    ));
+                }
+                // if both of them are not set, i.e. `#[property]`. implicitly use both getter/setter
+                let (get, set) = if config.get.is_none() && config.set.is_none() {
+                    (Some(PropertyGet::Default), Some(PropertySet::Default))
+                } else {
+                    (config.get, config.set)
                 };
-                quote!(
-                .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
-                    #before_set
-                    #set
-                    #after_set
-                }))
-            });
+                let before_get: Option<Stmt> = config
+                    .before_get
+                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+                let after_get: Option<Stmt> = config
+                    .after_get
+                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+                let with_getter = get.map(|get| {
+                    let register_fn = match get {
+                        PropertyGet::Owned(_) => quote!(with_getter),
+                        _ => quote!(with_ref_getter),
+                    };
+                    let get: Expr = match get {
+                        PropertyGet::Default => parse_quote!(&this.#ident),
+                        PropertyGet::Owned(path_expr) | PropertyGet::Ref(path_expr) => parse_quote!(#path_expr(this, _owner))
+                    };
+                    quote!(
+                        .#register_fn(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
+                            #before_get
+                            let res = #get;
+                            #after_get
+                            res
+                        })
+                    )
+                });
+                let before_set: Option<Stmt> = config
+                    .before_set
+                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+                let after_set: Option<Stmt> = config
+                    .after_set
+                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
+                let with_setter = set.map(|set| {
+                    let set: Stmt = match set {
+                        PropertySet::Default => parse_quote!(this.#ident = v;),
+                        PropertySet::WithPath(path_expr) => parse_quote!(#path_expr(this, _owner, v);),
+                    };
+                    quote!(
+                    .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
+                        #before_set
+                        #set
+                        #after_set
+                    }))
+                });
 
-            let label = config.path.unwrap_or_else(|| format!("{}", ident));
-            quote!({
-                builder.property(#label)
-                    #with_default
-                    #with_hint
-                    #with_usage
-                    #with_getter
-                    #with_setter
-                    .done();
+                let label = config.path.unwrap_or_else(|| format!("{}", ident));
+                Ok(quote!({
+                    builder.property#property_ty(#label)
+                        #with_default
+                        #with_hint
+                        #with_usage
+                        #with_getter
+                        #with_setter
+                        .done();
+                }))
             })
-        });
+            .collect::<Result<Vec<_>, _>>()?;
 
         let maybe_statically_named = data.godot_name.map(|name_str| {
             quote! {
@@ -406,5 +440,24 @@ mod tests {
         .unwrap();
         let input: DeriveInput = syn::parse2(input).unwrap();
         parse_derive_input(&input).unwrap();
+    }
+
+    #[test]
+    fn derive_property_require_to_be_used_on_property_without_default_accessor() {
+        let input: TokenStream2 = syn::parse_str(
+            r#"
+            #[inherit(Node)]
+            struct Foo {
+                #[property(get = "Self::get_bar", set = "Self::set_bar")]
+                bar: i64,
+            }"#,
+        )
+        .unwrap();
+        let input: DeriveInput = syn::parse2(input).unwrap();
+        assert_eq!(
+            derive_native_class(&input).unwrap_err().to_string(),
+            "The `#[property]` attribute can only be used on a field of type `Property`, \
+            if a path is provided for both get/set method(s).",
+        );
     }
 }

@@ -218,6 +218,21 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// Call hook methods with `self` and `owner` before and/or after the generated property
 /// accessors.
 ///
+/// - `get` / `get_ref` / `set`
+///
+/// Configure getter/setter for property. All of them can accept a path to specify a custom
+/// property accessor. For example, `#[property(get = "Self::my_getter")]` will use
+/// `Self::my_getter` as the getter.
+///
+/// The difference of `get` and `get_ref` is that `get` will register the getter with
+/// `with_getter` function, which means your getter should return an owned value `T`, but
+/// `get_ref` use `with_ref_getter` to register getter. In this case, your custom getter
+/// should return a shared reference `&T`.
+///
+/// `get` and `set` can be used without specifying a path, as long as the field type is not
+/// `Property<T>`. In this case, godot-rust generates an accessor function for the field.
+/// For example, `#[property(get)]` will generate a read-only property.
+///
 /// - `no_editor`
 ///
 /// Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.

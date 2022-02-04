@@ -1,4 +1,5 @@
 //! Property registration.
+use std::marker::PhantomData;
 
 use accessor::{Getter, RawGetter, RawSetter, Setter};
 use invalid_accessor::{InvalidGetter, InvalidSetter};
@@ -320,6 +321,12 @@ impl PropertyUsage {
     pub fn to_sys(self) -> sys::godot_property_usage_flags {
         self.bits() as sys::godot_property_usage_flags
     }
+}
+
+/// A ZST used to register a property with no backing field for it.
+#[derive(Default)]
+pub struct Property<T> {
+    _marker: PhantomData<T>,
 }
 
 mod impl_export {

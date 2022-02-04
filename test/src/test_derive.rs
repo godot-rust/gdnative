@@ -1,5 +1,6 @@
 use std::cell::Cell;
 
+use gdnative::export::Property;
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {
@@ -9,6 +10,8 @@ pub(crate) fn run_tests() -> bool {
     status &= test_derive_owned_to_variant();
     status &= test_derive_nativeclass_with_property_hooks();
     status &= test_derive_nativeclass_without_constructor();
+    status &= test_derive_nativeclass_with_property_get_set();
+    status &= test_derive_nativeclass_property_with_only_getter();
 
     status
 }
@@ -16,6 +19,8 @@ pub(crate) fn run_tests() -> bool {
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<PropertyHooks>();
     handle.add_class::<EmplacementOnly>();
+    handle.add_class::<CustomGetSet>();
+    handle.add_class::<MyVec>();
 }
 
 fn test_derive_to_variant() -> bool {
@@ -318,6 +323,124 @@ fn test_derive_nativeclass_without_constructor() -> bool {
 
     if !ok {
         godot_error!("   !! Test test_derive_nativeclass_without_constructor failed");
+    }
+
+    ok
+}
+
+#[derive(NativeClass)]
+#[inherit(Node)]
+struct CustomGetSet {
+    pub get_called: Cell<i32>,
+    pub set_called: Cell<i32>,
+    #[allow(dead_code)]
+    #[property(get_ref = "Self::get_foo", set = "Self::set_foo")]
+    pub foo: Property<i32>,
+    pub _foo: i32,
+}
+
+#[methods]
+impl CustomGetSet {
+    fn new(_onwer: &Node) -> Self {
+        Self {
+            get_called: Cell::new(0),
+            set_called: Cell::new(0),
+            foo: Property::default(),
+            _foo: 0,
+        }
+    }
+
+    fn get_foo(&self, _owner: TRef<Node>) -> &i32 {
+        self.get_called.set(self.get_called.get() + 1);
+        &self._foo
+    }
+
+    fn set_foo(&mut self, _owner: TRef<Node>, value: i32) {
+        self.set_called.set(self.set_called.get() + 1);
+        self._foo = value;
+    }
+}
+
+fn test_derive_nativeclass_with_property_get_set() -> bool {
+    println!(" -- test_derive_nativeclass_with_property_get_set");
+    let ok = std::panic::catch_unwind(|| {
+        use gdnative::export::user_data::Map;
+        let (owner, script) = CustomGetSet::new_instance().decouple();
+        script
+            .map(|script| {
+                assert_eq!(0, script.get_called.get());
+                assert_eq!(0, script.set_called.get());
+            })
+            .unwrap();
+        owner.set("foo", 1);
+        script
+            .map(|script| {
+                assert_eq!(0, script.get_called.get());
+                assert_eq!(1, script.set_called.get());
+                assert_eq!(1, script._foo);
+            })
+            .unwrap();
+        assert_eq!(1, i32::from_variant(&owner.get("foo")).unwrap());
+        script
+            .map(|script| {
+                assert_eq!(1, script.get_called.get());
+                assert_eq!(1, script.set_called.get());
+            })
+            .unwrap();
+        owner.free();
+    })
+    .is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_derive_nativeclass_with_property_get_set failed");
+    }
+
+    ok
+}
+
+#[derive(NativeClass)]
+struct MyVec {
+    vec: Vec<i32>,
+    #[allow(dead_code)]
+    #[property(get = "Self::get_size")]
+    size: Property<u32>,
+}
+
+#[methods]
+impl MyVec {
+    fn new(_owner: TRef<Reference>) -> Self {
+        Self {
+            vec: Vec::new(),
+            size: Property::default(),
+        }
+    }
+
+    fn add(&mut self, val: i32) {
+        self.vec.push(val);
+    }
+
+    fn get_size(&self, _owner: TRef<Reference>) -> u32 {
+        self.vec.len() as u32
+    }
+}
+
+fn test_derive_nativeclass_property_with_only_getter() -> bool {
+    println!(" -- test_derive_nativeclass_property_with_only_getter");
+
+    let ok = std::panic::catch_unwind(|| {
+        use gdnative::export::user_data::MapMut;
+        let (owner, script) = MyVec::new_instance().decouple();
+        assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 0);
+        script.map_mut(|script| script.add(42)).unwrap();
+        assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 1);
+        // check the setter doesn't work for `size`
+        let _ = std::panic::catch_unwind(|| owner.set("size", 3));
+        assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 1);
+    })
+    .is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_derive_nativeclass_property_with_only_getter failed");
     }
 
     ok
