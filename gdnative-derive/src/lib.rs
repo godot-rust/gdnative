@@ -229,9 +229,9 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// `get_ref` use `with_ref_getter` to register getter. In this case, your custom getter
 /// should return a shared reference `&T`.
 ///
-/// `get` and `set` can be used without specifying a path, as long as the field type is not
-/// `Property<T>`. In this case, godot-rust generates an accessor function for the field.
-/// For example, `#[property(get)]` will generate a read-only property.
+/// Situations with custom getters/setters and no backing fields require the use of the
+/// type [`Property<T>`][gdnative::export::Property]. Consult its documentation for
+/// a deeper elaboration of property exporting.
 ///
 /// - `no_editor`
 ///
@@ -394,19 +394,21 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as DeriveInput);
 
     // Implement NativeClass for the input
-    native_script::derive_native_class(&derive_input).map_or_else(
+    let derived = native_script::derive_native_class(&derive_input).map_or_else(
         |err| {
             // Silence the other errors that happen because NativeClass is not implemented
             let empty_nativeclass = native_script::impl_empty_nativeclass(&derive_input);
             let err = err.to_compile_error();
 
-            TokenStream::from(quote! {
+            quote! {
                 #empty_nativeclass
                 #err
-            })
+            }
         },
         std::convert::identity,
-    )
+    );
+
+    TokenStream::from(derived)
 }
 
 #[proc_macro_derive(ToVariant, attributes(variant))]

@@ -14,7 +14,7 @@ pub use gdnative_core::core_types::{
     FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq,
 };
 pub use gdnative_core::export::{
-    ClassBuilder, ExportInfo, Method, MethodBuilder, NativeClass, NativeClassMethods,
+    ClassBuilder, ExportInfo, Method, MethodBuilder, NativeClass, NativeClassMethods, Property,
     PropertyUsage, SignalBuilder, SignalParam,
 };
 pub use gdnative_core::init::InitHandle;

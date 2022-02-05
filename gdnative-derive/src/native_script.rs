@@ -1,4 +1,3 @@
-use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
 use syn::spanned::Spanned;
@@ -48,7 +47,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
     }
 }
 
-pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStream, syn::Error> {
+pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStream2, syn::Error> {
     let derived = crate::automatically_derived();
     let data = parse_derive_input(derive_input)?;
 
@@ -93,21 +92,27 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                         .map(|ty| quote!(::<#ty>)),
                     _ => None,
                 };
-                // #[property] is not attached on `Property<T>`
-                if property_ty.is_none()
-                // custom getter used
-                && config.get.as_ref().map(|get| !matches!(get, PropertyGet::Default)).unwrap_or(false)
-                // custom setter used
-                && config.set.as_ref().map(|set| !matches!(set, PropertySet::Default)).unwrap_or(false)
+
+                // Attribute is #[property] (or has other arguments which are not relevant here)
+                let is_standalone_attribute = config.get.is_none() && config.set.is_none();
+                // Attribute is #[property(get)] or #[property(get, set="path")]
+                let has_default_getter = matches!(config.get, Some(PropertyGet::Default));
+                // Attribute is #[property(set)] or #[property(get="path", set)]
+                let has_default_setter = matches!(config.set, Some(PropertySet::Default));
+
+                // Field type is `Property<T>`
+                if property_ty.is_some()
+                    && (is_standalone_attribute || has_default_getter || has_default_setter)
                 {
                     return Err(syn::Error::new(
                         ident.span(),
-                        "The `#[property]` attribute can only be used on a field of type `Property`, \
-                        if a path is provided for both get/set method(s)."
+                        "The `#[property]` attribute requires explicit paths for `get` and `set` argument; \
+                        the defaults #[property], #[property(get)] and #[property(set)] are not allowed."
                     ));
                 }
+
                 // if both of them are not set, i.e. `#[property]`. implicitly use both getter/setter
-                let (get, set) = if config.get.is_none() && config.set.is_none() {
+                let (get, set) = if is_standalone_attribute {
                     (Some(PropertyGet::Default), Some(PropertySet::Default))
                 } else {
                     (config.get, config.set)
@@ -206,7 +211,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
     };
 
     // create output token stream
-    Ok(trait_impl.into())
+    Ok(trait_impl)
 }
 
 fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
@@ -443,21 +448,71 @@ mod tests {
     }
 
     #[test]
-    fn derive_property_require_to_be_used_on_property_without_default_accessor() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
-            #[inherit(Node)]
-            struct Foo {
-                #[property(get = "Self::get_bar", set = "Self::set_bar")]
-                bar: i64,
-            }"#,
-        )
-        .unwrap();
-        let input: DeriveInput = syn::parse2(input).unwrap();
-        assert_eq!(
-            derive_native_class(&input).unwrap_err().to_string(),
-            "The `#[property]` attribute can only be used on a field of type `Property`, \
-            if a path is provided for both get/set method(s).",
-        );
+    fn derive_property_combinations() {
+        let attr_none = quote! {       #[property]                          };
+        let attr_get = quote! {        #[property(get                   )]  };
+        let attr_getp = quote! {       #[property(get="path"            )]  };
+        let attr_set = quote! {        #[property(            set       )]  };
+        let attr_setp = quote! {       #[property(            set="path")]  };
+        let attr_get_set = quote! {    #[property(get,        set       )]  };
+        let attr_get_setp = quote! {   #[property(get,        set="path")]  };
+        let attr_getp_set = quote! {   #[property(get="path", set       )]  };
+        let attr_getp_setp = quote! {  #[property(get="path", set="path")]  };
+
+        // See documentation of Property<T> for this table
+        // Columns: #[property] attributes | i32 style fields | Property<i32> style fields
+        let combinations = [
+            (attr_none, true, false),
+            (attr_get, true, false),
+            (attr_getp, true, true),
+            (attr_set, true, false),
+            (attr_setp, true, true),
+            (attr_get_set, true, false),
+            (attr_get_setp, true, false),
+            (attr_getp_set, true, false),
+            (attr_getp_setp, true, true),
+        ];
+
+        for (attr, allowed_bare, allowed_property) in &combinations {
+            check_property_combination(attr, quote! { i32 }, *allowed_bare);
+            check_property_combination(attr, quote! { Property<i32> }, *allowed_property);
+        }
+    }
+
+    /// Tests whether a certain combination of a `#[property]` attribute (attr) and a field type
+    /// (bare i32 or Property<i32>) should compile successfully
+    fn check_property_combination(
+        attr: &TokenStream2,
+        field_type: TokenStream2,
+        should_succeed: bool,
+    ) {
+        // Lazy because of formatting in error message
+        let input = || {
+            quote! {
+                #[inherit(Node)]
+                struct Foo {
+                    #attr
+                    field: #field_type
+                }
+            }
+        };
+
+        let derive_input: DeriveInput = syn::parse2(input()).unwrap();
+        let derived = derive_native_class(&derive_input);
+
+        if should_succeed {
+            assert!(
+                derived.is_ok(),
+                "Valid derive expression fails to compile:\n{}",
+                input().to_string()
+            );
+        } else {
+            assert_eq!(
+                derived.unwrap_err().to_string(),
+                "The `#[property]` attribute requires explicit paths for `get` and `set` argument; \
+                the defaults #[property], #[property(get)] and #[property(set)] are not allowed.",
+                "Invalid derive expression compiles by mistake:\n{}", input().to_string()
+            );
+        }
     }
 }
