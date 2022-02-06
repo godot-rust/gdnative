@@ -12,11 +12,11 @@ workspace = ".."
 edition = "2018"
 
 [dependencies]
-libc = "0.2.104"
+libc = "0.2"
 
 [build-dependencies]
-bindgen = { version = "0.59.1", default-features = false, features = ["runtime"] }
-proc-macro2 = "1.0.30"
-quote = "1.0.10"
-miniserde = "0.1.15"
-semver = "1.0.4"
+bindgen = { version = "0.59", default-features = false, features = ["runtime"] }
+proc-macro2 = "1"
+quote = "1"
+miniserde = "0.1"
+semver = "1"

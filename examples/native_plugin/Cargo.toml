@@ -2,9 +2,9 @@
 name = "native_plugin"
 version = "0.1.0"
 authors = ["The godot-rust developers"]
-publish = false
 edition = "2018"
 license = "MIT"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]

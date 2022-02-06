@@ -3,8 +3,8 @@ name = "gdnative-test"
 version = "0.1.0"
 workspace = ".."
 edition = "2018"
-publish = false
 license = "MIT"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
@@ -17,12 +17,12 @@ custom-godot = ["gdnative/custom-godot"]
 [dependencies]
 gdnative = { path = "../gdnative", features = ["gd-test", "serde", "async"] }
 gdnative-derive = { path = "../gdnative-derive" }
-approx = "0.5.0"
-ron = "0.7.0"
-serde = "1.0.130"
-serde_json = "1.0.68"
-bincode = "1.3.3"
-serde_yaml = "0.8.21"
-rmp-serde = "0.15.5"
-futures = "0.3.17"
-once_cell = "1.8.0"
+approx = "0.5"
+ron = "0.7"
+serde = "1"
+serde_json = "1"
+bincode = "1"
+serde_yaml = "0.8.23"
+rmp-serde = "0.15"
+futures = "0.3"
+once_cell = "1"
