@@ -25,6 +25,8 @@ pub struct PropertyAttrArgs {
     pub set: Option<PropertySet>,
     pub after_set: Option<syn::Path>,
     pub no_editor: bool,
+    pub group: Option<Option<String>>,
+    pub category: bool,
 }
 
 pub struct PropertyAttrArgsBuilder {
@@ -39,6 +41,8 @@ pub struct PropertyAttrArgsBuilder {
     set: Option<PropertySet>,
     after_set: Option<syn::Path>,
     no_editor: bool,
+    group: Option<Option<String>>,
+    category: bool,
 }
 
 impl PropertyAttrArgsBuilder {
@@ -55,6 +59,8 @@ impl PropertyAttrArgsBuilder {
             set: None,
             after_set: None,
             no_editor: false,
+            group: None,
+            category: false,
         }
     }
 
@@ -117,6 +123,23 @@ impl PropertyAttrArgsBuilder {
                     return Err(syn::Error::new(
                         pair.span(),
                         format!("there is already a 'hint' attribute with value: {:?}", old),
+                    ));
+                }
+            }
+            "group" => {
+                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
+                    lit_str.value()
+                } else {
+                    return Err(syn::Error::new(
+                        pair.span(),
+                        "group hint is not a string literal".to_string(),
+                    ));
+                };
+
+                if let Some(old) = self.group.replace(Some(string)) {
+                    return Err(syn::Error::new(
+                        pair.span(),
+                        format!("there is already a group set: {:?}", old),
                     ));
                 }
             }
@@ -285,6 +308,10 @@ impl PropertyAttrArgsBuilder {
     pub fn add_path(&mut self, path: &syn::Path) -> Result<(), syn::Error> {
         if path.is_ident("no_editor") {
             self.no_editor = true;
+        } else if path.is_ident("group") {
+            self.group = Some(None);
+        } else if path.is_ident("category") {
+            self.category = true;
         } else if path.is_ident("get") {
             if let Some(get) = self.get.replace(PropertyGet::Default) {
                 return Err(syn::Error::new(
@@ -324,6 +351,8 @@ impl PropertyAttrArgsBuilder {
             set: self.set,
             after_set: self.after_set,
             no_editor: self.no_editor,
+            group: self.group,
+            category: self.category,
         }
     }
 }

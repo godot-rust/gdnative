@@ -66,10 +66,32 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             .map(|(ident, config)| {
                 let with_default = config
                     .default
+                    .as_ref()
                     .map(|default_value| quote!(.with_default(#default_value)));
-                let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
+                let with_hint = config
+                    .hint
+                    .as_ref()
+                    .map(|hint_fn| quote!(.with_hint(#hint_fn())))
+                    .or_else(|| {
+                        if let Some(Some(prefix)) = &config.group {
+                            Some(quote!(.with_hint(::gdnative::export::hint::GroupHint::new(#prefix))))
+                        } else {
+                            None
+                        }
+                    });
+
                 let with_usage = if config.no_editor {
                     Some(quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)))
+                } else if config.group.is_some() {
+                    Some(quote!(.with_usage({
+                        ::gdnative::export::PropertyUsage::DEFAULT
+                        | ::gdnative::export::PropertyUsage::GROUP
+                    })))
+                } else if config.category {
+                    Some(quote!(.with_usage({
+                        ::gdnative::export::PropertyUsage::DEFAULT
+                        | ::gdnative::export::PropertyUsage::CATEGORY
+                    })))
                 } else {
                     None
                 };

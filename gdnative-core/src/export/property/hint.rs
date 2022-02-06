@@ -465,3 +465,29 @@ impl ArrayHint {
         }
     }
 }
+
+/// Provides a hint prefix for group members.
+#[derive(Clone, Debug, Default)]
+pub struct GroupHint {
+    prefix: String,
+}
+
+impl GroupHint {
+    /// Returns a `GroupHint` with a specific prefix.
+    #[inline]
+    pub fn new<S: ToString>(prefix: S) -> Self {
+        Self {
+            prefix: prefix.to_string(),
+        }
+    }
+
+    #[inline]
+    pub fn export_info(self) -> ExportInfo {
+        ExportInfo {
+            variant_type: VariantType::Nil,
+            // hint_kind: sys::godot_property_hint_GODOT_PROPERTY_HINT_TYPE_STRING,
+            hint_kind: sys::godot_property_hint_GODOT_PROPERTY_HINT_NONE,
+            hint_string: GodotString::from_str(&self.prefix),
+        }
+    }
+}

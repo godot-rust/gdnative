@@ -323,6 +323,31 @@ impl PropertyUsage {
     }
 }
 
+/// Marker for defining property groups.
+#[derive(Debug)]
+pub struct GroupMarker;
+
+impl crate::core_types::ToVariant for GroupMarker {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        Variant::nil()
+    }
+}
+
+impl crate::core_types::FromVariant for GroupMarker {
+    #[inline]
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        if variant.is_nil() {
+            Ok(Self)
+        } else {
+            Err(FromVariantError::InvalidVariantType {
+                variant_type: variant.get_type(),
+                expected: VariantType::Nil,
+            })
+        }
+    }
+}
+
 /// Placeholder type for exported properties with no backing field.
 ///
 /// This is the go-to type whenever you want to expose a getter/setter to GDScript, which
@@ -585,6 +610,15 @@ mod impl_export {
 
     impl Export for VariantArray<Shared> {
         type Hint = hint::ArrayHint;
+
+        #[inline]
+        fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
+            hint.unwrap_or_default().export_info()
+        }
+    }
+
+    impl Export for GroupMarker {
+        type Hint = hint::GroupHint;
 
         #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
