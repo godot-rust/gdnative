@@ -1,4 +1,5 @@
 //! Property registration.
+use std::marker::PhantomData;
 
 use accessor::{Getter, RawGetter, RawSetter, Setter};
 use invalid_accessor::{InvalidGetter, InvalidSetter};
@@ -320,6 +321,115 @@ impl PropertyUsage {
     pub fn to_sys(self) -> sys::godot_property_usage_flags {
         self.bits() as sys::godot_property_usage_flags
     }
+}
+
+/// Placeholder type for exported properties with no backing field.
+///
+/// This is the go-to type whenever you want to expose a getter/setter to GDScript, which
+/// does not directly map to a field in your struct. Instead of adding a useless field
+/// of the corresponding type (which needs initialization, extra space, etc.), you can use
+/// an instance of this type as a placeholder.
+///
+/// `Property` is a zero-sized type (ZST) which has exactly one value: `Property::default()`.
+/// It implements most of the basic traits, which allows its enclosing struct to remain
+/// composable and derive those traits itself.
+///
+/// ## When to use `Property<T>` instead of `T`
+///
+/// The following table shows which combinations of `#[property]` attributes and field types are allowed.
+/// In this context, `get` and `set` behave symmetrically, so only one of the combinations is listed.
+/// Furthermore, `get_ref` can be used in place of `get`, when it appears with a path.
+///
+/// Field type ➡ <br> Attributes ⬇           | bare `T`                      | `Property<T>`
+/// ------------------------------------------|-------------------------------|-----------------------------
+/// `#[property]`                             | ✔️ default get + set       | ❌️
+/// `#[property(get, set)]` _(same as above)_ | ✔️ default get + set       | ❌️
+/// `#[property(get)]`                        | ✔️ default get (no set)    | ❌️
+/// `#[property(get="path")]`                 | ⚠️ custom get (no set)     | ✔️ custom get (no set)
+/// `#[property(get="path", set)]`            | ✔️ custom get, default set | ❌️
+/// `#[property(get="path", set="path")]`     | ⚠️ custom get + set        | ✔️ custom get + set
+///
+/// "⚠️" means that this attribute combination is allowed for bare `T`, but you should consider
+/// using `Property<T>`.
+///
+/// Since there is no default `get` or `set` in these cases, godot-rust will never access the field
+/// directly. In other words, you are not really exporting _that field_, but linking its name and type
+/// (but not its value) to the specified get/set methods.
+///
+/// To decide when to use which:
+/// * If you access your field as-is on the Rust side, use bare `T`.<br>
+///   With a `Property<T>` field on the other hand, you would need to _additionally_ add a `T` backing field.
+/// * If you don't need a backing field, use `Property<T>`.<br>
+///   This is the case whenever you compute a result dynamically, or map values between Rust and GDScript
+///   representations.
+///
+/// ## Examples
+///
+/// Read/write accessible:
+/// ```no_run
+/// # use gdnative::prelude::*;
+/// #[derive(NativeClass)]
+/// # #[no_constructor]
+/// struct MyObject {
+///     #[property]
+///     color: Color,
+/// }
+/// ```
+///
+/// Read-only:
+/// ```no_run
+/// # use gdnative::prelude::*;
+/// #[derive(NativeClass)]
+/// # #[no_constructor]
+/// struct MyObject {
+///     #[property(get)]
+///     hitpoints: f32,
+/// }
+/// ```
+///
+/// Read-write, with validating setter:
+/// ```no_run
+/// # use gdnative::prelude::*;
+/// # fn validate(s: &String) -> bool { true }
+/// #[derive(NativeClass)]
+/// # #[no_constructor]
+/// struct MyObject {
+///     #[property(get, set = "Self::set_name")]
+///     player_name: String,
+/// }
+///
+/// #[methods]
+/// impl MyObject {
+///     fn set_name(&mut self, _owner: TRef<Reference>, name: String) {
+///         if validate(&name) {
+///             self.player_name = name;
+///         }
+///     }
+/// }
+/// ```
+///
+/// Write-only, no backing field, custom setter:
+/// ```no_run
+/// # use gdnative::prelude::*;
+/// #[derive(NativeClass)]
+/// # #[no_constructor]
+/// struct MyObject {
+///     #[property(set = "Self::set_password")]
+///     password: Property<String>,
+/// }
+///
+/// #[methods]
+/// impl MyObject {
+///     fn set_password(&mut self, _owner: TRef<Reference>, password: String) {
+///         // securely hash and store password
+///     }
+/// }
+/// ```
+
+// Note: traits are mostly implemented to enable deriving the same traits on the enclosing struct.
+#[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct Property<T> {
+    _marker: PhantomData<T>,
 }
 
 mod impl_export {

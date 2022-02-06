@@ -218,6 +218,21 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// Call hook methods with `self` and `owner` before and/or after the generated property
 /// accessors.
 ///
+/// - `get` / `get_ref` / `set`
+///
+/// Configure getter/setter for property. All of them can accept a path to specify a custom
+/// property accessor. For example, `#[property(get = "Self::my_getter")]` will use
+/// `Self::my_getter` as the getter.
+///
+/// The difference of `get` and `get_ref` is that `get` will register the getter with
+/// `with_getter` function, which means your getter should return an owned value `T`, but
+/// `get_ref` use `with_ref_getter` to register getter. In this case, your custom getter
+/// should return a shared reference `&T`.
+///
+/// Situations with custom getters/setters and no backing fields require the use of the
+/// type [`Property<T>`][gdnative::export::Property]. Consult its documentation for
+/// a deeper elaboration of property exporting.
+///
 /// - `no_editor`
 ///
 /// Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.
@@ -379,19 +394,21 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as DeriveInput);
 
     // Implement NativeClass for the input
-    native_script::derive_native_class(&derive_input).map_or_else(
+    let derived = native_script::derive_native_class(&derive_input).map_or_else(
         |err| {
             // Silence the other errors that happen because NativeClass is not implemented
             let empty_nativeclass = native_script::impl_empty_nativeclass(&derive_input);
             let err = err.to_compile_error();
 
-            TokenStream::from(quote! {
+            quote! {
                 #empty_nativeclass
                 #err
-            })
+            }
         },
         std::convert::identity,
-    )
+    );
+
+    TokenStream::from(derived)
 }
 
 #[proc_macro_derive(ToVariant, attributes(variant))]
