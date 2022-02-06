@@ -11,6 +11,10 @@ inputs:
     required: false
     description: "Components array"
     default: ''
+  cache-key:
+    required: false
+    description: "Extra key to resolve cache"
+    default: ''
 
 runs:
   using: "composite"
@@ -24,3 +28,5 @@ runs:
 
     # For notes about the cache, see 'Full CI' workflow
     - uses: Swatinem/rust-cache@v1
+      with:
+        sharedKey: ${{ inputs.cache-key }}

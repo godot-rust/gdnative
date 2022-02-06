@@ -123,13 +123,27 @@ jobs:
           - os: { id: ubuntu-latest, name: linux }
             rust: { toolchain: '1.51', postfix: ' (msrv 1.51)' }
             testflags: '-- --skip ui_tests'
+          - os: { id: ubuntu-latest, name: linux }
+            rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
     runs-on: ${{ matrix.os.id }}
     steps:
       - uses: actions/checkout@v2
+      - name: "Install nightly Rust (minimal-deps only)"
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: false # use selected toolchain for remainder of this step
+          components: cargo
+        if: ${{ matrix.rust.special == 'minimal-deps' }}
+      - name: "Install minimal dependency versions from Cargo"
+        run: cargo +nightly update -Z minimal-versions
+        if: ${{ matrix.rust.special == 'minimal-deps' }}
       - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
           rust: ${{ matrix.rust.toolchain }}
+          cache-key: ${{ matrix.rust.special }} # 'minimal-deps' or empty/not defined
       - name: "Install LLVM"
         uses: ./.github/composite/llvm
         if: ${{ matrix.os.id == 'windows-latest' }}
