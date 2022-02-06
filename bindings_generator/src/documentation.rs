@@ -97,7 +97,7 @@ if it is a `Node`."#,
     let base_class_docs = if !class.base_class.is_empty() {
         let mut docs = vec![];
         write!(
-            &mut docs,
+            docs,
             r#"
 ## Class hierarchy
 
