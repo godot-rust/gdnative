@@ -1,15 +1,22 @@
-*/target
-target
-*.rlib
-**/Cargo.lock
+# IDEs
 .vscode
 .idea
 
+# Build and package artifacts
+target
+*/target
+*.rlib
+**/Cargo.lock
+
+# Godot
 # ignore all files in test/project/lib/, except the .gitkeep as the directory should still be there
 test/project/lib/*
 !test/project/lib/.gitkeep
-
 **/.import/*
+/logs
 
-#os specific
+# OS-specific
 .DS_Store
+
+# User stuff
+/ignore

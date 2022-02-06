@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 (Renames listed under _Changed_, safety removals under _Fixed_)
 
 - Crate features
-  - `nativescript` ([#812](https://github.com/godot-rust/godot-rust/pull/812))
+  - `nativescript` ([#811](https://github.com/godot-rust/godot-rust/pull/811))
   - `bindings` ([#833](https://github.com/godot-rust/godot-rust/pull/833))
 - All redundant or unnecessarily nested modules (see _Changed_)
 - Deprecated symbols ([#828](https://github.com/godot-rust/godot-rust/pull/828))
@@ -134,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic publishing of `master` docs ([#786](https://github.com/godot-rust/godot-rust/pull/786))
 - Issue templates ([#807](https://github.com/godot-rust/godot-rust/pull/807))
 - Add `cargo-deny` to CI ([#849](https://github.com/godot-rust/godot-rust/pull/849))
+- Add CI job which tests minimal dependencies ([#856](https://github.com/godot-rust/godot-rust/pull/856))
 
 
 ## [0.9.3] - 2021-02-02

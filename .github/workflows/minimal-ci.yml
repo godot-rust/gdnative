@@ -40,7 +40,7 @@ jobs:
           rust: stable
           components: rustfmt
       - name: "Check rustfmt"
-        run: cargo fmt --all -- --check;
+        run: cargo fmt --all -- --check
 
   clippy:
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
           rust: stable
           components: clippy
       - name: "Check clippy"
-        run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented;
+        run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented
 
   unit-test:
     runs-on: ubuntu-latest
@@ -62,9 +62,9 @@ jobs:
       - name: "Install Rust"
         uses: ./.github/composite/rust
       - name: "Compile tests"
-        run: cargo test --workspace --features ${GDRUST_FEATURES} --no-run;
+        run: cargo test --workspace --features ${GDRUST_FEATURES} --no-run
       - name: "Test"
-        run: cargo test --workspace --features ${GDRUST_FEATURES};
+        run: cargo test --workspace --features ${GDRUST_FEATURES}
 
   integration-test-godot:
     runs-on: ubuntu-latest
