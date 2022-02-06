@@ -5,6 +5,137 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - unreleased
+
+### Added
+
+- Crate features
+  - `serde`: support for serialization/deserialization of `VariantDispatch` and core types ([#743](https://github.com/godot-rust/godot-rust/pull/743))
+  - `async`: foundation for async/await programming ([#804](https://github.com/godot-rust/godot-rust/pull/804))
+  - `custom-godot`, allowing easy use of custom Godot builds
+    ([#833](https://github.com/godot-rust/godot-rust/pull/833),
+     [#838](https://github.com/godot-rust/godot-rust/pull/838))
+- New top-level modules `init`, `log`, `profiler`, `derive`
+  ([#788](https://github.com/godot-rust/godot-rust/pull/788),
+   [#800](https://github.com/godot-rust/godot-rust/pull/800),
+   [#811](https://github.com/godot-rust/godot-rust/pull/811))
+- Geometric types
+  - `Vector2` and `Vector3` constants ([#718](https://github.com/godot-rust/godot-rust/pull/718))
+  - `Quat` methods ([#720](https://github.com/godot-rust/godot-rust/pull/720))
+  - `Transform2D` methods ([#791](https://github.com/godot-rust/godot-rust/pull/791))
+  - `Transform` methods ([#821](https://github.com/godot-rust/godot-rust/pull/821))
+- Other core types
+  - `VariantDispatch` struct + `Variant::dispatch()` ([#708](https://github.com/godot-rust/godot-rust/pull/708))
+  - `Color` conversions: `from_hsv()`, `from_hsva()`, `to_*()` ([#729](https://github.com/godot-rust/godot-rust/pull/729))
+  - `GodotString::format()` ([#816](https://github.com/godot-rust/godot-rust/pull/816))
+  - `AsArg` for `Instance` + `TInstance` ([#830](https://github.com/godot-rust/godot-rust/pull/830))
+  - `TRef::get_node_as()` through `NodeExt` ([#727](https://github.com/godot-rust/godot-rust/pull/727))
+  - `PoolArray::to_vec()` ([#843](https://github.com/godot-rust/godot-rust/pull/843))
+- Exporting
+  - `#[property(get, set)]` and `Property<T>` for custom getters/setters ([#841](https://github.com/godot-rust/godot-rust/pull/841)) 
+  - Array typehints ([#639](https://github.com/godot-rust/godot-rust/pull/639))
+  - Type-safe registration (`Method`, `Varargs`, `FromVarargs`, ...) ([#681](https://github.com/godot-rust/godot-rust/pull/681))
+  - `ClassBuilder::signal()` + `SignalBuilder` ([#828](https://github.com/godot-rust/godot-rust/pull/828))
+  - `#[export]` now accepts a method name ([#734](https://github.com/godot-rust/godot-rust/pull/734))
+  - `ArcData::into_inner()` ([#700](https://github.com/godot-rust/godot-rust/pull/700))
+  - `MapOwned` trait + `Once<T>` user-data ([#693](https://github.com/godot-rust/godot-rust/pull/693))
+  - `NoHint` for forward compatibility ([#690](https://github.com/godot-rust/godot-rust/pull/690))
+
+### Changed
+
+- MSRV is now 1.51 ([#833](https://github.com/godot-rust/godot-rust/pull/833))
+- `euclid` vector library replaced with `glam`, no longer part of public API ([#713](https://github.com/godot-rust/godot-rust/pull/713))
+- `Variant` has now a redesigned conversion API ([#819](https://github.com/godot-rust/godot-rust/pull/819))
+- Type renames (815, 828)
+  - `RefInstance` -> `TInstance`
+  - `RefKind` -> `Memory`
+  - `ThreadAccess` -> `Ownership`
+  - `TypedArray` -> `PoolArray`
+  - `Element` -> `PoolElement`
+  - `SignalArgument` -> `SignalParam`
+- Simplified module structure
+  ([#788](https://github.com/godot-rust/godot-rust/pull/788),
+   [#811](https://github.com/godot-rust/godot-rust/pull/811))
+  - 1 module per symbol (+prelude), no symbols at root, lower nesting depth
+  - Rename `nativescript` -> `export`
+  - Move `export::{Instance,RefInstance}` -> `object`
+  - More details: see PR descriptions
+- Geometric types API consistency ([#827](https://github.com/godot-rust/godot-rust/pull/827))
+  - Rename basis vectors `x, y, z` -> `a, b, c`
+  - Pass by value/ref consistency
+  - Other changes (see PRs)
+- Method renames
+  - `{String,Variant}::forget()` -> `leak()` ([#828](https://github.com/godot-rust/godot-rust/pull/828))
+  - `Color::{rgb,rgba}()` -> `{from_rgb,from_rgba}()`
+  - `Rid::is_valid()` -> `is_occupied()`
+  - `Basis::to_scale()` -> `scale()`
+  - `Basis::from_elements()` -> `from_rows()`
+  - `Transform2D::from_axis_origin()` -> `from_basis_origin()`
+- Relax `Dictionary` key bounds: `ToVariant` -> `OwnedToVariant` ([#809](https://github.com/godot-rust/godot-rust/pull/809))
+- `#[inherit]` is now optional and defaults to `Reference` ([#705](https://github.com/godot-rust/godot-rust/pull/705))
+- `Instance` and `TInstance` now use `Own=Shared` by default ([#823](https://github.com/godot-rust/godot-rust/pull/823))
+- Ergonomics improvements for `get_node_as()` & Co. ([#837](https://github.com/godot-rust/godot-rust/pull/837))
+- Separate trait for `NativeClass` static names ([#847](https://github.com/godot-rust/godot-rust/pull/847))
+- Generated docs: Godot BBCode translated to RustDoc, including intra-doc links ([#779](https://github.com/godot-rust/godot-rust/pull/779))
+
+### Removed
+
+(Renames listed under _Changed_, safety removals under _Fixed_)
+
+- Crate features
+  - `nativescript` ([#812](https://github.com/godot-rust/godot-rust/pull/812))
+  - `bindings` ([#833](https://github.com/godot-rust/godot-rust/pull/833))
+- All redundant or unnecessarily nested modules (see _Changed_)
+- Deprecated symbols ([#828](https://github.com/godot-rust/godot-rust/pull/828))
+  - `Reference::init_ref()` (unsound) 
+  - `ClassBuilder::add_method()`, `add_method_advanced()`, `add_method_with_rpc_mode()`
+  - `ScriptMethod`, `ScriptMethodFn`, `ScriptMethodAttributes`
+- Never functioning or misleading
+  - `FloatHint::Enum` ([#828](https://github.com/godot-rust/godot-rust/pull/828))
+  - `Transform::from_axis_origin()` ([#827](https://github.com/godot-rust/godot-rust/pull/827))
+- Redundant methods (cleaner API)
+  - access methods for `VariantArray<Shared>` ([#795](https://github.com/godot-rust/godot-rust/pull/795))
+  - `Basis::invert()`, `orthonormalize()`, `rotate()`, `tdotx()`, `tdoty()`, `tdotz()` ([#827](https://github.com/godot-rust/godot-rust/pull/827))
+  - `Rid::operator_less()` ([#844](https://github.com/godot-rust/godot-rust/pull/844))
+- From `prelude`
+  - macros`godot_gdnative_init`, `godot_gdnative_terminate`, `godot_nativescript_init`, `godot_site` ([#811](https://github.com/godot-rust/godot-rust/pull/811))
+
+### Fixed
+
+- Exports
+  - Class registry for detection of already registered classes and improved errors ([#737](https://github.com/godot-rust/godot-rust/pull/737))
+  - Exported properties now registered in order of declaration ([#777](https://github.com/godot-rust/godot-rust/pull/777))
+  - Signal parameter types annotated in builder not propagated to Godot ([#828](https://github.com/godot-rust/godot-rust/pull/828))
+- GDNative bindings
+  - "Safe names" for GDNative symbols conflicting with Rust keywords
+    ([#812](https://github.com/godot-rust/godot-rust/pull/812),
+     [#832](https://github.com/godot-rust/godot-rust/pull/832))
+  - Unresolved enum name in bindings generator ([#840](https://github.com/godot-rust/godot-rust/pull/840))
+  - Silence UB warnings caused by bindgen ([#776](https://github.com/godot-rust/godot-rust/pull/776))
+  - `.gdnlib` in integration tests now non-reloadable ([#746](https://github.com/godot-rust/godot-rust/pull/746))
+- Core
+  - Bugs in `Basis * Vector3` + `Vector3::rotated()` ([#760](https://github.com/godot-rust/godot-rust/pull/760))
+  - `VariantArray`: bounds check, remove unsafe methods for VariantArray<Shared> ([#795](https://github.com/godot-rust/godot-rust/pull/795))
+  - `Variant::call()` now unsafe, like `Object::call()` ([#795](https://github.com/godot-rust/godot-rust/pull/795))
+  - `Rid` ([#844](https://github.com/godot-rust/godot-rust/pull/844)):
+    - GDNative APIs accepting it now unsafe
+    - Method `get_id()` now unsafe and null-checked
+    - Fix logic error in `PartialOrd`
+  - `Dictionary`:
+    - Fix unsound `get()` ([#748](https://github.com/godot-rust/godot-rust/pull/748))
+    - Remove `get_next()` ([#795](https://github.com/godot-rust/godot-rust/pull/795))
+- Error messages conforming to Rust conventions ([#731](https://github.com/godot-rust/godot-rust/pull/731))
+- Qualify identifiers in proc-macros, avoids potential naming conflicts ([#835](https://github.com/godot-rust/godot-rust/pull/835))
+- Library logo ([#801](https://github.com/godot-rust/godot-rust/pull/801))
+
+### Config
+
+- CI overhaul: run for every PR, shorter runtime, cache ([#783](https://github.com/godot-rust/godot-rust/pull/783))
+- Automatic publishing of `master` docs ([#786](https://github.com/godot-rust/godot-rust/pull/786))
+- Issue templates ([#807](https://github.com/godot-rust/godot-rust/pull/807))
+- Add `cargo-deny` to CI ([#849](https://github.com/godot-rust/godot-rust/pull/849))
+
+
 ## [0.9.3] - 2021-02-02
 
 ### Fixed
