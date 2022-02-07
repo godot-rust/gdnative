@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="CameraFeed" inherits="Reference" version="3.3">
+<class name="CameraFeed" inherits="Reference" version="3.4">
 	<brief_description>
 		A camera feed gives you access to a single physical camera attached to your device.
 	</brief_description>
@@ -11,22 +11,19 @@
 	</tutorials>
 	<methods>
 		<method name="get_id" qualifiers="const">
-			<return type="int">
-			</return>
+			<return type="int" />
 			<description>
 				Returns the unique ID for this feed.
 			</description>
 		</method>
 		<method name="get_name" qualifiers="const">
-			<return type="String">
-			</return>
+			<return type="String" />
 			<description>
 				Returns the camera's name.
 			</description>
 		</method>
 		<method name="get_position" qualifiers="const">
-			<return type="int" enum="CameraFeed.FeedPosition">
-			</return>
+			<return type="int" enum="CameraFeed.FeedPosition" />
 			<description>
 				Returns the position of camera on the device.
 			</description>
