@@ -33,14 +33,14 @@ fn main() {
     format_file_if_needed(&generated_rs);
     format_file_if_needed(&icalls_rs);
 
-    // build.rs will automatically be recompiled and run if it's dependencies are updated.
-    // Ignoring all but build.rs will keep from needless rebuilds.
-    // Manually rebuilding the crate will ignore this.
-    println!("cargo:rerun-if-changed=docs/");
+    // build.rs will automatically be recompiled and run if its dependencies are updated.
+    // Ignoring everything but build.rs will avoid needless rebuilds.
+    // Manually rebuilding the crate does not affect this.
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Avoid endless recompiling, if this script generates api.json
+    // Avoid endless recompiling, if this script generates api.json and docs
     if !just_generated_api {
+        println!("cargo:rerun-if-changed=docs/");
         println!("cargo:rerun-if-changed=api.json");
     }
 }
