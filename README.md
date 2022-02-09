@@ -123,15 +123,15 @@ godot_init!(init);
 
 The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
-- [**hello_world**](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console.
-- [**spinning_cube**](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spin our own node in place, exposing editor properties.
-- [**scene_create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Load, instance and place scenes using Rust code.
-- [**array_export**](https://github.com/godot-rust/godot-rust/tree/master/examples/array_export) - Export more complex properties (here arrays) from Rust.
-- [**dodge_the_creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge_the_creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
+- [**hello-world**](https://github.com/godot-rust/godot-rust/tree/master/examples/hello-world) - Your first project, writes to the console.
+- [**spinning-cube**](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning-cube) - Spin our own node in place, exposing editor properties.
+- [**scene-create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene-create) - Load, instance and place scenes using Rust code.
+- [**array-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/array-export) - Export more complex properties (here arrays) from Rust.
+- [**dodge-the-creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge-the-creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
 - [**signals**](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Connect and emit signals.
 - [**resource**](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Create and use custom resources.
 - [**rpc**](https://github.com/godot-rust/godot-rust/tree/master/examples/rpc) - Simple peer-to-peer networking.
-- [**native_plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native_plugin) - Create custom node plugins.
+- [**native-plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native-plugin) - Create custom node plugins.
 
 ## Third-party resources
 

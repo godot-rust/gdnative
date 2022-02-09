@@ -7,17 +7,17 @@ members = [
     "gdnative-derive",
     "gdnative-sys",
     "test",
-    "bindings_generator",
-    "examples/hello_world",
-    "examples/spinning_cube",
-    "examples/scene_create",
+    "bindings-generator",
+    "examples/hello-world",
+    "examples/spinning-cube",
+    "examples/scene-create",
     "examples/signals",
-    "examples/dodge_the_creeps",
+    "examples/dodge-the-creeps",
     "examples/resource",
-    "examples/native_plugin",
+    "examples/native-plugin",
     "examples/rpc",
-    "examples/array_export",
-    "impl/proc_macros"
+    "examples/array-export",
+    "impl/proc-macros"
 ]
 
 [profile.dev.package.miniserde]

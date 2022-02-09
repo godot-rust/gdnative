@@ -22,4 +22,4 @@ bitflags = "1"
 libc = "0.2"
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator" }
+gdnative_bindings_generator = { path = "../bindings-generator" }
