@@ -1,70 +1,62 @@
-# Contributing to godot's rust bindings.
+# Contributing to the godot-rust library
 
 The godot-rust bindings developers welcome contribution from everyone. Here are the guidelines if you are thinking of helping us:
 
-## Contributions
 
-Contributions should be made in the form of GitHub pull requests (PRs). Each pull request will be reviewed by a core contributor (someone with permission to land patches) and either landed in the main tree or given feedback for changes that would be required.
+## Submitting a PR
 
-When opening a PR, our continuous integration (CI) pipeline will automatically perform a few basic checks (formatting, lints, unit tests). Please make sure those checks pass, adjusting your code if necessary.
+Contributions should be made in the form of GitHub pull requests (PRs). Each pull request will be reviewed by the godot-rust team or other contributors.
 
-Should you wish to work on an issue, please claim it first by commenting on the GitHub issue that you want to work on it. This is to prevent duplicated efforts from contributors on the same issue.
 
-## Getting started
+### Picking a task
 
-Have a look at the [issues](https://github.com/godot-rust/godot-rust/issues) to find good tasks to start with.
+Have a look at the [issue tracker] to find good tasks to start with. Should you wish to work on an issue, please claim it first by commenting in it. This is to prevent duplicated efforts from contributors on the same issue.
 
-## Pull Request Checklist
+We especially appreciate input on the issues labeled [`help wanted`]. The label [`good first issue`] encompasses issues which do not require a deep prior knowledge of the godot-rust intricacies and could be picked up by a newcomer.
 
-- Branch from the master branch and, if needed, rebase to the current master branch before submitting your pull request. If it doesn't merge cleanly with master you may be asked to rebase your changes.
+You can also open a pull request directly without an associated issue. Note however that discussing the issue with other developers beforehand increases the chances of a PR being accepted, and may save time on both your and the reviewer's end. Such discussions can also happen in our Discord server.
 
-- Use one commit per logical change. Often, PRs only consist of a single commit. If you change unrelated parts of the code, split it into separate commits.
 
-- If your patch is not getting reviewed or you need a specific person to review it, you can @-reply a reviewer asking for a review in the pull request or a comment.
+### Git workflow
 
-- Whenever applicable, add tests relevant to the fixed bug or new feature.
+* Branch from the `master` branch and, if needed, rebase to the current `master` branch before submitting your pull request. If it doesn't merge cleanly, you may be asked to rebase your changes.
 
-- Use `cargo fmt` to format your code.
+* Use one commit per logical change. Often, PRs only consist of a single commit. If you change unrelated parts of the code, split it into separate commits.
 
-## Testing
+* If your patch is not getting reviewed or you need a specific person to review it, you can @-reply a reviewer asking for a review in the pull request or a comment.
 
-Everywhere: run `cargo test --workspace` from the root of the repository.
 
-On GNU/Linux operating systems:
+### Writing tests
 
-```
-cd test
-cargo build
-cp ../target/debug/libgdnative_test.so ./project/lib/
-godot --path ./project
-```
+Whenever applicable, add tests relevant to the fixed bug or new feature.
 
-The `godot` command in the above snippet is your local installation of godot and may vary depending on how it was installed.
+Some types and functions can only be used if the engine is running. In order to test them, use the `godot_test!` macro, and explicitly invoke the test functions in [test/src/lib.rs](test/src/lib.rs). Don't hesitate to see how existing code does this.
 
-### Automating tests
+  
+### Local and CI checks
 
-If you are on a bash-compatible system, you can use the `pre-commit.sh` to automatically run your tests every time you try to commit code.  You can install it with:
+The repository root contains a script `check.sh`. If you invoke it without arguments, it will run a list of basic checks locally. This tool also allows you to quickly build RustDoc documentation of changed APIs. Please run `./check.sh --help` for more information about its usage.
 
-```sh
-$ ln -s ../../hooks/pre-commit.sh .git/hooks/pre-commit
-$ chmod +x .git/hooks/pre-commit
-```
+If you use Windows, you might consider using a Unix shell interpreter (e.g. one shipped with Git-for-Windows, or WSL2, or similar).
 
-If you don't need to run tests on your commit, you can simply run `git commit --no-verify` to skip the pre-commit script.  The pre-commit script handles a few edge cases as well, by stashing all of your changes before running tests, just in case your unstashed changes mask errors in the bare commit.  This is especially useful if you've stopped working on something to make a quick patch.
+Additionally, when opening a PR, our continuous integration (CI) pipeline will automatically perform a few checks (formatting, lints, unit tests). Please make sure all of them pass, adjusting your code where necessary.
 
-## Writing tests
-
-Some types can only be used if the engine is running, in order to test them, use the `godot_test!` macro (see examples in [variant.rs](gdnative/src/variant.rs)), and explicitly invoke the test functions in [test/src/lib.rs](test/src/lib.rs).
 
 ## Communication
 
-Primary communication between developers of the project happens on the `godot-rust` Discord server. [Invite link here](https://discord.gg/FNudpBD).
+Primary communication between developers of the project happens on the `godot-rust` Discord server. [Invite link here][godot-rust-discord].
 
-For questions about using `godot-rust` the `#gdnative` channel on the [Godot Engine community Discord server](https://godotengine.org/community) can be used.
-On IRC the `#godotengine-gdnative` channel on freenode can be used for questions as well.
+For questions about Godot, check out the options on the [Godot community page][godot-community]. For example, their Discord server hosts a `#gdnative-dev` channel for questions regarding GDNative interface. The contributor chat is helpful in case of discussions about Godot's own design and implementation.
 
-If you are only interested in occasional announcements and showcases, follow [@GodotRust on Twitter](https://twitter.com/GodotRust). For questions and design discussions, please use Discord.
+If you are only interested in occasional announcements and showcases, follow [@GodotRust on Twitter][godot-rust-twitter]. For questions and design discussions, please use Discord.
 
 ## License
 
 Any contribution submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
+
+[issue tracker]: https://github.com/godot-rust/godot-rust/issues
+[`help wanted`]: https://github.com/godot-rust/godot-rust/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
+[`good first issue`]: https://github.com/godot-rust/godot-rust/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+[godot-community]: https://godotengine.org/community
+[godot-rust-discord]: https://discord.gg/FNudpBD
+[godot-rust-twitter]: https://twitter.com/GodotRust

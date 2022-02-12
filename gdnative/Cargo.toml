@@ -2,6 +2,7 @@
 name = "gdnative"
 authors = ["The godot-rust developers"]
 description = "The Godot game engine's gdnative bindings."
+keywords = ["gamedev", "godot", "engine", "bindings"]
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
@@ -10,6 +11,8 @@ license = "MIT"
 workspace = ".."
 readme = "../README.md"
 edition = "2018"
+# once edition is 2021, see https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field:
+# rust-version = "1.56"
 
 [features]
 # Public
@@ -24,14 +27,14 @@ gd-test = ["gdnative-core/gd-test"]
 type-tag-fallback = ["gdnative-core/type-tag-fallback"]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }
-gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
-gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
-gdnative-async = { path = "../gdnative-async", version = "=0.9.3", optional = true }
+gdnative-derive = { path = "../gdnative-derive" }
+gdnative-core = { path = "../gdnative-core" }
+gdnative-bindings = { path = "../gdnative-bindings" }
+gdnative-async = { path = "../gdnative-async", optional = true }
 
 [dev-dependencies]
-trybuild = "1.0.50"
-rustversion = "1.0.5"
+trybuild = "1.0.18" # earrlier versions use broken termcolor 1.0.0
+rustversion = "1"
 
 # See https://docs.rs/about/metadata
 [package.metadata.docs.rs]

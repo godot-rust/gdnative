@@ -18,8 +18,8 @@ custom-godot = ["gdnative_bindings_generator/custom-godot"]
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys" }
 gdnative-core = { path = "../gdnative-core" }
-libc = "0.2.104"
-bitflags = "1.3.2"
+bitflags = "1"
+libc = "0.2"
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings_generator" }
+gdnative_bindings_generator = { path = "../bindings-generator" }

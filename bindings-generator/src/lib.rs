@@ -229,62 +229,62 @@ pub(crate) mod test_prelude {
             let mut icalls = HashMap::new();
 
             let code = generate_module_doc(&class);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             let class_doc = generate_class_documentation(&api, &class);
-            write!(&mut buffer, "{}", code).unwrap();
-            write!(&mut buffer, "{}", quote! { struct StructWithDocs {} }).unwrap();
+            write!(buffer, "{}", code).unwrap();
+            write!(buffer, "{}", quote! { struct StructWithDocs {} }).unwrap();
             validate_and_clear_buffer!(buffer);
 
             let code = generate_class_struct(&class, class_doc);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             let code = generate_enums(&class);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             if !class.constants.is_empty() {
                 let code = generate_class_constants(&class);
-                write!(&mut buffer, "{}", code).unwrap();
+                write!(buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
             let code = generate_class_impl(&class, &mut icalls, None);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             // traits
             let code = generate_godot_object_impl(&class);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             let code = generate_queue_free_impl(&api, &class);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             if !class.base_class.is_empty() {
                 let code = generate_deref_impl(&class);
-                write!(&mut buffer, "{}", code).unwrap();
+                write!(buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
             // Instantiable
             if class.instantiable {
                 let code = generate_instantiable_impl(&class);
-                write!(&mut buffer, "{}", code).unwrap();
+                write!(buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
 
             // icalls and method table
             let code = generate_method_table(&api, &class);
-            write!(&mut buffer, "{}", code).unwrap();
+            write!(buffer, "{}", code).unwrap();
             validate_and_clear_buffer!(buffer);
 
             for (name, sig) in icalls {
                 let code = generate_icall(name, sig);
-                write!(&mut buffer, "{}", code).unwrap();
+                write!(buffer, "{}", code).unwrap();
                 validate_and_clear_buffer!(buffer);
             }
         }

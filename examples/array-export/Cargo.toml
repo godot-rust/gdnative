@@ -1,14 +1,13 @@
 [package]
-name = "dodge_the_creeps"
+name = "array_export"
 version = "0.1.0"
 authors = ["The godot-rust developers"]
-publish = false
 edition = "2018"
 license = "MIT"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 gdnative = { path = "../../gdnative" }
-rand = "0.8.4"

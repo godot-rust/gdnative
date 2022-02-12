@@ -172,9 +172,16 @@ allow = [
 # Wrapper crates can optionally be specified to allow the crate when it
 # is a direct dependency of the otherwise banned crate
 #{ name = "ansi_term", version = "=0.11.0", wrappers = [] },
+#
+# See also: https://togithub.com/RustSec/advisory-db/issues/173
 deny = [
     # unmaintained since Feb 20 + https://github.com/noamtashma/owning-ref-unsoundness
     { name = "owning_ref" },
+
+    # unmaintained since Jul 20, RustSec refuses to acknowledge "because author says maintained"
+    # https://togithub.com/rustsec/advisory-db/pull/891
+    { name = "im" },
+    { name = "im-rc" },
 ]
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [

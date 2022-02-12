@@ -2,11 +2,11 @@
 
 <a href="https://godot-rust.github.io/"><img align="right" width="200" height="200" src="assets/godot-ferris.svg"></a>
 
-[![Docs Status](https://docs.rs/gdnative/badge.svg)](https://docs.rs/gdnative)
-
-
-**[Website](https://godot-rust.github.io)** |
-**[User Guide](https://godot-rust.github.io/book)** | **[Stable Docs](https://docs.rs/gdnative)** | **[Latest Docs](https://godot-rust.github.io/docs)**
+[<img alt="crates.io" src="https://img.shields.io/crates/v/gdnative?logo=rust&color=A6854D" />](https://crates.io/crates/gdnative)
+[<img alt="stable docs" src="https://img.shields.io/badge/docs-released-4D8AA6?&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiPjxwYXRoIGZpbGw9IiNmNWY1ZjUiIGQ9Ik00ODguNiAyNTAuMkwzOTIgMjE0VjEwNS41YzAtMTUtOS4zLTI4LjQtMjMuNC0zMy43bC0xMDAtMzcuNWMtOC4xLTMuMS0xNy4xLTMuMS0yNS4zIDBsLTEwMCAzNy41Yy0xNC4xIDUuMy0yMy40IDE4LjctMjMuNCAzMy43VjIxNGwtOTYuNiAzNi4yQzkuMyAyNTUuNSAwIDI2OC45IDAgMjgzLjlWMzk0YzAgMTMuNiA3LjcgMjYuMSAxOS45IDMyLjJsMTAwIDUwYzEwLjEgNS4xIDIyLjEgNS4xIDMyLjIgMGwxMDMuOS01MiAxMDMuOSA1MmMxMC4xIDUuMSAyMi4xIDUuMSAzMi4yIDBsMTAwLTUwYzEyLjItNi4xIDE5LjktMTguNiAxOS45LTMyLjJWMjgzLjljMC0xNS05LjMtMjguNC0yMy40LTMzLjd6TTM1OCAyMTQuOGwtODUgMzEuOXYtNjguMmw4NS0zN3Y3My4zek0xNTQgMTA0LjFsMTAyLTM4LjIgMTAyIDM4LjJ2LjZsLTEwMiA0MS40LTEwMi00MS40di0uNnptODQgMjkxLjFsLTg1IDQyLjV2LTc5LjFsODUtMzguOHY3NS40em0wLTExMmwtMTAyIDQxLjQtMTAyLTQxLjR2LS42bDEwMi0zOC4yIDEwMiAzOC4ydi42em0yNDAgMTEybC04NSA0Mi41di03OS4xbDg1LTM4Ljh2NzUuNHptMC0xMTJsLTEwMiA0MS40LTEwMi00MS40di0uNmwxMDItMzguMiAxMDIgMzguMnYuNnoiPjwvcGF0aD48L3N2Zz4K" />](https://docs.rs/gdnative)
+[<img alt="master docs" src="https://img.shields.io/badge/docs-master-4D8AA6?&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiPjxwYXRoIGZpbGw9IiNmNWY1ZjUiIGQ9Ik00ODguNiAyNTAuMkwzOTIgMjE0VjEwNS41YzAtMTUtOS4zLTI4LjQtMjMuNC0zMy43bC0xMDAtMzcuNWMtOC4xLTMuMS0xNy4xLTMuMS0yNS4zIDBsLTEwMCAzNy41Yy0xNC4xIDUuMy0yMy40IDE4LjctMjMuNCAzMy43VjIxNGwtOTYuNiAzNi4yQzkuMyAyNTUuNSAwIDI2OC45IDAgMjgzLjlWMzk0YzAgMTMuNiA3LjcgMjYuMSAxOS45IDMyLjJsMTAwIDUwYzEwLjEgNS4xIDIyLjEgNS4xIDMyLjIgMGwxMDMuOS01MiAxMDMuOSA1MmMxMC4xIDUuMSAyMi4xIDUuMSAzMi4yIDBsMTAwLTUwYzEyLjItNi4xIDE5LjktMTguNiAxOS45LTMyLjJWMjgzLjljMC0xNS05LjMtMjguNC0yMy40LTMzLjd6TTM1OCAyMTQuOGwtODUgMzEuOXYtNjguMmw4NS0zN3Y3My4zek0xNTQgMTA0LjFsMTAyLTM4LjIgMTAyIDM4LjJ2LjZsLTEwMiA0MS40LTEwMi00MS40di0uNnptODQgMjkxLjFsLTg1IDQyLjV2LTc5LjFsODUtMzguOHY3NS40em0wLTExMmwtMTAyIDQxLjQtMTAyLTQxLjR2LS42bDEwMi0zOC4yIDEwMiAzOC4ydi42em0yNDAgMTEybC04NSA0Mi41di03OS4xbDg1LTM4Ljh2NzUuNHptMC0xMTJsLTEwMiA0MS40LTEwMi00MS40di0uNmwxMDItMzguMiAxMDIgMzguMnYuNnoiPjwvcGF0aD48L3N2Zz4K" />](https://godot-rust.github.io/docs)
+[<img alt="book" src="https://img.shields.io/badge/user_guide-book-3e6ccf?&logo=read-the-docs&logoColor=white" />](https://godot-rust.github.io/book)
+[<img alt="website" src="https://img.shields.io/badge/website-3e6ccf?&color=gray" />](https://godot-rust.github.io)
 
 **godot-rust** is a Rust library that implements native bindings for the [Godot game engine](http://godotengine.org/). This allows you to develop games or other applications in Godot, while benefiting from Rust's strengths, such as its type system, scalability and performance.
 
@@ -25,23 +25,10 @@ For versions 3.2 and 3.3, some extra steps are needed, see _Custom builds_ below
 
 The bindings do _**not**_ support in-development Godot 4 versions at the moment. Support is planned as the native extensions become more stable.
 
-## Requirements
 
-The generator makes use of `bindgen`, which depends on Clang. Instructions for installing `bindgen`'s dependencies for popular OSes can be found [in their documentation](https://rust-lang.github.io/rust-bindgen/requirements.html).
+## Getting started
 
-`bindgen` may complain about a missing `llvm-config` binary, but it is not actually required to build the `gdnative` crate. If you see a warning about `llvm-config` and a failed build, it's likely that you're having a different problem!
-
-### 'Header not found' errors
-
-When building the library, `bindgen` may produce errors that look like this:
-
-```
-godot-rust\gdnative-sys/godot_headers\gdnative/string.h:39:10: fatal error: 'wchar.h' file not found
-```
-
-This means that `bindgen` was unable to find the C system headers for your platform. If you can locate the headers manually, you may try setting the `C_INCLUDE_PATH` environment variable so `libclang` could find them. If on Windows, you may try building from the Visual Studio "developer console", which should setup the appropriate variables for you.
-
-## Usage
+Detailed setup is explained in [the _Getting Started_ section of the book](https://godot-rust.github.io/book/getting-started.html). In case of problems, consider also reading the [FAQ](https://godot-rust.github.io/book/faq/configuration.html).
 
 ### Latest `master` version + Godot 3.4
 
@@ -78,15 +65,11 @@ Async support is a work-in-progress, with a low-level API available in the `gdna
 
 ## Example
 
-The most general use-case of the bindings will be to interact with Godot using the generated wrapper
-classes, as well as providing custom functionality by exposing Rust types as *NativeScript*s.
+A typical use case is to expose your own _Native Class_, a Rust API that can be invoked from the Godot engine. The resulting native script can be attached to the scene tree, just like GDScript (`.gd` files). 
 
-NativeScript is an extension for GDNative that allows a dynamic library to register "script classes"
-to Godot.
+This happens via dynamic libraries and the _GDNative interface_, which will be loaded from Godot. The necessary wiring is done behind the scenes by godot-rust. A simple "Hello world" application could look like this:
 
-As is tradition, a simple "Hello World" should serve as an introduction. For a full tutorial, check out ["Getting Started" from the user guide](https://godot-rust.github.io/book/getting-started.html)!
-
-```rust
+```rs
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -112,52 +95,38 @@ fn init(handle: InitHandle) {
 godot_init!(init);
 ```
 
+
 ### Further examples
 
-
-> ### **IMPORTANT NOTE**
+> **Important note:**
 >
-> Before launching the examples in the godot editor, you must first run `cargo build` and wait for the build operations to finish successfully.
+> Before launching the examples in the Godot editor, you must first run `cargo build` and wait for the build operations to finish successfully.
 >
->At startup, the Godot editor tries to load all resources used by the project, including the native binary. If it isn't present, the editor skips properties or signals associated with the missing NativeScripts in the scene. This will cause the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
+>At startup, the Godot editor tries to load all resources used by the project, including the native library. If the latter isn't present, the editor will skip properties or signals associated with the missing native scripts in the scene. This will cause the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
 
 The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
-- [**hello_world**](https://github.com/godot-rust/godot-rust/tree/master/examples/hello_world) - Your first project, writes to the console.
-- [**spinning_cube**](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning_cube) - Spin our own node in place, exposing editor properties.
-- [**scene_create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene_create) - Load, instance and place scenes using Rust code.
-- [**array_export**](https://github.com/godot-rust/godot-rust/tree/master/examples/array_export) - Export more complex properties (here arrays) from Rust.
-- [**dodge_the_creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge_the_creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
+- [**hello-world**](https://github.com/godot-rust/godot-rust/tree/master/examples/hello-world) - Your first project, writes to the console.
+- [**spinning-cube**](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning-cube) - Spin our own node in place, exposing editor properties.
+- [**scene-create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene-create) - Load, instance and place scenes using Rust code.
+- [**array-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/array-export) - Export more complex properties (here arrays) from Rust.
+- [**dodge-the-creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge-the-creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
 - [**signals**](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Connect and emit signals.
 - [**resource**](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Create and use custom resources.
 - [**rpc**](https://github.com/godot-rust/godot-rust/tree/master/examples/rpc) - Simple peer-to-peer networking.
-- [**native_plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native_plugin) - Create custom node plugins.
+- [**native-plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native-plugin) - Create custom node plugins.
 
-## Third-party resources
 
-See also (work-in-progress): [Third-party projects](https://godot-rust.github.io/book/projects.html) in the book.
+### Third-party projects
 
-### Tools and integrations
-
-- [godot-egui](https://github.com/setzer22/godot-egui) (setzer22, jacobsky) - combine the [egui](https://github.com/emilk/egui) library with Godot 
-- [ftw](https://github.com/macalimlim/ftw) (macalimlim) - manage your godot-rust projects from the command line
-
-### Open-source games
-
-- [Action RPG](https://github.com/MacKarp/Rust_Action_RPG_Tutorial) (MacKarp) - this [Godot tutorial](https://www.youtube.com/playlist?list=PL9FzW-m48fn2SlrW0KoLT4n5egNdX-W9a) ported to Rust.
-- [Air Combat](https://github.com/paytonrules/AirCombat) (paytonrules) - this [Godot tutorial](https://devga.me/tutorials/godot2d/) ported to Rust.
-- [Simple single-player Blackjack](https://github.com/paytonrules/Blackjack) (paytonrules)
-- [Pong](https://github.com/you-win/godot-pong-rust) (you-win)
-
-### Tutorials
-
-- Step by step guide - [Up and running with Rust and Godot: A basic setup](https://hagsteel.com/posts/godot-rust/)
+To see a list of games and integrations developed on top of godot-rust, have a look at our list of [third-party projects](https://godot-rust.github.io/book/projects.html) in the book.
 
 
 ## Contributing
 
 See the [contribution guidelines](CONTRIBUTING.md).
 
+
 ## License
 
-Any contribution intentionally submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.
+Any contribution submitted for inclusion in the work by you shall be licensed under the [MIT license](LICENSE.md), without any additional terms or conditions.

@@ -27,7 +27,7 @@ fn main() {
     {
         let mut output = BufWriter::new(File::create(&icalls_rs).unwrap());
 
-        write!(&mut output, "{}", binding_res.icalls).unwrap();
+        write!(output, "{}", binding_res.icalls).unwrap();
     }
 
     format_file_if_needed(&generated_rs);

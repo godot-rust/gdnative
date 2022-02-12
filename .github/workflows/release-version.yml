@@ -38,7 +38,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
         run: |
-          (cd impl/proc_macros && cargo publish);
+          (cd impl/proc-macros && cargo publish);
           sleep 1m;
           (cd gdnative-sys && cargo publish);
           sleep 1m;
@@ -46,7 +46,7 @@ jobs:
           sleep 1m;
           (cd gdnative-core && cargo publish);
           sleep 1m;
-          (cd bindings_generator && cargo publish);
+          (cd bindings-generator && cargo publish);
           sleep 1m;
           (cd gdnative-bindings && cargo publish);
           sleep 1m;
