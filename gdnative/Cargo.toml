@@ -27,10 +27,10 @@ gd-test = ["gdnative-core/gd-test"]
 type-tag-fallback = ["gdnative-core/type-tag-fallback"]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive" }
-gdnative-core = { path = "../gdnative-core" }
-gdnative-bindings = { path = "../gdnative-bindings" }
-gdnative-async = { path = "../gdnative-async", optional = true }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }
+gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
+gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
+gdnative-async = { path = "../gdnative-async", version = "=0.9.3", optional = true }
 
 [dev-dependencies]
 trybuild = "1.0.18" # earrlier versions use broken termcolor 1.0.0

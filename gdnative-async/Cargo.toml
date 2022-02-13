@@ -13,9 +13,9 @@ edition = "2018"
 [features]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive" }
-gdnative-core = { path = "../gdnative-core" }
-gdnative-bindings = { path = "../gdnative-bindings" }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.9.3" }
+gdnative-core = { path = "../gdnative-core", version = "=0.9.3" }
+gdnative-bindings = { path = "../gdnative-bindings", version = "=0.9.3" }
 atomic-waker = "1"
 crossbeam-channel = "0.5"
 crossbeam-utils = "0.8"
