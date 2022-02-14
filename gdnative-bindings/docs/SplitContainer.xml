@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="SplitContainer" inherits="Container" version="3.3">
+<class name="SplitContainer" inherits="Container" version="3.4">
 	<brief_description>
 		Container for splitting and adjusting.
 	</brief_description>
@@ -10,8 +10,7 @@
 	</tutorials>
 	<methods>
 		<method name="clamp_split_offset">
-			<return type="void">
-			</return>
+			<return type="void" />
 			<description>
 				Clamps the [member split_offset] value to not go outside the currently possible minimal and maximum values.
 			</description>
@@ -30,8 +29,7 @@
 	</members>
 	<signals>
 		<signal name="dragged">
-			<argument index="0" name="offset" type="int">
-			</argument>
+			<argument index="0" name="offset" type="int" />
 			<description>
 				Emitted when the dragger is dragged by user.
 			</description>

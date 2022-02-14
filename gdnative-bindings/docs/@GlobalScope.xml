@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="@GlobalScope" version="3.3">
+<class name="@GlobalScope" version="3.4">
 	<brief_description>
 		Global scope constants and variables.
 	</brief_description>
@@ -883,7 +883,7 @@
 		<constant name="KEY_MASK_CTRL" value="268435456" enum="KeyModifierMask">
 			Ctrl key mask.
 		</constant>
-		<constant name="KEY_MASK_CMD" value="268435456" enum="KeyModifierMask">
+		<constant name="KEY_MASK_CMD" value="platform-dependent" enum="KeyModifierMask">
 			Command key mask. On macOS, this is equivalent to [constant KEY_MASK_META]. On other platforms, this is equivalent to [constant KEY_MASK_CTRL]. This mask should be preferred to [constant KEY_MASK_META] or [constant KEY_MASK_CTRL] for system shortcuts as it handles all platforms correctly.
 		</constant>
 		<constant name="KEY_MASK_KPAD" value="536870912" enum="KeyModifierMask">
@@ -1003,7 +1003,10 @@
 		<constant name="JOY_BUTTON_21" value="21" enum="JoystickList">
 			Gamepad button 21.
 		</constant>
-		<constant name="JOY_BUTTON_MAX" value="22" enum="JoystickList">
+		<constant name="JOY_BUTTON_22" value="22" enum="JoystickList">
+			Gamepad button 22.
+		</constant>
+		<constant name="JOY_BUTTON_MAX" value="23" enum="JoystickList">
 			Represents the maximum number of joystick buttons supported.
 		</constant>
 		<constant name="JOY_SONY_CIRCLE" value="1" enum="JoystickList">
@@ -1081,22 +1084,25 @@
 		<constant name="JOY_DPAD_RIGHT" value="15" enum="JoystickList">
 			Gamepad DPad right.
 		</constant>
-		<constant name="JOY_MISC1" value="16" enum="JoystickList">
+		<constant name="JOY_GUIDE" value="16" enum="JoystickList">
+			Gamepad SDL guide button.
+		</constant>
+		<constant name="JOY_MISC1" value="17" enum="JoystickList">
 			Gamepad SDL miscellaneous button.
 		</constant>
-		<constant name="JOY_PADDLE1" value="17" enum="JoystickList">
+		<constant name="JOY_PADDLE1" value="18" enum="JoystickList">
 			Gamepad SDL paddle 1 button.
 		</constant>
-		<constant name="JOY_PADDLE2" value="18" enum="JoystickList">
+		<constant name="JOY_PADDLE2" value="19" enum="JoystickList">
 			Gamepad SDL paddle 2 button.
 		</constant>
-		<constant name="JOY_PADDLE3" value="19" enum="JoystickList">
+		<constant name="JOY_PADDLE3" value="20" enum="JoystickList">
 			Gamepad SDL paddle 3 button.
 		</constant>
-		<constant name="JOY_PADDLE4" value="20" enum="JoystickList">
+		<constant name="JOY_PADDLE4" value="21" enum="JoystickList">
 			Gamepad SDL paddle 4 button.
 		</constant>
-		<constant name="JOY_TOUCHPAD" value="21" enum="JoystickList">
+		<constant name="JOY_TOUCHPAD" value="22" enum="JoystickList">
 			Gamepad SDL touchpad button.
 		</constant>
 		<constant name="JOY_L" value="4" enum="JoystickList">
@@ -1364,7 +1370,7 @@
 			Hints that an integer or float property should be within a range specified via the hint string [code]"min,max"[/code] or [code]"min,max,step"[/code]. The hint string can optionally include [code]"or_greater"[/code] and/or [code]"or_lesser"[/code] to allow manual input going respectively above the max or below the min values. Example: [code]"-360,360,1,or_greater,or_lesser"[/code].
 		</constant>
 		<constant name="PROPERTY_HINT_EXP_RANGE" value="2" enum="PropertyHint">
-			Hints that an integer or float property should be within an exponential range specified via the hint string [code]"min,max"[/code] or [code]"min,max,step"[/code]. The hint string can optionally include [code]"or_greater"[/code] and/or [code]"or_lesser"[/code] to allow manual input going respectively above the max or below the min values. Example: [code]"0.01,100,0.01,or_greater"[/code].
+			Hints that a float property should be within an exponential range specified via the hint string [code]"min,max"[/code] or [code]"min,max,step"[/code]. The hint string can optionally include [code]"or_greater"[/code] and/or [code]"or_lesser"[/code] to allow manual input going respectively above the max or below the min values. Example: [code]"0.01,100,0.01,or_greater"[/code].
 		</constant>
 		<constant name="PROPERTY_HINT_ENUM" value="3" enum="PropertyHint">
 			Hints that an integer, float or string property is an enumerated value to pick in a list specified via a hint string such as [code]"Hello,Something,Else"[/code].

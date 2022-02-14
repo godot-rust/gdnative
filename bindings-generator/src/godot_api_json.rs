@@ -1,4 +1,5 @@
 use crate::godot_version;
+use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -43,20 +44,50 @@ pub fn generate_json_if_needed() -> bool {
     exec(
         if has_generate_bug { 10 } else { 1 },
         Command::new(&godot_bin)
+            .arg("--no-window")
             .arg("--gdnative-generate-json-api")
             .arg("api.json"),
     );
+
+    // Best effort for generating the XML documentation
+    // Note: this documentation is not the same as shipped by official Godot releases, but it's the best we have.
+    exec_maybe(
+        1,
+        Command::new(&godot_bin)
+            .arg("--no-window")
+            .arg("--doctool")
+            .arg("."),
+    );
+
+    // Godot output structure           required structure
+    //
+    // +-- api.json
+    // +-- modules                      +-- api.json
+    // +-- doc                          +-- docs [*]
+    //     +-- classes [*]
+    //
+    let _ = fs::remove_dir_all("docs");
+    let _ = fs::rename("doc/classes", "docs");
+    let _ = fs::remove_dir("doc");
+    let _ = fs::remove_dir_all("modules");
 
     true
 }
 
 /// Executes a command and returns stdout. Panics on failure.
 fn exec(attempts: i32, command: &mut Command) -> String {
+    exec_maybe(attempts, command)
+        .unwrap_or_else(|| panic!("Could not execute Godot command (see above)."))
+}
+
+fn exec_maybe(attempts: i32, command: &mut Command) -> Option<String> {
     let command_line = format!("{:?}", command);
 
     for _attempt in 0..attempts {
         match command.output() {
-            Ok(output) => return String::from_utf8(output.stdout).expect("parse UTF8 string"),
+            Ok(output) => {
+                return Some(String::from_utf8(output.stdout).expect("parse UTF8 string"))
+            }
             Err(err) => {
                 eprintln!(
                     "Godot command failed:\n  command: {}\n  error: {}",
@@ -66,5 +97,5 @@ fn exec(attempts: i32, command: &mut Command) -> String {
         }
     }
 
-    panic!("Could not execute Godot command (see above).")
+    None
 }

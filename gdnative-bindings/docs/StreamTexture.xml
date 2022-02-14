@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="StreamTexture" inherits="Texture" version="3.3">
+<class name="StreamTexture" inherits="Texture" version="3.4">
 	<brief_description>
 		A [code].stex[/code] texture.
 	</brief_description>
@@ -10,10 +10,8 @@
 	</tutorials>
 	<methods>
 		<method name="load">
-			<return type="int" enum="Error">
-			</return>
-			<argument index="0" name="path" type="String">
-			</argument>
+			<return type="int" enum="Error" />
+			<argument index="0" name="path" type="String" />
 			<description>
 				Loads the texture from the given path.
 			</description>
