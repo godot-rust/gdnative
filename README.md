@@ -30,10 +30,21 @@ The bindings do _**not**_ support in-development Godot 4 versions at the moment.
 
 Detailed setup is explained in [the _Getting Started_ section of the book](https://godot-rust.github.io/book/getting-started.html). In case of problems, consider also reading the [FAQ](https://godot-rust.github.io/book/faq/configuration.html).
 
-### Latest `master` version + Godot 3.4
+### Latest released version
 
-This is the recommended way of using godot-rust, if you want to benefit from latest features.
-After `bindgen` dependencies are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
+This is the recommended way of using godot-rust. After `bindgen` dependencies and a current Godot version are installed, add the `gdnative` crate as a dependency, and set the crate type to `cdylib`:
+
+```toml
+[dependencies]
+gdnative = "0.10.0-rc.0"
+
+[lib]
+crate-type = ["cdylib"]
+```
+
+### Latest GitHub version
+
+If you would like to benefit from cutting-edge features and bugfixes, you can use the GitHub version. We have a relatively sophisticated CI and test suite for basic stability, but the GitHub version is typically more experimental and less battle-tested than a `crates.io` release. We also do not guarantee any SemVer compatibility here.
 
 ```toml
 [dependencies]
@@ -43,25 +54,14 @@ gdnative = { git = "https://github.com/godot-rust/godot-rust.git" }
 crate-type = ["cdylib"]
 ```
 
-### Godot 3.2.3-stable
-
-To access the last released version on crates.io, use the following. Note that there have been significant API changes since v0.9.3 -- if you are starting to use godot-rust, we recommend using the `master` version instead.
-
-```toml
-[dependencies]
-gdnative = "0.9.3"
-
-[lib]
-crate-type = ["cdylib"]
-```
 
 ### Custom builds
 
 To use the bindings with a different Godot version or a custom build of the engine, see [Custom Godot builds](https://godot-rust.github.io/book/advanced-guides/custom-godot.html) in the user guide.
 
-### Async / `yield` support
+### Async/yield support
 
-Async support is a work-in-progress, with a low-level API available in the `gdnative-async` crate. This crate is re-exported as `gdnative::tasks`, if the `async` feature is enabled on `gdnative`. See [this page](https://godot-rust.github.io/book/recipes/async-tokio.html) in the book for an introduction to use the async feature with Tokio.
+Async support is a work-in-progress, with a low-level API available in `gdnative::tasks`, if the `async` feature is enabled on `gdnative`. See [this page](https://godot-rust.github.io/book/recipes/async-tokio.html) in the book for an introduction to use the async feature with Tokio.
 
 ## Example
 
