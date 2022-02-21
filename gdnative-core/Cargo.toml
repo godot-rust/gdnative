@@ -30,4 +30,4 @@ parking_lot = "0.12"
 serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-gdnative = { path = "../gdnative", version = "=0.10.0-rc.0" } # for doc-tests
+gdnative = { path = "../gdnative" } # for doc-tests

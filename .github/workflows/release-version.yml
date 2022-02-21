@@ -125,9 +125,11 @@ jobs:
         run: |
           IFS=' ' read -r -a publishedCrates <<< "$GDRUST_CRATES"
           for crate in "${publishedCrates[@]}"; do
+            echo "Publish $crate..."
             (cd "$crate" && cargo publish) || {
               printf "\nError: Failed to publish $crate\n"
               exit 2
             }
+            echo "Wait..."
             sleep 40s
           done
