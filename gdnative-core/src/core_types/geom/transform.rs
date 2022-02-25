@@ -5,7 +5,6 @@ use crate::core_types::{Basis, Vector3};
 /// Affine 3D transform (3x4 matrix).
 ///
 /// Used for 3D linear transformations. Uses a basis + origin representation.
-/// The
 ///
 /// Expressed as a 3x4 matrix, this transform consists of 3 basis (column) vectors `a`, `b`, `c`
 /// as well as an origin `o`; more information in [`Self::from_basis_origin()`]:
