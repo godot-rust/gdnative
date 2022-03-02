@@ -76,7 +76,7 @@ pub(crate) fn generate_class_constants(class: &GodotClass) -> TokenStream {
         class.constants.iter().collect();
     class_constants.sort_by(constant_sorter);
 
-    for (name, value) in &class_constants {
+    for (name, value) in class_constants {
         let name = format_ident!("{}", name);
         let constant = quote! {
             pub const #name: i64 = #value;

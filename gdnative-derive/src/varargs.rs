@@ -48,7 +48,7 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
 
         let mut required = Vec::new();
         let mut optional = Vec::new();
-        for field in fields.iter() {
+        for field in fields {
             let is_optional = field.attrs.iter().any(|attr| attr.path.is_ident("opt"));
             if !is_optional && !optional.is_empty() {
                 return Err(syn::Error::new(
