@@ -198,120 +198,107 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                         if let Some("export") = last_seg.as_deref() {
                             let _export_args = export_args.get_or_insert_with(ExportArgs::default);
-                            if !attr.tokens.is_empty() {
-                                use syn::{Meta, MetaNameValue, NestedMeta};
-
-                                let meta = match attr.parse_meta() {
-                                    Ok(val) => val,
+                            use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
+                            let nested_meta_iter = match attr.parse_meta() {
                                     Err(err) => {
                                         errors.push(err);
                                         return false;
                                     }
-                                };
-
-                                let pairs: Vec<_> = match meta {
-                                    Meta::List(list) => list
-                                        .nested
-                                        .into_pairs()
-                                        .filter_map(|p| {
-                                            let span = p.span();
-                                            match p.into_value() {
-                                                NestedMeta::Meta(Meta::NameValue(pair)) => {
-                                                    Some(pair)
-                                                }
-                                                unexpected => {
-                                                    let msg = format!(
-                                                        "unexpected argument in list: {}",
-                                                        unexpected.into_token_stream()
-                                                    );
+                                Ok(Meta::NameValue(name_value)) => {
+                                    let span = name_value.span();
+                                    let msg = "NameValue syntax is not valid";
                                                     errors.push(syn::Error::new(span, msg));
-                                                    None
+                                    return false;
                                                 }
+                                Ok(Meta::Path(_)) => {
+                                    Punctuated::<NestedMeta, syn::token::Comma>::new().into_iter()
                                             }
-                                        })
-                                        .collect(),
-                                    Meta::NameValue(pair) => vec![pair],
-                                    meta => {
-                                        let span = meta.span();
-                                        let msg = format!(
-                                            "unexpected attribute argument: {}",
-                                            meta.into_token_stream()
-                                        );
+                                Ok(Meta::List(list)) => list.nested.into_iter(),
+                            };
+                            for nested_meta in nested_meta_iter {
+                                let (path, lit) = match &nested_meta {
+                                    NestedMeta::Lit(param) => {
+                                        let span = param.span();
+                                        let msg = "Literal item is not valid";
                                         errors.push(syn::Error::new(span, msg));
-                                        return false;
+                                        continue;
                                     }
-                                };
-
-                                for MetaNameValue { path, lit, .. } in pairs {
-                                    let last = match path.segments.last() {
-                                        Some(val) => val,
-                                        None => {
-                                            errors.push(syn::Error::new(
-                                                path.span(),
-                                                "the path should not be empty",
-                                            ));
-                                            return false;
+                                    NestedMeta::Meta(param) => match param {
+                                        Meta::List(list) => {
+                                            let span = list.span();
+                                            let msg = "List item is not valid";
+                                            errors.push(syn::Error::new(span, msg));
+                                            continue;
                                         }
+                                        Meta::Path(path) => (path, None),
+                                        Meta::NameValue(name_value) => {
+                                            (&name_value.path, Some(&name_value.lit))
+                                        }
+                                    },
                                     };
-                                    let path = last.ident.to_string();
-
-                                    // Match optional export arguments
-                                    match path.as_str() {
+                                if path.is_ident("rpc") {
                                         // rpc mode
-                                        "rpc" => {
-                                            let value = if let syn::Lit::Str(lit_str) = lit {
-                                                lit_str.value()
-                                            } else {
+                                    match lit {
+                                        None => {
                                                 errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    "unexpected type for rpc value, expected Str",
+                                                nested_meta.span(),
+                                                "name parameter requires string value",
                                                 ));
-                                                return false;
-                                            };
-
+                                        }
+                                        Some(Lit::Str(str)) => {
+                                            let value = str.value();
                                             if let Some(mode) = RpcMode::parse(value.as_str()) {
                                                 if rpc.replace(mode).is_some() {
                                                     errors.push(syn::Error::new(
-                                                        last.span(),
+                                                        nested_meta.span(),
                                                         "rpc mode was set more than once",
                                                     ));
-                                                    return false;
                                                 }
                                             } else {
                                                 errors.push(syn::Error::new(
-                                                    last.span(),
+                                                    nested_meta.span(),
                                                     format!("unexpected value for rpc: {}", value),
                                                 ));
-                                                return false;
-                                            }
-                                        }
-                                        // name override
-                                        "name" => {
-                                            let value = if let syn::Lit::Str(lit_str) = lit {
-                                                lit_str.value()
-                                            } else {
-                                                errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    "unexpected type for name value, expected Str",
-                                                ));
-                                                return false;
-                                            };
-
-                                            if name_override.replace(value).is_some() {
-                                                errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    "name was set more than once",
-                                                ));
-                                                return false;
                                             }
                                         }
                                         _ => {
-                                            let msg =
-                                                format!("unknown option for export: `{}`", path);
-                                            errors.push(syn::Error::new(last.span(), msg));
-                                            return false;
+                                            errors.push(syn::Error::new(
+                                                nested_meta.span(),
+                                                "unexpected type for rpc value, expected string",
+                                            ));
                                         }
                                     }
+                                } else if path.is_ident("name") {
+                                        // name override
+                                    match lit {
+                                        None => {
+                                                errors.push(syn::Error::new(
+                                                nested_meta.span(),
+                                                "name parameter requires string value",
+                                                ));
+                                        }
+                                        Some(Lit::Str(str)) => {
+                                            if name_override.replace(str.value()).is_some() {
+                                                errors.push(syn::Error::new(
+                                                    nested_meta.span(),
+                                                    "name was set more than once",
+                                                ));
+                                            }
+                                        }
+                                        _ => {
+                                            errors.push(syn::Error::new(
+                                                nested_meta.span(),
+                                                "unexpected type for name value, expected string",
+                                            ));
+                                        }
+                                    }
+                                    }
+                                } else {
+                                    let msg = format!(
+                                        "unknown option for export: `{}`",
+                                        path.to_token_stream()
+                                    );
+                                    errors.push(syn::Error::new(nested_meta.span(), msg));
                                 }
                             }
                             return false;
