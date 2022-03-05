@@ -10,9 +10,8 @@ version = "0.10.0-rc.0"
 license = "MIT"
 workspace = ".."
 readme = "../README.md"
-edition = "2018"
-# once edition is 2021, see https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field:
-# rust-version = "1.56"
+edition = "2021"
+rust-version = "1.56"
 
 [features]
 # Public

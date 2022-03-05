@@ -2,7 +2,8 @@
 name = "gdnative-test"
 version = "0.1.0"
 workspace = ".."
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 license = "MIT"
 publish = false
 

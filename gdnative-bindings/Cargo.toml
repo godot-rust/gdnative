@@ -8,7 +8,8 @@ homepage = "https://godot-rust.github.io/"
 version = "0.10.0-rc.0"
 license = "MIT"
 workspace = ".."
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 
 [features]
 formatted = []

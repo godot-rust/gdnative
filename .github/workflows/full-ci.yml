@@ -121,7 +121,7 @@ jobs:
           - rust: { toolchain: 'nightly' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
-            rust: { toolchain: '1.51', postfix: ' (msrv 1.51)' }
+            rust: { toolchain: '1.56', postfix: ' (msrv 1.56)' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
             rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
@@ -253,9 +253,9 @@ jobs:
           - rust: nightly
             godot: "3.4.1"
             postfix: ' (nightly)'
-          - rust: '1.51'
+          - rust: '1.56'
             godot: "3.4.1"
-            postfix: ' (msrv 1.51)'
+            postfix: ' (msrv 1.56)'
 
           # Test with oldest supported engine version
           - rust: stable

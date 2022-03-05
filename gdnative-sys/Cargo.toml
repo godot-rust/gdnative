@@ -9,7 +9,8 @@ version = "0.10.0-rc.0"
 build = "build.rs"
 license = "MIT"
 workspace = ".."
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 
 [dependencies]
 libc = "0.2"
