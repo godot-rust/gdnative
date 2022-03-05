@@ -66,6 +66,7 @@ pub(crate) struct ExportArgs {
     pub(crate) optional_args: Option<usize>,
     pub(crate) rpc_mode: RpcMode,
     pub(crate) name_override: Option<String>,
+    pub(crate) is_deref_return: bool,
 }
 
 pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
@@ -116,6 +117,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             };
 
             let rpc = args.rpc_mode;
+            let is_deref_return = args.is_deref_return;
 
             let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
                 let span = arg.span();
@@ -130,6 +132,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 {
                     let method = ::gdnative::export::godot_wrap_method!(
                         #class_name,
+                        #is_deref_return,
                         fn #name ( #( #args )* ) -> #ret_ty
                     );
 
@@ -183,6 +186,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 let mut export_args = None;
                 let mut rpc = None;
                 let mut name_override = None;
+                let mut is_deref_return = false;
 
                 let mut errors = vec![];
 
@@ -292,6 +296,20 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             ));
                                         }
                                     }
+                                } else if path.is_ident("deref_return") {
+                                    // deref return value
+                                    if lit.is_some() {
+                                        errors.push(syn::Error::new(
+                                            nested_meta.span(),
+                                            "value for deref_return parameter is not valid",
+                                        ));
+                                    } else if is_deref_return {
+                                        errors.push(syn::Error::new(
+                                            nested_meta.span(),
+                                            "deref_return was apply more than once",
+                                        ));
+                                    } else {
+                                        is_deref_return = true;
                                     }
                                 } else {
                                     let msg = format!(
@@ -350,6 +368,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     export_args.optional_args = optional_args;
                     export_args.rpc_mode = rpc.unwrap_or(RpcMode::Disabled);
                     export_args.name_override = name_override;
+                    export_args.is_deref_return = is_deref_return;
 
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),

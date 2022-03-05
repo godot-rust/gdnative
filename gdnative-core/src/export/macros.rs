@@ -13,9 +13,21 @@ macro_rules! godot_wrap_method_parameter_count {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! godot_wrap_method_if_deref {
+    (true, $ret:expr) => {
+        std::ops::Deref::deref(&$ret)
+    };
+    (false, $ret:expr) => {
+        $ret
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! godot_wrap_method_inner {
     (
         $type_name:ty,
+        $is_deref_return:ident,
         $map_method:ident,
         fn $method_name:ident(
             $self:ident,
@@ -56,7 +68,9 @@ macro_rules! godot_wrap_method_inner {
                                     $($pname,)*
                                     $($opt_pname,)*
                                 );
-                                gdnative::core_types::OwnedToVariant::owned_to_variant(ret)
+                                gdnative::core_types::OwnedToVariant::owned_to_variant(
+                                    $crate::godot_wrap_method_if_deref!($is_deref_return, ret)
+                                )
                             }
                         })
                         .unwrap_or_else(|err| {
@@ -83,6 +97,7 @@ macro_rules! godot_wrap_method {
     // mutable
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             &mut $self:ident,
             $owner:ident : $owner_ty:ty
@@ -93,6 +108,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map_mut,
             fn $method_name(
                 $self,
@@ -105,6 +121,7 @@ macro_rules! godot_wrap_method {
     // immutable
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             & $self:ident,
             $owner:ident : $owner_ty:ty
@@ -115,6 +132,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map,
             fn $method_name(
                 $self,
@@ -127,6 +145,7 @@ macro_rules! godot_wrap_method {
     // owned
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             mut $self:ident,
             $owner:ident : $owner_ty:ty
@@ -137,6 +156,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map_owned,
             fn $method_name(
                 $self,
@@ -149,6 +169,7 @@ macro_rules! godot_wrap_method {
     // owned
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             $self:ident,
             $owner:ident : $owner_ty:ty
@@ -159,6 +180,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map_owned,
             fn $method_name(
                 $self,
@@ -171,6 +193,7 @@ macro_rules! godot_wrap_method {
     // mutable without return type
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             &mut $self:ident,
             $owner:ident : $owner_ty:ty
@@ -181,6 +204,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method!(
             $type_name,
+            $is_deref_return,
             fn $method_name(
                 &mut $self,
                 $owner: $owner_ty
@@ -192,6 +216,7 @@ macro_rules! godot_wrap_method {
     // immutable without return type
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             & $self:ident,
             $owner:ident : $owner_ty:ty
@@ -202,6 +227,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method!(
             $type_name,
+            $is_deref_return,
             fn $method_name(
                 & $self,
                 $owner: $owner_ty
@@ -213,6 +239,7 @@ macro_rules! godot_wrap_method {
     // owned without return type
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             mut $self:ident,
             $owner:ident : $owner_ty:ty
@@ -223,6 +250,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method!(
             $type_name,
+            $is_deref_return,
             fn $method_name(
                 $self,
                 $owner: $owner_ty
@@ -234,6 +262,7 @@ macro_rules! godot_wrap_method {
     // owned without return type
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
             $self:ident,
             $owner:ident : $owner_ty:ty
@@ -244,6 +273,7 @@ macro_rules! godot_wrap_method {
     ) => {
         $crate::godot_wrap_method!(
             $type_name,
+            $is_deref_return,
             fn $method_name(
                 $self,
                 $owner: $owner_ty
