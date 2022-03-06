@@ -54,7 +54,7 @@ fn test_godot_versions() {
     ];
 
     // From Rust 1.56: 'for (...) in good_versions'
-    for (full, major, minor, patch, stability) in good_versions.iter().cloned() {
+    for (full, major, minor, patch, stability) in good_versions {
         let parsed: GodotVersion = parse_godot_version(full).unwrap();
         assert_eq!(parsed.major, major);
         assert_eq!(parsed.minor, minor);
@@ -62,7 +62,7 @@ fn test_godot_versions() {
         assert_eq!(parsed.stability, stability);
     }
 
-    for full in bad_versions.iter() {
+    for full in bad_versions {
         let parsed = parse_godot_version(full);
         assert!(parsed.is_err());
     }

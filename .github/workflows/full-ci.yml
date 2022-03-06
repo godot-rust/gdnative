@@ -34,6 +34,7 @@ env:
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
   GDRUST_FEATURES: "gdnative/async,gdnative/serde"
   CARGO_DENY_VERSION: "0.11.0"
+  CARGO_DINGHY_VERSION: "0.4.68"
 
 on:
   push:
@@ -121,7 +122,7 @@ jobs:
           - rust: { toolchain: 'nightly' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
-            rust: { toolchain: '1.51', postfix: ' (msrv 1.51)' }
+            rust: { toolchain: '1.56', postfix: ' (msrv 1.56)' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
             rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
@@ -194,10 +195,10 @@ jobs:
       - name: "Install cargo-dinghy"
         run: |
           rustup target add x86_64-apple-ios
-          curl -L https://github.com/sonos/dinghy/releases/download/0.4.62/cargo-dinghy-macos-0.4.62.tgz -o cargo-dinghy-macos.tar.gz
+          curl -L https://github.com/sonos/dinghy/releases/download/$CARGO_DINGHY_VERSION/cargo-dinghy-macos-$CARGO_DINGHY_VERSION.tgz -o cargo-dinghy-macos.tar.gz
           tar -zxvf cargo-dinghy-macos.tar.gz
           mkdir -p $HOME/.cargo/bin
-          cp cargo-dinghy-0.4.62/cargo-dinghy $HOME/.cargo/bin
+          cp cargo-dinghy-$CARGO_DINGHY_VERSION/cargo-dinghy $HOME/.cargo/bin
       - name: "Cross-compile to iOS"
         run: |
           RUNTIME_ID=$(xcrun simctl list runtimes | grep iOS | cut -d ' ' -f 7 | tail -1)
@@ -253,9 +254,9 @@ jobs:
           - rust: nightly
             godot: "3.4.1"
             postfix: ' (nightly)'
-          - rust: '1.51'
+          - rust: '1.56'
             godot: "3.4.1"
-            postfix: ' (msrv 1.51)'
+            postfix: ' (msrv 1.56)'
 
           # Test with oldest supported engine version
           - rust: stable

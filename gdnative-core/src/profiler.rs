@@ -1,7 +1,6 @@
 //! Interface to Godot's built-in profiler.
 
 use std::borrow::Cow;
-use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
 use std::time::{Duration, Instant};
 

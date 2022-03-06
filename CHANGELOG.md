@@ -43,7 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- MSRV is now 1.51 ([#833](https://github.com/godot-rust/godot-rust/pull/833))
+- MSRV is now 1.56 ([#833](https://github.com/godot-rust/godot-rust/pull/833), [#870](https://github.com/godot-rust/godot-rust/pull/870))
+- Rust edition is now 2021 ([#870](https://github.com/godot-rust/godot-rust/pull/870))
 - `euclid` vector library replaced with `glam`, no longer part of public API ([#713](https://github.com/godot-rust/godot-rust/pull/713))
 - `Variant` has now a redesigned conversion API ([#819](https://github.com/godot-rust/godot-rust/pull/819))
 - Type renames (815, 828)

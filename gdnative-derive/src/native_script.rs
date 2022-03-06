@@ -162,7 +162,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
 
                 let label = config.path.unwrap_or_else(|| format!("{}", ident));
                 Ok(quote!({
-                    builder.property#property_ty(#label)
+                    builder.property #property_ty(#label)
                         #with_default
                         #with_hint
                         #with_usage
@@ -287,7 +287,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
                         let attr_args_builder = property_args
                             .get_or_insert_with(|| PropertyAttrArgsBuilder::new(&field.ty));
 
-                        for arg in &nested {
+                        for arg in nested {
                             if let NestedMeta::Meta(Meta::NameValue(ref pair)) = arg {
                                 attr_args_builder.add_pair(pair)?;
                             } else if let NestedMeta::Meta(Meta::Path(ref path)) = arg {
@@ -473,9 +473,9 @@ mod tests {
             (attr_getp_setp, true, true),
         ];
 
-        for (attr, allowed_bare, allowed_property) in &combinations {
-            check_property_combination(attr, quote! { i32 }, *allowed_bare);
-            check_property_combination(attr, quote! { Property<i32> }, *allowed_property);
+        for (attr, allowed_bare, allowed_property) in combinations {
+            check_property_combination(&attr, quote! { i32 }, allowed_bare);
+            check_property_combination(&attr, quote! { Property<i32> }, allowed_property);
         }
     }
 
