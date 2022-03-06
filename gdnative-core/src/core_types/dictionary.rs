@@ -446,7 +446,6 @@ impl<'a, Own: Ownership> Iterator for Iter<'a, Own> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        use std::convert::TryFrom;
         (0, usize::try_from(self.dic.len()).ok())
     }
 }
@@ -490,7 +489,6 @@ impl Iterator for IntoIter {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        use std::convert::TryFrom;
         (0, usize::try_from(self.dic.len()).ok())
     }
 }

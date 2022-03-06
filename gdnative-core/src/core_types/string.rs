@@ -4,7 +4,6 @@ use crate::private::get_api;
 use crate::sys;
 
 use std::cmp::Ordering;
-use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem::forget;

@@ -433,7 +433,6 @@ impl<'a, Own: Ownership> Iterator for Iter<'a, Own> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        use std::convert::TryFrom;
         let n = i32::try_from(n).ok()?;
 
         if self.arr.len() > n {
@@ -486,7 +485,6 @@ impl Iterator for IntoIter {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        use std::convert::TryFrom;
         let n = i32::try_from(n).ok()?;
 
         if self.arr.len() > n {

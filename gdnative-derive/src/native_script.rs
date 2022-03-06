@@ -162,7 +162,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
 
                 let label = config.path.unwrap_or_else(|| format!("{}", ident));
                 Ok(quote!({
-                    builder.property#property_ty(#label)
+                    builder.property #property_ty(#label)
                         #with_default
                         #with_hint
                         #with_usage

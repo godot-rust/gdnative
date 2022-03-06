@@ -1584,8 +1584,6 @@ impl<T: ToVariant> ToVariant for Vec<T> {
 impl<T: FromVariant> FromVariant for Vec<T> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        use std::convert::TryInto;
-
         let arr = VariantArray::from_variant(variant)?;
         let len: usize = arr
             .len()
