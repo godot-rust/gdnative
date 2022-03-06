@@ -24,6 +24,13 @@ macro_rules! godot_wrap_method_if_deref {
 
 #[doc(hidden)]
 #[macro_export]
+#[deprecated = "This function does not actually pass by reference to the Godot engine. You can clarify by writing #[export(deref_return)]."]
+macro_rules! deprecated_reference_return {
+    () => {};
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! godot_wrap_method_inner {
     (
         $type_name:ty,

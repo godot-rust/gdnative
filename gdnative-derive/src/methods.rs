@@ -86,7 +86,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             let name = sig.ident;
             let name_string = args.name_override.unwrap_or_else(|| name.to_string());
             let ret_span = sig.output.span();
-            let ret_ty = match sig.output {
+            let ret_ty = match &sig.output {
                 syn::ReturnType::Default => quote_spanned!(ret_span => ()),
                 syn::ReturnType::Type(_, ty) => quote_spanned!( ret_span => #ty ),
             };
@@ -128,6 +128,16 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 }
             });
 
+            let deprecated = if let syn::ReturnType::Type(_, ty) = &sig.output {
+                if !is_deref_return && matches!(**ty, syn::Type::Reference(_)) {
+                    quote_spanned!(ret_span=> ::gdnative::export::deprecated_reference_return!();)
+                } else {
+                    quote_spanned!(ret_span=>)
+                }
+            } else {
+                quote_spanned!(ret_span=>)
+            };
+
             quote_spanned!( sig_span=>
                 {
                     let method = ::gdnative::export::godot_wrap_method!(
@@ -139,6 +149,8 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                     #builder.method(#name_string, method)
                         .with_rpc_mode(#rpc)
                         .done_stateless();
+
+                    #deprecated
                 }
             )
         })
@@ -204,19 +216,19 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             let _export_args = export_args.get_or_insert_with(ExportArgs::default);
                             use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
                             let nested_meta_iter = match attr.parse_meta() {
-                                    Err(err) => {
-                                        errors.push(err);
-                                        return false;
-                                    }
+                                Err(err) => {
+                                    errors.push(err);
+                                    return false;
+                                }
                                 Ok(Meta::NameValue(name_value)) => {
                                     let span = name_value.span();
                                     let msg = "NameValue syntax is not valid";
-                                                    errors.push(syn::Error::new(span, msg));
+                                    errors.push(syn::Error::new(span, msg));
                                     return false;
-                                                }
+                                }
                                 Ok(Meta::Path(_)) => {
                                     Punctuated::<NestedMeta, syn::token::Comma>::new().into_iter()
-                                            }
+                                }
                                 Ok(Meta::List(list)) => list.nested.into_iter(),
                             };
                             for nested_meta in nested_meta_iter {
@@ -239,15 +251,15 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             (&name_value.path, Some(&name_value.lit))
                                         }
                                     },
-                                    };
+                                };
                                 if path.is_ident("rpc") {
-                                        // rpc mode
+                                    // rpc mode
                                     match lit {
                                         None => {
-                                                errors.push(syn::Error::new(
+                                            errors.push(syn::Error::new(
                                                 nested_meta.span(),
                                                 "name parameter requires string value",
-                                                ));
+                                            ));
                                         }
                                         Some(Lit::Str(str)) => {
                                             let value = str.value();
@@ -273,13 +285,13 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                         }
                                     }
                                 } else if path.is_ident("name") {
-                                        // name override
+                                    // name override
                                     match lit {
                                         None => {
-                                                errors.push(syn::Error::new(
+                                            errors.push(syn::Error::new(
                                                 nested_meta.span(),
                                                 "name parameter requires string value",
-                                                ));
+                                            ));
                                         }
                                         Some(Lit::Str(str)) => {
                                             if name_override.replace(str.value()).is_some() {
