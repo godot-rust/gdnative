@@ -19,5 +19,5 @@ libc = "0.2"
 bindgen = { version = "0.59", default-features = false, features = ["runtime"] }
 proc-macro2 = "1"
 quote = "1"
-miniserde = "0.1"
+miniserde = "0.1.10"
 semver = "1"
