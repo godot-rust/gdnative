@@ -249,13 +249,13 @@ jobs:
         include:
           # Latest Godot with different Rust versions
           - rust: stable
-            godot: "3.4.1"
+            godot: "3.4.3"
             postfix: ''
           - rust: nightly
-            godot: "3.4.1"
+            godot: "3.4.3"
             postfix: ' (nightly)'
           - rust: '1.56'
-            godot: "3.4.1"
+            godot: "3.4.3"
             postfix: ' (msrv 1.56)'
 
           # Test with oldest supported engine version
