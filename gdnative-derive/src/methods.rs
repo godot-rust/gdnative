@@ -58,13 +58,13 @@ pub(crate) struct ClassMethodExport {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub(crate) struct ExportMethod {
     pub(crate) sig: Signature,
-    pub(crate) args: ExportArgs,
+    pub(crate) export_args: ExportArgs,
+    pub(crate) optional_args: Option<usize>,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(crate) struct ExportArgs {
-    pub(crate) optional_args: Option<usize>,
-    pub(crate) rpc_mode: RpcMode,
+    pub(crate) rpc_mode: Option<RpcMode>,
     pub(crate) name_override: Option<String>,
     pub(crate) is_deref_return: bool,
 }
@@ -80,11 +80,11 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
     let methods = export
         .methods
         .into_iter()
-        .map(|ExportMethod { sig, args }| {
+        .map(|ExportMethod { sig, export_args , optional_args}| {
             let sig_span = sig.ident.span();
 
             let name = sig.ident;
-            let name_string = args.name_override.unwrap_or_else(|| name.to_string());
+            let name_string = export_args.name_override.unwrap_or_else(|| name.to_string());
             let ret_span = sig.output.span();
             let ret_ty = match &sig.output {
                 syn::ReturnType::Default => quote_spanned!(ret_span => ()),
@@ -101,7 +101,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 .to_compile_error();
             }
 
-            let optional_args = match args.optional_args {
+            let optional_args = match optional_args {
                 Some(count) => {
                     let max_optional = arg_count - 2; // self and owner
                     if count > max_optional {
@@ -116,8 +116,8 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 None => 0,
             };
 
-            let rpc = args.rpc_mode;
-            let is_deref_return = args.is_deref_return;
+            let rpc = export_args.rpc_mode.unwrap_or(RpcMode::Disabled);
+            let is_deref_return = export_args.is_deref_return;
 
             let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
                 let span = arg.span();
@@ -196,10 +196,6 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
-                let mut rpc = None;
-                let mut name_override = None;
-                let mut is_deref_return = false;
-
                 let mut errors = vec![];
 
                 // only allow the "outer" style, aka #[thing] item.
@@ -213,7 +209,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             .map(|i| i.ident.to_string());
 
                         if let Some("export") = last_seg.as_deref() {
-                            let _export_args = export_args.get_or_insert_with(ExportArgs::default);
+                            let mut _export_args = export_args.get_or_insert_with(ExportArgs::default);
                             use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
                             let nested_meta_iter = match attr.parse_meta() {
                                 Err(err) => {
@@ -264,7 +260,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                         Some(Lit::Str(str)) => {
                                             let value = str.value();
                                             if let Some(mode) = RpcMode::parse(value.as_str()) {
-                                                if rpc.replace(mode).is_some() {
+                                                if _export_args.rpc_mode.replace(mode).is_some() {
                                                     errors.push(syn::Error::new(
                                                         nested_meta.span(),
                                                         "rpc mode was set more than once",
@@ -294,7 +290,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             ));
                                         }
                                         Some(Lit::Str(str)) => {
-                                            if name_override.replace(str.value()).is_some() {
+                                            if _export_args.name_override.replace(str.value()).is_some() {
                                                 errors.push(syn::Error::new(
                                                     nested_meta.span(),
                                                     "name was set more than once",
@@ -315,13 +311,13 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             nested_meta.span(),
                                             "value for deref_return parameter is not valid",
                                         ));
-                                    } else if is_deref_return {
+                                    } else if _export_args.is_deref_return {
                                         errors.push(syn::Error::new(
                                             nested_meta.span(),
                                             "deref_return was apply more than once",
                                         ));
                                     } else {
-                                        is_deref_return = true;
+                                        _export_args.is_deref_return = true;
                                     }
                                 } else {
                                     let msg = format!(
@@ -338,7 +334,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     true
                 });
 
-                if let Some(mut export_args) = export_args.take() {
+                if let Some(export_args) = export_args.take() {
                     let mut optional_args = None;
 
                     for (n, arg) in method.sig.inputs.iter_mut().enumerate() {
@@ -377,14 +373,10 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         }
                     }
 
-                    export_args.optional_args = optional_args;
-                    export_args.rpc_mode = rpc.unwrap_or(RpcMode::Disabled);
-                    export_args.name_override = name_override;
-                    export_args.is_deref_return = is_deref_return;
-
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
-                        args: export_args,
+                        export_args,
+                        optional_args,
                     });
                 }
 
