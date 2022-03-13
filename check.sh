@@ -22,6 +22,7 @@ for arg in "${args[@]}"; do
         echo "    test          run unit tests (no Godot)"
         echo "    itest         run integration tests (Godot)"
         echo "    doc           generate docs for 'gdnative' crate"
+        echo "    dok           generate docs and open in browser"
         echo ""
         echo "Examples:"
         echo "    check.sh fmt clippy"
@@ -81,6 +82,9 @@ for arg in "${args[@]}"; do
         ;;
     doc)
         cmds+=("cargo doc --lib -p gdnative --no-deps --features $features")
+        ;;
+    dok)
+        cmds+=("cargo doc --lib -p gdnative --no-deps --features $features --open")
         ;;
     *)
         echo "Unrecognized command '$arg'"
