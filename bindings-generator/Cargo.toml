@@ -16,13 +16,13 @@ debug = []
 custom-godot = ["which"]
 
 [dependencies]
-heck = "0.4.0"
-memchr = "2.4.1"
-miniserde = "0.1.15"
-proc-macro2 = "1.0.30"
-quote = "1.0.10"
-regex = "1.5.4"
-roxmltree = "0.14.1"
-syn = { version = "1.0.80", features = ["full", "extra-traits", "visit"] }
-unindent = "0.1.7"
-which = { optional = true, version = "4.2.2" }
+heck = "0.4"
+memchr = "2"
+miniserde = "0.1.10"
+proc-macro2 = "1"
+quote = "1"
+regex = "1.5.5" # for security: https://blog.rust-lang.org/2022/03/08/cve-2022-24713.html
+roxmltree = "0.14"
+syn = { version = "1", features = ["full", "extra-traits", "visit"] }
+unindent = "0.1.5"
+which = { optional = true, version = "4" }
