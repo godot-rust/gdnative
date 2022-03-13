@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Geometric types API consistency ([#827](https://github.com/godot-rust/godot-rust/pull/827))
   - Rename basis vectors `x, y, z` -> `a, b, c`
   - Pass by value/ref consistency
+  - `Plane` invariants ([#874](https://github.com/godot-rust/godot-rust/pull/874))
   - Other changes (see PRs)
 - Method renames
   - `{String,Variant}::forget()` -> `leak()` ([#828](https://github.com/godot-rust/godot-rust/pull/828))
@@ -72,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Basis::to_scale()` -> `scale()`
   - `Basis::from_elements()` -> `from_rows()`
   - `Transform2D::from_axis_origin()` -> `from_basis_origin()`
+  - `Plane::intersects_*()` -> `intersect_*()` ([#874](https://github.com/godot-rust/godot-rust/pull/874))
+  - `Plane::normalize()` -> `normalized()`
+  - `Plane::has_point()` -> `contains_point()` + `contains_point_eps()`
 - Relax `Dictionary` key bounds: `ToVariant` -> `OwnedToVariant` ([#809](https://github.com/godot-rust/godot-rust/pull/809))
 - `#[inherit]` is now optional and defaults to `Reference` ([#705](https://github.com/godot-rust/godot-rust/pull/705))
 - `Instance` and `TInstance` now use `Own=Shared` by default ([#823](https://github.com/godot-rust/godot-rust/pull/823))
