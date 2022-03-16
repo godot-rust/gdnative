@@ -542,6 +542,12 @@ impl fmt::Debug for Utf8String {
     }
 }
 
+/// Interned string.
+///
+/// Like [`GodotString`], but unique: two `StringName`s with the same string value share the same
+/// internal object. Just like the `GodotString` struct, this type is immutable.
+///
+/// Use [`Self::from_godot_string()`] and [`Self::to_godot_string()`] for conversions.
 pub struct StringName(pub(crate) sys::godot_string_name);
 
 impl StringName {
@@ -579,13 +585,8 @@ impl StringName {
     }
 
     #[inline]
-    pub fn get_name(&self) -> GodotString {
+    pub fn to_godot_string(&self) -> GodotString {
         unsafe { GodotString((get_api().godot_string_name_get_name)(&self.0)) }
-    }
-
-    #[inline]
-    pub fn operator_less(&self, s: &StringName) -> bool {
-        unsafe { (get_api().godot_string_name_operator_less)(&self.0, &s.0) }
     }
 
     #[doc(hidden)]
@@ -617,7 +618,7 @@ impl_basic_traits_as_sys! {
 impl fmt::Debug for StringName {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        self.get_name().to_string().fmt(f)
+        self.to_godot_string().fmt(f)
     }
 }
 
