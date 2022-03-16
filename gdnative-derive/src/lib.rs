@@ -213,11 +213,6 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// Sets the default value *in the inspector* for this property. The setter is *not*
 /// guaranteed to be called by the engine with the value.
 ///
-/// - `before_get` / `after_get` / `before_set` / `after_set` `= "Self::hook_method"`
-///
-/// Call hook methods with `self` and `owner` before and/or after the generated property
-/// accessors.
-///
 /// - `get` / `get_ref` / `set`
 ///
 /// Configure getter/setter for property. All of them can accept a path to specify a custom

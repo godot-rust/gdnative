@@ -8,7 +8,6 @@ pub(crate) fn run_tests() -> bool {
 
     status &= test_derive_to_variant();
     status &= test_derive_owned_to_variant();
-    status &= test_derive_nativeclass_with_property_hooks();
     status &= test_derive_nativeclass_without_constructor();
     status &= test_derive_nativeclass_with_property_get_set();
     status &= test_derive_nativeclass_property_with_only_getter();
@@ -17,7 +16,6 @@ pub(crate) fn run_tests() -> bool {
 }
 
 pub(crate) fn register(handle: InitHandle) {
-    handle.add_class::<PropertyHooks>();
     handle.add_class::<EmplacementOnly>();
     handle.add_class::<CustomGetSet>();
     handle.add_class::<MyVec>();
@@ -170,117 +168,6 @@ fn test_derive_owned_to_variant() -> bool {
                 .collect::<Vec<_>>()
                 .as_slice()
         );
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_owned_to_variant failed");
-    }
-
-    ok
-}
-
-#[derive(gdnative::derive::NativeClass)]
-#[inherit(Node)]
-struct PropertyHooks {
-    #[property(
-        before_get = "Self::before_get",
-        after_get = "Self::after_get",
-        before_set = "Self::before_set",
-        after_set = "Self::after_set"
-    )]
-    value: u32,
-
-    pub before_get_called: Cell<u32>,
-    pub after_get_called: Cell<u32>,
-    pub before_set_value: Option<u32>,
-    pub after_set_value: Option<u32>,
-}
-
-#[gdnative_derive::methods]
-impl PropertyHooks {
-    fn new(_owner: &Node) -> Self {
-        Self {
-            value: 0,
-            before_get_called: Cell::new(0),
-            after_get_called: Cell::new(0),
-            before_set_value: None,
-            after_set_value: None,
-        }
-    }
-
-    fn before_get(&self, _owner: TRef<Node, Shared>) {
-        assert_eq!(self.before_get_called.get(), self.after_get_called.get());
-        self.before_get_called.set(self.before_get_called.get() + 1);
-    }
-
-    fn after_get(&self, _owner: TRef<Node, Shared>) {
-        assert_eq!(
-            self.before_get_called.get(),
-            self.after_get_called.get() + 1
-        );
-        self.after_get_called.set(self.after_get_called.get() + 1);
-    }
-
-    fn assert_get_calls(&self, times: u32) {
-        assert_eq!(times, self.before_get_called.get());
-        assert_eq!(times, self.after_get_called.get());
-    }
-
-    fn before_set(&mut self, _owner: TRef<Node, Shared>) {
-        self.before_set_value = Some(self.value);
-    }
-
-    fn after_set(&mut self, _owner: TRef<Node, Shared>) {
-        self.after_set_value = Some(self.value);
-    }
-
-    fn reset_set_value(&mut self) {
-        self.before_set_value = None;
-        self.after_set_value = None;
-    }
-}
-
-fn test_derive_nativeclass_with_property_hooks() -> bool {
-    println!(" -- test_derive_nativeclass_with_property_hooks");
-
-    let ok = std::panic::catch_unwind(|| {
-        use gdnative::export::user_data::MapMut;
-
-        let thing = Instance::<PropertyHooks, _>::new();
-        let (owner, script) = thing.decouple();
-
-        owner.set("value", 42);
-        script
-            .map_mut(|script| {
-                assert_eq!(Some(0), script.before_set_value);
-                assert_eq!(Some(42), script.after_set_value);
-                script.reset_set_value();
-            })
-            .unwrap();
-
-        script
-            .map_mut(|script| {
-                script.assert_get_calls(0);
-            })
-            .unwrap();
-        assert_eq!(42, u32::from_variant(&owner.get("value")).unwrap());
-        script
-            .map_mut(|script| {
-                script.assert_get_calls(1);
-            })
-            .unwrap();
-
-        owner.set("value", 12345);
-        script
-            .map_mut(|script| {
-                assert_eq!(Some(42), script.before_set_value);
-                assert_eq!(Some(12345), script.after_set_value);
-                script.reset_set_value();
-            })
-            .unwrap();
-
-        owner.free();
     })
     .is_ok();
 
