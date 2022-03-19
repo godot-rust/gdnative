@@ -14,7 +14,7 @@
 
 The bindings cover most of the exposed API of Godot 3.4, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
 
-Minimum supported Rust version (MSRV) is **1.56**.
+Minimum supported Rust version (MSRV) is **1.56**. We use the Rust 2021 Edition.
 
 ## Engine compatibility
 
@@ -38,7 +38,7 @@ This is the recommended way of using godot-rust. After `bindgen` dependencies an
 
 ```toml
 [dependencies]
-gdnative = "0.10.0-rc.0"
+gdnative = "0.10"
 
 [lib]
 crate-type = ["cdylib"]
@@ -71,7 +71,7 @@ A typical use case is to expose your own _Native Class_, a Rust API that can be 
 
 This happens via dynamic libraries and the _GDNative interface_, which will be loaded from Godot. The necessary wiring is done behind the scenes by godot-rust. A simple "Hello world" application could look like this:
 
-```rs
+```rust
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -104,7 +104,7 @@ godot_init!(init);
 >
 > Before launching the examples in the Godot editor, you must first run `cargo build` and wait for the build operations to finish successfully.
 >
->At startup, the Godot editor tries to load all resources used by the project, including the native library. If the latter isn't present, the editor will skip properties or signals associated with the missing native scripts in the scene. This will cause the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
+>At startup, the Godot editor tries to load all resources used by the project, including the native library. If the latter isn't present, the editor will skip properties or signals associated with the missing native scripts in the scene. This causes the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
 
 The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
