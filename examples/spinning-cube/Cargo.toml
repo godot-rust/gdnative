@@ -1,5 +1,5 @@
 [package]
-name = "spinning_cube"
+name = "spinning-cube"
 version = "0.1.0"
 authors = ["The godot-rust developers"]
 edition = "2021"

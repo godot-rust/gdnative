@@ -8,7 +8,8 @@ on:
       - '0.10.[0-9]+-?*'
 
 env:
-  GDRUST_FEATURES: "gdnative/async,gdnative/serde"
+  # Note: used for test and clippy, not for publish
+  GDRUST_FEATURES: "gdnative/async,gdnative/serde,gdnative_bindings_generator/debug"
 
   # Crates to publish -- important, this doesn't work when there are spaces in any of the paths!
   GDRUST_CRATES: >

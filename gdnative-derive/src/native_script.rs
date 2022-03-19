@@ -117,12 +117,6 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                 } else {
                     (config.get, config.set)
                 };
-                let before_get: Option<Stmt> = config
-                    .before_get
-                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-                let after_get: Option<Stmt> = config
-                    .after_get
-                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
                 let with_getter = get.map(|get| {
                     let register_fn = match get {
                         PropertyGet::Owned(_) => quote!(with_getter),
@@ -134,19 +128,10 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     };
                     quote!(
                         .#register_fn(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
-                            #before_get
-                            let res = #get;
-                            #after_get
-                            res
+                            #get
                         })
                     )
                 });
-                let before_set: Option<Stmt> = config
-                    .before_set
-                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
-                let after_set: Option<Stmt> = config
-                    .after_set
-                    .map(|path_expr| parse_quote!(#path_expr(this, _owner);));
                 let with_setter = set.map(|set| {
                     let set: Stmt = match set {
                         PropertySet::Default => parse_quote!(this.#ident = v;),
@@ -154,9 +139,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     };
                     quote!(
                     .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
-                        #before_set
                         #set
-                        #after_set
                     }))
                 });
 
@@ -341,40 +324,6 @@ mod tests {
             #[inherit(Node)]
             struct Foo {
                 #[property]
-                bar: String,
-            }"#,
-        )
-        .unwrap();
-
-        let input: DeriveInput = syn::parse2(input).unwrap();
-
-        parse_derive_input(&input).unwrap();
-    }
-
-    #[test]
-    fn derive_property_before_get() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
-            #[inherit(Node)]
-            struct Foo {
-                #[property(before_get = "foo::bar")]
-                bar: String,
-            }"#,
-        )
-        .unwrap();
-
-        let input: DeriveInput = syn::parse2(input).unwrap();
-
-        parse_derive_input(&input).unwrap();
-    }
-
-    #[test]
-    fn derive_property_before_get_err() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
-            #[inherit(Node)]
-            struct Foo {
-                #[property(before_get = "foo::bar")]
                 bar: String,
             }"#,
         )

@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.0] - unreleased
+## [0.10.0] - 2022-03-19
+
+(Version `0.10.0-rc.0` has been integrated into this change set)
 
 ### Added
 
@@ -47,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rust edition is now 2021 ([#870](https://github.com/godot-rust/godot-rust/pull/870))
 - `euclid` vector library replaced with `glam`, no longer part of public API ([#713](https://github.com/godot-rust/godot-rust/pull/713))
 - `Variant` has now a redesigned conversion API ([#819](https://github.com/godot-rust/godot-rust/pull/819))
-- Type renames (815, 828)
+- Type renames ([#815](https://github.com/godot-rust/godot-rust/pull/815), [#828](https://github.com/godot-rust/godot-rust/pull/828))
   - `RefInstance` -> `TInstance`
   - `RefKind` -> `Memory`
   - `ThreadAccess` -> `Ownership`
@@ -64,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Geometric types API consistency ([#827](https://github.com/godot-rust/godot-rust/pull/827))
   - Rename basis vectors `x, y, z` -> `a, b, c`
   - Pass by value/ref consistency
+  - `Plane` invariants ([#874](https://github.com/godot-rust/godot-rust/pull/874))
   - Other changes (see PRs)
 - Method renames
   - `{String,Variant}::forget()` -> `leak()` ([#828](https://github.com/godot-rust/godot-rust/pull/828))
@@ -72,6 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Basis::to_scale()` -> `scale()`
   - `Basis::from_elements()` -> `from_rows()`
   - `Transform2D::from_axis_origin()` -> `from_basis_origin()`
+  - `StringName::get_name()` -> `to_godot_string()` ([#874](https://github.com/godot-rust/godot-rust/pull/874))
+  - `Plane::intersects_*()` -> `intersect_*()` ([#874](https://github.com/godot-rust/godot-rust/pull/874))
+  - `Plane::normalize()` -> `normalized()`
+  - `Plane::has_point()` -> `contains_point()` + `contains_point_eps()`
 - Relax `Dictionary` key bounds: `ToVariant` -> `OwnedToVariant` ([#809](https://github.com/godot-rust/godot-rust/pull/809))
 - `#[inherit]` is now optional and defaults to `Reference` ([#705](https://github.com/godot-rust/godot-rust/pull/705))
 - `Instance` and `TInstance` now use `Own=Shared` by default ([#823](https://github.com/godot-rust/godot-rust/pull/823))
@@ -98,6 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - access methods for `VariantArray<Shared>` ([#795](https://github.com/godot-rust/godot-rust/pull/795))
   - `Basis::invert()`, `orthonormalize()`, `rotate()`, `tdotx()`, `tdoty()`, `tdotz()` ([#827](https://github.com/godot-rust/godot-rust/pull/827))
   - `Rid::operator_less()` ([#844](https://github.com/godot-rust/godot-rust/pull/844))
+  - `StringName::operator_less()` ([#874](https://github.com/godot-rust/godot-rust/pull/874))
+- Macros and attributes
+  - `#[property(before_get|before_set|after_get|after_set)]`, replaced with `#[property(get|set)]` ([#874](https://github.com/godot-rust/godot-rust/pull/874))
 - From `prelude`
   - macros`godot_gdnative_init`, `godot_gdnative_terminate`, `godot_nativescript_init`, `godot_site` ([#811](https://github.com/godot-rust/godot-rust/pull/811))
 

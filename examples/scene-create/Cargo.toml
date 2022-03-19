@@ -1,5 +1,5 @@
 [package]
-name = "scene_create"
+name = "scene-create"
 version = "0.1.0"
 authors = ["The godot-rust developers"]
 publish = false

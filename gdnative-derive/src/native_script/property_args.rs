@@ -18,12 +18,8 @@ pub struct PropertyAttrArgs {
     pub path: Option<String>,
     pub default: Option<syn::Lit>,
     pub hint: Option<syn::Path>,
-    pub before_get: Option<syn::Path>,
     pub get: Option<PropertyGet>,
-    pub after_get: Option<syn::Path>,
-    pub before_set: Option<syn::Path>,
     pub set: Option<PropertySet>,
-    pub after_set: Option<syn::Path>,
     pub no_editor: bool,
 }
 
@@ -32,12 +28,8 @@ pub struct PropertyAttrArgsBuilder {
     path: Option<String>,
     default: Option<syn::Lit>,
     hint: Option<syn::Path>,
-    before_get: Option<syn::Path>,
     get: Option<PropertyGet>,
-    after_get: Option<syn::Path>,
-    before_set: Option<syn::Path>,
     set: Option<PropertySet>,
-    after_set: Option<syn::Path>,
     no_editor: bool,
 }
 
@@ -48,12 +40,8 @@ impl PropertyAttrArgsBuilder {
             path: None,
             default: None,
             hint: None,
-            before_get: None,
             get: None,
-            after_get: None,
-            before_set: None,
             set: None,
-            after_set: None,
             no_editor: false,
         }
     }
@@ -120,28 +108,6 @@ impl PropertyAttrArgsBuilder {
                     ));
                 }
             }
-            "before_get" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'before_get' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                if let Some(old) = self.before_get.replace(path) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!(
-                            "there is already a 'before_get' attribute with value: {:?}",
-                            old
-                        ),
-                    ));
-                }
-            }
             "get" => {
                 let string = if let syn::Lit::Str(lit_str) = &pair.lit {
                     lit_str.value()
@@ -185,50 +151,6 @@ impl PropertyAttrArgsBuilder {
                     ));
                 }
             }
-            "after_get" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'after_get' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                if let Some(old) = self.after_get.replace(path) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!(
-                            "there is already a 'after_get' attribute with value: {:?}",
-                            old
-                        ),
-                    ));
-                }
-            }
-            "before_set" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'before_set' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                if let Some(old) = self.before_set.replace(path) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!(
-                            "there is already a 'before_set' attribute with value: {:?}",
-                            old
-                        ),
-                    ));
-                }
-            }
             "set" => {
                 let string = if let syn::Lit::Str(lit_str) = &pair.lit {
                     lit_str.value()
@@ -246,28 +168,6 @@ impl PropertyAttrArgsBuilder {
                     return Err(syn::Error::new(
                         pair.span(),
                         format!("there is already a 'set' attribute with value: {:?}", old),
-                    ));
-                }
-            }
-            "after_set" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'after_set' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                if let Some(old) = self.after_set.replace(path) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!(
-                            "there is already a 'after_set' attribute with value: {:?}",
-                            old
-                        ),
                     ));
                 }
             }
@@ -317,12 +217,8 @@ impl PropertyAttrArgsBuilder {
             path: self.path,
             default: self.default,
             hint: self.hint,
-            before_get: self.before_get,
             get: self.get,
-            after_get: self.after_get,
-            before_set: self.before_set,
             set: self.set,
-            after_set: self.after_set,
             no_editor: self.no_editor,
         }
     }

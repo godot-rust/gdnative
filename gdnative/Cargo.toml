@@ -6,7 +6,7 @@ keywords = ["gamedev", "godot", "engine", "bindings"]
 documentation = "https://docs.rs/crate/gdnative"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
-version = "0.10.0-rc.0"
+version = "0.10.0"
 license = "MIT"
 workspace = ".."
 readme = "../README.md"
@@ -26,10 +26,10 @@ gd-test = ["gdnative-core/gd-test"]
 type-tag-fallback = ["gdnative-core/type-tag-fallback"]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive", version = "=0.10.0-rc.0" }
-gdnative-core = { path = "../gdnative-core", version = "=0.10.0-rc.0" }
-gdnative-bindings = { path = "../gdnative-bindings", version = "=0.10.0-rc.0" }
-gdnative-async = { path = "../gdnative-async", version = "=0.10.0-rc.0", optional = true }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.10.0" }
+gdnative-core = { path = "../gdnative-core", version = "=0.10.0" }
+gdnative-bindings = { path = "../gdnative-bindings", version = "=0.10.0" }
+gdnative-async = { path = "../gdnative-async", version = "=0.10.0", optional = true }
 
 [dev-dependencies]
 trybuild = "1.0.18" # earrlier versions use broken termcolor 1.0.0

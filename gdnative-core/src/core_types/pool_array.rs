@@ -133,6 +133,7 @@ impl<T: PoolElement> PoolArray<T> {
     ///
     /// If the resulting length would not fit in `i32`.
     #[inline]
+    #[allow(clippy::iter_with_drain)] // "`drain(..)` used on a `Vec`"; suggests `into_iter()` but we don't have the vec by value
     pub fn append_vec(&mut self, src: &mut Vec<T>) {
         let start = self.len() as usize;
         let new_len = start + src.len();
@@ -266,7 +267,7 @@ impl<T: PoolElement> PoolArray<T> {
 impl<T: PoolElement + Copy> PoolArray<T> {
     /// Creates a new `PoolArray` by copying from `src`.
     ///
-    /// Equivalent to
+    /// Equivalent to a new object created with [`new()`][Self::new], followed by a subsequent [`append_slice()`][Self::append_slice].
     ///
     /// # Panics
     ///
