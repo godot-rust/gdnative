@@ -18,7 +18,7 @@ custom-godot = ["which"]
 [dependencies]
 heck = "0.4"
 memchr = "2"
-miniserde = "0.1.10"
+miniserde = "0.1.16"
 proc-macro2 = "1"
 quote = "1"
 regex = { version = "1.5.5", default-features = false, features = ["std"] } # for security: https://blog.rust-lang.org/2022/03/08/cve-2022-24713.html

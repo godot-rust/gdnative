@@ -25,7 +25,7 @@ env:
 
 
 # In the very unlikely cases where two PRs are merged, and the first 'doc' job is still running when the 2nd 'full-ci' starts,
-# make sure the first one is awaited. Even though docs are eventually overwritten, this ensures continuitiy in the doc repo history.
+# make sure the first one is awaited. Even though docs are eventually overwritten, this ensures continuity in the doc repo history.
 concurrency:
   group: 'sync-doc'
   cancel-in-progress: false
@@ -58,6 +58,7 @@ jobs:
       # For email address, see https://github.community/t/github-actions-bot-email-address/17204
       # As search-index.js changes every time, even if source hasn't changed, this will not need 'git commit --allow-empty'
       - name: "Prepare upload"
+        id: prepareUpload
         run: |
           mkdir ~/.ssh
           echo '${{ secrets.DOC_DEPLOY_SSH_KEY }}' > ~/.ssh/id_rsa
@@ -72,23 +73,30 @@ jobs:
           mv ${GITHUB_WORKSPACE}/target/doc/* .
           mv ${GITHUB_WORKSPACE}/.github/workflows/doc/* .
 
-          GDRUST_VERSION=$(grep -Po '^version = "\K[^"]*' ${GITHUB_WORKSPACE}/gdnative/Cargo.toml)
-          GDRUST_SHORT_SHA=$(git rev-parse --short "${GITHUB_SHA}")
+          libVersion=$(grep -Po '^version = "\K[^"]*' ${GITHUB_WORKSPACE}/gdnative/Cargo.toml)
+          shortSha=$(git rev-parse --short "${GITHUB_SHA}")
 
-          find gdnative -name .html -o -type f -print0 | xargs -0 sed -i 's/'"${GDRUST_VERSION}"'/master/g'
+          find gdnative -name .html -o -type f -print0 | xargs -0 sed -i 's/'"$libVersion"'/master/g'
 
-          git add --all
-          git commit -m "Sync doc from ${GDRUST_SHORT_SHA}
-
-          Revision in godot-rust: ${GITHUB_SHA}"
+          if git diff --exit-code 
+          then
+            echo "$shortSha introduces no doc changes; skip commit and push."
+          else
+            git add --all
+            git commit -m "Sync doc from $shortSha
+  
+            Revision in godot-rust: ${GITHUB_SHA}"
+          
+            echo ::set-output name=docsChanged::true
+          fi
 
       - name: "Upload"
         working-directory: doc
         run: git push origin ${GDRUST_DOC_BRANCH}
+        if: ${{ steps.prepareUpload.outputs.docsChanged == 'true' }}
 
       - name: "Cleanup"
         run: shred -u ~/.ssh/id_rsa
-
 
 
 # Possible alternative: dispatching a remote workflow
