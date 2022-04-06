@@ -1,7 +1,9 @@
 use crate::*;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::default::Default;
 use std::fmt;
+use std::hash::Hash;
 use std::mem::{forget, transmute};
 use std::ptr;
 
@@ -1602,6 +1604,33 @@ impl<T: FromVariant> FromVariant for Vec<T> {
     }
 }
 
+impl<K: ToVariant + Hash + ToVariantEq, V: ToVariant> ToVariant for HashMap<K, V> {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        let dict = Dictionary::new();
+        for (key, value) in self {
+            dict.insert(key, value);
+        }
+        dict.owned_to_variant()
+    }
+}
+
+impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
+    #[inline]
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        let dictionary = Dictionary::from_variant(variant)?;
+        let len: usize = dictionary
+            .len()
+            .try_into()
+            .expect("Dictionary length should fit in usize");
+        let mut hash_map = HashMap::with_capacity(len);
+        for (key, value) in dictionary.iter() {
+            hash_map.insert(K::from_variant(&key)?, V::from_variant(&value)?);
+        }
+        Ok(hash_map)
+    }
+}
+
 macro_rules! tuple_length {
     () => { 0usize };
     ($_x:ident, $($xs:ident,)*) => {
@@ -1772,6 +1801,38 @@ godot_test!(
         assert_eq!(Some(&42), vec_maybe[0].as_ref().ok());
         assert_eq!(Some(&Variant::nil()), vec_maybe[1].as_ref().err());
         assert_eq!(Some(&f64::to_variant(&54.0)), vec_maybe[2].as_ref().err());
+    }
+
+    test_variant_hash_map {
+        let original_hash_map = HashMap::from([
+            ("Foo".to_string(), 4u32),
+            ("Bar".to_string(), 2u32)
+        ]);
+        let variant = original_hash_map.to_variant();
+        let check_hash_map = variant.try_to::<HashMap<String, u32>>().expect("should be hash map");
+        assert_eq!(original_hash_map, check_hash_map);
+        // Check conversion of heterogeneous dictionary key types
+        let non_homogenous_key_dictonary = Dictionary::new();
+        non_homogenous_key_dictonary.insert("Foo".to_string(), 4u32);
+        non_homogenous_key_dictonary.insert(7, 2u32);
+        assert_eq!(
+            non_homogenous_key_dictonary.owned_to_variant().try_to::<HashMap<String, u32>>(),
+            Err(FromVariantError::InvalidVariantType {
+                variant_type: VariantType::I64,
+                expected: VariantType::GodotString
+            }),
+        );
+        // Check conversion of heterogeneous dictionary value types
+        let non_homogenous_value_dictonary = Dictionary::new();
+        non_homogenous_value_dictonary.insert("Foo".to_string(), 4u32);
+        non_homogenous_value_dictonary.insert("Bar".to_string(), "Unexpected".to_string());
+        assert_eq!(
+            non_homogenous_value_dictonary.owned_to_variant().try_to::<HashMap<String, u32>>(),
+            Err(FromVariantError::InvalidVariantType {
+                variant_type: VariantType::GodotString,
+                expected: VariantType::I64
+            }),
+        );
     }
 
     test_variant_tuple {
