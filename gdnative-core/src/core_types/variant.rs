@@ -1625,11 +1625,7 @@ impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
             .expect("Dictionary length should fit in usize");
         let mut hash_map = HashMap::with_capacity(len);
         for (key, value) in dictionary.iter() {
-            hash_map.insert(
-                K::from_variant(&key)?,
-                // Maybe add a custom FromVariantError variant if this fails
-                V::from_variant(&value)?,
-            );
+            hash_map.insert(K::from_variant(&key)?, V::from_variant(&value)?);
         }
         Ok(hash_map)
     }
@@ -1815,6 +1811,28 @@ godot_test!(
         let variant = original_hash_map.to_variant();
         let check_hash_map = variant.try_to::<HashMap<String, u32>>().expect("should be hash map");
         assert_eq!(original_hash_map, check_hash_map);
+        // Check conversion of heterogeneous dictionary key types
+        let non_homogenous_key_dictonary = Dictionary::new();
+        non_homogenous_key_dictonary.insert("Foo".to_string(), 4u32);
+        non_homogenous_key_dictonary.insert(7, 2u32);
+        assert_eq!(
+            non_homogenous_key_dictonary.owned_to_variant().try_to::<HashMap<String, u32>>(),
+            Err(FromVariantError::InvalidVariantType {
+                variant_type: VariantType::I64,
+                expected: VariantType::GodotString
+            }),
+        );
+        // Check conversion of heterogeneous dictionary value types
+        let non_homogenous_value_dictonary = Dictionary::new();
+        non_homogenous_value_dictonary.insert("Foo".to_string(), 4u32);
+        non_homogenous_value_dictonary.insert("Bar".to_string(), "Unexpected".to_string());
+        assert_eq!(
+            non_homogenous_value_dictonary.owned_to_variant().try_to::<HashMap<String, u32>>(),
+            Err(FromVariantError::InvalidVariantType {
+                variant_type: VariantType::GodotString,
+                expected: VariantType::I64
+            }),
+        );
     }
 
     test_variant_tuple {
