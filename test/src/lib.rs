@@ -45,6 +45,8 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_variant_option();
     status &= gdnative::core_types::test_variant_result();
     status &= gdnative::core_types::test_variant_hash_map();
+    status &= gdnative::core_types::test_variant_hash_set();
+    status &= gdnative::core_types::test_variant_vec();
     status &= gdnative::core_types::test_to_variant_iter();
     status &= gdnative::core_types::test_variant_tuple();
     status &= gdnative::core_types::test_variant_dispatch();
