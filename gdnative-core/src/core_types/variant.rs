@@ -1,6 +1,6 @@
 use crate::*;
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::default::Default;
 use std::fmt;
 use std::hash::Hash;
@@ -1628,6 +1628,38 @@ impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
             hash_map.insert(K::from_variant(&key)?, V::from_variant(&value)?);
         }
         Ok(hash_map)
+    }
+}
+
+impl<T: ToVariant> ToVariant for HashSet<T> {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        let array = VariantArray::new();
+        for value in self {
+            array.push(value.to_variant());
+        }
+        array.owned_to_variant()
+    }
+}
+
+impl<T: Eq + std::hash::Hash + FromVariant> FromVariant for HashSet<T> {
+    #[inline]
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        let arr = VariantArray::from_variant(variant)?;
+        let len: usize = arr
+            .len()
+            .try_into()
+            .expect("VariantArray length should fit in usize");
+        let mut set = HashSet::with_capacity(len);
+        for idx in 0..len as i32 {
+            let item =
+                T::from_variant(&arr.get(idx)).map_err(|e| FromVariantError::InvalidItem {
+                    index: idx as usize,
+                    error: Box::new(e),
+                })?;
+            set.insert(item);
+        }
+        Ok(set)
     }
 }
 
