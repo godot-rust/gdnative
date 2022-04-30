@@ -60,10 +60,12 @@ pub(crate) struct ExportMethod {
     pub(crate) sig: Signature,
     pub(crate) export_args: ExportArgs,
     pub(crate) optional_args: Option<usize>,
+    pub(crate) exist_base_arg: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(crate) struct ExportArgs {
+    pub(crate) is_old_syntax: bool,
     pub(crate) rpc_mode: Option<RpcMode>,
     pub(crate) name_override: Option<String>,
     pub(crate) is_deref_return: bool,
@@ -80,7 +82,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
     let methods = export
         .methods
         .into_iter()
-        .map(|ExportMethod { sig, export_args , optional_args}| {
+        .map(|ExportMethod { sig, export_args, optional_args, exist_base_arg}| {
             let sig_span = sig.ident.span();
 
             let name = sig.ident;
@@ -93,10 +95,18 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
 
             let arg_count = sig.inputs.len();
 
-            if arg_count < 2 {
+            if arg_count == 0 {
                 return syn::Error::new(
                     sig_span,
-                    "exported methods must take self and owner as arguments",
+                    "exported methods must take self parameter",
+                )
+                .to_compile_error();
+            }
+
+            if export_args.is_old_syntax && !exist_base_arg {
+                return syn::Error::new(
+                    sig_span,
+                    "exported methods must take second parameter",
                 )
                 .to_compile_error();
             }
@@ -106,7 +116,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                     let max_optional = arg_count - 2; // self and owner
                     if count > max_optional {
                         let message = format!(
-                            "there can be at most {} optional arguments, got {}",
+                            "there can be at most {} optional parameters, got {}",
                             max_optional, count,
                         );
                         return syn::Error::new(sig_span, message).to_compile_error();
@@ -121,13 +131,17 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
 
             let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
                 let span = arg.span();
-                if n < arg_count - optional_args {
+                if exist_base_arg && n == 1 {
+                    quote_spanned!(span => #[base] #arg ,)
+                }
+                else if n < arg_count - optional_args {
                     quote_spanned!(span => #arg ,)
                 } else {
                     quote_spanned!(span => #[opt] #arg ,)
                 }
             });
 
+            // See gdnative-core::export::deprecated_reference_return!()
             let deprecated = if let syn::ReturnType::Type(_, ty) = &sig.output {
                 if !is_deref_return && matches!(**ty, syn::Type::Reference(_)) {
                     quote_spanned!(ret_span=> ::gdnative::export::deprecated_reference_return!();)
@@ -208,9 +222,23 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             .last()
                             .map(|i| i.ident.to_string());
 
-                        if let Some("export") = last_seg.as_deref() {
-                            let mut _export_args = export_args.get_or_insert_with(ExportArgs::default);
+                        let (is_export, is_old_syntax) = if let Some("export") = last_seg.as_deref()
+                        {
+                            (true, true)
+                        } else if let Some("method") = last_seg.as_deref() {
+                            (true, false)
+                        } else {
+                            (false, false)
+                        };
+
+                        if is_export {
                             use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
+                            let mut export_args =
+                                export_args.get_or_insert_with(ExportArgs::default);
+                            export_args.is_old_syntax = is_old_syntax;
+
+                            // Codes like #[macro(path, name = "value")] are accepted.
+                            // Codes like #[path], #[name = "value"] or #[macro("lit")] are not accepted.
                             let nested_meta_iter = match attr.parse_meta() {
                                 Err(err) => {
                                     errors.push(err);
@@ -260,7 +288,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                         Some(Lit::Str(str)) => {
                                             let value = str.value();
                                             if let Some(mode) = RpcMode::parse(value.as_str()) {
-                                                if _export_args.rpc_mode.replace(mode).is_some() {
+                                                if export_args.rpc_mode.replace(mode).is_some() {
                                                     errors.push(syn::Error::new(
                                                         nested_meta.span(),
                                                         "rpc mode was set more than once",
@@ -290,7 +318,11 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             ));
                                         }
                                         Some(Lit::Str(str)) => {
-                                            if _export_args.name_override.replace(str.value()).is_some() {
+                                            if export_args
+                                                .name_override
+                                                .replace(str.value())
+                                                .is_some()
+                                            {
                                                 errors.push(syn::Error::new(
                                                     nested_meta.span(),
                                                     "name was set more than once",
@@ -311,13 +343,13 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             nested_meta.span(),
                                             "value for deref_return parameter is not valid",
                                         ));
-                                    } else if _export_args.is_deref_return {
+                                    } else if export_args.is_deref_return {
                                         errors.push(syn::Error::new(
                                             nested_meta.span(),
                                             "deref_return was apply more than once",
                                         ));
                                     } else {
-                                        _export_args.is_deref_return = true;
+                                        export_args.is_deref_return = true;
                                     }
                                 } else {
                                     let msg = format!(
@@ -336,6 +368,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                 if let Some(export_args) = export_args.take() {
                     let mut optional_args = None;
+                    let mut exist_base_arg = false;
 
                     for (n, arg) in method.sig.inputs.iter_mut().enumerate() {
                         let attrs = match arg {
@@ -344,15 +377,24 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         };
 
                         let mut is_optional = false;
+                        let mut is_base = false;
 
                         attrs.retain(|attr| {
                             if attr.path.is_ident("opt") {
                                 is_optional = true;
                                 false
+                            } else if attr.path.is_ident("base") {
+                                is_base = true;
+                                false
                             } else {
                                 true
                             }
                         });
+
+                        // In the old syntax, the second parameter is always the base parameter.
+                        if export_args.is_old_syntax && n == 1 {
+                            is_base = true;
+                        }
 
                         if is_optional {
                             if n < 2 {
@@ -360,16 +402,24 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     arg.span(),
                                     "self or owner cannot be optional",
                                 ));
-                                continue;
+                            } else {
+                                *optional_args.get_or_insert(0) += 1;
                             }
-
-                            *optional_args.get_or_insert(0) += 1;
                         } else if optional_args.is_some() {
                             errors.push(syn::Error::new(
                                 arg.span(),
                                 "cannot add required parameters after optional ones",
                             ));
-                            continue;
+                        }
+
+                        if is_base {
+                            exist_base_arg = true;
+                            if n != 1 {
+                                errors.push(syn::Error::new(
+                                    arg.span(),
+                                    "base must be the second parameter.",
+                                ));
+                            }
                         }
                     }
 
@@ -377,6 +427,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         sig: method.sig.clone(),
                         export_args,
                         optional_args,
+                        exist_base_arg,
                     });
                 }
 
@@ -423,7 +474,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 continue;
             }
 
-            // remove "mut" from arguments.
+            // remove "mut" from parameters.
             // give every wildcard a (hopefully) unique name.
             method
                 .sig

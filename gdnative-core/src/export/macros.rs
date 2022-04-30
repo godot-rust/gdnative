@@ -22,11 +22,25 @@ macro_rules! godot_wrap_method_if_deref {
     };
 }
 
+// The ways of emit warnings is a terrible hack.
+// This is because there is no way to emit warnings from macros in stable Rust.
+//
+// Follow these steps to emit warnings.
+// - Detect whether reference types are used in gdnative-derive::methods::derive_methods().
+// - Expand the call to the deprecated_reference_return!() macro to user code.
 #[doc(hidden)]
 #[macro_export]
 #[deprecated = "This function does not actually pass by reference to the Godot engine. You can clarify by writing #[export(deref_return)]."]
 macro_rules! deprecated_reference_return {
     () => {};
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! godot_wrap_method_void {
+    ($ident:ident, $void:tt) => {
+        $ident
+    };
 }
 
 #[doc(hidden)]
@@ -38,7 +52,7 @@ macro_rules! godot_wrap_method_inner {
         $map_method:ident,
         fn $method_name:ident(
             $self:ident
-            , $owner:ident : $owner_ty:ty
+            $(, #[base] $base:ident : $base_ty:ty)?
             $(, $pname:ident : $pty:ty)*
             $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
         ) -> $retty:ty
@@ -67,11 +81,11 @@ macro_rules! godot_wrap_method_inner {
                     Args { $($pname,)* $($opt_pname,)* }: Args,
                 ) -> $crate::core_types::Variant {
                     this
-                        .$map_method(|__rust_val, $owner| {
+                        .$map_method(|__rust_val, __base| {
                             #[allow(unused_unsafe)]
                             unsafe {
                                 let ret = __rust_val.$method_name(
-                                    OwnerArg::from_safe_ref($owner),
+                                    $(OwnerArg::from_safe_ref($crate::godot_wrap_method_void!(__base,$base)),)?
                                     $($pname,)*
                                     $($opt_pname,)*
                                 );
@@ -118,7 +132,7 @@ macro_rules! godot_wrap_method {
         $is_deref_return:ident,
         fn $method_name:ident(
             &mut $self:ident
-            , $owner:ident : $owner_ty:ty
+            $(, #[base] $base:ident : $base_ty:ty)?
             $(, $pname:ident : $pty:ty)*
             $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
@@ -130,7 +144,7 @@ macro_rules! godot_wrap_method {
             map_mut,
             fn $method_name(
                 $self
-                , $owner : $owner_ty
+                $(, #[base] $base : $base_ty)?
                 $(, $pname : $pty)*
                 $(, #[opt] $opt_pname : $opt_pty)*
             ) -> godot_wrap_method_return_type!($($retty)?)
@@ -142,7 +156,7 @@ macro_rules! godot_wrap_method {
         $is_deref_return:ident,
         fn $method_name:ident(
             & $self:ident
-            , $owner:ident : $owner_ty:ty
+            $(, #[base] $base:ident : $base_ty:ty)?
             $(, $pname:ident : $pty:ty)*
             $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
@@ -154,7 +168,7 @@ macro_rules! godot_wrap_method {
             map,
             fn $method_name(
                 $self
-                , $owner : $owner_ty
+                $(, #[base] $base : $base_ty)?
                 $(, $pname : $pty)*
                 $(, #[opt] $opt_pname : $opt_pty)*
             ) -> godot_wrap_method_return_type!($($retty)?)
@@ -166,7 +180,7 @@ macro_rules! godot_wrap_method {
         $is_deref_return:ident,
         fn $method_name:ident(
             mut $self:ident
-            , $owner:ident : $owner_ty:ty
+            $(, #[base] $base:ident : $base_ty:ty)?
             $(, $pname:ident : $pty:ty)*
             $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
@@ -178,7 +192,7 @@ macro_rules! godot_wrap_method {
             map_owned,
             fn $method_name(
                 $self
-                , $owner : $owner_ty
+                $(, #[base] $base : $base_ty)?
                 $(, $pname : $pty)*
                 $(, #[opt] $opt_pname : $opt_pty)*
             ) -> godot_wrap_method_return_type!($($retty)?)
@@ -190,7 +204,7 @@ macro_rules! godot_wrap_method {
         $is_deref_return:ident,
         fn $method_name:ident(
             $self:ident
-            , $owner:ident : $owner_ty:ty
+            $(, #[base] $base:ident : $base_ty:ty)?
             $(, $pname:ident : $pty:ty)*
             $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
@@ -202,7 +216,7 @@ macro_rules! godot_wrap_method {
             map_owned,
             fn $method_name(
                 $self
-                , $owner : $owner_ty
+                $(, #[base] $base : $base_ty)?
                 $(, $pname : $pty)*
                 $(, #[opt] $opt_pname : $opt_pty)*
             ) -> godot_wrap_method_return_type!($($retty)?)

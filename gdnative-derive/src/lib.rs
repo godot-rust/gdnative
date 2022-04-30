@@ -50,7 +50,7 @@ mod variant;
 /// impl gdnative::export::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
 ///         use gdnative::export::*;
-///         builder.method("foo", gdnative::export::godot_wrap_method!(Foo, false, fn foo(&self, _owner: &Reference, bar: i64) -> i64))
+///         builder.method("foo", gdnative::export::godot_wrap_method!(Foo, false, fn foo(&self, #[base] _owner: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
 ///     }
