@@ -1,8 +1,10 @@
 //! Method registration
 
 use std::borrow::Cow;
+use std::convert::TryFrom;
 use std::fmt;
 use std::marker::PhantomData;
+use std::ops::Bound;
 
 use crate::core_types::{FromVariant, FromVariantError, Variant};
 use crate::export::class::NativeClass;
@@ -212,14 +214,15 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
 /// for common operations with them. Can also be used as an iterator.
 pub struct Varargs<'a> {
     idx: usize,
-    iter: std::slice::Iter<'a, &'a Variant>,
+    args: &'a [&'a Variant],
+    offset_index: usize,
 }
 
 impl<'a> Varargs<'a> {
     /// Returns the amount of arguments left.
     #[inline]
     pub fn len(&self) -> usize {
-        self.iter.len()
+        self.args.len() - self.idx
     }
 
     #[inline]
@@ -250,7 +253,7 @@ impl<'a> Varargs<'a> {
     /// Returns the remaining arguments as a slice of `Variant`s.
     #[inline]
     pub fn as_slice(&self) -> &'a [&'a Variant] {
-        self.iter.as_slice()
+        self.args
     }
 
     /// Discard the rest of the arguments, and return an error if there is any.
@@ -284,8 +287,119 @@ impl<'a> Varargs<'a> {
         let args = std::mem::transmute::<&[*mut sys::godot_variant], &[&Variant]>(args);
         Self {
             idx: 0,
-            iter: args.iter(),
+            args,
+            offset_index: 0,
         }
+    }
+
+    /// Check the length of arguments.
+    /// See `get()`, `get_opt()` or `get_rest()` for examples.
+    ///
+    /// # Errors
+    /// Returns an error if the length of arguments is outside the specified range.
+    #[inline]
+    pub fn check_length(&self, bounds: impl ArgumentBounds) -> Result<(), ArgumentLengthError> {
+        let passed = self.args.len();
+        if bounds.contains(&passed) {
+            Ok(())
+        } else {
+            Err(ArgumentLengthError::new(passed, bounds))
+        }
+    }
+
+    /// Returns the type-converted value at the specified argument position.
+    ///
+    /// # Errors
+    /// Returns an error if the conversion fails or the argument is not set.
+    ///
+    /// # Examples
+    /// ```
+    /// # fn call(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
+    ///     args.check_length(2)?;
+    ///     let a: usize = args.get(0)?;
+    ///     let rest: i64 = args.get(1)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn get<T: FromVariant>(&self, index: usize) -> Result<T, ArgumentTypeError> {
+        let relative_index = index;
+        let actual_index = index + self.offset_index;
+
+        match self.args.get(relative_index) {
+            Some(v) => match T::from_variant(v) {
+                Ok(ok) => Ok(ok),
+                Err(err) => Err(ArgumentTypeError::new(actual_index, err)),
+            },
+            None => {
+                let err = FromVariantError::Custom("Argument is not set".to_owned());
+                Err(ArgumentTypeError::new(actual_index, err))
+            }
+        }
+    }
+
+    /// Returns the type-converted value at the specified argument position.
+    /// Returns `None` if the argument is not set.
+    ///
+    /// # Errors
+    /// Returns an error if the conversion fails.
+    ///
+    /// # Examples
+    /// ```
+    /// # fn call(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
+    ///     args.check_length(1..=2)?;
+    ///     let a: usize = args.get(0)?;
+    ///     let rest: i64 = args.get_opt(1)?.unwrap_or(72);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn get_opt<T: FromVariant>(&self, index: usize) -> Result<Option<T>, ArgumentTypeError> {
+        let relative_index = index;
+        let actual_index = index + self.offset_index;
+
+        match self.args.get(relative_index) {
+            Some(v) => match T::from_variant(v) {
+                Ok(ok) => Ok(Some(ok)),
+                Err(err) => Err(ArgumentTypeError::new(actual_index, err)),
+            },
+            None => Ok(None),
+        }
+    }
+
+    /// Returns the type-converted value from the specified argument position.
+    ///
+    /// # Errors
+    /// Returns an error if the conversion fails.
+    ///
+    /// # Examples
+    /// ```ignore
+    /// # fn call(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
+    ///     args.check_length(1..)?;
+    ///     let a: usize = args.get(0)?;
+    ///     let rest: Vec<i64> = args.get_rest(1)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn get_rest<T: TryFrom<Varargs<'a>>>(&self, rest_index: usize) -> Result<T, T::Error> {
+        let relative_rest_index = rest_index;
+        let actual_rest_index = rest_index + self.offset_index;
+
+        let rest = self.args.get(relative_rest_index..).unwrap_or_default();
+        let varargs = Varargs::<'a> {
+            idx: 0,
+            args: rest,
+            offset_index: actual_rest_index,
+        };
+        T::try_from(varargs)
+    }
+
+    /// Get the varargs's offset index.
+    #[inline]
+    #[must_use]
+    pub fn offset_index(&self) -> usize {
+        self.offset_index
     }
 }
 
@@ -293,7 +407,344 @@ impl<'a> Iterator for Varargs<'a> {
     type Item = &'a Variant;
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().copied()
+        let ret = self.args.get(self.idx);
+        ret.map(|&v| {
+            self.idx += 1;
+            v
+        })
+    }
+}
+
+// Return a second token.
+macro_rules! replace_expr {
+    ($_t:tt $sub:expr) => {
+        $sub
+    };
+}
+
+// Count parameters.
+macro_rules! count_tts {
+    ($($tts:tt)*) => {
+        0usize $(+ replace_expr!($tts 1usize))*
+    };
+}
+
+// Convert from Varargs to tuples, implement traits.
+macro_rules! varargs_into_tuple {
+    ($($params:ident),*) => {
+        impl<'a, $($params: FromVariant),*> std::convert::TryFrom<Varargs<'a>> for ($($params,)*) {
+            type Error = VarargsError;
+
+            #[inline]
+            fn try_from(args: Varargs<'a>) -> Result<Self, Self::Error> {
+                const EXPECTED: usize = count_tts!($($params)*);
+                args.check_length(EXPECTED)?;
+                let mut i: usize = 0;
+                #[allow(unused_variables, unused_mut)]
+                let mut inc = || {
+                    let ret = i;
+                    i += 1;
+                    ret
+                };
+                Ok((
+                    $(args.get::<$params>(inc())?,)*
+                ))
+            }
+        }
+    };
+}
+
+// Define up to the length supported by standard library.
+varargs_into_tuple!();
+varargs_into_tuple!(A);
+varargs_into_tuple!(A, B);
+varargs_into_tuple!(A, B, C);
+varargs_into_tuple!(A, B, C, D);
+varargs_into_tuple!(A, B, C, D, E);
+varargs_into_tuple!(A, B, C, D, E, F);
+varargs_into_tuple!(A, B, C, D, E, F, G);
+varargs_into_tuple!(A, B, C, D, E, F, G, H);
+varargs_into_tuple!(A, B, C, D, E, F, G, H, I);
+varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J);
+varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J, K);
+varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J, K, L);
+
+/// All possible error types for convert from Varargs.
+#[derive(Debug)]
+pub enum VarargsError {
+    ArgumentTypeError(ArgumentTypeError),
+    ArgumentLengthError(ArgumentLengthError),
+}
+
+impl std::error::Error for VarargsError {}
+impl std::fmt::Display for VarargsError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            VarargsError::ArgumentTypeError(e) => e.fmt(f),
+            VarargsError::ArgumentLengthError(e) => e.fmt(f),
+        }
+    }
+}
+
+impl From<ArgumentTypeError> for VarargsError {
+    #[inline]
+    fn from(value: ArgumentTypeError) -> Self {
+        Self::ArgumentTypeError(value)
+    }
+}
+
+impl From<ArgumentLengthError> for VarargsError {
+    #[inline]
+    fn from(value: ArgumentLengthError) -> Self {
+        Self::ArgumentLengthError(value)
+    }
+}
+
+/// Error to argument type do not match.
+#[derive(Debug)]
+pub struct ArgumentTypeError {
+    index: usize,
+    nested_error: FromVariantError,
+}
+
+impl ArgumentTypeError {
+    /// Create a new error with the argument position and `FromVariantError`.
+    #[inline]
+    #[must_use]
+    pub fn new(index: usize, nested_error: FromVariantError) -> Self {
+        Self {
+            index,
+            nested_error,
+        }
+    }
+
+    /// Returns an ordinal number representation.
+    #[inline]
+    #[must_use]
+    fn ordinal(&self) -> String {
+        match self.index + 1 {
+            1 => "1st".to_owned(),
+            2 => "2nd".to_owned(),
+            3 => "3rd".to_owned(),
+            i @ 4.. => format!("{i}th"),
+            _ => "unknown".to_owned(),
+        }
+    }
+
+    /// Get the argument type error's index.
+    #[inline]
+    #[must_use]
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    /// Get a reference to the argument type error's nested error.
+    #[inline]
+    #[must_use]
+    pub fn nested_error(&self) -> &FromVariantError {
+        &self.nested_error
+    }
+}
+
+impl std::error::Error for ArgumentTypeError {}
+impl std::fmt::Display for ArgumentTypeError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Incorrect type of {} argument, Cause: {}",
+            self.ordinal(),
+            self.nested_error,
+        )
+    }
+}
+
+/// Error to argument lengths do not match.
+#[derive(Debug)]
+pub struct ArgumentLengthError {
+    passed: usize,
+    expected_min: usize,
+    expected_max: usize,
+}
+
+impl ArgumentLengthError {
+    /// Creates a new error with the length of the arguments passed and the expected arguments range.
+    #[inline]
+    #[must_use]
+    pub fn new(passed: usize, expected: impl ArgumentBounds) -> Self {
+        Self {
+            passed,
+            expected_min: expected.start_bound(),
+            expected_max: expected.end_bound(),
+        }
+    }
+
+    /// Get the argument length error's passed.
+    #[inline]
+    #[must_use]
+    pub fn passed(&self) -> usize {
+        self.passed
+    }
+
+    /// Get the argument length error's expected min.
+    #[inline]
+    #[must_use]
+    pub fn expected_min(&self) -> usize {
+        self.expected_min
+    }
+
+    /// Get the argument length error's expected max.
+    #[inline]
+    #[must_use]
+    pub fn expected_max(&self) -> usize {
+        self.expected_max
+    }
+}
+
+impl std::error::Error for ArgumentLengthError {}
+impl std::fmt::Display for ArgumentLengthError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let expected_msg = match (self.expected_min, self.expected_max) {
+            (usize::MIN, usize::MAX) => "any".to_owned(),
+            (usize::MIN, e) => format!("max {e}"),
+            (s, usize::MAX) => format!("min {s}"),
+            (s, e) => {
+                if s == e {
+                    s.to_string()
+                } else {
+                    format!("min {s} and max {e}")
+                }
+            }
+        };
+        write!(
+            f,
+            "Argument lengths do not match, passed {}, expected {}",
+            self.passed, expected_msg
+        )
+    }
+}
+
+/// Produced by range syntax like `a`, `(a, b)`, ..`, `a..`, `..b`, `..=c`, `d..e`, or `f..=g`.
+pub trait ArgumentBounds {
+    /// Start index bound.
+    fn start_bound(&self) -> usize;
+    /// End index bound.
+    fn end_bound(&self) -> usize;
+
+    /// Returns true if item is contained in the range.
+    #[inline]
+    fn contains<U>(&self, item: &U) -> bool
+    where
+        usize: PartialOrd<U>,
+        U: ?Sized + PartialOrd<usize>,
+    {
+        (self.start_bound() <= *item) && (*item <= self.end_bound())
+    }
+}
+
+impl ArgumentBounds for usize {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        *self
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        *self
+    }
+}
+
+impl ArgumentBounds for (Bound<usize>, Bound<usize>) {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        match self.0 {
+            Bound::Included(s) => s,
+            Bound::Excluded(s) => s + 1,
+            Bound::Unbounded => usize::MIN,
+        }
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        match self.1 {
+            Bound::Included(e) => e,
+            Bound::Excluded(e) => e - 1,
+            Bound::Unbounded => usize::MAX,
+        }
+    }
+}
+
+impl ArgumentBounds for std::ops::Range<usize> {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        self.start
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        self.end - 1
+    }
+}
+
+impl ArgumentBounds for std::ops::RangeFrom<usize> {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        self.start
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        usize::MAX
+    }
+}
+
+impl ArgumentBounds for std::ops::RangeInclusive<usize> {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        *self.start()
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        *self.end()
+    }
+}
+
+impl ArgumentBounds for std::ops::RangeTo<usize> {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        usize::MIN
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        self.end - 1
+    }
+}
+
+impl ArgumentBounds for std::ops::RangeToInclusive<usize> {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        usize::MIN
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        self.end
+    }
+}
+
+impl ArgumentBounds for std::ops::RangeFull {
+    #[inline]
+    fn start_bound(&self) -> usize {
+        usize::MIN
+    }
+
+    #[inline]
+    fn end_bound(&self) -> usize {
+        usize::MAX
     }
 }
 
@@ -361,10 +812,11 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     #[inline]
     pub fn get(mut self) -> Result<T, ArgumentError<'a>> {
         self.get_optional_internal().and_then(|arg| {
+            let actual_index = self.args.idx + self.args.offset_index;
             arg.ok_or(ArgumentError {
                 site: self.site,
                 kind: ArgumentErrorKind::Missing {
-                    idx: self.args.idx,
+                    idx: actual_index,
                     name: self.name,
                 },
             })
@@ -389,14 +841,13 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
             ty,
             ..
         } = self;
-        let idx = args.idx;
+        let actual_index = args.idx + args.offset_index;
 
-        if let Some(arg) = args.iter.next() {
-            args.idx += 1;
+        if let Some(arg) = args.next() {
             T::from_variant(arg).map(Some).map_err(|err| ArgumentError {
                 site: *site,
                 kind: ArgumentErrorKind::CannotConvert {
-                    idx,
+                    idx: actual_index,
                     name: name.take(),
                     value: arg,
                     ty: ty

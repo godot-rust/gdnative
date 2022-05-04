@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::ops::Add;
 
 use gdnative::export::{StaticArgs, StaticArgsMethod, StaticallyNamed};
@@ -8,6 +9,8 @@ pub(crate) fn run_tests() -> bool {
 
     status &= test_register_property();
     status &= test_advanced_methods();
+    status &= test_varargs_gets();
+    status &= test_varargs_to_tuple();
 
     status
 }
@@ -16,6 +19,8 @@ pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<RegisterSignal>();
     handle.add_class::<RegisterProperty>();
     handle.add_class::<AdvancedMethods>();
+    handle.add_class::<VarargsGets>();
+    handle.add_class::<VarargsToTuple>();
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -206,3 +211,110 @@ crate::godot_itest! { test_advanced_methods {
     approx::assert_relative_eq!(3.5, v.x);
     approx::assert_relative_eq!(-0.5, v.y);
 }}
+
+#[derive(NativeClass)]
+#[inherit(Reference)]
+#[register_with(VarargsGets::register)]
+struct VarargsGets {}
+
+#[methods]
+impl VarargsGets {
+    fn new(_owner: TRef<Reference>) -> Self {
+        Self {}
+    }
+
+    fn register(builder: &ClassBuilder<VarargsGets>) {
+        builder.method("calc", CalcMethod).done();
+    }
+}
+
+struct CalcMethod;
+
+impl Method<VarargsGets> for CalcMethod {
+    fn call(
+        &self,
+        _this: TInstance<'_, VarargsGets>,
+        args: gdnative::export::Varargs<'_>,
+    ) -> Variant {
+        (|| {
+            args.check_length(1..=3)?;
+            let a: i64 = args.get(0)?;
+            let b: i64 = args.get(1)?;
+            let c: i64 = args.get_opt(2)?.unwrap_or(11);
+
+            let ret = a * b - c;
+            Ok::<Variant, Box<dyn Error>>(ret.to_variant())
+        })()
+        .unwrap_or_default()
+    }
+}
+
+fn test_varargs_gets() -> bool {
+    println!(" -- test_varargs_gets");
+
+    let ok = std::panic::catch_unwind(|| {
+        let thing = Instance::<VarargsGets, _>::new();
+        let base = thing.base();
+
+        let args = [3_i64.to_variant(), 4_i64.to_variant(), 5_i64.to_variant()];
+        assert_eq!(unsafe { base.call("calc", &args).to() }, Some(7));
+
+        let args = [3_i64.to_variant(), 4_i64.to_variant()];
+        assert_eq!(unsafe { base.call("calc", &args).to() }, Some(1));
+    })
+    .is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_varargs_gets failed");
+    }
+    ok
+}
+
+#[derive(NativeClass)]
+#[inherit(Reference)]
+#[register_with(VarargsToTuple::register)]
+struct VarargsToTuple {}
+
+#[methods]
+impl VarargsToTuple {
+    fn new(_owner: TRef<Reference>) -> Self {
+        VarargsToTuple {}
+    }
+
+    fn register(builder: &ClassBuilder<VarargsToTuple>) {
+        builder.method("calc", CalcMethod2).done();
+    }
+}
+
+struct CalcMethod2;
+
+impl Method<VarargsToTuple> for CalcMethod2 {
+    fn call(
+        &self,
+        _this: TInstance<'_, VarargsToTuple>,
+        args: gdnative::export::Varargs<'_>,
+    ) -> Variant {
+        let (a, b, c): (i64, i64, i64) =
+            std::convert::TryInto::try_into(args).expect("Must be able to convert");
+        let ret = a * b - c;
+        ret.to_variant()
+    }
+}
+
+fn test_varargs_to_tuple() -> bool {
+    println!(" -- test_varargs_to_tuple");
+
+    let ok = std::panic::catch_unwind(|| {
+        let thing = Instance::<VarargsToTuple, _>::new();
+        let base = thing.base();
+
+        let args = [3_i64.to_variant(), 4_i64.to_variant(), 5_i64.to_variant()];
+        assert_eq!(unsafe { base.call("calc", &args).to() }, Some(7));
+    })
+    .is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_varargs_to_tuple failed");
+    }
+    ok
+}
