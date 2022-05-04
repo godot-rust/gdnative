@@ -212,14 +212,14 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
 /// for common operations with them. Can also be used as an iterator.
 pub struct Varargs<'a> {
     idx: usize,
-    iter: std::slice::Iter<'a, &'a Variant>,
+    args: &'a [&'a Variant],
 }
 
 impl<'a> Varargs<'a> {
     /// Returns the amount of arguments left.
     #[inline]
     pub fn len(&self) -> usize {
-        self.iter.len()
+        self.args.len() - self.idx
     }
 
     #[inline]
@@ -250,7 +250,7 @@ impl<'a> Varargs<'a> {
     /// Returns the remaining arguments as a slice of `Variant`s.
     #[inline]
     pub fn as_slice(&self) -> &'a [&'a Variant] {
-        self.iter.as_slice()
+        self.args
     }
 
     /// Discard the rest of the arguments, and return an error if there is any.
@@ -282,10 +282,7 @@ impl<'a> Varargs<'a> {
     pub unsafe fn from_sys(num_args: libc::c_int, args: *mut *mut sys::godot_variant) -> Self {
         let args = std::slice::from_raw_parts(args, num_args as usize);
         let args = std::mem::transmute::<&[*mut sys::godot_variant], &[&Variant]>(args);
-        Self {
-            idx: 0,
-            iter: args.iter(),
-        }
+        Self { idx: 0, args }
     }
 }
 
@@ -293,7 +290,11 @@ impl<'a> Iterator for Varargs<'a> {
     type Item = &'a Variant;
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().copied()
+        let ret = self.args.get(self.idx).copied();
+        if ret.is_some() {
+            self.idx += 1;
+        }
+        ret
     }
 }
 
@@ -391,8 +392,7 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
         } = self;
         let idx = args.idx;
 
-        if let Some(arg) = args.iter.next() {
-            args.idx += 1;
+        if let Some(arg) = args.next() {
             T::from_variant(arg).map(Some).map_err(|err| ArgumentError {
                 site: *site,
                 kind: ArgumentErrorKind::CannotConvert {
