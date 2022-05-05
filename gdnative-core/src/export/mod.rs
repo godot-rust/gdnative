@@ -32,3 +32,45 @@ pub use class_builder::*;
 pub use method::*;
 pub use property::*;
 pub use signal::*;
+
+use std::fmt;
+
+/// Error to panic in 'catch_unwind()'.
+/// PanickedError displays the contents if the payload passed during panic has type &str or String.
+#[derive(Debug)]
+pub struct PanickedError {
+    cause: Box<dyn std::any::Any + Send + 'static>,
+}
+
+impl std::error::Error for PanickedError {}
+impl fmt::Display for PanickedError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let cause = &self.cause;
+        match cause.downcast_ref::<&str>() {
+            Some(s) => write!(f, "{}", s),
+            None => match cause.downcast_ref::<String>() {
+                Some(s) => write!(f, "{}", s),
+                None => write!(f, "unknown panicked"),
+            },
+        }
+    }
+}
+
+impl PanickedError {
+    // Returns the payload associated with the panic.
+    #[inline]
+    pub fn payload(&self) -> &(dyn std::any::Any + Send + 'static) {
+        &self.cause
+    }
+}
+
+/// Wrapper function for `std:panic:catch_unwind()` that returns `PanickedError` when panicked.
+/// See also: https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
+#[inline]
+pub fn catch_unwind<F: FnOnce() -> R + std::panic::UnwindSafe, R>(
+    f: F,
+) -> Result<R, PanickedError> {
+    let result = std::panic::catch_unwind(f);
+    result.map_err(|cause| PanickedError { cause })
+}
