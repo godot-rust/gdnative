@@ -277,7 +277,6 @@ impl<'a> Varargs<'a> {
     /// # Safety
     ///
     /// `args` must point to an array of valid `godot_variant` pointers of at least `num_args` long.
-    #[doc(hidden)]
     #[inline]
     pub unsafe fn from_sys(num_args: libc::c_int, args: *mut *mut sys::godot_variant) -> Self {
         let args = std::slice::from_raw_parts(args, num_args as usize);
