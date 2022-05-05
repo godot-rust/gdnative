@@ -76,6 +76,13 @@ impl<C: NativeClass> ClassBuilder<C> {
         MethodBuilder::new(self, name, method)
     }
 
+    /// Returns a `RawMethodBuilder` which can be used to add a raw method to the class being registered.
+    /// TODO: Write example.
+    #[inline]
+    pub fn raw_method<'a>(&'a self, name: &'a str) -> RawMethodBuilder<'a, C> {
+        RawMethodBuilder::new(self, name)
+    }
+
     /// Returns a `PropertyBuilder` which can be used to add a property to the class being
     /// registered.
     ///

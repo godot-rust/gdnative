@@ -88,6 +88,79 @@ where
     }
 }
 
+/// Builder type used to register a raw method on a `NativeClass`.
+#[must_use = "RawMethodBuilder left unbuilt -- did you forget to call done()?"]
+pub struct RawMethodBuilder<'a, C> {
+    class_builder: &'a ClassBuilder<C>,
+    name: &'a str,
+
+    method_ptr: Option<ScriptMethodFn>,
+    method_data: *mut libc::c_void,
+    free_func: Option<ScriptFreeFn>,
+
+    rpc_mode: RpcMode,
+}
+
+impl<'a, C> RawMethodBuilder<'a, C>
+where
+    C: NativeClass,
+{
+    pub(super) fn new(class_builder: &'a ClassBuilder<C>, name: &'a str) -> Self {
+        RawMethodBuilder {
+            class_builder,
+            name,
+            method_ptr: None,
+            method_data: std::ptr::null_mut(),
+            free_func: None,
+            rpc_mode: RpcMode::Disabled,
+        }
+    }
+
+    /// Set a this method pointer.
+    #[inline]
+    pub fn method_ptr(mut self, method_ptr: ScriptMethodFn) -> Self {
+        self.method_ptr = Some(method_ptr);
+        self
+    }
+
+    /// Set a this method environment data.
+    #[inline]
+    pub fn method_data(mut self, method_data: *mut libc::c_void) -> Self {
+        self.method_data = method_data;
+        self
+    }
+
+    /// Set a function pointer to drop 'method_data'.
+    #[inline]
+    pub fn free_func(mut self, free_func: ScriptFreeFn) -> Self {
+        self.free_func = Some(free_func);
+        self
+    }
+
+    /// Set a RPC mode for this method.
+    #[inline]
+    pub fn with_rpc_mode(mut self, rpc_mode: RpcMode) -> Self {
+        self.rpc_mode = rpc_mode;
+        self
+    }
+
+    /// Register the method.
+    #[inline]
+    pub fn done(self) {
+        let script_method = ScriptMethod {
+            name: self.name,
+            method_ptr: self.method_ptr,
+            method_data: self.method_data,
+            free_func: self.free_func,
+            attributes: ScriptMethodAttributes {
+                rpc_mode: self.rpc_mode,
+            },
+        };
+
+        self.class_builder.add_method(script_method);
+    }
+}
+
 type ScriptMethodFn = unsafe extern "C" fn(
     *mut sys::godot_object,
     *mut libc::c_void,
