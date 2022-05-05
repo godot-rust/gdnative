@@ -96,6 +96,8 @@ type ScriptMethodFn = unsafe extern "C" fn(
     *mut *mut sys::godot_variant,
 ) -> sys::godot_variant;
 
+type ScriptFreeFn = unsafe extern "C" fn(*mut libc::c_void) -> ();
+
 pub enum RpcMode {
     Disabled,
     Remote,
@@ -123,7 +125,7 @@ pub(crate) struct ScriptMethod<'l> {
     pub attributes: ScriptMethodAttributes,
 
     pub method_data: *mut libc::c_void,
-    pub free_func: Option<unsafe extern "C" fn(*mut libc::c_void) -> ()>,
+    pub free_func: Option<ScriptFreeFn>,
 }
 
 /// Safe low-level trait for stateful, variadic methods that can be called on a native script type.
