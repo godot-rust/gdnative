@@ -800,6 +800,22 @@ impl<T: GodotObject, Own: Ownership> Ref<T, Own> {
         ret
     }
 
+    /// Convert from a raw pointer, incrementing the reference counter if reference-counted.
+    /// If `obj` is null, an error is returned.
+    ///
+    /// # Safety
+    ///
+    /// `obj` must point to a valid object of the correct type.
+    #[inline]
+    pub unsafe fn try_from_sys(obj: *mut sys::godot_object) -> Result<Self, NullGodotObjectError> {
+        match std::ptr::NonNull::new(obj) {
+            Some(obj) => Ok(Self::from_sys(obj)),
+            None => Err(NullGodotObjectError {
+                class_name: T::class_name().to_owned(),
+            }),
+        }
+    }
+
     /// Convert from a pointer returned from a constructor of a reference-counted type. For
     /// non-reference-counted types, its behavior should be exactly the same as `from_sys`.
     ///
@@ -1005,5 +1021,23 @@ impl<T: GodotObject> Null<T> {
     #[allow(clippy::self_named_constructors)]
     pub fn null() -> Self {
         Null(PhantomData)
+    }
+}
+
+/// Error to `sys::godot_object` is null.
+#[derive(Debug)]
+pub struct NullGodotObjectError {
+    class_name: String,
+}
+
+impl std::error::Error for NullGodotObjectError {}
+impl fmt::Display for NullGodotObjectError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "base object pointer for {} is null (probably a bug in Godot)",
+            self.class_name
+        )
     }
 }
