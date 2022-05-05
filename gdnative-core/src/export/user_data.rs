@@ -851,3 +851,42 @@ where
         Ok(op(v))
     }
 }
+
+/// Error to `user_data` pointer is null.
+#[derive(Debug)]
+pub struct NullUserDataError {
+    class_name: String,
+}
+
+impl std::error::Error for NullUserDataError {}
+impl fmt::Display for NullUserDataError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "user data pointer for {} is null (did the constructor fail?)",
+            self.class_name
+        )
+    }
+}
+
+/// Takes an opaque pointer produced by `into_user_data` and "clones" it to produce the
+/// original instance, increasing the reference count.
+/// If `user_data` is null, an error is returned.
+///
+/// # Safety
+/// This should be used when user data is "borrowed" from the engine.
+/// `ptr` must be pointing to valid data of the correct type.
+#[inline]
+pub unsafe fn cast_sys_user_data<T: NativeClass>(
+    user_data: *mut libc::c_void,
+) -> Result<T::UserData, NullUserDataError> {
+    match std::ptr::NonNull::new(user_data) {
+        Some(user_data) => Ok(T::UserData::clone_from_user_data_unchecked(
+            user_data.as_ptr(),
+        )),
+        None => Err(NullUserDataError {
+            class_name: crate::export::class_registry::class_name_or_default::<T>().into_owned(),
+        }),
+    }
+}
