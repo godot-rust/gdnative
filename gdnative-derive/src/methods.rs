@@ -141,8 +141,14 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 }
             });
 
+            let warn_deprecated_export = if export_args.is_old_syntax {
+                Some(quote_spanned!(ret_span=> ::gdnative::export::deprecated_export_syntax!();))
+            } else {
+                None
+            };
+
             // See gdnative-core::export::deprecated_reference_return!()
-            let deprecated = if let syn::ReturnType::Type(_, ty) = &sig.output {
+            let warn_deprecated_ref_return  = if let syn::ReturnType::Type(_, ty) = &sig.output {
                 if !is_deref_return && matches!(**ty, syn::Type::Reference(_)) {
                     quote_spanned!(ret_span=> ::gdnative::export::deprecated_reference_return!();)
                 } else {
@@ -164,7 +170,8 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                         .with_rpc_mode(#rpc)
                         .done_stateless();
 
-                    #deprecated
+                    #warn_deprecated_export
+                    #warn_deprecated_ref_return
                 }
             )
         })

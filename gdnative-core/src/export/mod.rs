@@ -26,9 +26,9 @@ pub(crate) mod type_tag;
 
 pub mod user_data;
 
-#[allow(deprecated)]
-pub use crate::deprecated_reference_return;
 pub use crate::godot_wrap_method;
+#[allow(deprecated)]
+pub use crate::{deprecated_export_syntax, deprecated_reference_return};
 pub use class::*;
 pub use class_builder::*;
 pub use method::*;

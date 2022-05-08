@@ -37,6 +37,13 @@ macro_rules! deprecated_reference_return {
 
 #[doc(hidden)]
 #[macro_export]
+#[deprecated = "#[export] is deprecated and will be removed in the next major version. Use #[godot] instead."]
+macro_rules! deprecated_export_syntax {
+    () => {};
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! godot_wrap_method_void {
     ($ident:ident, $void:tt) => {
         $ident
