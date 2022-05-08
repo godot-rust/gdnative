@@ -205,13 +205,13 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - `path = "my_category/my_property_name"`
 ///
-/// Puts the property under the `my_category` category and renames it to
-/// `my_property_name` in the inspector and for GDScript.
+///   Puts the property under the `my_category` category and renames it to
+///   `my_property_name` in the inspector and for GDScript.
 ///
 /// - `default = 42.0`
 ///
-/// Sets the default value *in the inspector* for this property. The setter is *not*
-/// guaranteed to be called by the engine with the value.
+///   Sets the default value *in the inspector* for this property. The setter is *not*
+///   guaranteed to be called by the engine with the value.
 ///
 /// - `before_get` / `after_get` / `before_set` / `after_set` `= "Self::hook_method"`
 ///
@@ -220,22 +220,22 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - `get` / `get_ref` / `set`
 ///
-/// Configure getter/setter for property. All of them can accept a path to specify a custom
-/// property accessor. For example, `#[property(get = "Self::my_getter")]` will use
-/// `Self::my_getter` as the getter.
+///   Configure getter/setter for property. All of them can accept a path to specify a custom
+///   property accessor. For example, `#[property(get = "Self::my_getter")]` will use
+///   `Self::my_getter` as the getter.
 ///
-/// The difference of `get` and `get_ref` is that `get` will register the getter with
-/// `with_getter` function, which means your getter should return an owned value `T`, but
-/// `get_ref` use `with_ref_getter` to register getter. In this case, your custom getter
-/// should return a shared reference `&T`.
+///   The difference of `get` and `get_ref` is that `get` will register the getter with
+///   `with_getter` function, which means your getter should return an owned value `T`, but
+///   `get_ref` use `with_ref_getter` to register getter. In this case, your custom getter
+///   should return a shared reference `&T`.
 ///
-/// Situations with custom getters/setters and no backing fields require the use of the
-/// type [`Property<T>`][gdnative::export::Property]. Consult its documentation for
-/// a deeper elaboration of property exporting.
+///   Situations with custom getters/setters and no backing fields require the use of the
+///   type [`Property<T>`][gdnative::export::Property]. Consult its documentation for
+///   a deeper elaboration of property exporting.
 ///
 /// - `no_editor`
 ///
-/// Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.
+///   Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.
 ///
 /// ### `#[methods]`
 /// Adds the necessary information to a an `impl` block to register the properties and methods with Godot.
@@ -244,102 +244,139 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// For additional details about how `#[methods]` expands, please refer to [gdnative::methods](macro@methods)
 ///
-/// ### `#[export]`
+/// ### `#[godot]`
 /// Registers the attributed function signature to be used by Godot.
+///
+/// This attribute was formerly called `#[export]`, but is not directly related to the concept of
+/// [exporting](https://docs.godotengine.org/en/stable/tutorials/export/exporting_basics.html) in GDScript.
+///
 /// A valid function signature must have:
 /// - `&self` or `&mut self` as its first parameter
-/// - `&T` or `TRef<T>` where T refers to the type declared in `#[inherit(T)]` attribute as it's second parameter; this is typically called the `owner`.
-/// - Optionally, any number of additional parameters, which must have the type `Variant` or must implement the `FromVariant` trait. `FromVariant` is implemented for most common types.
+/// - Optionally, `&T` or `TRef<T>` where T refers to the type declared in `#[inherit(T)]` attribute as it's second parameter;
+///   this is typically called the _base_. The parameter must be attributed with `#[base]`.
+/// - Any number of required parameters, which must have the type `Variant` or must implement the `FromVariant` trait.
+///  `FromVariant` is implemented for most common types.
+/// - Any number of optional parameters annotated with `#[opt]`. Same rules as for required parameters apply.
+///   Optional parameters must appear at the end of the parameter list.
 /// - Return values must implement the `OwnedToVariant` trait (automatically implemented by `ToVariant`)
 ///   or be a `Variant` type.
 ///
 /// ```ignore
-/// #[export]
-/// fn foo(&self, owner: &Reference);
+/// // No access to base parameter
+/// #[godot]
+/// fn foo(&self);
+///
+/// // Access base parameter as &T
+/// #[godot]
+/// fn foo(&self, #[base] base: &Reference);
+///
+/// // Access base parameter as TRef<T>
+/// #[godot]
+/// fn foo(&self, #[base] base: TRef<Reference>);
 /// ```
-/// **Note**: Marking a function with `#[export]` does not have any effect unless inside an `impl` block that has the `#[methods]` attribute.
 ///
-/// Possible arguments for this attribute are
+/// **Note**: Marking a function with `#[godot]` does not have any effect unless inside an `impl` block that has the `#[methods]` attribute.
 ///
-/// - `name` = "overridden_function_name"
+/// Possible arguments for this attribute are:
 ///
-/// Overrides the function name as the method name to be registered in Godot.
+/// - `name = "overridden_function_name"`
 ///
-/// - `rpc` = "selected_rpc"
-///   - "selected_rpc" must be one of the following values, which refer to the associated [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations)
-///     - "disabled" - `RPCMode::RPC_MODE_DISABLED`
-///     - "remote" - `RPCMode::RPC_MODE_REMOTE`
-///     - "remote_sync" - `RPCMode::RPC_MODE_REMOTE_SYMC`
-///     - "master" - `RPCMode::RPC_MODE_MASTER`
-///     - "puppet" - `RPCMode::RPC_MODE_PUPPET`
-///     - "master_sync" - `RPCMode::RPC_MODE_MASTERSYNC`
-///     - "puppet_sync" - `RPCMode::RPC_MODE_PUPPETSYNC`
+///   Overrides the function name as the method name to be registered in Godot.
 ///
-/// This enables you to set the [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations) for the function.
+/// - `rpc = "selected_rpc"`
 ///
-/// Refer to [Godot's Remote Procedure documentation](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html#rpc) for more details.
+///   `"selected_rpc"` must be one of the following values, which refer to the associated [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations).
+///   See also the Rust type [`export::RpcMode`].
+///     - `"disabled"`
+///     - `"remote"`
+///     - `"remote_sync"`
+///     - `"master"`
+///     - `"master_sync"`
+///     - `"puppet"`
+///     - `"puppet_sync"`
+///
+///   This enables you to set the [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations) for the function.
+///   Refer to [Godot's Remote Procedure documentation](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html#rpc) for more details.
+///
+/// - `deref_return`
+///
+///   Allows you to return a type using its `Deref` representation. This can avoid extra intermediate copies for larger objects, by explicitly
+///   returning a reference (or in general, a type that dereferences to something that can be exported).
+///
+///   For example:
+///   ```ignore
+///   #[godot(deref_return)]
+///   fn get_numbers(&self) -> std::cell::Ref<Vec<i32>> {
+///      // Assume self.cell is std::cell::RefCell<Vec<i32>>
+///      self.cell.borrow()
+///   }
+///   ```
+///
+///
 /// #### `Node` virtual functions
 ///
 /// This is a list of common Godot virtual functions that are automatically called via [notifications](https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-notification).
 ///
+/// It is assumed that every method is exported via `#[godot]` attribute. The parameter `#[base] base: &Node` can be omitted if you don't need it.
+///
 /// ```ignore
-/// fn _ready(&self, owner: &Node);
+/// fn _ready(&self, #[base] base: &Node);
 /// ```
 /// Called when both the node and its children have entered the scene tree.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-ready) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _enter_tree(&self, owner: &Node);
+/// fn _enter_tree(&self, #[base] base: &Node);
 /// ```
 /// Called when the node enters the scene tree.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-enter-tree) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _exit_tree(&self, owner: &Node);
+/// fn _exit_tree(&self, #[base] base: &Node);
 /// ```
 /// Called when the node is removed from the scene tree.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-exit-tree) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _get_configuration_warning(&self, owner: &Node) -> GodotString;
+/// fn _get_configuration_warning(&self, #[base] base: &Node) -> GodotString;
 /// ```
 /// The string returned from this method is displayed as a warning in the Scene Dock if the script that overrides it is a tool script.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-get-configuration-warning) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _process(&mut self, owner: &Node, delta: f64);
+/// fn _process(&mut self, #[base] base: &Node, delta: f64);
 /// ```
 /// Called during processing step of the main loop.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-process) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _physics_process(&self, owner: &Node, delta: f64);
+/// fn _physics_process(&self, #[base] base: &Node, delta: f64);
 /// ```
 /// Called during physics update, with a fixed timestamp.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-physics-process) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _input(&self, owner: &Node, event: Ref<InputEvent>);
+/// fn _input(&self, #[base] base: &Node, event: Ref<InputEvent>);
 /// ```
 /// Called when there is an input event.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-input) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _unhandled_input(&self, owner: &Node, event: Ref<InputEvent>);
+/// fn _unhandled_input(&self, #[base] base: &Node, event: Ref<InputEvent>);
 /// ```
 /// Called when an `InputEvent` hasn't been consumed by `_input()` or any GUI.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-unhandled-input) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _unhandled_key_input (&self, owner: &Node, event: Ref<InputKeyEvent>);
+/// fn _unhandled_key_input (&self, #[base] base: &Node, event: Ref<InputKeyEvent>);
 /// ```
 /// Called when an `InputEventKey` hasn't been consumed by `_input()` or any GUI.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_node.html#class-node-method-unhandled-key-input) for more information._
@@ -350,43 +387,35 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// This is a list of common Godot virtual functions that are automatically called via [notifications](https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-notification).
 ///
 /// ```ignore
-/// fn _clips_input(&self, owner: &Control) -> bool;
+/// fn _clips_input(&self, #[base] base: &Control) -> bool;
 /// ```
 /// Returns whether `_gui_input()` should not be called for children controls outside this control's rectangle.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_control.html#class-control-method-clips-input) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _get_minimum_size(&self, owner: &Control) -> Vector2;
+/// fn _get_minimum_size(&self, #[base] base: &Control) -> Vector2;
 /// ```
 /// Returns the minimum size for this control.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_control.html#class-control-method-get-minimum-size) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _gui_input(&self, owner: &Control, event: Ref<InputEvent>);
+/// fn _gui_input(&self, #[base] base: &Control, event: Ref<InputEvent>);
 /// ```
 /// Use this method to process and accept inputs on UI elements.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_control.html#class-control-method-gui-input) for more information._
 /// <br><br>
 ///
 /// ```ignore
-/// fn _make_custom_tooltip(&self, owner: &Control, for_text: String) -> Ref<Control>;
+/// fn _make_custom_tooltip(&self, #[base] base: &Control, for_text: String) -> Ref<Control>;
 /// ```
 /// Returns a `Control` node that should be used as a tooltip instead of the default one.  
 /// _See [Godot docs](https://docs.godotengine.org/en/stable/classes/class_control.html#class-control-method-make-custom-tooltip) for more information._
 /// <br><br>
 #[proc_macro_derive(
     NativeClass,
-    attributes(
-        inherit,
-        export,
-        opt,
-        user_data,
-        property,
-        register_with,
-        no_constructor
-    )
+    attributes(inherit, register_with, no_constructor, user_data, property)
 )]
 pub fn derive_native_class(input: TokenStream) -> TokenStream {
     // Converting the proc_macro::TokenStream into non proc_macro types so that tests

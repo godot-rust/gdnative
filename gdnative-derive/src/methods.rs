@@ -232,7 +232,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         let (is_export, is_old_syntax) = if let Some("export") = last_seg.as_deref()
                         {
                             (true, true)
-                        } else if let Some("method") = last_seg.as_deref() {
+                        } else if let Some("godot") = last_seg.as_deref() {
                             (true, false)
                         } else {
                             (false, false)
@@ -304,7 +304,10 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             } else {
                                                 errors.push(syn::Error::new(
                                                     nested_meta.span(),
-                                                    format!("unexpected value for `rpc`: {}", value),
+                                                    format!(
+                                                        "unexpected value for `rpc`: {}",
+                                                        value
+                                                    ),
                                                 ));
                                             }
                                         }
