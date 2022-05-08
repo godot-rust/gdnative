@@ -44,7 +44,7 @@ mod private {
 }
 
 // Null
-impl<'a, T> private::Sealed for Null<T> {}
+impl<T> private::Sealed for Null<T> {}
 
 // Temporary references (shared ownership)
 impl<'a, T: GodotObject> private::Sealed for TRef<'a, T, Shared> {}
@@ -59,14 +59,14 @@ impl<T: NativeClass, Own: Ownership> private::Sealed for Instance<T, Own> {}
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 // Null
 
-impl<'a, T: GodotObject> AsArg<T> for Null<T> {
+impl<T: GodotObject> AsArg<T> for Null<T> {
     #[inline]
     fn as_arg_ptr(&self) -> *mut sys::godot_object {
         std::ptr::null_mut()
     }
 }
 
-impl<'a, T: GodotObject> AsVariant for Null<T> {
+impl<T: GodotObject> AsVariant for Null<T> {
     type Target = T;
 }
 
