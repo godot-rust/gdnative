@@ -98,7 +98,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             if arg_count == 0 {
                 return syn::Error::new(
                     sig_span,
-                    "exported methods must take self parameter",
+                    "#[godot] exported methods must take self parameter",
                 )
                 .to_compile_error();
             }
@@ -106,7 +106,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             if export_args.is_old_syntax && !exist_base_arg {
                 return syn::Error::new(
                     sig_span,
-                    "exported methods must take second parameter",
+                    "deprecated #[export] methods must take second parameter (base/owner)",
                 )
                 .to_compile_error();
             }
@@ -289,7 +289,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                         None => {
                                             errors.push(syn::Error::new(
                                                 nested_meta.span(),
-                                                "name parameter requires string value",
+                                                "`rpc` parameter requires string value",
                                             ));
                                         }
                                         Some(Lit::Str(str)) => {
@@ -298,20 +298,20 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                                 if export_args.rpc_mode.replace(mode).is_some() {
                                                     errors.push(syn::Error::new(
                                                         nested_meta.span(),
-                                                        "rpc mode was set more than once",
+                                                        "`rpc` mode was set more than once",
                                                     ));
                                                 }
                                             } else {
                                                 errors.push(syn::Error::new(
                                                     nested_meta.span(),
-                                                    format!("unexpected value for rpc: {}", value),
+                                                    format!("unexpected value for `rpc`: {}", value),
                                                 ));
                                             }
                                         }
                                         _ => {
                                             errors.push(syn::Error::new(
                                                 nested_meta.span(),
-                                                "unexpected type for rpc value, expected string",
+                                                "unexpected type for `rpc` value, expected string",
                                             ));
                                         }
                                     }
@@ -321,7 +321,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                         None => {
                                             errors.push(syn::Error::new(
                                                 nested_meta.span(),
-                                                "name parameter requires string value",
+                                                "`name` parameter requires string value",
                                             ));
                                         }
                                         Some(Lit::Str(str)) => {
@@ -332,14 +332,14 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             {
                                                 errors.push(syn::Error::new(
                                                     nested_meta.span(),
-                                                    "name was set more than once",
+                                                    "`name` was set more than once",
                                                 ));
                                             }
                                         }
                                         _ => {
                                             errors.push(syn::Error::new(
                                                 nested_meta.span(),
-                                                "unexpected type for name value, expected string",
+                                                "unexpected type for `name` value, expected string",
                                             ));
                                         }
                                     }
@@ -348,19 +348,19 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     if lit.is_some() {
                                         errors.push(syn::Error::new(
                                             nested_meta.span(),
-                                            "value for deref_return parameter is not valid",
+                                            "`deref_return` does not take any values",
                                         ));
                                     } else if export_args.is_deref_return {
                                         errors.push(syn::Error::new(
                                             nested_meta.span(),
-                                            "deref_return was apply more than once",
+                                            "`deref_return` was set more than once",
                                         ));
                                     } else {
                                         export_args.is_deref_return = true;
                                     }
                                 } else {
                                     let msg = format!(
-                                        "unknown option for export: `{}`",
+                                        "unknown option for #[export]: `{}`",
                                         path.to_token_stream()
                                     );
                                     errors.push(syn::Error::new(nested_meta.span(), msg));
@@ -407,7 +407,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             if n < 2 {
                                 errors.push(syn::Error::new(
                                     arg.span(),
-                                    "self or owner cannot be optional",
+                                    "self or base cannot be optional",
                                 ));
                             } else {
                                 *optional_args.get_or_insert(0) += 1;
