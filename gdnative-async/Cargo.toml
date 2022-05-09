@@ -19,7 +19,6 @@ gdnative-core = { path = "../gdnative-core", version = "=0.10.0" }
 gdnative-bindings = { path = "../gdnative-bindings", version = "=0.10.0" }
 atomic-waker = "1"
 crossbeam-channel = "0.5"
-crossbeam-utils = "0.8"
 futures-task = "0.3"
 once_cell = "1"
 parking_lot = "0.12"
