@@ -1,13 +1,17 @@
+use std::error::Error;
 use std::ops::Add;
 
-use gdnative::export::{StaticArgs, StaticArgsMethod, StaticallyNamed};
-use gdnative::prelude::*;
+use gdnative::export::user_data::{cast_sys_user_data, Map};
+use gdnative::export::{StaticArgs, StaticArgsMethod, StaticallyNamed, Varargs};
+use gdnative::log::{self, godot_site};
+use gdnative::{libc, prelude::*, sys};
 
 pub(crate) fn run_tests() -> bool {
     let mut status = true;
 
     status &= test_register_property();
     status &= test_advanced_methods();
+    status &= test_raw_method();
 
     status
 }
@@ -16,6 +20,7 @@ pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<RegisterSignal>();
     handle.add_class::<RegisterProperty>();
     handle.add_class::<AdvancedMethods>();
+    handle.add_class::<RawMethod>();
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -228,6 +233,78 @@ fn test_advanced_methods() -> bool {
 
     if !ok {
         godot_error!("   !! Test test_advanced_methods failed");
+    }
+
+    ok
+}
+
+#[derive(NativeClass)]
+#[register_with(RawMethod::register)]
+struct RawMethod {
+    inner: i64,
+}
+
+#[methods]
+impl RawMethod {
+    fn new(_owner: TRef<Reference>) -> Self {
+        RawMethod { inner: 10 }
+    }
+
+    fn register(builder: &ClassBuilder<RawMethod>) {
+        builder
+            .raw_method("raw_calc")
+            .method_ptr(Self::raw_calc)
+            .done();
+    }
+
+    unsafe extern "C" fn raw_calc(
+        this: *mut sys::godot_object,
+        _method_data: *mut libc::c_void,
+        user_data: *mut libc::c_void,
+        num_args: libc::c_int,
+        args: *mut *mut sys::godot_variant,
+    ) -> sys::godot_variant {
+        (|| {
+            let _this = unsafe { Ref::<Reference>::try_from_sys(this)?.assume_safe_unchecked() };
+            let user_data = unsafe { cast_sys_user_data::<RawMethod>(user_data)? };
+            let mut args = unsafe { Varargs::from_sys(num_args, &args) };
+
+            let a = args.next().and_then(|v| v.to::<i64>()).unwrap_or(3);
+            let b = args.next().and_then(|v| v.to::<i64>()).unwrap_or(4);
+
+            let result =
+                user_data.map(|ud| gdnative::export::catch_unwind(move || a * b + ud.inner));
+
+            Ok::<_, Box<dyn Error>>(result??.to_variant())
+        })()
+        .unwrap_or_else(|err| {
+            log::error(godot_site!(raw_calc), err);
+            Variant::nil()
+        })
+        .leak()
+    }
+}
+
+fn test_raw_method() -> bool {
+    println!(" -- test_raw_method");
+
+    let ok = std::panic::catch_unwind(|| {
+        let obj = RawMethod::new_instance();
+        let base = obj.into_base();
+
+        assert_eq!(Some(40), unsafe {
+            base.call("raw_calc", &[5.to_variant(), 6.to_variant()])
+                .to()
+        });
+        assert_eq!(Some(22), unsafe { base.call("raw_calc", &[]).to() });
+        assert_eq!(Some(30), unsafe {
+            base.call("raw_calc", &[5.to_variant()]).to()
+        });
+    })
+    .is_ok();
+
+    if !ok {
+        godot_error!("   !! Test test_raw_method failed");
     }
 
     ok
