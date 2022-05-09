@@ -275,13 +275,16 @@ impl<'a> Varargs<'a> {
     /// Create a typed interface from raw pointers. This is an internal interface.
     ///
     /// # Safety
-    ///
     /// `args` must point to an array of valid `godot_variant` pointers of at least `num_args` long.
+    /// The lifetime `'b` must be less lifetime than scope of the binding method.
     #[inline]
-    pub unsafe fn from_sys(num_args: libc::c_int, args: *mut *mut sys::godot_variant) -> Self {
-        let args = std::slice::from_raw_parts(args, num_args as usize);
-        let args = std::mem::transmute::<&[*mut sys::godot_variant], &[&Variant]>(args);
-        Self {
+    pub unsafe fn from_sys<'b>(
+        num_args: libc::c_int,
+        args: &'b *mut *mut sys::godot_variant,
+    ) -> Varargs<'b> {
+        let args = std::mem::transmute::<*mut *mut sys::godot_variant, *const &'b Variant>(*args);
+        let args = std::slice::from_raw_parts::<'b>(args, num_args as usize);
+        Varargs::<'b> {
             idx: 0,
             iter: args.iter(),
         }
@@ -573,7 +576,7 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
         let this: TRef<'_, C::Base, _> = this.assume_safe_unchecked();
         let this: TInstance<'_, C, _> = TInstance::from_raw_unchecked(this, user_data);
 
-        let args = Varargs::from_sys(num_args, args);
+        let args = Varargs::from_sys(num_args, &args);
 
         F::call(method, this, args)
     });
