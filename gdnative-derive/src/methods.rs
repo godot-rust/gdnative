@@ -58,14 +58,17 @@ pub(crate) struct ClassMethodExport {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub(crate) struct ExportMethod {
     pub(crate) sig: Signature,
-    pub(crate) args: ExportArgs,
+    pub(crate) export_args: ExportArgs,
+    pub(crate) optional_args: Option<usize>,
+    pub(crate) exist_base_arg: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub(crate) struct ExportArgs {
-    pub(crate) optional_args: Option<usize>,
-    pub(crate) rpc_mode: RpcMode,
+    pub(crate) is_old_syntax: bool,
+    pub(crate) rpc_mode: Option<RpcMode>,
     pub(crate) name_override: Option<String>,
+    pub(crate) is_deref_return: bool,
 }
 
 pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
@@ -79,33 +82,41 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
     let methods = export
         .methods
         .into_iter()
-        .map(|ExportMethod { sig, args }| {
+        .map(|ExportMethod { sig, export_args, optional_args, exist_base_arg}| {
             let sig_span = sig.ident.span();
 
             let name = sig.ident;
-            let name_string = args.name_override.unwrap_or_else(|| name.to_string());
+            let name_string = export_args.name_override.unwrap_or_else(|| name.to_string());
             let ret_span = sig.output.span();
-            let ret_ty = match sig.output {
+            let ret_ty = match &sig.output {
                 syn::ReturnType::Default => quote_spanned!(ret_span => ()),
                 syn::ReturnType::Type(_, ty) => quote_spanned!( ret_span => #ty ),
             };
 
             let arg_count = sig.inputs.len();
 
-            if arg_count < 2 {
+            if arg_count == 0 {
                 return syn::Error::new(
                     sig_span,
-                    "exported methods must take self and owner as arguments",
+                    "#[godot] exported methods must take self parameter",
                 )
                 .to_compile_error();
             }
 
-            let optional_args = match args.optional_args {
+            if export_args.is_old_syntax && !exist_base_arg {
+                return syn::Error::new(
+                    sig_span,
+                    "deprecated #[export] methods must take second parameter (base/owner)",
+                )
+                .to_compile_error();
+            }
+
+            let optional_args = match optional_args {
                 Some(count) => {
                     let max_optional = arg_count - 2; // self and owner
                     if count > max_optional {
                         let message = format!(
-                            "there can be at most {} optional arguments, got {}",
+                            "there can be at most {} optional parameters, got {}",
                             max_optional, count,
                         );
                         return syn::Error::new(sig_span, message).to_compile_error();
@@ -115,27 +126,52 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 None => 0,
             };
 
-            let rpc = args.rpc_mode;
+            let rpc = export_args.rpc_mode.unwrap_or(RpcMode::Disabled);
+            let is_deref_return = export_args.is_deref_return;
 
             let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
                 let span = arg.span();
-                if n < arg_count - optional_args {
+                if exist_base_arg && n == 1 {
+                    quote_spanned!(span => #[base] #arg ,)
+                }
+                else if n < arg_count - optional_args {
                     quote_spanned!(span => #arg ,)
                 } else {
                     quote_spanned!(span => #[opt] #arg ,)
                 }
             });
 
+            let warn_deprecated_export = if export_args.is_old_syntax {
+                Some(quote_spanned!(ret_span=> ::gdnative::export::deprecated_export_syntax!();))
+            } else {
+                None
+            };
+
+            // See gdnative-core::export::deprecated_reference_return!()
+            let warn_deprecated_ref_return  = if let syn::ReturnType::Type(_, ty) = &sig.output {
+                if !is_deref_return && matches!(**ty, syn::Type::Reference(_)) {
+                    quote_spanned!(ret_span=> ::gdnative::export::deprecated_reference_return!();)
+                } else {
+                    quote_spanned!(ret_span=>)
+                }
+            } else {
+                quote_spanned!(ret_span=>)
+            };
+
             quote_spanned!( sig_span=>
                 {
                     let method = ::gdnative::export::godot_wrap_method!(
                         #class_name,
+                        #is_deref_return,
                         fn #name ( #( #args )* ) -> #ret_ty
                     );
 
                     #builder.method(#name_string, method)
                         .with_rpc_mode(#rpc)
                         .done_stateless();
+
+                    #warn_deprecated_export
+                    #warn_deprecated_ref_return
                 }
             )
         })
@@ -181,9 +217,6 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
         let items = match func {
             ImplItem::Method(mut method) => {
                 let mut export_args = None;
-                let mut rpc = None;
-                let mut name_override = None;
-
                 let mut errors = vec![];
 
                 // only allow the "outer" style, aka #[thing] item.
@@ -196,122 +229,145 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             .last()
                             .map(|i| i.ident.to_string());
 
-                        if let Some("export") = last_seg.as_deref() {
-                            let _export_args = export_args.get_or_insert_with(ExportArgs::default);
-                            if !attr.tokens.is_empty() {
-                                use syn::{Meta, MetaNameValue, NestedMeta};
+                        let (is_export, is_old_syntax, macro_name) =
+                            if let Some("export") = last_seg.as_deref() {
+                                (true, true, "export")
+                            } else if let Some("godot") = last_seg.as_deref() {
+                                (true, false, "godot")
+                            } else {
+                                (false, false, "unknown")
+                            };
 
-                                let meta = match attr.parse_meta() {
-                                    Ok(val) => val,
-                                    Err(err) => {
-                                        errors.push(err);
-                                        return false;
-                                    }
-                                };
+                        if is_export {
+                            use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
+                            let mut export_args =
+                                export_args.get_or_insert_with(ExportArgs::default);
+                            export_args.is_old_syntax = is_old_syntax;
 
-                                let pairs: Vec<_> = match meta {
-                                    Meta::List(list) => list
-                                        .nested
-                                        .into_pairs()
-                                        .filter_map(|p| {
-                                            let span = p.span();
-                                            match p.into_value() {
-                                                NestedMeta::Meta(Meta::NameValue(pair)) => {
-                                                    Some(pair)
-                                                }
-                                                unexpected => {
-                                                    let msg = format!(
-                                                        "unexpected argument in list: {}",
-                                                        unexpected.into_token_stream()
-                                                    );
-                                                    errors.push(syn::Error::new(span, msg));
-                                                    None
-                                                }
-                                            }
-                                        })
-                                        .collect(),
-                                    Meta::NameValue(pair) => vec![pair],
-                                    meta => {
-                                        let span = meta.span();
-                                        let msg = format!(
-                                            "unexpected attribute argument: {}",
-                                            meta.into_token_stream()
-                                        );
+                            // Codes like #[macro(path, name = "value")] are accepted.
+                            // Codes like #[path], #[name = "value"] or #[macro("lit")] are not accepted.
+                            let nested_meta_iter = match attr.parse_meta() {
+                                Err(err) => {
+                                    errors.push(err);
+                                    return false;
+                                }
+                                Ok(Meta::NameValue(name_value)) => {
+                                    let span = name_value.span();
+                                    let msg = "NameValue syntax is not valid";
+                                    errors.push(syn::Error::new(span, msg));
+                                    return false;
+                                }
+                                Ok(Meta::Path(_)) => {
+                                    Punctuated::<NestedMeta, syn::token::Comma>::new().into_iter()
+                                }
+                                Ok(Meta::List(list)) => list.nested.into_iter(),
+                            };
+                            for nested_meta in nested_meta_iter {
+                                let (path, lit) = match &nested_meta {
+                                    NestedMeta::Lit(param) => {
+                                        let span = param.span();
+                                        let msg = "Literal item is not valid";
                                         errors.push(syn::Error::new(span, msg));
-                                        return false;
+                                        continue;
                                     }
+                                    NestedMeta::Meta(param) => match param {
+                                        Meta::List(list) => {
+                                            let span = list.span();
+                                            let msg = "List item is not valid";
+                                            errors.push(syn::Error::new(span, msg));
+                                            continue;
+                                        }
+                                        Meta::Path(path) => (path, None),
+                                        Meta::NameValue(name_value) => {
+                                            (&name_value.path, Some(&name_value.lit))
+                                        }
+                                    },
                                 };
-
-                                for MetaNameValue { path, lit, .. } in pairs {
-                                    let last = match path.segments.last() {
-                                        Some(val) => val,
+                                if path.is_ident("rpc") {
+                                    // rpc mode
+                                    match lit {
                                         None => {
                                             errors.push(syn::Error::new(
-                                                path.span(),
-                                                "the path should not be empty",
+                                                nested_meta.span(),
+                                                "`rpc` parameter requires string value",
                                             ));
-                                            return false;
                                         }
-                                    };
-                                    let path = last.ident.to_string();
-
-                                    // Match optional export arguments
-                                    match path.as_str() {
-                                        // rpc mode
-                                        "rpc" => {
-                                            let value = if let syn::Lit::Str(lit_str) = lit {
-                                                lit_str.value()
-                                            } else {
-                                                errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    "unexpected type for rpc value, expected Str",
-                                                ));
-                                                return false;
-                                            };
-
+                                        Some(Lit::Str(str)) => {
+                                            let value = str.value();
                                             if let Some(mode) = RpcMode::parse(value.as_str()) {
-                                                if rpc.replace(mode).is_some() {
+                                                if export_args.rpc_mode.replace(mode).is_some() {
                                                     errors.push(syn::Error::new(
-                                                        last.span(),
-                                                        "rpc mode was set more than once",
+                                                        nested_meta.span(),
+                                                        "`rpc` mode was set more than once",
                                                     ));
-                                                    return false;
                                                 }
                                             } else {
                                                 errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    format!("unexpected value for rpc: {}", value),
+                                                    nested_meta.span(),
+                                                    format!(
+                                                        "unexpected value for `rpc`: {}",
+                                                        value
+                                                    ),
                                                 ));
-                                                return false;
-                                            }
-                                        }
-                                        // name override
-                                        "name" => {
-                                            let value = if let syn::Lit::Str(lit_str) = lit {
-                                                lit_str.value()
-                                            } else {
-                                                errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    "unexpected type for name value, expected Str",
-                                                ));
-                                                return false;
-                                            };
-
-                                            if name_override.replace(value).is_some() {
-                                                errors.push(syn::Error::new(
-                                                    last.span(),
-                                                    "name was set more than once",
-                                                ));
-                                                return false;
                                             }
                                         }
                                         _ => {
-                                            let msg =
-                                                format!("unknown option for export: `{}`", path);
-                                            errors.push(syn::Error::new(last.span(), msg));
-                                            return false;
+                                            errors.push(syn::Error::new(
+                                                nested_meta.span(),
+                                                "unexpected type for `rpc` value, expected string",
+                                            ));
                                         }
                                     }
+                                } else if path.is_ident("name") {
+                                    // name override
+                                    match lit {
+                                        None => {
+                                            errors.push(syn::Error::new(
+                                                nested_meta.span(),
+                                                "`name` parameter requires string value",
+                                            ));
+                                        }
+                                        Some(Lit::Str(str)) => {
+                                            if export_args
+                                                .name_override
+                                                .replace(str.value())
+                                                .is_some()
+                                            {
+                                                errors.push(syn::Error::new(
+                                                    nested_meta.span(),
+                                                    "`name` was set more than once",
+                                                ));
+                                            }
+                                        }
+                                        _ => {
+                                            errors.push(syn::Error::new(
+                                                nested_meta.span(),
+                                                "unexpected type for `name` value, expected string",
+                                            ));
+                                        }
+                                    }
+                                } else if path.is_ident("deref_return") {
+                                    // deref return value
+                                    if lit.is_some() {
+                                        errors.push(syn::Error::new(
+                                            nested_meta.span(),
+                                            "`deref_return` does not take any values",
+                                        ));
+                                    } else if export_args.is_deref_return {
+                                        errors.push(syn::Error::new(
+                                            nested_meta.span(),
+                                            "`deref_return` was set more than once",
+                                        ));
+                                    } else {
+                                        export_args.is_deref_return = true;
+                                    }
+                                } else {
+                                    let msg = format!(
+                                        "unknown option for #[{}]: `{}`",
+                                        macro_name,
+                                        path.to_token_stream()
+                                    );
+                                    errors.push(syn::Error::new(nested_meta.span(), msg));
                                 }
                             }
                             return false;
@@ -321,8 +377,9 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                     true
                 });
 
-                if let Some(mut export_args) = export_args.take() {
+                if let Some(export_args) = export_args.take() {
                     let mut optional_args = None;
+                    let mut exist_base_arg = false;
 
                     for (n, arg) in method.sig.inputs.iter_mut().enumerate() {
                         let attrs = match arg {
@@ -331,42 +388,57 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         };
 
                         let mut is_optional = false;
+                        let mut is_base = false;
 
                         attrs.retain(|attr| {
                             if attr.path.is_ident("opt") {
                                 is_optional = true;
+                                false
+                            } else if attr.path.is_ident("base") {
+                                is_base = true;
                                 false
                             } else {
                                 true
                             }
                         });
 
+                        // In the old syntax, the second parameter is always the base parameter.
+                        if export_args.is_old_syntax && n == 1 {
+                            is_base = true;
+                        }
+
                         if is_optional {
                             if n < 2 {
                                 errors.push(syn::Error::new(
                                     arg.span(),
-                                    "self or owner cannot be optional",
+                                    "self or base cannot be optional",
                                 ));
-                                continue;
+                            } else {
+                                *optional_args.get_or_insert(0) += 1;
                             }
-
-                            *optional_args.get_or_insert(0) += 1;
                         } else if optional_args.is_some() {
                             errors.push(syn::Error::new(
                                 arg.span(),
                                 "cannot add required parameters after optional ones",
                             ));
-                            continue;
+                        }
+
+                        if is_base {
+                            exist_base_arg = true;
+                            if n != 1 {
+                                errors.push(syn::Error::new(
+                                    arg.span(),
+                                    "base must be the second parameter.",
+                                ));
+                            }
                         }
                     }
 
-                    export_args.optional_args = optional_args;
-                    export_args.rpc_mode = rpc.unwrap_or(RpcMode::Disabled);
-                    export_args.name_override = name_override;
-
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
-                        args: export_args,
+                        export_args,
+                        optional_args,
+                        exist_base_arg,
                     });
                 }
 
@@ -413,7 +485,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 continue;
             }
 
-            // remove "mut" from arguments.
+            // remove "mut" from parameters.
             // give every wildcard a (hopefully) unique name.
             method
                 .sig

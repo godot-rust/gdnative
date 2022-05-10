@@ -10,8 +10,8 @@ impl HelloWorld {
         HelloWorld
     }
 
-    #[export]
-    fn _ready(&self, _owner: &Node) {
+    #[godot]
+    fn _ready(&self) {
         godot_print!("hello, world.")
     }
 }

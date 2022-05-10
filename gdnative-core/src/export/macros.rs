@@ -13,14 +13,55 @@ macro_rules! godot_wrap_method_parameter_count {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! godot_wrap_method_if_deref {
+    (true, $ret:expr) => {
+        std::ops::Deref::deref(&$ret)
+    };
+    (false, $ret:expr) => {
+        $ret
+    };
+}
+
+// The ways of emit warnings is a terrible hack.
+// This is because there is no way to emit warnings from macros in stable Rust.
+//
+// Follow these steps to emit warnings.
+// - Detect whether reference types are used in gdnative-derive::methods::derive_methods().
+// - Expand the call to the deprecated_reference_return!() macro to user code.
+#[doc(hidden)]
+#[macro_export]
+#[deprecated = "This function does not actually pass by reference to the Godot engine. You can clarify by writing #[export(deref_return)]."]
+macro_rules! deprecated_reference_return {
+    () => {};
+}
+
+#[doc(hidden)]
+#[macro_export]
+#[deprecated = "\n#[export] is deprecated and will be removed in godot-rust 0.11. Use #[godot] instead.\n\
+  For more information, see https://godot-rust.github.io/docs/gdnative/derive/derive.NativeClass.html."]
+macro_rules! deprecated_export_syntax {
+    () => {};
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! godot_wrap_method_void {
+    ($ident:ident, $void:tt) => {
+        $ident
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! godot_wrap_method_inner {
     (
         $type_name:ty,
+        $is_deref_return:ident,
         $map_method:ident,
         fn $method_name:ident(
-            $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
+            $self:ident
+            $(, #[base] $base:ident : $base_ty:ty)?
+            $(, $pname:ident : $pty:ty)*
             $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
         ) -> $retty:ty
     ) => {
@@ -48,15 +89,17 @@ macro_rules! godot_wrap_method_inner {
                     Args { $($pname,)* $($opt_pname,)* }: Args,
                 ) -> $crate::core_types::Variant {
                     this
-                        .$map_method(|__rust_val, $owner| {
+                        .$map_method(|__rust_val, __base| {
                             #[allow(unused_unsafe)]
                             unsafe {
                                 let ret = __rust_val.$method_name(
-                                    OwnerArg::from_safe_ref($owner),
+                                    $(OwnerArg::from_safe_ref($crate::godot_wrap_method_void!(__base,$base)),)?
                                     $($pname,)*
                                     $($opt_pname,)*
                                 );
-                                gdnative::core_types::OwnedToVariant::owned_to_variant(ret)
+                                gdnative::core_types::OwnedToVariant::owned_to_variant(
+                                    $crate::godot_wrap_method_if_deref!($is_deref_return, ret)
+                                )
                             }
                         })
                         .unwrap_or_else(|err| {
@@ -76,6 +119,17 @@ macro_rules! godot_wrap_method_inner {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! godot_wrap_method_return_type {
+    () => {
+        ()
+    };
+    ($retty:ty) => {
+        $retty: ty
+    };
+}
+
 /// Convenience macro to wrap an object's method into a function pointer
 /// that can be passed to the engine when registering a class.
 #[macro_export]
@@ -83,173 +137,97 @@ macro_rules! godot_wrap_method {
     // mutable
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
-            &mut $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            &mut $self:ident
+            $(, #[base] $base:ident : $base_ty:ty)?
+            $(, $pname:ident : $pty:ty)*
+            $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
-        ) -> $retty:ty
+        ) $(-> $retty:ty)?
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map_mut,
             fn $method_name(
-                $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> $retty
+                $self
+                $(, #[base] $base : $base_ty)?
+                $(, $pname : $pty)*
+                $(, #[opt] $opt_pname : $opt_pty)*
+            ) -> godot_wrap_method_return_type!($($retty)?)
         )
     };
     // immutable
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
-            & $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            & $self:ident
+            $(, #[base] $base:ident : $base_ty:ty)?
+            $(, $pname:ident : $pty:ty)*
+            $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
-        ) -> $retty:ty
+        ) $(-> $retty:ty)?
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map,
             fn $method_name(
-                $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> $retty
+                $self
+                $(, #[base] $base : $base_ty)?
+                $(, $pname : $pty)*
+                $(, #[opt] $opt_pname : $opt_pty)*
+            ) -> godot_wrap_method_return_type!($($retty)?)
         )
     };
     // owned
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
-            mut $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            mut $self:ident
+            $(, #[base] $base:ident : $base_ty:ty)?
+            $(, $pname:ident : $pty:ty)*
+            $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
-        ) -> $retty:ty
+        ) $(-> $retty:ty)?
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map_owned,
             fn $method_name(
-                $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> $retty
+                $self
+                $(, #[base] $base : $base_ty)?
+                $(, $pname : $pty)*
+                $(, #[opt] $opt_pname : $opt_pty)*
+            ) -> godot_wrap_method_return_type!($($retty)?)
         )
     };
     // owned
     (
         $type_name:ty,
+        $is_deref_return:ident,
         fn $method_name:ident(
-            $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
+            $self:ident
+            $(, #[base] $base:ident : $base_ty:ty)?
+            $(, $pname:ident : $pty:ty)*
+            $(, #[opt] $opt_pname:ident : $opt_pty:ty)*
             $(,)?
-        ) -> $retty:ty
+        ) $(-> $retty:ty)?
     ) => {
         $crate::godot_wrap_method_inner!(
             $type_name,
+            $is_deref_return,
             map_owned,
             fn $method_name(
-                $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> $retty
-        )
-    };
-    // mutable without return type
-    (
-        $type_name:ty,
-        fn $method_name:ident(
-            &mut $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
-            $(,)?
-        )
-    ) => {
-        $crate::godot_wrap_method!(
-            $type_name,
-            fn $method_name(
-                &mut $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> ()
-        )
-    };
-    // immutable without return type
-    (
-        $type_name:ty,
-        fn $method_name:ident(
-            & $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
-            $(,)?
-        )
-    ) => {
-        $crate::godot_wrap_method!(
-            $type_name,
-            fn $method_name(
-                & $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> ()
-        )
-    };
-    // owned without return type
-    (
-        $type_name:ty,
-        fn $method_name:ident(
-            mut $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
-            $(,)?
-        )
-    ) => {
-        $crate::godot_wrap_method!(
-            $type_name,
-            fn $method_name(
-                $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> ()
-        )
-    };
-    // owned without return type
-    (
-        $type_name:ty,
-        fn $method_name:ident(
-            $self:ident,
-            $owner:ident : $owner_ty:ty
-            $(,$pname:ident : $pty:ty)*
-            $(,#[opt] $opt_pname:ident : $opt_pty:ty)*
-            $(,)?
-        )
-    ) => {
-        $crate::godot_wrap_method!(
-            $type_name,
-            fn $method_name(
-                $self,
-                $owner: $owner_ty
-                $(,$pname : $pty)*
-                $(,#[opt] $opt_pname : $opt_pty)*
-            ) -> ()
+                $self
+                $(, #[base] $base : $base_ty)?
+                $(, $pname : $pty)*
+                $(, #[opt] $opt_pname : $opt_pty)*
+            ) -> godot_wrap_method_return_type!($($retty)?)
         )
     };
 }

@@ -16,8 +16,8 @@ impl Server {
         Self
     }
 
-    #[export]
-    fn _ready(&mut self, owner: &Node) {
+    #[godot]
+    fn _ready(&mut self, #[base] owner: &Node) {
         let peer = NetworkedMultiplayerENet::new();
         peer.create_server(PORT, MAX_CLIENTS, IN_BANDWIDTH, OUT_BANDWIDTH)
             .unwrap();
@@ -28,8 +28,8 @@ impl Server {
         tree.set_network_peer(peer);
     }
 
-    #[export(rpc = "master")]
-    fn greet_server(&mut self, owner: &Node, msg: GodotString) {
+    #[godot(rpc = "master")]
+    fn greet_server(&mut self, #[base] owner: &Node, msg: GodotString) {
         godot_print!("Client says: {}", msg);
 
         let tree = owner.get_tree().expect("could not retreive Scene Tree");
