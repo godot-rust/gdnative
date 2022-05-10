@@ -229,14 +229,14 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             .last()
                             .map(|i| i.ident.to_string());
 
-                        let (is_export, is_old_syntax) = if let Some("export") = last_seg.as_deref()
-                        {
-                            (true, true)
-                        } else if let Some("godot") = last_seg.as_deref() {
-                            (true, false)
-                        } else {
-                            (false, false)
-                        };
+                        let (is_export, is_old_syntax, macro_name) =
+                            if let Some("export") = last_seg.as_deref() {
+                                (true, true, "export")
+                            } else if let Some("godot") = last_seg.as_deref() {
+                                (true, false, "godot")
+                            } else {
+                                (false, false, "unknown")
+                            };
 
                         if is_export {
                             use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
@@ -363,7 +363,8 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     }
                                 } else {
                                     let msg = format!(
-                                        "unknown option for #[export]: `{}`",
+                                        "unknown option for #[{}]: `{}`",
+                                        macro_name,
                                         path.to_token_stream()
                                     );
                                     errors.push(syn::Error::new(nested_meta.span(), msg));
