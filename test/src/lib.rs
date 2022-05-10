@@ -1,4 +1,5 @@
 #![allow(clippy::blacklisted_name)]
+#![allow(deprecated)]
 
 use gdnative::prelude::*;
 
