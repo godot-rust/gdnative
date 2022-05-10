@@ -24,8 +24,8 @@ impl Main {
         }
     }
 
-    #[export]
-    fn game_over(&self, owner: &Node) {
+    #[godot]
+    fn game_over(&self, #[base] owner: &Node) {
         let score_timer = unsafe { owner.get_node_as::<Timer>("score_timer").unwrap() };
         let mob_timer = unsafe { owner.get_node_as::<Timer>("mob_timer").unwrap() };
 
@@ -38,8 +38,8 @@ impl Main {
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
-    #[export]
-    fn new_game(&mut self, owner: &Node) {
+    #[godot]
+    fn new_game(&mut self, #[base] owner: &Node) {
         let start_position = unsafe { owner.get_node_as::<Position2D>("start_position").unwrap() };
         let player = unsafe {
             owner
@@ -66,16 +66,16 @@ impl Main {
         .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
-    #[export]
-    fn on_start_timer_timeout(&self, owner: &Node) {
+    #[godot]
+    fn on_start_timer_timeout(&self, #[base] owner: &Node) {
         let mob_timer = unsafe { owner.get_node_as::<Timer>("mob_timer").unwrap() };
         let score_timer = unsafe { owner.get_node_as::<Timer>("score_timer").unwrap() };
         mob_timer.start(0.0);
         score_timer.start(0.0);
     }
 
-    #[export]
-    fn on_score_timer_timeout(&mut self, owner: &Node) {
+    #[godot]
+    fn on_score_timer_timeout(&mut self, #[base] owner: &Node) {
         self.score += 1;
 
         let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
@@ -84,8 +84,8 @@ impl Main {
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
 
-    #[export]
-    fn on_mob_timer_timeout(&self, owner: &Node) {
+    #[godot]
+    fn on_mob_timer_timeout(&self, #[base] owner: &Node) {
         let mob_spawn_location = unsafe {
             owner
                 .get_node_as::<PathFollow2D>("mob_path/mob_spawn_locations")

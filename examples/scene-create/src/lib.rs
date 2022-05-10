@@ -33,8 +33,8 @@ impl SceneCreate {
         }
     }
 
-    #[gdnative::derive::export]
-    fn _ready(&mut self, _owner: &Spatial) {
+    #[gdnative::derive::godot]
+    fn _ready(&mut self) {
         self.template = load_scene("res://Child_scene.tscn");
         match &self.template {
             Some(_scene) => godot_print!("Loaded child scene successfully!"),
@@ -42,8 +42,8 @@ impl SceneCreate {
         }
     }
 
-    #[gdnative::derive::export]
-    fn spawn_one(&mut self, owner: &Spatial, message: GodotString) {
+    #[gdnative::derive::godot]
+    fn spawn_one(&mut self, #[base] owner: &Spatial, message: GodotString) {
         godot_print!("Called spawn_one({})", message.to_string());
 
         let template = if let Some(template) = &self.template {
@@ -77,8 +77,8 @@ impl SceneCreate {
         update_panel(owner, num_children);
     }
 
-    #[gdnative::derive::export]
-    fn remove_one(&mut self, owner: &Spatial, str: GodotString) {
+    #[gdnative::derive::godot]
+    fn remove_one(&mut self, #[base] owner: &Spatial, str: GodotString) {
         godot_print!("Called remove_one({})", str);
         let num_children = owner.get_child_count();
         if num_children <= 0 {

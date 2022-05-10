@@ -28,8 +28,8 @@ impl SignalEmitter {
         }
     }
 
-    #[export]
-    fn _process(&mut self, owner: &Node, delta: f64) {
+    #[godot]
+    fn _process(&mut self, #[base] owner: &Node, delta: f64) {
         if self.timer < 1.0 {
             self.timer += delta;
             return;
@@ -57,8 +57,8 @@ impl SignalSubscriber {
         SignalSubscriber { times_received: 0 }
     }
 
-    #[export]
-    fn _ready(&mut self, owner: TRef<Label>) {
+    #[godot]
+    fn _ready(&mut self, #[base] owner: TRef<Label>) {
         let emitter = &mut owner.get_node("../SignalEmitter").unwrap();
         let emitter = unsafe { emitter.assume_safe() };
 
@@ -76,16 +76,16 @@ impl SignalSubscriber {
             .unwrap();
     }
 
-    #[export]
-    fn notify(&mut self, owner: &Label) {
+    #[godot]
+    fn notify(&mut self, #[base] owner: &Label) {
         self.times_received += 1;
         let msg = format!("Received signal \"tick\" {} times", self.times_received);
 
         owner.set_text(msg);
     }
 
-    #[export]
-    fn notify_with_data(&mut self, owner: &Label, data: Variant) {
+    #[godot]
+    fn notify_with_data(&mut self, #[base] owner: &Label, data: Variant) {
         let msg = format!(
             "Received signal \"tick_with_data\" with data {}",
             data.try_to::<u64>().unwrap()

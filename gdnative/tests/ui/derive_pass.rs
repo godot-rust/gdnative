@@ -10,8 +10,8 @@ impl Foo {
         Foo {}
     }
 
-    #[export]
-    fn bar(&self, __owner: &Node) {}
+    #[godot]
+    fn bar(&self) {}
 }
 
 fn main() {}

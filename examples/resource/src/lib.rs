@@ -37,8 +37,8 @@ impl Greeter {
         }
     }
 
-    #[export]
-    fn _ready(&self, _owner: &Node) {
+    #[godot]
+    fn _ready(&self) {
         if let Some(greeting_resource) = self.greeting_resource.as_ref() {
             let greeting_resource = unsafe { greeting_resource.assume_safe() };
             greeting_resource.map(|s, o| s.say_hello(&*o)).unwrap();
