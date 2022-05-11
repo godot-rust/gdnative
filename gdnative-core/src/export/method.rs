@@ -3,6 +3,7 @@
 use std::borrow::Cow;
 use std::fmt;
 use std::marker::PhantomData;
+use std::ops::{Bound, RangeBounds};
 
 use crate::core_types::{FromVariant, FromVariantError, Variant};
 use crate::export::class::NativeClass;
@@ -295,6 +296,174 @@ impl<'a> Iterator for Varargs<'a> {
             self.idx += 1;
         }
         ret
+    }
+}
+
+/// All possible error types for convert from Varargs.
+#[derive(Debug)]
+pub enum VarargsError {
+    ArgumentTypeError(ArgumentTypeError),
+    ArgumentLengthError(ArgumentLengthError),
+}
+
+impl std::error::Error for VarargsError {}
+impl std::fmt::Display for VarargsError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            VarargsError::ArgumentTypeError(e) => e.fmt(f),
+            VarargsError::ArgumentLengthError(e) => e.fmt(f),
+        }
+    }
+}
+
+impl From<ArgumentTypeError> for VarargsError {
+    #[inline]
+    fn from(value: ArgumentTypeError) -> Self {
+        Self::ArgumentTypeError(value)
+    }
+}
+
+impl From<ArgumentLengthError> for VarargsError {
+    #[inline]
+    fn from(value: ArgumentLengthError) -> Self {
+        Self::ArgumentLengthError(value)
+    }
+}
+
+/// Error to incorrect type of argument.
+/// Displays a message containing the position of the argument and cause of the failure to convert.
+#[derive(Debug)]
+pub struct ArgumentTypeError {
+    index: usize,
+    nested_error: FromVariantError,
+}
+
+impl ArgumentTypeError {
+    /// Create a new error with the argument position and `FromVariantError`.
+    #[inline]
+    #[must_use]
+    pub fn new(index: usize, nested_error: FromVariantError) -> Self {
+        Self {
+            index,
+            nested_error,
+        }
+    }
+
+    /// Returns an ordinal number representation.
+    #[inline]
+    #[must_use]
+    fn ordinal(&self) -> String {
+        match self.index + 1 {
+            1 => "1st".to_owned(),
+            2 => "2nd".to_owned(),
+            3 => "3rd".to_owned(),
+            i @ 4.. => format!("{i}th"),
+            _ => "unknown".to_owned(),
+        }
+    }
+
+    /// Get the argument type error's index.
+    #[inline]
+    #[must_use]
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    /// Get a reference to the argument type error's nested error.
+    #[inline]
+    #[must_use]
+    pub fn nested_error(&self) -> &FromVariantError {
+        &self.nested_error
+    }
+}
+
+impl std::error::Error for ArgumentTypeError {}
+impl std::fmt::Display for ArgumentTypeError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Incorrect type of {} argument, cause: {}",
+            self.ordinal(),
+            self.nested_error,
+        )
+    }
+}
+
+/// Error to argument lengths do not match.
+/// Display a message containing the length of arguments passed and the expected range of lengths.
+#[derive(Debug)]
+pub struct ArgumentLengthError {
+    passed: usize,
+    expected: (Bound<usize>, Bound<usize>),
+}
+
+impl ArgumentLengthError {
+    /// Creates a new error with the length of the arguments passed and the expected arguments range.
+    #[inline]
+    #[must_use]
+    pub fn new(passed: usize, expected: impl RangeBounds<usize>) -> Self {
+        Self {
+            passed,
+            expected: (
+                expected.start_bound().cloned(),
+                expected.end_bound().cloned(),
+            ),
+        }
+    }
+
+    /// Get the argument length error's passed.
+    #[inline]
+    #[must_use]
+    pub fn passed(&self) -> usize {
+        self.passed
+    }
+
+    /// Get the argument length error's expected min.
+    #[inline]
+    #[must_use]
+    pub fn expected_min(&self) -> usize {
+        match self.expected.0 {
+            Bound::Included(s) => s,
+            Bound::Excluded(s) => s + 1,
+            Bound::Unbounded => usize::MIN,
+        }
+    }
+
+    /// Get the argument length error's expected max.
+    #[inline]
+    #[must_use]
+    pub fn expected_max(&self) -> usize {
+        match self.expected.1 {
+            Bound::Included(e) => e,
+            Bound::Excluded(e) => e - 1,
+            Bound::Unbounded => usize::MAX,
+        }
+    }
+}
+
+impl std::error::Error for ArgumentLengthError {}
+impl std::fmt::Display for ArgumentLengthError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let expected_msg = match (self.expected_min(), self.expected_max()) {
+            (usize::MIN, usize::MAX) => "any".to_owned(),
+            (usize::MIN, e) => format!("max {e}"),
+            (s, usize::MAX) => format!("min {s}"),
+            (s, e) => {
+                if s == e {
+                    s.to_string()
+                } else {
+                    format!("min {s} and max {e}")
+                }
+            }
+        };
+        write!(
+            f,
+            "Argument lengths do not match, passed {}, expected {}",
+            self.passed, expected_msg
+        )
     }
 }
 
