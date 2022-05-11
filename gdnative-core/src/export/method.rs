@@ -1,6 +1,7 @@
 //! Method registration
 
 use std::borrow::Cow;
+use std::convert::TryInto;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
@@ -214,6 +215,7 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
 pub struct Varargs<'a> {
     idx: usize,
     args: &'a [&'a Variant],
+    offset_index: usize,
 }
 
 impl<'a> Varargs<'a> {
@@ -283,7 +285,11 @@ impl<'a> Varargs<'a> {
     pub unsafe fn from_sys(num_args: libc::c_int, args: *mut *mut sys::godot_variant) -> Self {
         let args = std::slice::from_raw_parts(args, num_args as usize);
         let args = std::mem::transmute::<&[*mut sys::godot_variant], &[&Variant]>(args);
-        Self { idx: 0, args }
+        Self {
+            idx: 0,
+            args,
+            offset_index: 0,
+        }
     }
 
     /// Check the length of arguments.
@@ -317,14 +323,17 @@ impl<'a> Varargs<'a> {
     /// ```
     #[inline]
     pub fn get<T: FromVariant>(&self, index: usize) -> Result<T, ArgumentTypeError> {
-        match self.args.get(index) {
+        let relative_index = index;
+        let actual_index = index + self.offset_index;
+
+        match self.args.get(relative_index) {
             Some(v) => match T::from_variant(v) {
                 Ok(ok) => Ok(ok),
-                Err(err) => Err(ArgumentTypeError::new(index, err)),
+                Err(err) => Err(ArgumentTypeError::new(actual_index, err)),
             },
             None => {
                 let err = FromVariantError::Custom("Argument is not set".to_owned());
-                Err(ArgumentTypeError::new(index, err))
+                Err(ArgumentTypeError::new(actual_index, err))
             }
         }
     }
@@ -346,13 +355,55 @@ impl<'a> Varargs<'a> {
     /// ```
     #[inline]
     pub fn get_opt<T: FromVariant>(&self, index: usize) -> Result<Option<T>, ArgumentTypeError> {
-        match self.args.get(index) {
+        let relative_index = index;
+        let actual_index = index + self.offset_index;
+
+        match self.args.get(relative_index) {
             Some(v) => match T::from_variant(v) {
                 Ok(ok) => Ok(Some(ok)),
-                Err(err) => Err(ArgumentTypeError::new(index, err)),
+                Err(err) => Err(ArgumentTypeError::new(actual_index, err)),
             },
             None => Ok(None),
         }
+    }
+
+    /// Returns the type-converted value from the specified argument position.
+    /// Can be converted to any type that implements TryFrom<Varargs>.
+    ///
+    /// # Errors
+    /// Returns an error if the conversion fails.
+    ///
+    /// # Examples
+    /// ```ignore
+    /// # fn foo(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
+    ///     args.check_length(1..)?;
+    ///     let a: usize = args.get(0)?;
+    ///     let rest: Vec<i64> = args.get_rest(1)?;
+    /// #   Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn get_rest<T>(&self, rest_index: usize) -> Result<T, <Varargs<'a> as TryInto<T>>::Error>
+    where
+        Varargs<'a>: TryInto<T>,
+    {
+        let relative_rest_index = rest_index;
+        let actual_rest_index = rest_index + self.offset_index;
+
+        let rest = self.args.get(relative_rest_index..).unwrap_or_default();
+        let varargs = Varargs::<'a> {
+            idx: 0,
+            args: rest,
+            offset_index: actual_rest_index,
+        };
+        varargs.try_into()
+    }
+
+    /// Get the varargs's offset index.
+    #[inline]
+    #[must_use]
+    pub fn offset_index(&self) -> usize {
+        self.offset_index
     }
 }
 
@@ -600,10 +651,11 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
     #[inline]
     pub fn get(mut self) -> Result<T, ArgumentError<'a>> {
         self.get_optional_internal().and_then(|arg| {
+            let actual_index = self.args.idx + self.args.offset_index;
             arg.ok_or(ArgumentError {
                 site: self.site,
                 kind: ArgumentErrorKind::Missing {
-                    idx: self.args.idx,
+                    idx: actual_index,
                     name: self.name,
                 },
             })
@@ -628,13 +680,13 @@ impl<'r, 'a, T: FromVariant> ArgBuilder<'r, 'a, T> {
             ty,
             ..
         } = self;
-        let idx = args.idx;
+        let actual_index = args.idx + args.offset_index;
 
         if let Some(arg) = args.next() {
             T::from_variant(arg).map(Some).map_err(|err| ArgumentError {
                 site: *site,
                 kind: ArgumentErrorKind::CannotConvert {
-                    idx,
+                    idx: actual_index,
                     name: name.take(),
                     value: arg,
                     ty: ty
