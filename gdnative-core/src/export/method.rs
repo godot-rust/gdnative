@@ -285,6 +285,75 @@ impl<'a> Varargs<'a> {
         let args = std::mem::transmute::<&[*mut sys::godot_variant], &[&Variant]>(args);
         Self { idx: 0, args }
     }
+
+    /// Check the length of arguments.
+    /// See `get()`, `get_opt()` or `get_rest()` for examples.
+    ///
+    /// # Errors
+    /// Returns an error if the length of arguments is outside the specified range.
+    #[inline]
+    pub fn check_length(&self, bounds: impl RangeBounds<usize>) -> Result<(), ArgumentLengthError> {
+        let passed = self.args.len();
+        if bounds.contains(&passed) {
+            Ok(())
+        } else {
+            Err(ArgumentLengthError::new(passed, bounds))
+        }
+    }
+
+    /// Returns the type-converted value at the specified argument position.
+    ///
+    /// # Errors
+    /// Returns an error if the conversion fails or the argument is not set.
+    ///
+    /// # Examples
+    /// ```
+    /// # fn foo(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
+    ///     args.check_length(2..=2)?;
+    ///     let a: usize = args.get(0)?;
+    ///     let b: i64 = args.get(1)?;
+    /// #   Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn get<T: FromVariant>(&self, index: usize) -> Result<T, ArgumentTypeError> {
+        match self.args.get(index) {
+            Some(v) => match T::from_variant(v) {
+                Ok(ok) => Ok(ok),
+                Err(err) => Err(ArgumentTypeError::new(index, err)),
+            },
+            None => {
+                let err = FromVariantError::Custom("Argument is not set".to_owned());
+                Err(ArgumentTypeError::new(index, err))
+            }
+        }
+    }
+
+    /// Returns the type-converted value at the specified argument position.
+    /// Returns `None` if the argument is not set.
+    ///
+    /// # Errors
+    /// Returns an error if the conversion fails.
+    ///
+    /// # Examples
+    /// ```
+    /// # fn foo(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
+    ///     args.check_length(1..=2)?;
+    ///     let a: usize = args.get(0)?;
+    ///     let b: i64 = args.get_opt(1)?.unwrap_or(72);
+    /// #   Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn get_opt<T: FromVariant>(&self, index: usize) -> Result<Option<T>, ArgumentTypeError> {
+        match self.args.get(index) {
+            Some(v) => match T::from_variant(v) {
+                Ok(ok) => Ok(Some(ok)),
+                Err(err) => Err(ArgumentTypeError::new(index, err)),
+            },
+            None => Ok(None),
+        }
+    }
 }
 
 impl<'a> Iterator for Varargs<'a> {
