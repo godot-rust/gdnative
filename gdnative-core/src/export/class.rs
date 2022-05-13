@@ -43,6 +43,11 @@ pub trait NativeClass: Sized + 'static {
     /// See module-level documentation on `user_data` for more info.
     type UserData: UserData<Target = Self>;
 
+    // TODO(0.11) bugfix for https://github.com/godot-rust/godot-rust/issues/885
+    // * Rename init, register_properties, register by prefixing them with "nativeclass_"
+    // * Mark them as #[doc(hidden)]
+    // * Discourage manual NativeClass and NativeClassMethod impls
+
     /// Function that creates a value of `Self`, used for the script-instance. The default
     /// implementation simply panics.
     ///
@@ -53,6 +58,7 @@ pub trait NativeClass: Sized + 'static {
     /// of such scripts can only be created from Rust using `Instance::emplace`. See
     /// documentation on `Instance::emplace` for an example.
     #[inline]
+    #[deprecated = "This method will be removed from the public API."]
     fn init(_owner: TRef<'_, Self::Base, Shared>) -> Self {
         panic!(
             "{} does not have a zero-argument constructor",
@@ -62,6 +68,7 @@ pub trait NativeClass: Sized + 'static {
 
     /// Register any exported properties to Godot.
     #[inline]
+    #[deprecated = "This method will be removed from the public API."]
     fn register_properties(_builder: &ClassBuilder<Self>) {}
 
     /// Convenience method to create an `Instance<Self, Unique>`. This is a new `Self::Base`
@@ -111,6 +118,9 @@ pub trait StaticallyNamed: NativeClass {
 /// Trait used to provide information of Godot-exposed methods of a script class.
 pub trait NativeClassMethods: NativeClass {
     /// Function that registers all exposed methods to Godot.
+    ///
+    // TODO see comment in NativeClass
+    #[deprecated = "This method will be removed from the public API."]
     fn register(builder: &ClassBuilder<Self>);
 }
 

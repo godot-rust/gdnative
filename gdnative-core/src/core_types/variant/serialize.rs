@@ -111,7 +111,7 @@ struct DictionaryDispatchEntry {
     value: VariantDispatch,
 }
 
-impl<'d> Serialize for DictionaryDispatch {
+impl Serialize for DictionaryDispatch {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
         S: Serializer,

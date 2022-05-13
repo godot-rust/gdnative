@@ -5,7 +5,7 @@ use gdnative::export::hint::{EnumHint, IntHint, StringHint};
 
 #[derive(gdnative::derive::NativeClass)]
 #[inherit(MeshInstance)]
-#[register_with(register_properties)]
+#[register_with(register_members)]
 struct RustTest {
     start: Vector3,
     time: f32,
@@ -13,7 +13,7 @@ struct RustTest {
     rotate_speed: f64,
 }
 
-fn register_properties(builder: &ClassBuilder<RustTest>) {
+fn register_members(builder: &ClassBuilder<RustTest>) {
     builder
         .property::<String>("test/test_enum")
         .with_hint(StringHint::Enum(EnumHint::new(vec![

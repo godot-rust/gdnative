@@ -144,7 +144,7 @@ fn format_file_if_needed(output_rs: &Path) {
         .arg("run")
         .arg("stable")
         .arg("rustfmt")
-        .arg("--edition=2018")
+        .arg("--edition=2021")
         .arg(output_rs)
         .output();
 

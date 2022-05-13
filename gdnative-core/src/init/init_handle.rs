@@ -18,6 +18,7 @@ pub struct InitHandle {
     handle: *mut libc::c_void,
 }
 
+#[allow(deprecated)] // Remove once init(), register_properties() and register() have been renamed
 impl InitHandle {
     #[doc(hidden)]
     #[inline]
