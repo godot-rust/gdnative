@@ -21,3 +21,7 @@ proc-macro2 = "1"
 quote = "1"
 miniserde = "0.1.16"
 semver = "1"
+
+# False positives found by cargo-machete
+[package.metadata.cargo-machete]
+ignored = ["libc"]
