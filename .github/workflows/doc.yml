@@ -78,7 +78,7 @@ jobs:
 
           find gdnative -name .html -o -type f -print0 | xargs -0 sed -i 's/'"$libVersion"'/master/g'
 
-          if git diff --exit-code 
+          if git diff --exit-code --cached --quiet
           then
             echo "$shortSha introduces no doc changes; skip commit and push."
           else
