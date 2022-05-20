@@ -2,4 +2,4 @@ error: cannot find attribute `export` in this scope
   --> $DIR/derive_fail_methods.rs:12:7
    |
 12 |     #[export]
-   |       ^^^^^^
+   |       ^^^^^^ help: a built-in attribute with a similar name exists: `expect`
