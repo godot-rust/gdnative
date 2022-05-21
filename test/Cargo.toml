@@ -17,6 +17,7 @@ custom-godot = ["gdnative/custom-godot"]
 
 [dependencies]
 gdnative = { path = "../gdnative", features = ["gd-test", "serde", "async"] }
+gdnative-core = { path = "../gdnative-core" }
 approx = "0.5"
 ron = "0.7"
 serde = "1"
