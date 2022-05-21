@@ -45,38 +45,27 @@ impl Drop for Bar {
     }
 }
 
-fn test_owner_free_ub() -> bool {
-    println!(" -- test_owner_free_ub");
+crate::godot_itest! { test_owner_free_ub {
+    let drop_counter = Arc::new(AtomicUsize::new(0));
 
-    let ok = std::panic::catch_unwind(|| {
-        let drop_counter = Arc::new(AtomicUsize::new(0));
+    {
+        let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
 
-        {
-            let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
+        assert_eq!(Some(true), unsafe {
+            bar.base().call("set_script_is_not_ub", &[]).to()
+        });
 
-            assert_eq!(Some(true), unsafe {
-                bar.base().call("set_script_is_not_ub", &[]).to()
-            });
-
-            bar.into_base().free();
-        }
-
-        {
-            let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
-
-            assert_eq!(Some(true), unsafe {
-                bar.base().call("free_is_not_ub", &[]).to()
-            });
-        }
-
-        // the values are eventually dropped
-        assert_eq!(2, drop_counter.load(AtomicOrdering::Acquire));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_owner_free_ub failed");
+        bar.into_base().free();
     }
 
-    ok
-}
+    {
+        let bar = Bar(42, Arc::clone(&drop_counter)).emplace();
+
+        assert_eq!(Some(true), unsafe {
+            bar.base().call("free_is_not_ub", &[]).to()
+        });
+    }
+
+    // the values are eventually dropped
+    assert_eq!(2, drop_counter.load(AtomicOrdering::Acquire));
+}}

@@ -250,7 +250,6 @@ macro_rules! godot_test {
     }
 }
 
-
 /// Declares a test to be run with the Godot engine (i.e. not a pure Rust unit test).
 ///
 /// Creates a wrapper function that catches panics, prints errors and returns true/false.

@@ -2,6 +2,7 @@
 #![allow(deprecated)]
 
 use gdnative::prelude::*;
+use gdnative_core::godot_itest;
 
 mod test_as_arg;
 mod test_async;
@@ -82,22 +83,11 @@ pub extern "C" fn run_tests(
     Variant::new(status).leak()
 }
 
-fn test_underscore_method_binding() -> bool {
-    println!(" -- test_underscore_method_binding");
-
-    let ok = std::panic::catch_unwind(|| {
-        let script = gdnative::api::NativeScript::new();
-        let result = script._new(&[]);
-        assert_eq!(Variant::nil(), result);
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_underscore_method_binding failed");
-    }
-
-    ok
-}
+godot_itest! { test_underscore_method_binding {
+    let script = gdnative::api::NativeScript::new();
+    let result = script._new(&[]);
+    assert_eq!(Variant::nil(), result);
+}}
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -152,31 +142,19 @@ impl Foo {
     }
 }
 
-fn test_rust_class_construction() -> bool {
-    println!(" -- test_rust_class_construction");
+godot_itest! { test_rust_class_construction {
+    let foo = Foo::new_instance();
+    assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new_instance();
+    let base = foo.into_base();
+    assert_eq!(Some(42), unsafe { base.call("answer", &[]).to() });
 
-        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
+    let foo = Instance::<Foo, _>::try_from_base(base).expect("should be able to downcast");
+    assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
-        let base = foo.into_base();
-        assert_eq!(Some(42), unsafe { base.call("answer", &[]).to() });
-
-        let foo = Instance::<Foo, _>::try_from_base(base).expect("should be able to downcast");
-        assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&*owner) }));
-
-        let base = foo.into_base();
-        assert!(Instance::<NotFoo, _>::try_from_base(base).is_err());
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_rust_class_construction failed");
-    }
-
-    ok
-}
+    let base = foo.into_base();
+    assert!(Instance::<NotFoo, _>::try_from_base(base).is_err());
+}}
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -205,60 +183,49 @@ impl OptionalArgs {
     }
 }
 
-fn test_from_instance_id() -> bool {
-    println!(" -- test_from_instance_id");
+godot_itest! { test_from_instance_id {
+    assert!(unsafe { Node::try_from_instance_id(22).is_none() });
+    assert!(unsafe { Node::try_from_instance_id(42).is_none() });
+    assert!(unsafe { Node::try_from_instance_id(503).is_none() });
 
-    let ok = std::panic::catch_unwind(|| {
-        assert!(unsafe { Node::try_from_instance_id(22).is_none() });
-        assert!(unsafe { Node::try_from_instance_id(42).is_none() });
-        assert!(unsafe { Node::try_from_instance_id(503).is_none() });
+    let instance_id;
 
-        let instance_id;
+    {
+        let foo = unsafe { Node::new().into_shared().assume_safe() };
+        foo.set_name("foo");
 
-        {
-            let foo = unsafe { Node::new().into_shared().assume_safe() };
-            foo.set_name("foo");
+        instance_id = foo.get_instance_id();
 
-            instance_id = foo.get_instance_id();
+        assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
 
-            assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
+        let reconstructed = unsafe { Node::from_instance_id(instance_id) };
+        assert_eq!("foo", reconstructed.name().to_string());
 
-            let reconstructed = unsafe { Node::from_instance_id(instance_id) };
-            assert_eq!("foo", reconstructed.name().to_string());
+        unsafe { foo.assume_unique().free() };
+    }
 
-            unsafe { foo.assume_unique().free() };
-        }
+    assert!(unsafe { Node::try_from_instance_id(instance_id).is_none() });
+
+    let instance_id;
+
+    {
+        let foo = Reference::new().into_shared();
+        let foo = unsafe { foo.assume_safe() };
+        foo.set_meta("foo", "bar");
+
+        instance_id = foo.get_instance_id();
 
         assert!(unsafe { Node::try_from_instance_id(instance_id).is_none() });
 
-        let instance_id;
-
-        {
-            let foo = Reference::new().into_shared();
-            let foo = unsafe { foo.assume_safe() };
-            foo.set_meta("foo", "bar");
-
-            instance_id = foo.get_instance_id();
-
-            assert!(unsafe { Node::try_from_instance_id(instance_id).is_none() });
-
-            let reconstructed = unsafe { Reference::from_instance_id(instance_id) };
-            assert_eq!(
-                "bar",
-                String::from_variant(&reconstructed.get_meta("foo")).unwrap()
-            );
-        }
-
-        assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_from_instance_id failed");
+        let reconstructed = unsafe { Reference::from_instance_id(instance_id) };
+        assert_eq!(
+            "bar",
+            String::from_variant(&reconstructed.get_meta("foo")).unwrap()
+        );
     }
 
-    ok
-}
+    assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
+}}
 
 fn init(handle: InitHandle) {
     handle.add_class::<Foo>();

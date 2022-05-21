@@ -27,43 +27,32 @@ fn test_constructor() -> bool {
     true
 }
 
-fn test_from_class_name() -> bool {
-    println!(" -- test_from_class_name");
+crate::godot_itest! { test_from_class_name {
+    // Since this method is restricted to Godot types, there is no way we can detect
+    // here whether any invalid objects are leaked. Instead, the CI script is modified
+    // to look at stdout for any reported leaks.
 
-    let ok = std::panic::catch_unwind(|| {
-        // Since this method is restricted to Godot types, there is no way we can detect
-        // here whether any invalid objects are leaked. Instead, the CI script is modified
-        // to look at stdout for any reported leaks.
+    let node = Ref::<Node, _>::by_class_name("Node2D").unwrap();
+    assert_eq!("Node2D", node.get_class().to_string());
+    let node = node.cast::<Node2D>().unwrap();
+    assert_eq!("Node2D", node.get_class().to_string());
+    let _ = node.position();
+    node.free();
 
-        let node = Ref::<Node, _>::by_class_name("Node2D").unwrap();
-        assert_eq!("Node2D", node.get_class().to_string());
-        let node = node.cast::<Node2D>().unwrap();
-        assert_eq!("Node2D", node.get_class().to_string());
-        let _ = node.position();
-        node.free();
+    let shader = Ref::<Reference, _>::by_class_name("Shader").unwrap();
+    assert_eq!("Shader", &shader.get_class().to_string());
+    let shader = shader.cast::<Shader>().unwrap();
+    assert_eq!("Shader", &shader.get_class().to_string());
 
-        let shader = Ref::<Reference, _>::by_class_name("Shader").unwrap();
-        assert_eq!("Shader", &shader.get_class().to_string());
-        let shader = shader.cast::<Shader>().unwrap();
-        assert_eq!("Shader", &shader.get_class().to_string());
+    let none = Ref::<Object, _>::by_class_name("Shader");
+    assert!(none.is_none());
 
-        let none = Ref::<Object, _>::by_class_name("Shader");
-        assert!(none.is_none());
+    let none = Ref::<Node2D, _>::by_class_name("Spatial");
+    assert!(none.is_none());
 
-        let none = Ref::<Node2D, _>::by_class_name("Spatial");
-        assert!(none.is_none());
+    let none = Ref::<Shader, _>::by_class_name("AudioEffectReverb");
+    assert!(none.is_none());
 
-        let none = Ref::<Shader, _>::by_class_name("AudioEffectReverb");
-        assert!(none.is_none());
-
-        let none = Ref::<Object, _>::by_class_name("ClassThatDoesNotExistProbably");
-        assert!(none.is_none());
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_from_class_name failed");
-    }
-
-    ok
-}
+    let none = Ref::<Object, _>::by_class_name("ClassThatDoesNotExistProbably");
+    assert!(none.is_none());
+}}

@@ -51,40 +51,29 @@ impl VariantCallArgs {
     }
 }
 
-fn test_variant_call_args() -> bool {
-    println!(" -- test_variant_call_args");
+crate::godot_itest! { test_variant_call_args {
+    let obj = Instance::<VariantCallArgs, _>::new();
 
-    let ok = std::panic::catch_unwind(|| {
-        let obj = Instance::<VariantCallArgs, _>::new();
+    let mut base = obj.into_base().into_shared().to_variant();
 
-        let mut base = obj.into_base().into_shared().to_variant();
+    assert_eq!(Some(42), call_i64(&mut base, "zero", &[]));
 
-        assert_eq!(Some(42), call_i64(&mut base, "zero", &[]));
+    assert_eq!(Some(126), call_i64(&mut base, "one", &[Variant::new(3)]));
 
-        assert_eq!(Some(126), call_i64(&mut base, "one", &[Variant::new(3)]));
+    assert_eq!(
+        Some(-10),
+        call_i64(&mut base, "two", &[Variant::new(-1), Variant::new(32)])
+    );
 
-        assert_eq!(
-            Some(-10),
-            call_i64(&mut base, "two", &[Variant::new(-1), Variant::new(32)])
-        );
-
-        assert_eq!(
-            Some(-52),
-            call_i64(
-                &mut base,
-                "three",
-                &[Variant::new(-2), Variant::new(4), Variant::new(8),]
-            )
-        );
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_variant_call_args failed");
-    }
-
-    ok
-}
+    assert_eq!(
+        Some(-52),
+        call_i64(
+            &mut base,
+            "three",
+            &[Variant::new(-2), Variant::new(4), Variant::new(8),]
+        )
+    );
+}}
 
 fn call_i64(variant: &mut Variant, method: &str, args: &[Variant]) -> Option<i64> {
     let result = unsafe { variant.call(method, args) };

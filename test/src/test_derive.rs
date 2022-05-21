@@ -16,7 +16,7 @@ pub(crate) fn run_tests() -> bool {
     status &= test_derive_nativeclass_godot_attr_with_base();
     status &= test_derive_nativeclass_godot_attr_deref_return();
     status &= test_derive_nativeclass_godot_attr_rename_method();
-    status &= test_derive_nativeclass_godot_attr_to_use_all_macro_parameters();
+    status &= test_derive_nativeclass_godot_attr_all_arguments();
     status &= test_derive_nativeclass_with_property_get_set();
     status &= test_derive_nativeclass_property_with_only_getter();
 
@@ -31,14 +31,14 @@ pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<GodotAttrWithBase>();
     handle.add_class::<GodotAttrDerefReturn>();
     handle.add_class::<GodotAttrRenameMethod>();
-    handle.add_class::<GodotAttrToUseAllMacroParameters>();
+    handle.add_class::<GodotAttrAllArguments>();
     handle.add_class::<CustomGetSet>();
     handle.add_class::<MyVec>();
 }
 
-fn test_derive_to_variant() -> bool {
-    println!(" -- test_derive_to_variant");
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
+crate::godot_itest! { test_derive_to_variant {
     #[derive(Clone, Eq, PartialEq, Debug, ToVariant, FromVariant)]
     struct ToVar<T, R>
     where
@@ -90,108 +90,92 @@ fn test_derive_to_variant() -> bool {
         }
     }
 
-    let ok = std::panic::catch_unwind(|| {
-        let data = ToVar::<f64, i128> {
+    let data = ToVar::<f64, i128> {
+        foo: 42,
+        bar: 54.0,
+        baz: ToVarEnum::Foo(true),
+        ptr: std::ptr::null_mut(),
+        skipped: 42,
+    };
+
+    let variant = data.to_variant();
+    let dictionary = variant
+        .try_to::<Dictionary>()
+        .expect("should be dictionary");
+    assert_eq!(Some(42), dictionary.get("foo").and_then(|v| v.to::<i64>()));
+    assert_eq!(
+        Some(54.0),
+        dictionary.get("bar").and_then(|v| v.to::<f64>())
+    );
+    assert_eq!(
+        Some("*mut ()".into()),
+        dictionary.get("ptr").and_then(|v| v.to::<String>())
+    );
+    assert!(!dictionary.contains("skipped"));
+
+    let enum_dict = dictionary
+        .get("baz")
+        .and_then(|v| v.to::<Dictionary>())
+        .expect("should be dictionary");
+    assert_eq!(
+        Some(true),
+        enum_dict.get("Foo").and_then(|v| v.to::<bool>())
+    );
+
+    assert_eq!(
+        Ok(ToVar::<f64, i128> {
             foo: 42,
             bar: 54.0,
             baz: ToVarEnum::Foo(true),
             ptr: std::ptr::null_mut(),
-            skipped: 42,
-        };
+            skipped: 0,
+        }),
+        ToVar::from_variant(&variant)
+    );
 
-        let variant = data.to_variant();
-        let dictionary = variant
-            .try_to::<Dictionary>()
-            .expect("should be dictionary");
-        assert_eq!(Some(42), dictionary.get("foo").and_then(|v| v.to::<i64>()));
-        assert_eq!(
-            Some(54.0),
-            dictionary.get("bar").and_then(|v| v.to::<f64>())
-        );
-        assert_eq!(
-            Some("*mut ()".into()),
-            dictionary.get("ptr").and_then(|v| v.to::<String>())
-        );
-        assert!(!dictionary.contains("skipped"));
+    let data = ToVarTuple::<f64, i128>(1, 2, false);
+    let variant = data.to_variant();
+    let tuple_array = variant.to::<VariantArray>().expect("should be array");
 
-        let enum_dict = dictionary
-            .get("baz")
-            .and_then(|v| v.to::<Dictionary>())
-            .expect("should be dictionary");
-        assert_eq!(
-            Some(true),
-            enum_dict.get("Foo").and_then(|v| v.to::<bool>())
-        );
+    assert_eq!(2, tuple_array.len());
+    assert_eq!(Some(1), tuple_array.get(0).to::<i64>());
+    assert_eq!(Some(false), tuple_array.get(1).to::<bool>());
+    assert_eq!(
+        Ok(ToVarTuple::<f64, i128>(1, 0, false)),
+        ToVarTuple::from_variant(&variant)
+    );
+}}
 
-        assert_eq!(
-            Ok(ToVar::<f64, i128> {
-                foo: 42,
-                bar: 54.0,
-                baz: ToVarEnum::Foo(true),
-                ptr: std::ptr::null_mut(),
-                skipped: 0,
-            }),
-            ToVar::from_variant(&variant)
-        );
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
-        let data = ToVarTuple::<f64, i128>(1, 2, false);
-        let variant = data.to_variant();
-        let tuple_array = variant.to::<VariantArray>().expect("should be array");
-
-        assert_eq!(2, tuple_array.len());
-        assert_eq!(Some(1), tuple_array.get(0).to::<i64>());
-        assert_eq!(Some(false), tuple_array.get(1).to::<bool>());
-        assert_eq!(
-            Ok(ToVarTuple::<f64, i128>(1, 0, false)),
-            ToVarTuple::from_variant(&variant)
-        );
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_to_variant failed");
-    }
-
-    ok
-}
-
-fn test_derive_owned_to_variant() -> bool {
-    println!(" -- test_derive_owned_to_variant");
-
+crate::godot_itest! { test_derive_owned_to_variant {
     #[derive(OwnedToVariant)]
     struct ToVar {
         arr: VariantArray<Unique>,
     }
 
-    let ok = std::panic::catch_unwind(|| {
-        let data = ToVar {
-            arr: [1, 2, 3].iter().collect(),
-        };
+    let data = ToVar {
+        arr: [1, 2, 3].iter().collect(),
+    };
 
-        let variant = data.owned_to_variant();
-        let dictionary = variant.to::<Dictionary>().expect("should be dictionary");
-        let array = dictionary
-            .get("arr")
-            .and_then(|v| v.to::<VariantArray>())
-            .expect("should be array");
-        assert_eq!(3, array.len());
-        assert_eq!(
-            &[1, 2, 3],
-            array
-                .iter()
-                .map(|v| v.to::<i64>().unwrap())
-                .collect::<Vec<_>>()
-                .as_slice()
-        );
-    })
-    .is_ok();
+    let variant = data.owned_to_variant();
+    let dictionary = variant.to::<Dictionary>().expect("should be dictionary");
+    let array = dictionary
+        .get("arr")
+        .and_then(|v| v.to::<VariantArray>())
+        .expect("should be array");
+    assert_eq!(3, array.len());
+    assert_eq!(
+        &[1, 2, 3],
+        array
+            .iter()
+            .map(|v| v.to::<i64>().unwrap())
+            .collect::<Vec<_>>()
+            .as_slice()
+    );
+}}
 
-    if !ok {
-        godot_error!("   !! Test test_derive_owned_to_variant failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -209,22 +193,13 @@ impl MinimalDerive {
     }
 }
 
-fn test_derive_nativeclass() -> bool {
-    println!(" -- test_derive_nativeclass");
+crate::godot_itest! { test_derive_nativeclass {
+    let thing = Instance::<MinimalDerive, _>::new();
+    let base: Ref<Reference, Unique> = thing.into_base();
+    assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<MinimalDerive, _>::new();
-        let base: Ref<Reference, Unique> = thing.into_base();
-        assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -239,29 +214,19 @@ impl EmplacementOnly {
     }
 }
 
-fn test_derive_nativeclass_without_constructor() -> bool {
-    println!(" -- test_derive_nativeclass_without_constructor");
+crate::godot_itest! { test_derive_nativeclass_without_constructor {
+    let foo = Instance::emplace(EmplacementOnly(54));
+    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
 
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Instance::emplace(EmplacementOnly(54));
+    let base = foo.into_base();
+    assert_eq!(Some(54), unsafe { base.call("answer", &[]).to::<i64>() });
 
-        assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
+    let foo = Instance::<EmplacementOnly, _>::try_from_base(base)
+        .expect("should be able to downcast");
+    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
+}}
 
-        let base = foo.into_base();
-        assert_eq!(Some(54), unsafe { base.call("answer", &[]).to::<i64>() });
-
-        let foo = Instance::<EmplacementOnly, _>::try_from_base(base)
-            .expect("should be able to downcast");
-        assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_without_constructor failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 struct WithoutInherit(i64);
@@ -278,22 +243,13 @@ impl WithoutInherit {
     }
 }
 
-fn test_derive_nativeclass_without_inherit() -> bool {
-    println!(" -- test_derive_nativeclass_without_inherit");
+crate::godot_itest! { test_derive_nativeclass_without_inherit {
+    let thing = Instance::<WithoutInherit, _>::new();
+    let base = thing.into_base();
+    assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<WithoutInherit, _>::new();
-        let base = thing.into_base();
-        assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_without_inherit failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -311,22 +267,13 @@ impl GodotAttrWithoutBase {
     }
 }
 
-fn test_derive_nativeclass_godot_attr_without_base() -> bool {
-    println!(" -- test_derive_nativeclass_godot_attr_without_base");
+crate::godot_itest! { test_derive_nativeclass_godot_attr_without_base {
+    let thing = Instance::<GodotAttrWithoutBase, _>::new();
+    let base = thing.into_base();
+    assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<GodotAttrWithoutBase, _>::new();
-        let base = thing.into_base();
-        assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_godot_attr_without_base failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -344,22 +291,13 @@ impl GodotAttrWithBase {
     }
 }
 
-fn test_derive_nativeclass_godot_attr_with_base() -> bool {
-    println!(" -- test_derive_nativeclass_godot_attr_with_base");
+crate::godot_itest! { test_derive_nativeclass_godot_attr_with_base {
+    let thing = Instance::<GodotAttrWithBase, _>::new();
+    let base = thing.into_base();
+    assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<GodotAttrWithBase, _>::new();
-        let base = thing.into_base();
-        assert_eq!(unsafe { base.call("answer", &[]).to::<i64>() }, Some(54));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_godot_attr_with_base failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -379,24 +317,15 @@ impl GodotAttrDerefReturn {
     }
 }
 
-fn test_derive_nativeclass_godot_attr_deref_return() -> bool {
-    println!(" -- test_derive_nativeclass_godot_attr_deref_return");
+crate::godot_itest! { test_derive_nativeclass_godot_attr_deref_return {
+    let thing = Instance::<GodotAttrDerefReturn, _>::new();
+    let base = thing.into_base();
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<GodotAttrDerefReturn, _>::new();
-        let base = thing.into_base();
+    let res = unsafe { base.call("answer", &[]).to::<Vec<i64>>() };
+    assert_eq!(res, Some([12, 34].into()));
+}}
 
-        let res = unsafe { base.call("answer", &[]).to::<Vec<i64>>() };
-        assert_eq!(res, Some([12, 34].into()));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_godot_attr_deref_return failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -414,29 +343,20 @@ impl GodotAttrRenameMethod {
     }
 }
 
-fn test_derive_nativeclass_godot_attr_rename_method() -> bool {
-    println!(" -- test_derive_nativeclass_godot_attr_rename_method");
+crate::godot_itest! { test_derive_nativeclass_godot_attr_rename_method {
+    let thing = Instance::<GodotAttrRenameMethod, _>::new();
+    let base = thing.into_base();
+    assert_eq!(unsafe { base.call("ask", &[]).to::<i64>() }, Some(54));
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<GodotAttrRenameMethod, _>::new();
-        let base = thing.into_base();
-        assert_eq!(unsafe { base.call("ask", &[]).to::<i64>() }, Some(54));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_godot_attr_rename_method failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
-struct GodotAttrToUseAllMacroParameters(Rc<RefCell<Vec<i64>>>);
+struct GodotAttrAllArguments(Rc<RefCell<Vec<i64>>>);
 
 #[methods]
-impl GodotAttrToUseAllMacroParameters {
+impl GodotAttrAllArguments {
     fn new(_owner: &Reference) -> Self {
         let vec = Vec::from([12, 34]);
         let rc_ref = Rc::new(RefCell::new(vec));
@@ -449,26 +369,15 @@ impl GodotAttrToUseAllMacroParameters {
     }
 }
 
-fn test_derive_nativeclass_godot_attr_to_use_all_macro_parameters() -> bool {
-    println!(" -- test_derive_nativeclass_godot_attr_to_use_all_macro_parameters");
+crate::godot_itest! { test_derive_nativeclass_godot_attr_all_arguments {
+    let thing = Instance::<GodotAttrAllArguments, _>::new();
+    let base = thing.into_base();
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<GodotAttrToUseAllMacroParameters, _>::new();
-        let base = thing.into_base();
+    let res = unsafe { base.call("ask", &[]).to::<Vec<i64>>() };
+    assert_eq!(res, Some([12, 34].into()));
+}}
 
-        let res = unsafe { base.call("ask", &[]).to::<Vec<i64>>() };
-        assert_eq!(res, Some([12, 34].into()));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!(
-            "   !! Test test_derive_nativeclass_godot_attr_to_use_all_macro_parameters failed"
-        );
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -503,42 +412,34 @@ impl CustomGetSet {
     }
 }
 
-fn test_derive_nativeclass_with_property_get_set() -> bool {
-    println!(" -- test_derive_nativeclass_with_property_get_set");
-    let ok = std::panic::catch_unwind(|| {
-        use gdnative::export::user_data::Map;
-        let (owner, script) = CustomGetSet::new_instance().decouple();
-        script
-            .map(|script| {
-                assert_eq!(0, script.get_called.get());
-                assert_eq!(0, script.set_called.get());
-            })
-            .unwrap();
-        owner.set("foo", 1);
-        script
-            .map(|script| {
-                assert_eq!(0, script.get_called.get());
-                assert_eq!(1, script.set_called.get());
-                assert_eq!(1, script._foo);
-            })
-            .unwrap();
-        assert_eq!(1, i32::from_variant(&owner.get("foo")).unwrap());
-        script
-            .map(|script| {
-                assert_eq!(1, script.get_called.get());
-                assert_eq!(1, script.set_called.get());
-            })
-            .unwrap();
-        owner.free();
-    })
-    .is_ok();
+crate::godot_itest! { test_derive_nativeclass_with_property_get_set {
+    use gdnative::export::user_data::Map;
+    let (owner, script) = CustomGetSet::new_instance().decouple();
+    script
+        .map(|script| {
+            assert_eq!(0, script.get_called.get());
+            assert_eq!(0, script.set_called.get());
+        })
+        .unwrap();
+    owner.set("foo", 1);
+    script
+        .map(|script| {
+            assert_eq!(0, script.get_called.get());
+            assert_eq!(1, script.set_called.get());
+            assert_eq!(1, script._foo);
+        })
+        .unwrap();
+    assert_eq!(1, i32::from_variant(&owner.get("foo")).unwrap());
+    script
+        .map(|script| {
+            assert_eq!(1, script.get_called.get());
+            assert_eq!(1, script.set_called.get());
+        })
+        .unwrap();
+    owner.free();
+}}
 
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_with_property_get_set failed");
-    }
-
-    ok
-}
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(NativeClass)]
 struct MyVec {
@@ -566,24 +467,15 @@ impl MyVec {
     }
 }
 
-fn test_derive_nativeclass_property_with_only_getter() -> bool {
-    println!(" -- test_derive_nativeclass_property_with_only_getter");
+crate::godot_itest! { test_derive_nativeclass_property_with_only_getter {
+    use gdnative::export::user_data::MapMut;
+    let (owner, script) = MyVec::new_instance().decouple();
+    assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 0);
 
-    let ok = std::panic::catch_unwind(|| {
-        use gdnative::export::user_data::MapMut;
-        let (owner, script) = MyVec::new_instance().decouple();
-        assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 0);
-        script.map_mut(|script| script.add(42)).unwrap();
-        assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 1);
-        // check the setter doesn't work for `size`
-        let _ = std::panic::catch_unwind(|| owner.set("size", 3));
-        assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 1);
-    })
-    .is_ok();
+    script.map_mut(|script| script.add(42)).unwrap();
+    assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 1);
 
-    if !ok {
-        godot_error!("   !! Test test_derive_nativeclass_property_with_only_getter failed");
-    }
-
-    ok
-}
+    // check the setter doesn't work for `size`
+    let _ = std::panic::catch_unwind(|| owner.set("size", 3));
+    assert_eq!(u32::from_variant(&owner.get("size")).unwrap(), 1);
+}}

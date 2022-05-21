@@ -1,8 +1,6 @@
 use gdnative::api::Camera;
 use gdnative::prelude::*;
 
-use gdnative_core::godot_itest;
-
 pub(crate) fn run_tests() -> bool {
     let mut status = true;
 
@@ -13,7 +11,7 @@ pub(crate) fn run_tests() -> bool {
 
 pub(crate) fn register(_handle: InitHandle) {}
 
-godot_itest! { test_vararray_return_crash {
+crate::godot_itest! { test_vararray_return_crash {
     // See https://github.com/godot-rust/godot-rust/issues/422
     let camera = Camera::new();
 
