@@ -30,40 +30,29 @@ impl VecBuilder {
     }
 }
 
-fn test_map_owned() -> bool {
-    println!(" -- test_map_owned");
+crate::godot_itest! { test_map_owned {
+    let v1 = Instance::emplace(VecBuilder { v: Vec::new() }).into_shared();
+    let v1 = unsafe { v1.assume_safe() };
 
-    let ok = std::panic::catch_unwind(|| {
-        let v1 = Instance::emplace(VecBuilder { v: Vec::new() }).into_shared();
-        let v1 = unsafe { v1.assume_safe() };
+    let v2 = v1
+        .map_owned(|s, owner| s.append(owner, vec![1, 2, 3]))
+        .unwrap();
+    let v2 = unsafe { v2.assume_safe() };
+    assert!(v1
+        .map_owned(|_, _| panic!("should never be called"))
+        .is_err());
 
-        let v2 = v1
-            .map_owned(|s, owner| s.append(owner, vec![1, 2, 3]))
-            .unwrap();
-        let v2 = unsafe { v2.assume_safe() };
-        assert!(v1
-            .map_owned(|_, _| panic!("should never be called"))
-            .is_err());
+    let v3 = v2
+        .map_owned(|s, owner| s.append(owner, vec![4, 5, 6]))
+        .unwrap();
+    let v3 = unsafe { v3.assume_safe() };
+    assert!(v2
+        .map_owned(|_, _| panic!("should never be called"))
+        .is_err());
 
-        let v3 = v2
-            .map_owned(|s, owner| s.append(owner, vec![4, 5, 6]))
-            .unwrap();
-        let v3 = unsafe { v3.assume_safe() };
-        assert!(v2
-            .map_owned(|_, _| panic!("should never be called"))
-            .is_err());
-
-        let v = v3.map_owned(|s, _| s.v).unwrap();
-        assert_eq!(&v, &[1, 2, 3, 4, 5, 6]);
-        assert!(v3
-            .map_owned(|_, _| panic!("should never be called"))
-            .is_err());
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_map_owned failed");
-    }
-
-    ok
-}
+    let v = v3.map_owned(|s, _| s.v).unwrap();
+    assert_eq!(&v, &[1, 2, 3, 4, 5, 6]);
+    assert!(v3
+        .map_owned(|_, _| panic!("should never be called"))
+        .is_err());
+}}

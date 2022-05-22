@@ -44,48 +44,37 @@ impl Drop for Probe {
 #[methods]
 impl Probe {}
 
-fn test_return_leak() -> bool {
-    println!(" -- test_return_leak");
+crate::godot_itest! { test_return_leak {
+    let drop_counter = Arc::new(AtomicUsize::new(0));
 
-    let ok = std::panic::catch_unwind(|| {
-        let drop_counter = Arc::new(AtomicUsize::new(0));
+    // The object used for its ptrcall getter
+    let animation_tree = api::AnimationTree::new();
 
-        // The object used for its ptrcall getter
-        let animation_tree = api::AnimationTree::new();
-
-        // Create an instance of the probe, and drop the reference after setting the property
-        // to it. After this block, the only reference should be the one in `animation_tree`.
-        {
-            let probe = Instance::emplace(Probe {
-                drop_count: Arc::clone(&drop_counter),
-            });
-            let base = probe.into_base().into_shared();
-            animation_tree.set_tree_root(base);
-        }
-
-        assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));
-
-        // Take the reference out of the property and drop it. The probe should be dropped after
-        // this block.
-        {
-            // This happens via ptrcall, which is what's being tested.
-            let _probe_reference = animation_tree.tree_root().unwrap();
-
-            // Free `animation_tree` so the reference inside is dropped.
-            animation_tree.free();
-
-            // `probe_reference` should now be the only reference left.
-            assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));
-        }
-
-        // The probe should not be leaked after `probe_reference` is dropped.
-        assert_eq!(1, drop_counter.load(AtomicOrdering::Acquire));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_return_leak failed");
+    // Create an instance of the probe, and drop the reference after setting the property
+    // to it. After this block, the only reference should be the one in `animation_tree`.
+    {
+        let probe = Instance::emplace(Probe {
+            drop_count: Arc::clone(&drop_counter),
+        });
+        let base = probe.into_base().into_shared();
+        animation_tree.set_tree_root(base);
     }
 
-    ok
-}
+    assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));
+
+    // Take the reference out of the property and drop it. The probe should be dropped after
+    // this block.
+    {
+        // This happens via ptrcall, which is what's being tested.
+        let _probe_reference = animation_tree.tree_root().unwrap();
+
+        // Free `animation_tree` so the reference inside is dropped.
+        animation_tree.free();
+
+        // `probe_reference` should now be the only reference left.
+        assert_eq!(0, drop_counter.load(AtomicOrdering::Acquire));
+    }
+
+    // The probe should not be leaked after `probe_reference` is dropped.
+    assert_eq!(1, drop_counter.load(AtomicOrdering::Acquire));
+}}

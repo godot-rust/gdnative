@@ -79,32 +79,17 @@ impl RegisterProperty {
     }
 }
 
-fn test_register_property() -> bool {
-    println!(" -- test_register_property");
+crate::godot_itest! { test_register_property {
+    let obj = RegisterProperty::new_instance();
+    let base = obj.into_base();
+    assert_eq!(Some(42), unsafe { base.call("get_value", &[]).to() });
 
-    let ok = std::panic::catch_unwind(|| {
-        let obj = RegisterProperty::new_instance();
+    base.set("value", 54.to_variant());
+    assert_eq!(Some(54), unsafe { base.call("get_value", &[]).to() });
 
-        let base = obj.into_base();
-
-        assert_eq!(Some(42), unsafe { base.call("get_value", &[]).to() });
-
-        base.set("value", 54.to_variant());
-
-        assert_eq!(Some(54), unsafe { base.call("get_value", &[]).to() });
-
-        unsafe { base.call("set_value", &[4242.to_variant()]) };
-
-        assert_eq!(Some(4242), unsafe { base.call("get_value", &[]).to() });
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_register_property failed");
-    }
-
-    ok
-}
+    unsafe { base.call("set_value", &[4242.to_variant()]) };
+    assert_eq!(Some(4242), unsafe { base.call("get_value", &[]).to() });
+}}
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -169,66 +154,55 @@ fn register_methods(builder: &ClassBuilder<AdvancedMethods>) {
         .done();
 }
 
-fn test_advanced_methods() -> bool {
-    println!(" -- test_advanced_methods");
+crate::godot_itest! { test_advanced_methods {
+    let thing = Instance::<AdvancedMethods, _>::new();
+    let thing = thing.base();
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<AdvancedMethods, _>::new();
-        let thing = thing.base();
-
-        assert_eq!(
-            45,
-            i32::from_variant(unsafe {
-                &thing.call(
-                    "add_ints",
-                    &[1.to_variant(), 2.to_variant(), Variant::nil()],
-                )
-            })
-            .unwrap()
-        );
-
-        assert_eq!(
-            48,
-            i32::from_variant(unsafe {
-                &thing.call(
-                    "add_ints",
-                    &[1.to_variant(), 2.to_variant(), 3.to_variant()],
-                )
-            })
-            .unwrap()
-        );
-
-        approx::assert_relative_eq!(
-            6.5,
-            f32::from_variant(unsafe {
-                &thing.call(
-                    "add_floats",
-                    &[(5.0).to_variant(), (-2.5).to_variant(), Variant::nil()],
-                )
-            })
-            .unwrap()
-        );
-
-        let v = Vector2::from_variant(unsafe {
+    assert_eq!(
+        45,
+        i32::from_variant(unsafe {
             &thing.call(
-                "add_vectors",
-                &[
-                    Vector2::new(5.0, -5.0).to_variant(),
-                    Vector2::new(-2.5, 2.5).to_variant(),
-                    Variant::nil(),
-                ],
+                "add_ints",
+                &[1.to_variant(), 2.to_variant(), Variant::nil()],
             )
         })
-        .unwrap();
+        .unwrap()
+    );
 
-        approx::assert_relative_eq!(3.5, v.x);
-        approx::assert_relative_eq!(-0.5, v.y);
+    assert_eq!(
+        48,
+        i32::from_variant(unsafe {
+            &thing.call(
+                "add_ints",
+                &[1.to_variant(), 2.to_variant(), 3.to_variant()],
+            )
+        })
+        .unwrap()
+    );
+
+    approx::assert_relative_eq!(
+        6.5,
+        f32::from_variant(unsafe {
+            &thing.call(
+                "add_floats",
+                &[(5.0).to_variant(), (-2.5).to_variant(), Variant::nil()],
+            )
+        })
+        .unwrap()
+    );
+
+    let v = Vector2::from_variant(unsafe {
+        &thing.call(
+            "add_vectors",
+            &[
+                Vector2::new(5.0, -5.0).to_variant(),
+                Vector2::new(-2.5, 2.5).to_variant(),
+                Variant::nil(),
+            ],
+        )
     })
-    .is_ok();
+    .unwrap();
 
-    if !ok {
-        godot_error!("   !! Test test_advanced_methods failed");
-    }
-
-    ok
-}
+    approx::assert_relative_eq!(3.5, v.x);
+    approx::assert_relative_eq!(-0.5, v.y);
+}}

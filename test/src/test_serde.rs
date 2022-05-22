@@ -112,176 +112,100 @@ impl Foo {
     }
 }
 
-/// Sanity check that a round trip through Variant preserves equality for Foo.
-fn test_variant_eq() -> bool {
-    println!("   -- test_variant_eq");
+// Sanity check that a round trip through Variant preserves equality for Foo.
+crate::godot_itest! { test_variant_eq {
+    let foo = Foo::new();
+    let variant = foo.to_variant();
+    let result = Foo::from_variant(&variant).expect("Foo::from_variant");
+    assert_eq!(foo, result);
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
-        let variant = foo.to_variant();
-        let result = Foo::from_variant(&variant).expect("Foo::from_variant");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
+// Sanity check that a round trip through VariantDispatch preserves equality for Foo.
+crate::godot_itest! { test_dispatch_eq {
+    let foo = Foo::new();
+    let dispatch = foo.to_variant().dispatch();
+    let result = Foo::from_variant(&Variant::from(&dispatch)).expect("Foo from Dispatch");
+    assert_eq!(foo, result);
+}}
 
-    if !ok {
-        godot_error!("     !! Test test_variant_eq failed");
-    }
+crate::godot_itest! { test_ron {
+    let foo = Foo::new();
 
-    ok
-}
+    let ron_str = ron::to_string(&foo).expect("Foo to RON str");
+    let mut de = ron::Deserializer::from_str(ron_str.as_ref());
+    let result = Foo::deserialize(de.as_mut().expect("deserialize Foo from RON")).unwrap();
+    assert_eq!(foo, result);
 
-/// Sanity check that a round trip through VariantDispatch preserves equality for Foo.
-fn test_dispatch_eq() -> bool {
-    println!("   -- test_dispatch_eq");
+    let ron_disp_str = ron::to_string(&foo.to_variant().dispatch()).expect("Dispatch to RON");
+    let mut de = ron::Deserializer::from_str(ron_disp_str.as_ref());
+    let de = de
+        .as_mut()
+        .expect("disp_round_trip ron::Deserializer::from_str");
+    let disp = VariantDispatch::deserialize(de).expect("Dispatch from RON");
+    let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from RON");
+    assert_eq!(foo, result);
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
-        let dispatch = foo.to_variant().dispatch();
-        let result = Foo::from_variant(&Variant::from(&dispatch)).expect("Foo from Dispatch");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
+crate::godot_itest! { test_json {
+    let foo = Foo::new();
 
-    if !ok {
-        godot_error!("     !! Test test_dispatch_eq failed");
-    }
+    let json_str = serde_json::to_string(&foo).expect("Foo to JSON");
+    let result = serde_json::from_str::<Foo>(json_str.as_ref()).expect("Foo from JSON");
+    assert_eq!(foo, result);
 
-    ok
-}
+    let foo = Foo::new();
+    let json_disp_str =
+        serde_json::to_string(&foo.to_variant().dispatch()).expect("Foo Dispatch to JSON");
+    let disp = serde_json::from_str::<VariantDispatch>(json_disp_str.as_ref())
+        .expect("Dispatch from JSON");
 
-fn test_ron() -> bool {
-    println!("   -- test_ron");
+    let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from JSON");
+    assert_eq!(foo, result);
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
+crate::godot_itest! { test_yaml {
+    let foo = Foo::new();
 
-        let ron_str = ron::to_string(&foo).expect("Foo to RON str");
-        let mut de = ron::Deserializer::from_str(ron_str.as_ref());
-        let result = Foo::deserialize(de.as_mut().expect("deserialize Foo from RON")).unwrap();
-        assert_eq!(foo, result);
+    let yaml_str = serde_yaml::to_string(&foo).expect("Foo to YAML");
+    let result = serde_yaml::from_str::<Foo>(&yaml_str).expect("Foo from YAML");
+    assert_eq!(foo, result);
 
-        let ron_disp_str = ron::to_string(&foo.to_variant().dispatch()).expect("Dispatch to RON");
-        let mut de = ron::Deserializer::from_str(ron_disp_str.as_ref());
-        let de = de
-            .as_mut()
-            .expect("disp_round_trip ron::Deserializer::from_str");
-        let disp = VariantDispatch::deserialize(de).expect("Dispatch from RON");
-        let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from RON");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
+    let yaml_str =
+        serde_yaml::to_string(&foo.to_variant().dispatch()).expect("Dispatch to YAML");
+    let disp = serde_yaml::from_str::<VariantDispatch>(&yaml_str).expect("Dispatch from YAML");
+    let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from YAML");
+    assert_eq!(foo, result);
+}}
 
-    if !ok {
-        godot_error!("     !! Test test_ron failed");
-    }
+crate::godot_itest! { test_msgpack {
+    let foo = Foo::new();
 
-    ok
-}
+    let msgpack_bytes = rmp_serde::to_vec_named(&foo).expect("Foo to MessagePack");
+    let result =
+        rmp_serde::from_read_ref::<_, Foo>(&msgpack_bytes).expect("Foo from MessagePack");
+    assert_eq!(foo, result);
 
-fn test_json() -> bool {
-    println!("   -- test_json");
+    let msgpack_disp_bytes =
+        rmp_serde::to_vec_named(&foo.to_variant().dispatch()).expect("Dispatch to MessagePack");
+    let disp = rmp_serde::from_read_ref::<_, VariantDispatch>(&msgpack_disp_bytes)
+        .expect("Dispatch from MessagePack");
+    let result =
+        Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from MessagePack");
+    assert_eq!(foo, result);
+}}
 
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
+crate::godot_itest! { test_bincode {
+    let foo = Foo::new();
 
-        let json_str = serde_json::to_string(&foo).expect("Foo to JSON");
-        let result = serde_json::from_str::<Foo>(json_str.as_ref()).expect("Foo from JSON");
-        assert_eq!(foo, result);
+    let bincode_bytes = bincode::serialize(&foo).expect("Foo to bincode");
+    let result = bincode::deserialize::<Foo>(bincode_bytes.as_ref()).expect("Foo from bincode");
+    assert_eq!(foo, result);
 
-        let foo = Foo::new();
-        let json_disp_str =
-            serde_json::to_string(&foo.to_variant().dispatch()).expect("Foo Dispatch to JSON");
-        let disp = serde_json::from_str::<VariantDispatch>(json_disp_str.as_ref())
-            .expect("Dispatch from JSON");
-        let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from JSON");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("     !! Test test_json failed");
-    }
-
-    ok
-}
-
-fn test_yaml() -> bool {
-    println!("   -- test_yaml");
-
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
-
-        let yaml_str = serde_yaml::to_string(&foo).expect("Foo to YAML");
-        let result = serde_yaml::from_str::<Foo>(&yaml_str).expect("Foo from YAML");
-        assert_eq!(foo, result);
-
-        let yaml_str =
-            serde_yaml::to_string(&foo.to_variant().dispatch()).expect("Dispatch to YAML");
-        let disp = serde_yaml::from_str::<VariantDispatch>(&yaml_str).expect("Dispatch from YAML");
-        let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from YAML");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("     !! Test test_yaml failed");
-    }
-
-    ok
-}
-
-fn test_msgpack() -> bool {
-    println!("   -- test_msgpack");
-
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
-
-        let msgpack_bytes = rmp_serde::to_vec_named(&foo).expect("Foo to MessagePack");
-        let result =
-            rmp_serde::from_read_ref::<_, Foo>(&msgpack_bytes).expect("Foo from MessagePack");
-        assert_eq!(foo, result);
-
-        let msgpack_disp_bytes =
-            rmp_serde::to_vec_named(&foo.to_variant().dispatch()).expect("Dispatch to MessagePack");
-        let disp = rmp_serde::from_read_ref::<_, VariantDispatch>(&msgpack_disp_bytes)
-            .expect("Dispatch from MessagePack");
-        let result =
-            Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from MessagePack");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("     !! Test test_msgpack failed");
-    }
-
-    ok
-}
-
-fn test_bincode() -> bool {
-    println!("   -- test_bincode");
-
-    let ok = std::panic::catch_unwind(|| {
-        let foo = Foo::new();
-
-        let bincode_bytes = bincode::serialize(&foo).expect("Foo to bincode");
-        let result = bincode::deserialize::<Foo>(bincode_bytes.as_ref()).expect("Foo from bincode");
-        assert_eq!(foo, result);
-
-        let bincode_bytes =
-            bincode::serialize(&foo.to_variant().dispatch()).expect("Dispatch to bincode");
-        let disp = bincode::deserialize::<VariantDispatch>(bincode_bytes.as_ref())
-            .expect("Dispatch from bincode");
-        let result =
-            Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from bincode");
-        assert_eq!(foo, result);
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("     !! Test test_bincode failed");
-    }
-
-    ok
-}
+    let bincode_bytes =
+        bincode::serialize(&foo.to_variant().dispatch()).expect("Dispatch to bincode");
+    let disp = bincode::deserialize::<VariantDispatch>(bincode_bytes.as_ref())
+        .expect("Dispatch from bincode");
+    let result =
+        Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from bincode");
+    assert_eq!(foo, result);
+}}

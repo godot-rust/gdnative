@@ -8,20 +8,10 @@ pub(crate) fn register(handle: InitHandle) {
 }
 
 pub(crate) fn run_tests() -> bool {
-    println!(" -- test_as_arg");
+    let mut ok = true;
 
-    let ok = std::panic::catch_unwind(|| {
-        println!("   -- test_ref_as_arg");
-        test_ref_as_arg();
-
-        println!("   -- test_instance_as_arg");
-        test_instance_as_arg();
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_as_arg failed");
-    }
+    ok &= test_as_arg_ref();
+    ok &= test_as_arg_instance();
 
     ok
 }
@@ -40,7 +30,7 @@ impl MyNode {}
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 
-fn test_ref_as_arg() {
+crate::godot_itest! { test_as_arg_ref {
     // Ref<T, Unique>
     add_node_with(|n: Ref<Node2D, Unique>| n);
 
@@ -56,9 +46,9 @@ fn test_ref_as_arg() {
 
     // TRef<T, Shared>
     add_node_with(|n: Ref<Node2D, Unique>| unsafe { n.into_shared().assume_safe() });
-}
+}}
 
-fn test_instance_as_arg() {
+crate::godot_itest! { test_as_arg_instance {
     // Instance<T, Unique>
     add_instance_with(|n: Instance<MyNode, Unique>| n);
 
@@ -74,7 +64,7 @@ fn test_instance_as_arg() {
 
     // TInstance<T, Shared>
     add_instance_with(|n: Instance<MyNode, Unique>| unsafe { n.into_shared().assume_safe() });
-}
+}}
 
 fn add_node_with<F, T>(to_arg: F)
 where
