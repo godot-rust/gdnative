@@ -16,7 +16,7 @@ rust-version = "1.56"
 libc = "0.2"
 
 [build-dependencies]
-bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.60.1", default-features = false, features = ["runtime"] }
 proc-macro2 = "1"
 quote = "1"
 miniserde = "0.1.16"
