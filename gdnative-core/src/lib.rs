@@ -43,6 +43,7 @@ mod macros;
 pub mod core_types;
 
 pub mod export;
+pub mod globalscope;
 pub mod init;
 pub mod log;
 pub mod object;
