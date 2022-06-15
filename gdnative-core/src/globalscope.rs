@@ -11,8 +11,8 @@ pub fn cartasian2polar(x: f32, y: f32) -> Vector2 {
 }
 /// Converts from `decibels` to linear energy (audio).
 #[inline]
-pub fn db2linear(p_db: f32) -> f32 {
-    f32::exp(p_db * 0.11512925464970228420089957273422)
+pub fn db2linear(db: f32) -> f32 {
+    f32::exp(db * 0.115_129_255)
 }
 /// Returns the `position` of the first `non-zero` digit, after the decimal point.
 /// Note that the `maximum` return `value` is `10`, which is a design decision in the implementation.
@@ -41,12 +41,12 @@ pub fn step_decimals(p_step: f32) -> i32 {
     let abs = p_step.abs();
     let int_abs: i32 = p_step as i32;
     let decs: f32 = abs - (int_abs as f32); // strip away integer part;
-    for i in 0..MAXN {
-        if decs >= SD[i] {
+    for (i, item) in SD.iter().enumerate().take(MAXN) {
+        if decs >= *item {
             return i.try_into().unwrap();
         }
     }
-    return 0;
+    0
 }
 /// Moves `from` toward `to` by the `delta` `value`.
 /// Use a negative `delta` value `to` move away.
@@ -66,28 +66,29 @@ pub fn move_toward(p_from: f32, p_to: f32, p_delta: f32) -> f32 {
 /// Returns an "eased" value of x based on an easing function defined with `curve`.
 /// This easing function is based on an `exponent`. The curve can be any floating-point number,
 /// with specific values leading to the following behaviors:
-pub fn ease(mut p_x: f32, p_c: f32) -> f32 {
-    if p_x < 0.0 {
-        p_x = 0.0;
-    } else if p_x > 1.0 {
-        p_x = 1.0;
+#[inline]
+pub fn ease(mut s: f32, curve: f32) -> f32 {
+    if s < 0.0 {
+        s = 0.0;
+    } else if s > 1.0 {
+        s = 1.0;
     }
-    if p_c > 0.0 {
-        if p_c < 1.0 {
-            return 1.0 - (1.0 - p_x).powf(1.0 / p_c);
+    if curve > 0.0 {
+        if curve < 1.0 {
+            1.0 - (1.0 - s).powf(1.0 / curve)
         } else {
-            return p_x.powf(p_c);
+            s.powf(curve)
         }
-    } else if p_c < 0.0 {
+    } else if curve < 0.0 {
         //inout ease
 
-        if p_x < 0.5 {
-            return (p_x * 2.0).powf(-p_c) * 0.5;
+        if s < 0.5 {
+            (s * 2.0).powf(-curve) * 0.5
         } else {
-            return (1.0 - (1.0 - (p_x - 0.5) * 2.0).powf(-p_c)) * 0.5 + 0.5;
+            (1.0 - (1.0 - (s - 0.5) * 2.0).powf(-curve)) * 0.5 + 0.5
         }
     } else {
-        return 0.0; // no ease (raw)
+        0.0 // no ease (raw)
     }
 }
 /// Returns the floating-point remainder of `a/b`, keeping the sign of `a`.
@@ -112,6 +113,7 @@ pub fn lerp(from: f32, to: f32, weight: f32) -> f32 {
 /// Linearly interpolates between two angles (in radians) by a normalized value.
 /// Similar to lerp, but interpolates correctly when the angles wrap around `TAU`.
 /// To perform eased interpolation with `lerp_angle`, combine it with `ease` or `smoothstep`.
+#[inline]
 pub fn lerp_angle(angle_from: f32, angle_to: f32, amount: f32) -> f32 {
     let difference = fmod(angle_to - angle_from, TAU);
     let distance = fmod(2.0 * difference, TAU) - difference;
@@ -125,6 +127,7 @@ pub fn lerp_angle(angle_from: f32, angle_to: f32, amount: f32) -> f32 {
 /// assert_eq!(fposmod(-0.5, 1.5), 1.0);
 /// assert_eq!(fposmod(0.0, 1.5), 0.0);
 /// ```
+#[inline]
 pub fn fposmod(p_x: f32, p_y: f32) -> f32 {
     let mut value = fmod(p_x, p_y);
     if ((value < 0.0) && (p_y > 0.0)) || ((value > 0.0) && (p_y < 0.0)) {
@@ -160,6 +163,7 @@ pub fn inverse_lerp(p_from: f32, p_to: f32, p_value: f32) -> f32 {
 /// assert_eq!(smoothstep(0.0, 2.0, 1.0), 0.5);
 /// assert_eq!(smoothstep(0.0, 2.0, 2.0), 1.0);
 /// ```
+#[inline]
 pub fn smoothstep(p_from: f32, p_to: f32, p_s: f32) -> f32 {
     if is_equal_approx(p_from, p_to) {
         return p_from;
@@ -171,6 +175,7 @@ pub fn smoothstep(p_from: f32, p_to: f32, p_s: f32) -> f32 {
 /// Here, approximately equal means that `a` and `sb` are within a small internal epsilon of each other,
 /// which scales with the magnitude of the numbers.
 /// Infinity values of the same sign are considered equal.
+#[inline]
 pub fn is_equal_approx(a: f32, b: f32) -> bool {
     if a == b {
         return true;
@@ -192,7 +197,7 @@ pub fn is_zero_approx(s: f32) -> bool {
 /// This can be used to implement volume sliders that behave as expected (since volume isn't linear).
 #[inline]
 pub fn linear2db(nrg: f32) -> f32 {
-    nrg.ln() * 8.6858896380650365530225783783321
+    nrg.ln() * 0.115_129_255
 }
 /// Returns the nearest equal or larger power of 2 for integer value.
 /// In other words, returns the smallest value a where `a = pow(2, n)` such that `value <= a` for some non-negative integer `n`.
@@ -231,7 +236,7 @@ pub fn posmod(a: i32, b: i32) -> i32 {
     if ((value < 0) && (b > 0)) || ((value > 0) && (b < 0)) {
         value += b;
     }
-    return value;
+    value
 }
 /// Maps a value from range [istart, istop] to [ostart, ostop].
 /// # Example:
@@ -253,7 +258,7 @@ pub fn stepify(mut value: f32, step: f32) -> f32 {
     if step != 0.0 {
         value = (value / step + 0.5).floor() * step;
     }
-    return value;
+    value
 }
 /// Wraps float value between min and max.
 /// Usable for creating loop-alike behavior or infinite surfaces.
