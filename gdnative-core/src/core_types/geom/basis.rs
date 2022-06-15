@@ -278,7 +278,7 @@ impl Basis {
 
     /// Returns linear interpolation between two basis by weight amount (on the range of 0.0 to 1.0).
     #[inline]
-    pub fn lerp(&self, other: Basis, weight: f32) -> Self {
+    pub fn lerp(&self, other: &Basis, weight: f32) -> Self {
         // this is how godot is doing it at https://github.com/godotengine/godot/blob/master/core/math/basis.cpp#L964
         // but Godot engine output for me differs than godot-rust
         let a = self.elements[0].linear_interpolate(other.elements[0], weight);

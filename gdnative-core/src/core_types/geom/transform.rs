@@ -87,6 +87,9 @@ impl Transform {
     }
 
     /// Returns this transform, with its origin moved by a certain `translation`
+    #[deprecated = "`translated` is not relative to the transform's coordinate system \
+    and thus inconsistent with GDScript. Please use translated_global() instead. \
+    This method will be renamed to translated_local in gdnative 0.11."]
     #[inline]
     pub fn translated(&self, translation: Vector3) -> Self {
         Self {
@@ -150,7 +153,7 @@ impl Transform {
     /// Returns the rotated transform around the given axis by the given angle (in radians),
     /// using matrix multiplication. The axis must be a normalized vector.
     #[inline]
-    pub fn rotate(&mut self, axis: Vector3, phi: f32) {
+    fn rotate(&mut self, axis: Vector3, phi: f32) {
         *self = self.rotated(axis, phi);
     }
 
@@ -196,8 +199,10 @@ impl Transform {
 
     /// Translates the transform by the given offset, relative to
     /// the transform's basis vectors.
+    ///
+    /// This method will be renamed to `translated` in gdnative 0.11
     #[inline]
-    pub fn translated_withbasis(&self, translation: Vector3) -> Self {
+    pub fn translated_global(&self, translation: Vector3) -> Self {
         let mut copy = *self;
         copy.translate_withbasis(translation);
         copy
@@ -224,7 +229,7 @@ impl Transform {
     }
 
     #[inline]
-    pub fn is_equal_approx(&self, other: Transform) -> bool {
+    pub fn is_equal_approx(&self, other: &Transform) -> bool {
         self.basis.is_equal_approx(&other.basis) && self.origin.is_equal_approx(other.origin)
     }
 
@@ -232,7 +237,7 @@ impl Transform {
     /// weight amount (on the range of 0.0 to 1.0).
     /// Assuming the two transforms are located on a sphere surface.
     #[inline]
-    pub fn sphere_interpolate_with(&self, other: Transform, weight: f32) -> Self {
+    pub fn sphere_interpolate_with(&self, other: &Transform, weight: f32) -> Self {
         let src_scale = self.basis.scale();
         let src_rot = self.basis.to_quat();
         let src_loc = self.origin;
@@ -252,9 +257,9 @@ impl Transform {
     /// Interpolates the transform to other Transform by
     /// weight amount (on the range of 0.0 to 1.0).
     #[inline]
-    pub fn interpolate_with(&self, other: Transform, weight: f32) -> Self {
+    pub fn interpolate_with(&self, other: &Transform, weight: f32) -> Self {
         Transform {
-            basis: self.basis.lerp(other.basis, weight),
+            basis: self.basis.lerp(&other.basis, weight),
             origin: self.origin.linear_interpolate(other.origin, weight),
         }
     }
@@ -297,7 +302,7 @@ mod tests {
             basis.c(),
             Vector3::new(0.0, 0.0, 0.0),
         );
-        t = t.translated_withbasis(Vector3::new(0.5, -1.0, 0.25));
+        t = t.translated_global(Vector3::new(0.5, -1.0, 0.25));
         t = t.scaled(Vector3::new(0.25, 0.5, 2.0));
 
         let basis = Basis::from_euler(Vector3::new(12.23, 50.46, 93.94));
@@ -307,7 +312,7 @@ mod tests {
             basis.c(),
             Vector3::new(0.0, 0.0, 0.0),
         );
-        t2 = t2.translated_withbasis(Vector3::new(1.5, -2.0, 1.25));
+        t2 = t2.translated_global(Vector3::new(1.5, -2.0, 1.25));
         t2 = t2.scaled(Vector3::new(0.5, 0.58, 1.0));
         // Godot reports:
         // t = 0.019358, -0.041264, 0.24581, -0.144074, 0.470205, 0.090279, -1.908901, -0.594598, 0.050514 - 0.112395, -0.519672, -0.347224
@@ -348,7 +353,7 @@ mod tests {
             Vector3::new(-0.47722515, -0.14864945, 0.012628445),
             Vector3::new(-0.5, 1.0, -0.25),
         );
-        assert!(expected.is_equal_approx(t))
+        assert!(expected.is_equal_approx(&t))
     }
 
     #[test]
@@ -363,7 +368,7 @@ mod tests {
             Vector3::new(0.99580616, 0.0914323, 0.0031974507),
             Vector3::new(0.11239518, -0.519672, -0.34722406),
         );
-        assert!(expected.is_equal_approx(t))
+        assert!(expected.is_equal_approx(&t))
     }
 
     #[test]
@@ -374,14 +379,14 @@ mod tests {
         // TODO: Get new godot result. https://github.com/godotengine/godot/commit/61759da5b35e44003ab3ffe3d4024dd611d17eff changed how Transform3D.linear_interpolate works
         // For now assuming this is sane - examined the new implementation manually.
         let (t, t2) = test_inputs();
-        let result = t.interpolate_with(t2, 0.5);
+        let result = t.interpolate_with(&t2, 0.5);
         let expected = Transform::from_basis_origin(
             Vector3::new(0.24826992, -0.15496635, -0.997503),
             Vector3::new(0.038474888, 0.49598676, -0.4808879),
             Vector3::new(0.16852, 0.14085774, 0.48833522),
             Vector3::new(0.352889, -0.786351, 0.707835),
         );
-        assert!(expected.is_equal_approx(result))
+        assert!(expected.is_equal_approx(&result))
     }
 
     #[test]
@@ -391,13 +396,13 @@ mod tests {
         // t2 = 0.477182, 0.118214, 0.09123, -0.165859, 0.521769, 0.191437, -0.086105, -0.367178, 0.926157 - 0.593383, -1.05303, 1.762894
         // result =  0.727909, -0.029075, 0.486138, -0.338385, 0.6514, 0.156468, -0.910002, -0.265481, 0.330678 - 0.352889, -0.786351, 0.707835
         let (t, t2) = test_inputs();
-        let result = t.sphere_interpolate_with(t2, 0.5);
+        let result = t.sphere_interpolate_with(&t2, 0.5);
         let expected = Transform::from_basis_origin(
             Vector3::new(0.7279087, -0.19632529, -0.45626357),
             Vector3::new(-0.05011323, 0.65140045, -0.22942543),
             Vector3::new(0.9695858, 0.18105738, 0.33067825),
             Vector3::new(0.3528893, -0.78635097, 0.7078349),
         );
-        assert!(expected.is_equal_approx(result))
+        assert!(expected.is_equal_approx(&result))
     }
 }
