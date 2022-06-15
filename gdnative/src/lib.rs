@@ -81,7 +81,7 @@
 // Items, which are #[doc(hidden)] in their original crate and re-exported with a wildcard, lose
 // their hidden status. Re-exporting them manually and hiding the wildcard solves this.
 #[doc(inline)]
-pub use gdnative_core::{core_types, export, init, log, object, profiler};
+pub use gdnative_core::{core_types, export, globalscope, init, log, object, profiler};
 
 // Implementation details (e.g. used by macros).
 // However, do not re-export macros (on crate level), thus no wildcard
