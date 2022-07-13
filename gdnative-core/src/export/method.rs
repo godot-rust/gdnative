@@ -1,10 +1,8 @@
 //! Method registration
 
 use std::borrow::Cow;
-use std::convert::TryFrom;
-use std::fmt;
 use std::marker::PhantomData;
-use std::ops::Bound;
+use std::{fmt, ops};
 
 use crate::core_types::{FromVariant, FromVariantError, Variant};
 use crate::export::class::NativeClass;
@@ -211,7 +209,34 @@ impl<C: NativeClass, F: StaticArgsMethod<C>> Method<C> for StaticArgs<F> {
 }
 
 /// Safe interface to a list of borrowed method arguments with a convenient API
-/// for common operations with them. Can also be used as an iterator.
+/// for common operations with them.
+///
+/// **Note:** the `impl Iterator` is deprecated, `Varargs` itself should not be treated as a consumable iterator.
+/// Instead, use [`Self::as_slice()`].
+///
+/// This type can be destructured into tuples:
+/// ```no_run
+/// use gdnative::prelude::*;
+/// use gdnative::export::Varargs;
+///
+/// #[derive(NativeClass)]
+/// #[no_constructor]
+/// struct MyClass {}
+///
+/// struct CalcMethod;
+/// impl Method<MyClass> for CalcMethod {
+///     fn call(
+///         &self,
+///         _this: TInstance<'_, MyClass>,
+///         args: Varargs<'_>,
+///     ) -> Variant {
+///         // Destructure via try_into():
+///         let (a, b): (i64, i64) = args.try_into().expect("signature mismatch");
+///         let ret = a * b;
+///         ret.to_variant()
+///     }
+/// }
+/// ```
 pub struct Varargs<'a> {
     idx: usize,
     args: &'a [&'a Variant],
@@ -293,24 +318,30 @@ impl<'a> Varargs<'a> {
     }
 
     /// Check the length of arguments.
-    /// See `get()`, `get_opt()` or `get_rest()` for examples.
+    ///
+    /// See [`Self::get()`] or [`Self::get_opt()`] for examples.
     ///
     /// # Errors
-    /// Returns an error if the length of arguments is outside the specified range.
+    /// Returns an [`VarargsError::InvalidLength`] if the length of arguments is outside the specified range.
     #[inline]
-    pub fn check_length(&self, bounds: impl ArgumentBounds) -> Result<(), ArgumentLengthError> {
+    pub fn check_length(&self, expected: impl Into<IndexBounds>) -> Result<(), VarargsError> {
         let passed = self.args.len();
-        if bounds.contains(&passed) {
+        let expected = expected.into();
+        if expected.contains(passed) {
             Ok(())
         } else {
-            Err(ArgumentLengthError::new(passed, bounds))
+            // Note: cannot use Box<dyn RangeBounds<usize>> because trait is not object-safe due to _unrelated_ method contains()
+            Err(VarargsError::InvalidLength {
+                length: passed,
+                expected,
+            })
         }
     }
 
     /// Returns the type-converted value at the specified argument position.
     ///
     /// # Errors
-    /// Returns an error if the conversion fails or the argument is not set.
+    /// Returns a [`VarargsError::InvalidArgumentType`] if the conversion fails or the argument is not set.
     ///
     /// # Examples
     /// ```
@@ -322,18 +353,17 @@ impl<'a> Varargs<'a> {
     /// # }
     /// ```
     #[inline]
-    pub fn get<T: FromVariant>(&self, index: usize) -> Result<T, ArgumentTypeError> {
-        let relative_index = index;
-        let actual_index = index + self.offset_index;
+    pub fn get<T: FromVariant>(&self, index: usize) -> Result<T, VarargsError> {
+        // Note: disregards iterator offset, since that representation is deprecated
 
-        match self.args.get(relative_index) {
+        match self.args.get(index) {
             Some(v) => match T::from_variant(v) {
                 Ok(ok) => Ok(ok),
-                Err(err) => Err(ArgumentTypeError::new(actual_index, err)),
+                Err(error) => Err(VarargsError::InvalidArgumentType { index, error }),
             },
             None => {
-                let err = FromVariantError::Custom("Argument is not set".to_owned());
-                Err(ArgumentTypeError::new(actual_index, err))
+                let error = FromVariantError::Custom("Argument is not set".to_owned());
+                Err(VarargsError::InvalidArgumentType { index, error })
             }
         }
     }
@@ -342,7 +372,7 @@ impl<'a> Varargs<'a> {
     /// Returns `None` if the argument is not set.
     ///
     /// # Errors
-    /// Returns an error if the conversion fails.
+    /// Returns a [`VarargsError::InvalidArgumentType`] if the conversion fails.
     ///
     /// # Examples
     /// ```
@@ -354,52 +384,16 @@ impl<'a> Varargs<'a> {
     /// # }
     /// ```
     #[inline]
-    pub fn get_opt<T: FromVariant>(&self, index: usize) -> Result<Option<T>, ArgumentTypeError> {
-        let relative_index = index;
-        let actual_index = index + self.offset_index;
+    pub fn get_opt<T: FromVariant>(&self, index: usize) -> Result<Option<T>, VarargsError> {
+        // Note: disregards iterator offset, since that representation is deprecated
 
-        match self.args.get(relative_index) {
+        match self.args.get(index) {
             Some(v) => match T::from_variant(v) {
                 Ok(ok) => Ok(Some(ok)),
-                Err(err) => Err(ArgumentTypeError::new(actual_index, err)),
+                Err(error) => Err(VarargsError::InvalidArgumentType { index, error }),
             },
             None => Ok(None),
         }
-    }
-
-    /// Returns the type-converted value from the specified argument position.
-    ///
-    /// # Errors
-    /// Returns an error if the conversion fails.
-    ///
-    /// # Examples
-    /// ```ignore
-    /// # fn call(args: gdnative::export::Varargs) -> Result<(), Box<dyn std::error::Error>> {
-    ///     args.check_length(1..)?;
-    ///     let a: usize = args.get(0)?;
-    ///     let rest: Vec<i64> = args.get_rest(1)?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    #[inline]
-    pub fn get_rest<T: TryFrom<Varargs<'a>>>(&self, rest_index: usize) -> Result<T, T::Error> {
-        let relative_rest_index = rest_index;
-        let actual_rest_index = rest_index + self.offset_index;
-
-        let rest = self.args.get(relative_rest_index..).unwrap_or_default();
-        let varargs = Varargs::<'a> {
-            idx: 0,
-            args: rest,
-            offset_index: actual_rest_index,
-        };
-        T::try_from(varargs)
-    }
-
-    /// Get the varargs's offset index.
-    #[inline]
-    #[must_use]
-    pub fn offset_index(&self) -> usize {
-        self.offset_index
     }
 }
 
@@ -469,282 +463,135 @@ varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J);
 varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J, K);
 varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J, K, L);
 
-/// All possible error types for convert from Varargs.
+/// All possible errors that can occur when converting from Varargs.
+///
+/// For methods that return this error, see [`Varargs::check_length()`], [`Varargs::get()`] or [`Varargs::get_opt()`].
+/// Another context where this type is used is when destructuring `Varargs` into tuples.
 #[derive(Debug)]
 pub enum VarargsError {
-    ArgumentTypeError(ArgumentTypeError),
-    ArgumentLengthError(ArgumentLengthError),
+    /// At least one argument type mismatches.
+    InvalidArgumentType {
+        index: usize,
+        error: FromVariantError,
+    },
+    /// Number of arguments doesn't match expectations.
+    InvalidLength {
+        /// The number of arguments actually passed.
+        length: usize,
+        expected: IndexBounds,
+    },
 }
 
 impl std::error::Error for VarargsError {}
-impl std::fmt::Display for VarargsError {
+
+impl fmt::Display for VarargsError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self {
-            VarargsError::ArgumentTypeError(e) => e.fmt(f),
-            VarargsError::ArgumentLengthError(e) => e.fmt(f),
-        }
-    }
-}
-
-impl From<ArgumentTypeError> for VarargsError {
-    #[inline]
-    fn from(value: ArgumentTypeError) -> Self {
-        Self::ArgumentTypeError(value)
-    }
-}
-
-impl From<ArgumentLengthError> for VarargsError {
-    #[inline]
-    fn from(value: ArgumentLengthError) -> Self {
-        Self::ArgumentLengthError(value)
-    }
-}
-
-/// Error to argument type do not match.
-#[derive(Debug)]
-pub struct ArgumentTypeError {
-    index: usize,
-    nested_error: FromVariantError,
-}
-
-impl ArgumentTypeError {
-    /// Create a new error with the argument position and `FromVariantError`.
-    #[inline]
-    #[must_use]
-    pub fn new(index: usize, nested_error: FromVariantError) -> Self {
-        Self {
-            index,
-            nested_error,
-        }
-    }
-
-    /// Returns an ordinal number representation.
-    #[inline]
-    #[must_use]
-    fn ordinal(&self) -> String {
-        match self.index + 1 {
-            1 => "1st".to_owned(),
-            2 => "2nd".to_owned(),
-            3 => "3rd".to_owned(),
-            i @ 4.. => format!("{i}th"),
-            _ => "unknown".to_owned(),
-        }
-    }
-
-    /// Get the argument type error's index.
-    #[inline]
-    #[must_use]
-    pub fn index(&self) -> usize {
-        self.index
-    }
-
-    /// Get a reference to the argument type error's nested error.
-    #[inline]
-    #[must_use]
-    pub fn nested_error(&self) -> &FromVariantError {
-        &self.nested_error
-    }
-}
-
-impl std::error::Error for ArgumentTypeError {}
-impl std::fmt::Display for ArgumentTypeError {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Incorrect type of {} argument, Cause: {}",
-            self.ordinal(),
-            self.nested_error,
-        )
-    }
-}
-
-/// Error to argument lengths do not match.
-#[derive(Debug)]
-pub struct ArgumentLengthError {
-    passed: usize,
-    expected_min: usize,
-    expected_max: usize,
-}
-
-impl ArgumentLengthError {
-    /// Creates a new error with the length of the arguments passed and the expected arguments range.
-    #[inline]
-    #[must_use]
-    pub fn new(passed: usize, expected: impl ArgumentBounds) -> Self {
-        Self {
-            passed,
-            expected_min: expected.start_bound(),
-            expected_max: expected.end_bound(),
-        }
-    }
-
-    /// Get the argument length error's passed.
-    #[inline]
-    #[must_use]
-    pub fn passed(&self) -> usize {
-        self.passed
-    }
-
-    /// Get the argument length error's expected min.
-    #[inline]
-    #[must_use]
-    pub fn expected_min(&self) -> usize {
-        self.expected_min
-    }
-
-    /// Get the argument length error's expected max.
-    #[inline]
-    #[must_use]
-    pub fn expected_max(&self) -> usize {
-        self.expected_max
-    }
-}
-
-impl std::error::Error for ArgumentLengthError {}
-impl std::fmt::Display for ArgumentLengthError {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let expected_msg = match (self.expected_min, self.expected_max) {
-            (usize::MIN, usize::MAX) => "any".to_owned(),
-            (usize::MIN, e) => format!("max {e}"),
-            (s, usize::MAX) => format!("min {s}"),
-            (s, e) => {
-                if s == e {
-                    s.to_string()
-                } else {
-                    format!("min {s} and max {e}")
-                }
+        match self {
+            VarargsError::InvalidArgumentType { index, error } => {
+                write!(f, "type error for argument #{}: {}", index, error)?
             }
-        };
-        write!(
-            f,
-            "Argument lengths do not match, passed {}, expected {}",
-            self.passed, expected_msg
-        )
-    }
-}
-
-/// Produced by range syntax like `a`, `(a, b)`, ..`, `a..`, `..b`, `..=c`, `d..e`, or `f..=g`.
-pub trait ArgumentBounds {
-    /// Start index bound.
-    fn start_bound(&self) -> usize;
-    /// End index bound.
-    fn end_bound(&self) -> usize;
-
-    /// Returns true if item is contained in the range.
-    #[inline]
-    fn contains<U>(&self, item: &U) -> bool
-    where
-        usize: PartialOrd<U>,
-        U: ?Sized + PartialOrd<usize>,
-    {
-        (self.start_bound() <= *item) && (*item <= self.end_bound())
-    }
-}
-
-impl ArgumentBounds for usize {
-    #[inline]
-    fn start_bound(&self) -> usize {
-        *self
-    }
-
-    #[inline]
-    fn end_bound(&self) -> usize {
-        *self
-    }
-}
-
-impl ArgumentBounds for (Bound<usize>, Bound<usize>) {
-    #[inline]
-    fn start_bound(&self) -> usize {
-        match self.0 {
-            Bound::Included(s) => s,
-            Bound::Excluded(s) => s + 1,
-            Bound::Unbounded => usize::MIN,
+            VarargsError::InvalidLength { expected, length } => write!(
+                f,
+                "length mismatch: expected range {}, actual {}",
+                expected, length
+            )?,
         }
-    }
 
+        Ok(())
+    }
+}
+
+/// Defines which number of arguments is valid.
+///
+/// Convertible from an exact value `a` as well as inclusive range expressions `a..`, `..=b`, `a..=b`.
+pub struct IndexBounds {
+    /// The lower (inclusive) bound of the expected number of arguments, or `None` if unbounded.
+    pub start: Option<usize>,
+
+    /// The upper (inclusive) bound of the expected number of arguments, or `None` if unbounded.
+    pub end: Option<usize>,
+}
+
+impl IndexBounds {
     #[inline]
-    fn end_bound(&self) -> usize {
-        match self.1 {
-            Bound::Included(e) => e,
-            Bound::Excluded(e) => e - 1,
-            Bound::Unbounded => usize::MAX,
+    pub fn contains(&self, value: usize) -> bool {
+        match (self.start, self.end) {
+            (Some(s), Some(e)) => value >= s && value <= e,
+            (Some(s), None) => value >= s,
+            (None, Some(e)) => value <= e,
+            (None, None) => false, // unreachable in this context, but can be constructed by user
         }
     }
 }
 
-impl ArgumentBounds for std::ops::Range<usize> {
+/// `a`
+impl From<usize> for IndexBounds {
     #[inline]
-    fn start_bound(&self) -> usize {
-        self.start
-    }
-
-    #[inline]
-    fn end_bound(&self) -> usize {
-        self.end - 1
-    }
-}
-
-impl ArgumentBounds for std::ops::RangeFrom<usize> {
-    #[inline]
-    fn start_bound(&self) -> usize {
-        self.start
-    }
-
-    #[inline]
-    fn end_bound(&self) -> usize {
-        usize::MAX
+    fn from(exact_value: usize) -> Self {
+        Self {
+            start: Some(exact_value),
+            end: Some(exact_value),
+        }
     }
 }
 
-impl ArgumentBounds for std::ops::RangeInclusive<usize> {
+/// `a..=b`
+impl From<ops::RangeInclusive<usize>> for IndexBounds {
     #[inline]
-    fn start_bound(&self) -> usize {
-        *self.start()
-    }
-
-    #[inline]
-    fn end_bound(&self) -> usize {
-        *self.end()
-    }
-}
-
-impl ArgumentBounds for std::ops::RangeTo<usize> {
-    #[inline]
-    fn start_bound(&self) -> usize {
-        usize::MIN
-    }
-
-    #[inline]
-    fn end_bound(&self) -> usize {
-        self.end - 1
+    fn from(range: ops::RangeInclusive<usize>) -> Self {
+        Self {
+            start: Some(*range.start()),
+            end: Some(*range.end()),
+        }
     }
 }
 
-impl ArgumentBounds for std::ops::RangeToInclusive<usize> {
+/// `a..`
+impl From<ops::RangeFrom<usize>> for IndexBounds {
     #[inline]
-    fn start_bound(&self) -> usize {
-        usize::MIN
-    }
-
-    #[inline]
-    fn end_bound(&self) -> usize {
-        self.end
+    fn from(range: ops::RangeFrom<usize>) -> Self {
+        Self {
+            start: Some(range.start),
+            end: None,
+        }
     }
 }
 
-impl ArgumentBounds for std::ops::RangeFull {
+/// `..=b`
+impl From<ops::RangeToInclusive<usize>> for IndexBounds {
     #[inline]
-    fn start_bound(&self) -> usize {
-        usize::MIN
+    fn from(range: ops::RangeToInclusive<usize>) -> Self {
+        Self {
+            start: None,
+            end: Some(range.end),
+        }
     }
+}
 
+impl fmt::Debug for IndexBounds {
     #[inline]
-    fn end_bound(&self) -> usize {
-        usize::MAX
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "IndexBounds({})", self)
+    }
+}
+
+impl fmt::Display for IndexBounds {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.start {
+            Some(start) => write!(f, "{}", start)?,
+            None => {}
+        }
+
+        write!(f, "..=")?;
+
+        match self.end {
+            Some(end) => write!(f, "{}", end)?,
+            None => {}
+        }
+
+        Ok(())
     }
 }
 

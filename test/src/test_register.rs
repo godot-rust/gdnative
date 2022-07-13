@@ -249,26 +249,16 @@ impl Method<VarargsGets> for CalcMethod {
     }
 }
 
-fn test_varargs_gets() -> bool {
-    println!(" -- test_varargs_gets");
+crate::godot_itest! { test_varargs_gets {
+    let thing = Instance::<VarargsGets, _>::new();
+    let base = thing.base();
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<VarargsGets, _>::new();
-        let base = thing.base();
+    let args = [3_i64.to_variant(), 4_i64.to_variant(), 5_i64.to_variant()];
+    assert_eq!(unsafe { base.call("calc", &args).to() }, Some(7));
 
-        let args = [3_i64.to_variant(), 4_i64.to_variant(), 5_i64.to_variant()];
-        assert_eq!(unsafe { base.call("calc", &args).to() }, Some(7));
-
-        let args = [3_i64.to_variant(), 4_i64.to_variant()];
-        assert_eq!(unsafe { base.call("calc", &args).to() }, Some(1));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_varargs_gets failed");
-    }
-    ok
-}
+    let args = [3_i64.to_variant(), 4_i64.to_variant()];
+    assert_eq!(unsafe { base.call("calc", &args).to() }, Some(1));
+}}
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -301,20 +291,10 @@ impl Method<VarargsToTuple> for CalcMethod2 {
     }
 }
 
-fn test_varargs_to_tuple() -> bool {
-    println!(" -- test_varargs_to_tuple");
+crate::godot_itest! { test_varargs_to_tuple {
+    let thing = Instance::<VarargsToTuple, _>::new();
+    let base = thing.base();
 
-    let ok = std::panic::catch_unwind(|| {
-        let thing = Instance::<VarargsToTuple, _>::new();
-        let base = thing.base();
-
-        let args = [3_i64.to_variant(), 4_i64.to_variant(), 5_i64.to_variant()];
-        assert_eq!(unsafe { base.call("calc", &args).to() }, Some(7));
-    })
-    .is_ok();
-
-    if !ok {
-        godot_error!("   !! Test test_varargs_to_tuple failed");
-    }
-    ok
-}
+    let args = [3_i64.to_variant(), 4_i64.to_variant(), 5_i64.to_variant()];
+    assert_eq!(unsafe { base.call("calc", &args).to() }, Some(7));
+}}
