@@ -39,13 +39,7 @@ impl Api {
     }
 
     pub fn find_class(&self, name: &str) -> Option<&GodotClass> {
-        for class in &self.classes {
-            if class.name == name {
-                return Some(class);
-            }
-        }
-
-        None
+        self.classes.iter().find(|&class| class.name == name)
     }
 
     pub fn class_inherits(&self, class: &GodotClass, base_class_name: &str) -> bool {
