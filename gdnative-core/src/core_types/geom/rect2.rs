@@ -35,7 +35,7 @@ impl Rect2 {
 
     /// Ending corner. This is calculated as `position + size`.
     #[inline]
-    pub fn end(&self) -> Vector2 {
+    pub fn end(self) -> Vector2 {
         self.position + self.size
     }
 
@@ -48,7 +48,7 @@ impl Rect2 {
     /// Returns a rectangle with equivalent position and area, modified so that the top-left corner
     /// is the origin and `width` and `height` are positive.
     #[inline]
-    pub fn abs(&self) -> Self {
+    pub fn abs(self) -> Self {
         let position = self.position + Vector2::new(self.size.x.min(0.0), self.size.y.min(0.0));
         let size = self.size.abs();
 
@@ -57,7 +57,7 @@ impl Rect2 {
 
     /// Returns the area of the rectangle. See also [`has_no_area`][Self::has_no_area].
     #[inline]
-    pub fn get_area(&self) -> f32 {
+    pub fn get_area(self) -> f32 {
         self.size.x * self.size.y
     }
 
@@ -80,7 +80,7 @@ impl Rect2 {
     /// # }
     /// ```
     #[inline]
-    pub fn has_no_area(&self) -> bool {
+    pub fn has_no_area(self) -> bool {
         self.size.x <= 0.0 || self.size.y <= 0.0
     }
 
@@ -90,7 +90,7 @@ impl Rect2 {
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle to check for contained points.
     #[inline]
-    pub fn contains_point(&self, point: Vector2) -> bool {
+    pub fn contains_point(self, point: Vector2) -> bool {
         let point = point - self.position;
 
         point.abs() == point && point.x < self.size.x && point.y < self.size.y
@@ -99,7 +99,7 @@ impl Rect2 {
     /// Returns true if this rectangle and `b` are approximately equal, by calling
     /// [`is_equal_approx`](Vector2::is_equal_approx) on each component.
     #[inline]
-    pub fn is_equal_approx(&self, b: Self) -> bool {
+    pub fn is_equal_approx(self, b: Self) -> bool {
         self.position.is_equal_approx(b.position) && self.size.is_equal_approx(b.size)
     }
 
@@ -111,7 +111,7 @@ impl Rect2 {
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle to check for intersections.
     #[inline]
-    pub fn intersects(&self, b: Self) -> bool {
+    pub fn intersects(self, b: Self) -> bool {
         self.position.x < b.position.x + b.size.x
             && self.position.x + self.size.x > b.position.x
             && self.position.y < b.position.y + b.size.y
@@ -126,7 +126,7 @@ impl Rect2 {
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle to check for intersections.
     #[inline]
-    pub fn intersects_including_borders(&self, b: Self) -> bool {
+    pub fn intersects_including_borders(self, b: Self) -> bool {
         self.position.x <= b.position.x + b.size.x
             && self.position.x + self.size.x >= b.position.x
             && self.position.y <= b.position.y + b.size.y
@@ -137,7 +137,7 @@ impl Rect2 {
     ///
     /// This is true when `self` covers all the area of `b`, and possibly (but not necessarily) more.
     #[inline]
-    pub fn encloses(&self, b: Self) -> bool {
+    pub fn encloses(self, b: Self) -> bool {
         b.position.x >= self.position.x
             && b.position.y >= self.position.y
             && b.position.x + b.size.x <= self.position.x + self.size.x
@@ -153,7 +153,7 @@ impl Rect2 {
     /// to get a positive sized equivalent rectangle for clipping.
     #[inline]
     #[must_use]
-    pub fn intersection(&self, b: Self) -> Option<Self> {
+    pub fn intersection(self, b: Self) -> Option<Self> {
         if !self.intersects(b) {
             return None;
         }
@@ -177,7 +177,7 @@ impl Rect2 {
     /// to get a positive sized equivalent rectangle for merging.
     #[inline]
     #[must_use]
-    pub fn merge(&self, b: Self) -> Self {
+    pub fn merge(self, b: Self) -> Self {
         let position = Vector2::new(
             self.position.x.min(b.position.x),
             self.position.y.min(b.position.y),
@@ -214,14 +214,14 @@ impl Rect2 {
     /// ```
     #[inline]
     #[must_use]
-    pub fn expand(&self, to: Vector2) -> Self {
+    pub fn expand(self, to: Vector2) -> Self {
         self.merge(Self::new(to, Vector2::ZERO))
     }
 
     /// Returns a copy of this rectangle grown by a given amount of units on all the sides.
     #[inline]
     #[must_use]
-    pub fn grow(&self, by: f32) -> Self {
+    pub fn grow(self, by: f32) -> Self {
         let position = self.position - Vector2::new(by, by);
         let size = self.size + Vector2::new(by, by) * 2.0;
 
@@ -232,22 +232,20 @@ impl Rect2 {
     /// individually.
     #[inline]
     #[must_use]
-    pub fn grow_individual(&self, left: f32, top: f32, right: f32, bottom: f32) -> Self {
-        let mut rect = *self;
+    pub fn grow_individual(mut self, left: f32, top: f32, right: f32, bottom: f32) -> Self {
+        self.position.x -= left;
+        self.position.y -= top;
+        self.size.x += left + right;
+        self.size.y += top + bottom;
 
-        rect.position.x -= left;
-        rect.position.y -= top;
-        rect.size.x += left + right;
-        rect.size.y += top + bottom;
-
-        rect
+        self
     }
 
     /// Returns a copy of this rectangle grown by a given amount of units towards the [`Margin`]
     /// direction.
     #[inline]
     #[must_use]
-    pub fn grow_margin(&self, margin: Margin, amount: f32) -> Self {
+    pub fn grow_margin(self, margin: Margin, amount: f32) -> Self {
         let left = if margin == Margin::Left { amount } else { 0.0 };
         let top = if margin == Margin::Top { amount } else { 0.0 };
         let right = if margin == Margin::Right { amount } else { 0.0 };

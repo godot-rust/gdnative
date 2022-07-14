@@ -28,7 +28,7 @@ impl Aabb {
 
     /// Ending corner. This is calculated as `position + size`.
     #[inline]
-    pub fn end(&self) -> Vector3 {
+    pub fn end(self) -> Vector3 {
         self.position + self.size
     }
 
@@ -41,7 +41,7 @@ impl Aabb {
     /// Returns an `Aabb` with equivalent position and area, modified so that the most-negative
     /// corner is the origin and the size is positive.
     #[inline]
-    pub fn abs(&self) -> Self {
+    pub fn abs(self) -> Self {
         let position = self.position + Vector3::gd(self.size.glam().min(glam::Vec3A::ZERO));
         let size = self.size.abs();
 
@@ -54,7 +54,7 @@ impl Aabb {
     ///
     /// [get_area]: https://docs.godotengine.org/en/stable/classes/class_aabb.html#class-aabb-method-get-area
     #[inline]
-    pub fn get_volume(&self) -> f32 {
+    pub fn get_volume(self) -> f32 {
         self.size.x * self.size.y * self.size.z
     }
 
@@ -68,13 +68,13 @@ impl Aabb {
     ///
     /// [`has_no_area`]: https://docs.godotengine.org/en/stable/classes/class_aabb.html#class-aabb-method-has-no-area
     #[inline]
-    pub fn has_no_volume(&self) -> bool {
+    pub fn has_no_volume(self) -> bool {
         self.size.x <= 0.0 || self.size.y <= 0.0 || self.size.z <= 0.0
     }
 
     /// Returns true if the bounding box is empty or all of its dimensions are negative.
     #[inline]
-    pub fn has_no_surface(&self) -> bool {
+    pub fn has_no_surface(self) -> bool {
         self.size.x <= 0.0 && self.size.y <= 0.0 && self.size.z <= 0.0
     }
 
@@ -84,7 +84,7 @@ impl Aabb {
     /// Note: This method is not reliable for bounding boxes with a negative size. Use
     /// [`abs`][Self::abs] to get a positive sized equivalent box to check for contained points.
     #[inline]
-    pub fn contains_point(&self, point: Vector3) -> bool {
+    pub fn contains_point(self, point: Vector3) -> bool {
         let point = point - self.position;
 
         point.abs() == point
@@ -96,7 +96,7 @@ impl Aabb {
     /// Returns true if this bounding box and `b` are approximately equal, by calling
     /// [`is_equal_approx`](Vector3::is_equal_approx) on each component.
     #[inline]
-    pub fn is_equal_approx(&self, b: Self) -> bool {
+    pub fn is_equal_approx(self, b: Self) -> bool {
         self.position.is_equal_approx(b.position) && self.size.is_equal_approx(b.size)
     }
 
@@ -104,7 +104,7 @@ impl Aabb {
     ///
     /// The index returns an arbitrary point, but all points are guaranteed to be unique.
     #[inline]
-    pub fn get_endpoint(&self, index: usize) -> Option<Vector3> {
+    pub fn get_endpoint(self, index: usize) -> Option<Vector3> {
         match index {
             0 => Some(self.position),
             1 => Some(self.position + Vector3::new(0.0, 0.0, self.size.z)),
@@ -120,7 +120,7 @@ impl Aabb {
 
     /// Returns the normalized longest axis of the bounding box.
     #[inline]
-    pub fn get_longest_axis(&self) -> Vector3 {
+    pub fn get_longest_axis(self) -> Vector3 {
         self.size.max_axis().to_unit_vector()
     }
 
@@ -128,20 +128,20 @@ impl Aabb {
     ///
     /// If multiple axes have the same length, then the first in order X, Y, Z is returned.
     #[inline]
-    pub fn get_longest_axis_index(&self) -> Axis {
+    pub fn get_longest_axis_index(self) -> Axis {
         self.size.max_axis()
     }
 
     /// Returns the scalar length of the longest axis of the bounding box.
     #[inline]
-    pub fn get_longest_axis_size(&self) -> f32 {
+    pub fn get_longest_axis_size(self) -> f32 {
         let Vector3 { x, y, z } = self.size;
         x.max(y).max(z)
     }
 
     /// Returns the normalized shortest axis of the bounding box.
     #[inline]
-    pub fn get_shortest_axis(&self) -> Vector3 {
+    pub fn get_shortest_axis(self) -> Vector3 {
         self.size.min_axis().to_unit_vector()
     }
 
@@ -149,13 +149,13 @@ impl Aabb {
     ///
     /// If multiple axes have the same length, then the first in order X, Y, Z is returned.
     #[inline]
-    pub fn get_shortest_axis_index(&self) -> Axis {
+    pub fn get_shortest_axis_index(self) -> Axis {
         self.size.min_axis()
     }
 
     /// Returns the scalar length of the shortest axis of the bounding box.
     #[inline]
-    pub fn get_shortest_axis_size(&self) -> f32 {
+    pub fn get_shortest_axis_size(self) -> f32 {
         let Vector3 { x, y, z } = self.size;
         x.min(y).min(z)
     }
@@ -173,7 +173,7 @@ impl Aabb {
     /// [1]: https://ncollide.org/geometric_representations/#support-mappings
     /// [2]: https://www.toptal.com/game/video-game-physics-part-ii-collision-detection-for-solid-objects
     #[inline]
-    pub fn get_support(&self, dir: Vector3) -> Vector3 {
+    pub fn get_support(self, dir: Vector3) -> Vector3 {
         self.position
             + Vector3::new(
                 if dir.x > 0.0 { 0.0 } else { self.size.x },
@@ -187,7 +187,7 @@ impl Aabb {
     /// It is possible to specify a negative amount to shrink the AABB (note that this can invert the AABB).
     #[inline]
     #[must_use]
-    pub fn grow(&self, by: f32) -> Self {
+    pub fn grow(self, by: f32) -> Self {
         let position = self.position - Vector3::new(by, by, by);
         let size = self.size + Vector3::new(by, by, by) * 2.0;
 
@@ -198,7 +198,7 @@ impl Aabb {
     ///
     /// This **excludes** borders; if the intersection has no volume, `false` is returned.
     #[inline]
-    pub fn intersects(&self, b: Self) -> bool {
+    pub fn intersects(self, b: Self) -> bool {
         self.position.x < b.position.x + b.size.x
             && self.position.x + self.size.x > b.position.x
             && self.position.y < b.position.y + b.size.y
@@ -209,7 +209,7 @@ impl Aabb {
 
     /// Returns true if the bounding box is on both sides of a plane.
     #[inline]
-    pub fn intersects_plane(&self, plane: Plane) -> bool {
+    pub fn intersects_plane(self, plane: Plane) -> bool {
         let mut corners = [Vector3::ZERO; 8];
         for (i, corner) in corners.iter_mut().enumerate() {
             *corner = self.get_endpoint(i).unwrap();
@@ -230,7 +230,7 @@ impl Aabb {
 
     /// Returns true if the bounding box intersects the line segment between `from` and `to`.
     #[inline]
-    pub fn intersects_segment(&self, from: Vector3, to: Vector3) -> bool {
+    pub fn intersects_segment(self, from: Vector3, to: Vector3) -> bool {
         let mut min: f32 = 0.0;
         let mut max: f32 = 1.0;
 
@@ -283,7 +283,7 @@ impl Aabb {
     /// This **excludes** borders; if the intersection has no volume, `None` is returned.
     #[inline]
     #[must_use]
-    pub fn intersection(&self, b: Self) -> Option<Self> {
+    pub fn intersection(self, b: Self) -> Option<Self> {
         if !self.intersects(b) {
             return None;
         }
@@ -306,7 +306,7 @@ impl Aabb {
     /// Returns a larger bounding box that contains both this `Aabb` and `b`.
     #[inline]
     #[must_use]
-    pub fn merge(&self, b: Self) -> Self {
+    pub fn merge(self, b: Self) -> Self {
         let position = Vector3::new(
             self.position.x.min(b.position.x),
             self.position.y.min(b.position.y),
