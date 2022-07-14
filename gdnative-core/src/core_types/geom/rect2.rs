@@ -35,7 +35,7 @@ impl Rect2 {
 
     /// Ending corner. This is calculated as `position + size`.
     #[inline]
-    pub fn get_end(&self) -> Vector2 {
+    pub fn end(&self) -> Vector2 {
         self.position + self.size
     }
 
@@ -90,7 +90,7 @@ impl Rect2 {
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle to check for contained points.
     #[inline]
-    pub fn has_point(&self, point: Vector2) -> bool {
+    pub fn contains_point(&self, point: Vector2) -> bool {
         let point = point - self.position;
 
         point.abs() == point && point.x < self.size.x && point.y < self.size.y
@@ -103,33 +103,39 @@ impl Rect2 {
         self.position.is_equal_approx(b.position) && self.size.is_equal_approx(b.size)
     }
 
-    /// Returns true if the rectangle overlaps with `b` (i.e. they have at least one point in
+    /// Returns true if the inside of the rectangle overlaps with `b` (i.e. they have at least one point in
     /// common).
+    ///
+    /// This **excludes** borders. See [`intersects_including_borders`][Self::intersects_including_borders] for inclusive check.
     ///
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle to check for intersections.
     #[inline]
     pub fn intersects(&self, b: Self) -> bool {
-        !(self.position.x >= b.position.x + b.size.x
-            || self.position.x + self.size.x <= b.position.x
-            || self.position.y >= b.position.y + b.size.y
-            || self.position.y + self.size.y <= b.size.y)
+        self.position.x < b.position.x + b.size.x
+            && self.position.x + self.size.x > b.position.x
+            && self.position.y < b.position.y + b.size.y
+            && self.position.y + self.size.y > b.size.y
     }
 
     /// Returns true if the rectangle overlaps with `b` (i.e. they have at least one point in
     /// common) or their borders touch even without intersection.
     ///
+    /// This **includes** borders. See [`intersects`][Self::intersects] for exclusive check.
+    ///
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle to check for intersections.
     #[inline]
     pub fn intersects_including_borders(&self, b: Self) -> bool {
-        !(self.position.x > b.position.x + b.size.x
-            || self.position.x + self.size.x < b.position.x
-            || self.position.y > b.position.y + b.size.y
-            || self.position.y + self.size.y < b.size.y)
+        self.position.x <= b.position.x + b.size.x
+            && self.position.x + self.size.x >= b.position.x
+            && self.position.y <= b.position.y + b.size.y
+            && self.position.y + self.size.y >= b.size.y
     }
 
-    /// Returns true if this rectangle completely encloses `b`.
+    /// Returns true if this rectangle (inclusively) encloses `b`.
+    ///
+    /// This is true when `self` covers all the area of `b`, and possibly (but not necessarily) more.
     #[inline]
     pub fn encloses(&self, b: Self) -> bool {
         b.position.x >= self.position.x
@@ -138,28 +144,31 @@ impl Rect2 {
             && b.position.y + b.size.y <= self.position.y + self.size.y
     }
 
-    /// Returns the intersection of this rectangle and `b`. Returns a copy of this `Rect2` if there
-    /// is no intersection.
+    /// Returns the intersection of this rectangle and `b`, or `None` if they don't intersect.
+    ///
+    /// This is similar to the GDScript `clip` function, but returns `None` instead of `self` if there is no intersection.
+    /// This method **excludes** borders just like [`intersects`][Self::intersects].
     ///
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle for clipping.
     #[inline]
-    pub fn clip(&self, b: Self) -> Self {
+    #[must_use]
+    pub fn intersection(&self, b: Self) -> Option<Self> {
         if !self.intersects(b) {
-            return *self;
+            return None;
         }
 
         let mut rect = b;
         rect.position.x = rect.position.x.max(self.position.x);
         rect.position.y = rect.position.y.max(self.position.y);
 
-        let end = self.get_end();
-        let end_b = b.get_end();
+        let end = self.end();
+        let end_b = b.end();
 
         rect.size.x = end.x.min(end_b.x) - rect.position.x;
         rect.size.y = end.y.min(end_b.y) - rect.position.y;
 
-        rect
+        Some(rect)
     }
 
     /// Returns a larger rectangle that contains this `Rect2` and `b`.
@@ -167,6 +176,7 @@ impl Rect2 {
     /// Note: This method is not reliable for `Rect2` with a negative size. Use [`abs`][Self::abs]
     /// to get a positive sized equivalent rectangle for merging.
     #[inline]
+    #[must_use]
     pub fn merge(&self, b: Self) -> Self {
         let position = Vector2::new(
             self.position.x.min(b.position.x),
@@ -203,12 +213,14 @@ impl Rect2 {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn expand(&self, to: Vector2) -> Self {
         self.merge(Self::new(to, Vector2::ZERO))
     }
 
     /// Returns a copy of this rectangle grown by a given amount of units on all the sides.
     #[inline]
+    #[must_use]
     pub fn grow(&self, by: f32) -> Self {
         let position = self.position - Vector2::new(by, by);
         let size = self.size + Vector2::new(by, by) * 2.0;
@@ -219,6 +231,7 @@ impl Rect2 {
     /// Returns a copy of this rectangle grown by a given amount of units towards each direction
     /// individually.
     #[inline]
+    #[must_use]
     pub fn grow_individual(&self, left: f32, top: f32, right: f32, bottom: f32) -> Self {
         let mut rect = *self;
 
@@ -233,6 +246,7 @@ impl Rect2 {
     /// Returns a copy of this rectangle grown by a given amount of units towards the [`Margin`]
     /// direction.
     #[inline]
+    #[must_use]
     pub fn grow_margin(&self, margin: Margin, amount: f32) -> Self {
         let left = if margin == Margin::Left { amount } else { 0.0 };
         let top = if margin == Margin::Top { amount } else { 0.0 };
@@ -296,38 +310,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_has_point() {
+    fn test_contains_point() {
         let rect = Rect2::new(Vector2::new(3.0, 3.0), Vector2::new(3.0, 3.0));
 
-        assert!(rect.has_point(Vector2::new(5.5, 5.5)));
-        assert!(!rect.has_point(Vector2::new(1.0, 1.0)));
-        assert!(!rect.has_point(Vector2::new(1.0, 5.5)));
-        assert!(!rect.has_point(Vector2::new(5.5, 1.0)));
-        assert!(!rect.has_point(Vector2::new(8.0, 8.0)));
-        assert!(!rect.has_point(Vector2::new(8.0, 5.5)));
-        assert!(!rect.has_point(Vector2::new(5.5, 8.0)));
+        assert!(rect.contains_point(Vector2::new(5.5, 5.5)));
+        assert!(!rect.contains_point(Vector2::new(1.0, 1.0)));
+        assert!(!rect.contains_point(Vector2::new(1.0, 5.5)));
+        assert!(!rect.contains_point(Vector2::new(5.5, 1.0)));
+        assert!(!rect.contains_point(Vector2::new(8.0, 8.0)));
+        assert!(!rect.contains_point(Vector2::new(8.0, 5.5)));
+        assert!(!rect.contains_point(Vector2::new(5.5, 8.0)));
     }
 
     #[test]
-    fn test_has_point_negative_size() {
+    fn test_contains_point_negative_size() {
         let rect = Rect2::new(Vector2::new(3.0, 3.0), Vector2::new(-3.0, -3.0));
 
-        assert!(!rect.has_point(Vector2::new(1.5, 1.5)));
-        assert!(!rect.has_point(Vector2::new(-1.0, -1.0)));
-        assert!(!rect.has_point(Vector2::new(-1.0, 1.5)));
-        assert!(!rect.has_point(Vector2::new(1.5, -1.0)));
-        assert!(!rect.has_point(Vector2::new(4.0, 4.0)));
-        assert!(!rect.has_point(Vector2::new(4.0, 1.5)));
-        assert!(!rect.has_point(Vector2::new(1.5, 4.0)));
+        assert!(!rect.contains_point(Vector2::new(1.5, 1.5)));
+        assert!(!rect.contains_point(Vector2::new(-1.0, -1.0)));
+        assert!(!rect.contains_point(Vector2::new(-1.0, 1.5)));
+        assert!(!rect.contains_point(Vector2::new(1.5, -1.0)));
+        assert!(!rect.contains_point(Vector2::new(4.0, 4.0)));
+        assert!(!rect.contains_point(Vector2::new(4.0, 1.5)));
+        assert!(!rect.contains_point(Vector2::new(1.5, 4.0)));
 
         let rect = rect.abs();
-        assert!(rect.has_point(Vector2::new(1.5, 1.5)));
-        assert!(!rect.has_point(Vector2::new(-1.0, -1.0)));
-        assert!(!rect.has_point(Vector2::new(-1.0, 1.5)));
-        assert!(!rect.has_point(Vector2::new(1.5, -1.0)));
-        assert!(!rect.has_point(Vector2::new(4.0, 4.0)));
-        assert!(!rect.has_point(Vector2::new(4.0, 1.5)));
-        assert!(!rect.has_point(Vector2::new(1.5, 4.0)));
+        assert!(rect.contains_point(Vector2::new(1.5, 1.5)));
+        assert!(!rect.contains_point(Vector2::new(-1.0, -1.0)));
+        assert!(!rect.contains_point(Vector2::new(-1.0, 1.5)));
+        assert!(!rect.contains_point(Vector2::new(1.5, -1.0)));
+        assert!(!rect.contains_point(Vector2::new(4.0, 4.0)));
+        assert!(!rect.contains_point(Vector2::new(4.0, 1.5)));
+        assert!(!rect.contains_point(Vector2::new(1.5, 4.0)));
     }
 
     #[test]
@@ -336,6 +350,8 @@ mod tests {
         let b = Rect2::new(Vector2::new(5.0, 5.0), Vector2::new(3.0, 3.0));
         let c = Rect2::new(Vector2::new(6.0, 6.0), Vector2::new(3.0, 3.0));
         let d = Rect2::new(Vector2::new(8.0, 8.0), Vector2::new(-3.0, -3.0));
+
+        assert!(a.intersects(a));
 
         assert!(a.intersects(b));
         assert!(b.intersects(a));
@@ -356,6 +372,8 @@ mod tests {
         let b = Rect2::new(Vector2::new(6.0, 6.0), Vector2::new(3.0, 3.0));
         let c = Rect2::new(Vector2::new(9.0, 9.0), Vector2::new(-3.0, -3.0));
 
+        assert!(a.intersects_including_borders(a));
+
         assert!(a.intersects_including_borders(b));
         assert!(b.intersects_including_borders(a));
 
@@ -374,13 +392,14 @@ mod tests {
         let c = Rect2::new(Vector2::new(5.0, 5.0), Vector2::new(2.0, 2.0));
         let d = Rect2::new(Vector2::new(6.0, 6.0), Vector2::new(-2.0, -2.0));
 
+        assert!(a.encloses(a));
         assert!(a.encloses(b));
         assert!(!a.encloses(c));
         assert!(a.encloses(d));
     }
 
     #[test]
-    fn test_clip() {
+    fn test_intersection() {
         let a = Rect2::new(Vector2::new(3.0, 3.0), Vector2::new(3.0, 3.0));
         let b = Rect2::new(Vector2::new(5.0, 5.0), Vector2::new(3.0, 3.0));
         let c = Rect2::new(Vector2::new(6.0, 6.0), Vector2::new(3.0, 3.0));
@@ -388,10 +407,11 @@ mod tests {
 
         let expected = Rect2::new(Vector2::new(5.0, 5.0), Vector2::new(1.0, 1.0));
 
-        assert_eq!(a.clip(b), expected);
-        assert_eq!(a.clip(c), a);
-        assert_eq!(a.clip(d), a);
-        assert_eq!(a.clip(d.abs()), expected);
+        assert_eq!(a.intersection(a), Some(a));
+        assert_eq!(a.intersection(b), Some(expected));
+        assert_eq!(a.intersection(c), None);
+        assert_eq!(a.intersection(d), None);
+        assert_eq!(a.intersection(d.abs()), Some(expected));
     }
 
     #[test]
