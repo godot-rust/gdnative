@@ -1,8 +1,23 @@
-//! `fmod` is `%` operator on `f32`;
-//! ```rust
-//! use std::ops::Rem;
-//! assert_eq!(f32::rem(12.0, 10.0), 2.0);
-//! ```
+//! Port of selected GDScript built-in functions.
+//!
+//! This module contains _some_ of the functions available in the [@GDScript] documentation.
+//!
+//! Reasons why a GDScript function may _not_ be ported to Rust include:
+//! * they are in the Rust standard library (`abs`, `sin`, `floor`, `assert`, ...)
+//! * they are already part of a godot-rust API
+//!   * `print` -> [`godot_print!`][crate::log::godot_print!]
+//!   * `instance_from_id` -> [`GodotObject::from_instance_id()`][crate::object::GodotObject::from_instance_id]
+//!   * ...
+//! * they have a private implementation, i.e. a Rust port would have different semantics
+//!   * `randi`, `randf` etc. -- users should use `rand` crate
+//!   * `str2var`, `bytes2var`, `hash` etc -- to be verified
+//!
+//! This above list is not a definitive inclusion/exclusion criterion, just a rough guideline.
+//!
+//! Other noteworthy special cases:
+//! * GDScript `fmod` corresponds to Rust's `%` operator on `f32` (also known as the `Rem` trait).
+//!
+//! [@GDScript]: https://docs.godotengine.org/en/stable/classes/class_@gdscript.html
 
 use std::f32::consts::TAU;
 use std::ops::Rem;
@@ -10,24 +25,72 @@ use std::ops::{Range, RangeInclusive};
 
 const CMP_EPSILON: f32 = 0.00001;
 
-/// Converts a 2D point expressed in the `cartesian` coordinate system (X and Y axis)
-///  to the `polar` coordinate system (a distance from the origin and an angle `(in radians)`).
+/// Coordinate system conversion: polar -> cartesian
+///
+/// Polar coordinates: distance `r` from the origin + angle `th` (radians).
+/// Cartesian coordinate system: `x` and `y` axis.
+///
+/// Example:
+/// ```
+/// use gdnative::globalscope::*;
+///
+/// let (x, y) = polar2cartesian(13.0, -0.394791119699);
+///
+/// assert_eq!(x, 12.0);
+/// assert_eq!(y, -5.0);
+/// ```
 #[inline]
-pub fn cartasian2polar(x: f32, y: f32) -> (f32, f32) {
-    ((x * x + y * y).sqrt(), y.atan2(x))
+pub fn polar2cartesian(r: f32, th: f32) -> (f32, f32) {
+    let x = r * th.cos();
+    let y = r * th.sin();
+
+    (x, y)
 }
 
-/// Converts from `decibels` to linear energy (audio).
+/// Coordinate system conversion: cartesian -> polar
+///
+/// Cartesian coordinate system: `x` and `y` axis.
+/// Polar coordinates: distance `r` from the origin + angle `th` (radians).
+///
+/// Example:
+/// ```
+/// use gdnative::globalscope::*;
+///
+/// let (r, th) = cartesian2polar(12.0, -5.0);
+///
+/// assert!(is_equal_approx(r, 13.0));
+/// assert!(is_equal_approx(th, -0.394791119699));
+/// ```
 #[inline]
-pub fn db2linear(db: f32) -> f32 {
-    f32::exp(db * 0.115_129_255)
+pub fn cartesian2polar(x: f32, y: f32) -> (f32, f32) {
+    let r = x.hypot(y);
+    let th = y.atan2(x);
+
+    (r, th)
 }
 
-/// Returns the `position` of the first `non-zero` digit, after the decimal point.
-/// Note that the `maximum` return `value` is `10`, which is a design decision in the implementation.
+/// Converts from decibels to linear energy (audio).
+#[inline]
+pub fn db2linear(decibels: f32) -> f32 {
+    f32::exp(decibels * 0.115_129_255)
+}
+
+/// Converts from linear energy to decibels (audio).
+///
+/// This can be used to implement volume sliders that behave as expected (since volume isn't linear).
+#[inline]
+pub fn linear2db(linear_energy: f32) -> f32 {
+    linear_energy.ln() * 0.115_129_255
+}
+
+/// Position of the first non-zero digit, after the decimal point.
+///
+/// Note that the maximum return value is `10`, which is a design decision in the implementation.
+///
 /// # Examples:
 /// ```
-/// use gdnative_core::globalscope::step_decimals;
+/// use gdnative::globalscope::*;
+///
 /// assert_eq!(step_decimals(5.0), 0);
 /// assert_eq!(step_decimals(12.0004), 4);
 /// assert_eq!(step_decimals(0.000000004), 9);
@@ -59,11 +122,13 @@ pub fn step_decimals(step: f32) -> i32 {
     0
 }
 
-/// Moves `range.start()` toward `range.end()` by the `delta` `value`.
-/// Use a negative `delta` value `range.end()` move away.
+/// Moves `range.start()` toward `range.end()` by the `delta` value.
+///
+/// Use a negative `delta` value `range.end()` to move away.
 /// # Examples:
 /// ```
-/// use gdnative_core::globalscope::move_toward;
+/// use gdnative::globalscope::*;
+///
 /// assert_eq!(move_toward(10.0..=5.0, 4.), 6.);
 /// assert_eq!(move_toward(10.0..=5.0, -1.5), 11.5);
 /// assert_eq!(move_toward(4.0..=8.0, 1.0), 5.0);
@@ -81,8 +146,24 @@ pub fn move_toward(range: RangeInclusive<f32>, delta: f32) -> f32 {
 }
 
 /// Returns an "eased" value of x based on an easing function defined with `curve`.
+///
 /// This easing function is based on an `exponent`. The curve can be any floating-point number,
 /// with specific values leading to the following behaviors:
+///
+/// Value range | Effect
+/// :---: | ---
+/// `s < -1` | Ease in-out
+/// `s == -1` | Linear
+/// `-1 < s < 0` | Ease out-in
+/// `s == 0` | Constant
+/// `0 < s < 1` | Ease out
+/// `s == 1` | Linear
+/// `s > 1` | Ease in
+///
+/// See also [`smoothstep`]. If you need to perform more advanced transitions, use `Tween` or `AnimationPlayer`.
+///
+/// Curve values cheatsheet:  
+/// ![Image](https://raw.githubusercontent.com/godotengine/godot-docs/3.4/img/ease_cheatsheet.png)
 #[inline]
 pub fn ease(mut s: f32, curve: f32) -> f32 {
     if s < 0.0 {
@@ -109,11 +190,12 @@ pub fn ease(mut s: f32, curve: f32) -> f32 {
     }
 }
 
-/// Linearly interpolates between two values by the factor defined in weight.
+/// Linearly interpolates between two values, by the factor defined in weight.
+///
 /// To perform interpolation, weight should be between 0.0 and 1.0 (inclusive).
 /// However, values outside this range are allowed and can be used to perform extrapolation.
 /// ```
-/// use gdnative_core::globalscope::lerp;
+/// use gdnative::globalscope::*;
 /// assert_eq!(lerp(0.0..=4.0, 0.75), 3.0);
 /// ```
 #[inline]
@@ -121,9 +203,11 @@ pub fn lerp(range: RangeInclusive<f32>, weight: f32) -> f32 {
     range.start() + (range.end() - range.start()) * weight
 }
 
-/// Linearly interpolates between two angles (in radians) by a normalized value.
+/// Linearly interpolates between two angles (in radians), by a normalized value.
+///
 /// Similar to lerp, but interpolates correctly when the angles wrap around `TAU`.
-/// To perform eased interpolation with `lerp_angle`, combine it with `ease` or `smoothstep`
+/// To perform eased interpolation with `lerp_angle`, combine it with `ease` or `smoothstep`.
+/// ```
 /// use std::f32::consts::{PI, TAU};
 /// use gdnative::globalscope::lerp_angle;
 ///
@@ -133,44 +217,58 @@ pub fn lerp(range: RangeInclusive<f32>, weight: f32) -> f32 {
 /// assert_eq!(lerp_angle(PI..-PI, 1.0), PI);
 /// assert_eq!(lerp_angle(0.0..TAU, 0.0), 0.0);
 /// assert_eq!(lerp_angle(0.0..TAU, 1.0), 0.0);
-/// assert_eq!(lerp_angle(TAU..0, 0.0), TAU);
-/// assert_eq!(lerp_angle(TAU..0, 1.0), TAU);
+/// assert_eq!(lerp_angle(TAU..0.0, 0.0), TAU);
+/// assert_eq!(lerp_angle(TAU..0.0, 1.0), TAU);
+/// ```
 #[inline]
 pub fn lerp_angle(range: Range<f32>, amount: f32) -> f32 {
     let difference = f32::rem(range.end - range.start, TAU);
-
     let distance = f32::rem(2.0 * difference, TAU) - difference;
+
     range.start + distance * amount
 }
 
-/// Returns the floating-point modulus of `a/b` that wraps equally in `positive` and `negative`.
+/// Returns the floating-point modulus of `a/b` that wraps equally in positive and negative.
+///
+/// The result, if not zero, has the same sign as `b`.
+///
 /// # Examples:
-/// ```rust
-/// use gdnative_core::globalscope::fposmod;
-/// assert_eq!(fposmod(-1.5, 1.5), 0.0);
-/// assert_eq!(fposmod(-1.0, 1.5), 0.5);
-/// assert_eq!(fposmod(-0.5, 1.5), 1.0);
-/// assert_eq!(fposmod(0.0, 1.5), 0.0);
+/// ```
+/// use gdnative::globalscope::*;
+///
+/// assert_eq!(fposmod(7.0, 3.0), 1.0);
+/// assert_eq!(fposmod(-7.0, 3.0), 2.0);
+/// assert_eq!(fposmod(7.0, -3.0), -2.0);
+/// assert_eq!(fposmod(-7.0, -3.0), -1.0);
+///
+/// assert_eq!(fposmod(6.0, 3.0), 0.0);
+/// assert_eq!(fposmod(-6.0, 3.0), 0.0);
+/// assert_eq!(fposmod(6.0, -3.0), 0.0);
+/// assert_eq!(fposmod(-6.0, -3.0), 0.0);
 /// ```
 #[inline]
-pub fn fposmod(x: f32, y: f32) -> f32 {
-    let mut value = f32::rem(x, y);
-    if ((value < 0.0) && (y > 0.0)) || ((value > 0.0) && (y < 0.0)) {
-        value += y;
+pub fn fposmod(a: f32, b: f32) -> f32 {
+    let mut value = a % b;
+    if value < 0.0 && b > 0.0 || value > 0.0 && b < 0.0 {
+        value += b;
     }
-
-    value += 0.0;
     value
 }
 
+/// Find linear interpolation weight from interpolated values.
+///
 /// Returns an interpolation or extrapolation factor considering the range specified in `range.start()` and `range.end()`,
 /// and the interpolated value specified in `weight`.
+///
 /// The returned value will be between `0.0` and `1.0` if `weight` is between `range.start()` and `range.end()` (inclusive).
-/// If `weight` is located outside this range,
-/// then an extrapolation factor will be returned (return value lower than `0.0` or greater than `1.0`).
+///
+/// If `weight` is located outside this range, then an extrapolation factor will be returned
+/// (return value lower than `0.0` or greater than `1.0`).
+///
 /// # Examples:
-/// ```rust
-/// use gdnative_core::globalscope::inverse_lerp;
+/// ```
+/// use gdnative::globalscope::*;
+///
 /// assert_eq!(inverse_lerp(20.0..=30.0, 27.5), 0.75);
 /// ```
 #[inline]
@@ -178,20 +276,29 @@ pub fn inverse_lerp(range: RangeInclusive<f32>, value: f32) -> f32 {
     (value - range.start()) / (range.end() - range.start())
 }
 
-/// Returns the result of smoothly interpolating the value of `s` between `0` and `1`, based on the where `s` lies with respect to the edges `from` and `to`.
-/// The return value is `0` if `s <= from`, and `1` if `s >= to`. If `s` lies between `from` and `to`, the returned value follows an S-shaped curve that maps `s` between `0` and `1`.
+/// Smooth (Hermite) interpolation.
+///
+/// Returns the result of smoothly interpolating the value of `s` between `0` and `1`, based on where `s` lies
+/// with respect to the edges `from` and `to`.
+///
+/// The return value is `0` if `s <= from`, and `1` if `s >= to`.  
+///
+/// If `s` lies between `from` and `to`, the returned value follows an S-shaped curve that maps `s` between `0` and `1`.  
 /// This S-shaped curve is the cubic Hermite interpolator, given by `f(y) = 3*y^2 - 2*y^3` where `y = (x-from) / (to-from)`.
-/// Compared to ease with a curve value of `-1.6521`, smoothstep returns the smoothest possible curve with no sudden changes in the derivative.
-/// If you need to perform more advanced transitions, use Tween or AnimationPlayer.
+///
+/// Compared to [`ease()`] with a curve value of `-1.6521`, `smoothstep()` returns the smoothest possible curve with no
+/// sudden changes in the derivative.
+///
+/// If you need to perform more advanced transitions, use `Tween` or `AnimationPlayer`.
 /// # Examples:
-/// ```rust
-/// use gdnative_core::globalscope::smoothstep;
+/// ```
+/// use gdnative::globalscope::*;
+///
 /// assert_eq!(smoothstep(0.0, 2.0, -5.0), 0.0);
 /// assert_eq!(smoothstep(0.0, 2.0, 0.5), 0.15625);
 /// assert_eq!(smoothstep(0.0, 2.0, 1.0), 0.5);
 /// assert_eq!(smoothstep(0.0, 2.0, 2.0), 1.0);
 /// ```
-
 #[inline]
 pub fn smoothstep(from: f32, to: f32, s: f32) -> f32 {
     if is_equal_approx(from, to) {
@@ -202,8 +309,10 @@ pub fn smoothstep(from: f32, to: f32, s: f32) -> f32 {
 }
 
 /// Returns `true` if `a` and `b` are approximately equal to each other.
-/// Here, approximately equal means that `a` and `sb` are within a small internal epsilon of each other,
+///
+/// Here, approximately equal means that `a` and `b` are within a small internal epsilon of each other,
 /// which scales with the magnitude of the numbers.
+///
 /// Infinity values of the same sign are considered equal.
 #[inline]
 pub fn is_equal_approx(a: f32, b: f32) -> bool {
@@ -217,25 +326,27 @@ pub fn is_equal_approx(a: f32, b: f32) -> bool {
     (a - b).abs() < tolerance
 }
 
-/// Returns true if s is zero or almost zero.
+/// Returns true if `s` is zero or almost zero.
+///
 /// This method is faster than using is_equal_approx with one value as zero.
 #[inline]
 pub fn is_zero_approx(s: f32) -> bool {
     s.abs() < CMP_EPSILON
 }
 
-/// Converts from linear energy to decibels (audio).
-/// This can be used to implement volume sliders that behave as expected (since volume isn't linear).
-#[inline]
-pub fn linear2db(nrg: f32) -> f32 {
-    nrg.ln() * 0.115_129_255
-}
-
-/// Returns the nearest equal or larger power of 2 for integer value.
+/// Returns the nearest equal or larger power of 2 for an integer value.
+///
 /// In other words, returns the smallest value a where `a = pow(2, n)` such that `value <= a` for some non-negative integer `n`.
+///
+/// This behaves like [`u32::next_power_of_two()`] for `value >= 1`.
+///
+/// **Warning:** This function returns 0 rather than 1 for non-positive values of `value`
+/// (in reality, 1 is the smallest integer power of 2).
+///
 /// # Examples:
-/// ```rust
-/// use gdnative_core::globalscope::nearest_po2;
+/// ```
+/// use gdnative::globalscope::*;
+///
 /// assert_eq!(nearest_po2(3), 4);
 /// assert_eq!(nearest_po2(4), 4);
 /// assert_eq!(nearest_po2(5), 8);
@@ -250,35 +361,39 @@ pub fn nearest_po2(value: i32) -> u32 {
     (value as u32).next_power_of_two()
 }
 
-/// Converts a 2D point expressed in the polar coordinate system
-/// (a distance from the origin r and an angle th (radians)) to the cartesian coordinate system (X and Y axis).
-#[inline]
-pub fn cartesian2polar(r: f32, th: f32) -> (f32, f32) {
-    (r * th.cos(), r * th.sin())
-}
-
-/// Returns the integer modulus of a/b that wraps equally in positive and negative.
+/// Returns the integer modulus of `a/b` that wraps equally in positive and negative.
+///
+/// The result, if not zero, has the same sign as `b`.
+///
 /// # Examples:
-/// ```rust
-/// use gdnative_core::globalscope::posmod;
-/// const VALS: [i32; 7] = [0, 1, 2, 0, 1, 2, 0];
-/// for i in (-3..4).enumerate() {
-///     assert_eq!(posmod(i.1, 3), VALS[i.0]);
-/// }
+/// ```
+/// use gdnative::globalscope::*;
+///
+/// assert_eq!(posmod(7, 3), 1);
+/// assert_eq!(posmod(-7, 3), 2);
+/// assert_eq!(posmod(7, -3), -2);
+/// assert_eq!(posmod(-7, -3), -1);
+///
+/// assert_eq!(posmod(6, 3), 0);
+/// assert_eq!(posmod(-6, 3), 0);
+/// assert_eq!(posmod(6, -3), 0);
+/// assert_eq!(posmod(-6, -3), 0);
 /// ```
 #[inline]
 pub fn posmod(a: i32, b: i32) -> i32 {
     let mut value = a % b;
-    if ((value < 0) && (b > 0)) || ((value > 0) && (b < 0)) {
+    if value < 0 && b > 0 || value > 0 && b < 0 {
         value += b;
     }
     value
 }
 
-/// Maps a value from range `range.from` to `range_to`.
+/// Maps a value from `range_from` to `range_to`, using linear interpolation.
+///
 /// # Example:
-/// ```rust
-/// use gdnative_core::globalscope::range_lerp;
+/// ```
+/// use gdnative::globalscope::*;
+///
 /// assert_eq!(range_lerp(75.0, 0.0..=100.0, -1.0..=1.0), 0.5);
 /// ```
 #[inline]
@@ -290,12 +405,15 @@ pub fn range_lerp(
     lerp(range_to, inverse_lerp(range_from, value))
 }
 
-/// Snaps float value s to a given step.
+/// Snaps float value `s` to a given `step`.
+///
 /// This can also be used to round a floating point number to an arbitrary number of decimals.
-/// ```rust
-/// use gdnative_core::globalscope::stepify;
+/// ```
+/// use gdnative::globalscope::*;
+/// use std::f32::consts::E; // Euler constant, 2.71828
+///
 /// assert_eq!(stepify(100.0, 32.0), 96.0);
-/// assert_eq!(stepify(3.14159, 0.01), 3.1399999);
+/// assert_eq!(stepify(E, 0.01), 2.72);
 /// ```
 #[inline]
 pub fn stepify(mut value: f32, step: f32) -> f32 {
@@ -305,75 +423,70 @@ pub fn stepify(mut value: f32, step: f32) -> f32 {
     value
 }
 
-/// Wraps float value between min and max.
+/// Wraps float value between `min` and `max`.
+///
 /// Usable for creating loop-alike behavior or infinite surfaces.
-/// # Examples :
-/// ```rust
-/// use gdnative_core::globalscope::wrapf;
+///
+/// # Examples:
+/// ```
+/// use gdnative::globalscope::*;
 /// use std::f32::consts::{TAU, PI};
 ///
-/// //Infinite loop between 5.0 and 9.9
-/// let value = 1.5;
-/// let angle = 0.70707;
-/// let value = wrapf(value + 0.1, 5.0..10.0);
-/// //Infinite rotation (in radians)
-/// let angle = wrapf(angle + 0.1, 0.0..TAU);
-/// //Infinite rotation (in radians)
-/// let angle = wrapf(angle + 0.1, -PI..PI);
-/// ```
-/// # Tests :
-/// ```rust
-/// use gdnative_core::globalscope::wrapf;
-/// use std::f32::consts::{TAU, PI};
+/// // Custom range
+/// assert_eq!(wrapf(3.2, 0.5..2.5), 1.2);
 ///
-/// let value = 0.5;
-/// assert_eq!(wrapf(value + 0.1, 5.0..0.0), 5.6);
-/// let angle = PI/4.0;
-/// assert_eq!(wrapf(angle, 0.0..TAU), 0.7853982);
-/// assert_eq!(wrapf(1.0, 0.5..1.5), 1.0);
-/// assert_eq!(wrapf(0.75, -0.5..0.5), -0.25);
+/// // Full circle
+/// let angle = 3.0 * PI;
+/// assert!(is_equal_approx(wrapf(angle, 0.0..TAU), PI));
 /// ```
 ///
-/// # Note:
-/// If min is 0, this is equivalent to fposmod, so prefer using that instead.
-/// wrapf is more flexible than using the fposmod approach by giving the user control over the minimum value.
+/// If the range start is 0, this is equivalent to [`fposmod()`], so prefer using that instead.
+///
+/// Note that unlike GDScript's method, the range must be non-empty and non-inverted.
+///
+/// # Panics
+/// If the range is empty, i.e. `range.start` >= `range.end`.
 #[inline]
 pub fn wrapf(value: f32, range: Range<f32>) -> f32 {
-    let range_diff: f32 = range.end - range.start;
-    if is_zero_approx(range_diff) {
-        return range.start;
-    }
-    value - (range_diff * ((value - range.start / range_diff).floor()))
+    assert!(
+        !range.is_empty(),
+        "wrapf expects non-empty, non-inverted range; passed {}..{}",
+        range.start,
+        range.end
+    );
+
+    let range_diff = range.end - range.start;
+    value - range_diff * ((value - range.start) / range_diff).floor()
 }
 
-/// Wraps integer value between min and max.
+/// Wraps integer value between `min` and `max`.
+///
 /// Usable for creating loop-alike behavior or infinite surfaces.
-/// # Example :
-/// ```rust
-/// use gdnative_core::globalscope::wrapi;
 ///
-/// //Infinite loop between 5 and 9
-/// let frame = 10;
-/// let frame = wrapi(frame + 1, 5..10);
-/// //result is -2
-/// let result = wrapi(-6, -5..-1);
+/// # Examples:
 /// ```
-/// # Tests :
-/// ```rust
-/// use gdnative_core::globalscope::wrapi;
+/// use gdnative::globalscope::*;
 ///
+/// assert_eq!(wrapi(5, 3..5), 3);
 /// assert_eq!(wrapi(1, -1..2), 1);
 /// assert_eq!(wrapi(-1, 2..4), 3);
-/// assert_eq!(wrapi(1, 2..-1), 1);
 /// ```
-/// # Note:
-/// If min is 0, this is equivalent to posmod, so prefer using that instead.
-/// wrapi is more flexible than using the posmod approach by giving the user control over the minimum value.
+///
+/// If the range start is 0, this is equivalent to [`posmod()`], so prefer using that instead.
+///
+/// Note that unlike GDScript's method, the range must be non-empty and non-inverted.
+///
+/// # Panics
+/// If the range is empty, i.e. `range.start` >= `range.end`.
 #[inline]
 pub fn wrapi(value: i32, range: Range<i32>) -> i32 {
+    assert!(
+        !range.is_empty(),
+        "wrapf expects non-empty, non-inverted range; passed {}..{}",
+        range.start,
+        range.end
+    );
+
     let range_diff = range.end - range.start;
-    if range_diff == 0 {
-        return range.start;
-    }
-    range.start + (((value - range.start % range_diff) + range_diff) % range_diff)
+    range.start + (value - range.start % range_diff + range_diff) % range_diff
 }
