@@ -1643,7 +1643,7 @@ impl<T: ToVariant> ToVariant for HashSet<T> {
     }
 }
 
-impl<T: Eq + std::hash::Hash + FromVariant> FromVariant for HashSet<T> {
+impl<T: FromVariant + Eq + Hash> FromVariant for HashSet<T> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         let arr = VariantArray::from_variant(variant)?;

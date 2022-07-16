@@ -1,90 +1,51 @@
-use gdnative::api::*;
 use gdnative::prelude::*;
 
 use std::collections::{HashMap, HashSet};
 
-// HashMap
 #[derive(NativeClass, Default)]
 #[inherit(Node)]
-pub struct ExampleHashMapProperty {
+pub struct PropertyExport {
     #[property]
-    players: HashMap<i64, String>,
-}
+    name_vec: Vec<String>,
 
-impl ExampleHashMapProperty {
-    fn new(_owner: &Node) -> Self {
-        Self::default()
-    }
+    #[property]
+    color_map: HashMap<GodotString, Color>,
+
+    #[property]
+    id_set: HashSet<i64>,
 }
 
 #[methods]
-impl ExampleHashMapProperty {
-    #[export]
-    fn _ready(&self, _owner: &Node) {
-        godot_print!("HashMap:");
-        for (id, name) in &self.players {
-            godot_print!("Hello, {} - {}!", id, name);
-        }
-    }
-}
-
-// HashSet
-#[derive(NativeClass, Default)]
-#[inherit(Node)]
-pub struct ExampleHashSetProperty {
-    #[property]
-    players: HashSet<String>,
-}
-
-impl ExampleHashSetProperty {
-    fn new(_owner: &Node) -> Self {
+impl PropertyExport {
+    fn new(_base: &Node) -> Self {
         Self::default()
     }
-}
 
-#[methods]
-impl ExampleHashSetProperty {
     #[export]
-    fn _ready(&self, _owner: &Node) {
-        godot_print!("HashSet:");
-        for name in &self.players {
-            godot_print!("Hello, {}!", name);
+    fn _ready(&self, base: &Node) {
+        godot_print!("Vec (name):");
+        for name in &self.name_vec {
+            godot_print!("* {}", name);
         }
-    }
-}
 
-// Vec
-#[derive(NativeClass, Default)]
-#[inherit(Node)]
-pub struct ExampleVecProperty {
-    #[property]
-    players: Vec<String>,
-}
-
-impl ExampleVecProperty {
-    fn new(_owner: &Node) -> Self {
-        Self::default()
-    }
-}
-
-#[methods]
-impl ExampleVecProperty {
-    #[export]
-    fn _ready(&self, _owner: &Node) {
-        godot_print!("Vec:");
-        for name in &self.players {
-            godot_print!("Hello, {}!", name);
+        godot_print!("\nHashMap (string -> color):");
+        for (string, color) in &self.color_map {
+            godot_print!("* {} -> #{}", string, color.to_html(false));
         }
+
+        godot_print!("\nHashSet (ID):");
+        for id in &self.id_set {
+            godot_print!("* {}", id);
+        }
+
+        // The program has printed the contents and fulfilled its purpose, quit
+        let scene_tree = base.get_tree().unwrap();
+        unsafe { scene_tree.assume_safe() }.quit(0);
     }
 }
 
-// Function that registers all exposed classes to Godot
 fn init(handle: InitHandle) {
-    // Register the new `HelloWorld` type we just declared.
-    handle.add_class::<ExampleHashMapProperty>();
-    handle.add_class::<ExampleHashSetProperty>();
-    handle.add_class::<ExampleVecProperty>();
+    handle.add_class::<PropertyExport>();
 }
 
-// Macro that creates the entry-points of the dynamic library.
 godot_init!(init);
