@@ -24,6 +24,8 @@ pub extern "C" fn run_tests(
 ) -> gdnative::sys::godot_variant {
     let mut status = true;
     status &= gdnative::core_types::test_string();
+    status &= gdnative::core_types::test_string_name_eq();
+    status &= gdnative::core_types::test_string_name_ord();
 
     status &= gdnative::core_types::test_dictionary();
     // status &= gdnative::test_dictionary_clone_clear();
