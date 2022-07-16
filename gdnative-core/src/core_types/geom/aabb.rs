@@ -52,14 +52,14 @@ impl Aabb {
     ///
     /// This method corresponds to the [`get_area`] GDScript method.
     ///
-    /// [get_area]: https://docs.godotengine.org/en/stable/classes/class_aabb.html#class-aabb-method-get-area
+    /// [`get_area`]: https://docs.godotengine.org/en/stable/classes/class_aabb.html#class-aabb-method-get-area
     #[inline]
-    pub fn get_volume(self) -> f32 {
+    pub fn volume(self) -> f32 {
         self.size.x * self.size.y * self.size.z
     }
 
     /// Returns true if the bounding box is flat or empty. See also
-    /// [`get_volume`][Self::get_volume].
+    /// [`volume`][Self::volume].
     ///
     /// This method corresponds to the [`has_no_area`] GDScript method.
     ///
@@ -118,46 +118,40 @@ impl Aabb {
         }
     }
 
-    /// Returns the normalized longest axis of the bounding box.
-    #[inline]
-    pub fn get_longest_axis(self) -> Vector3 {
-        self.size.max_axis().to_unit_vector()
-    }
-
-    /// Returns the index of the longest axis of the bounding box.
+    /// Returns the longest side of this AABB as an axis index and its length.
     ///
-    /// If multiple axes have the same length, then the first in order X, Y, Z is returned.
-    #[inline]
-    pub fn get_longest_axis_index(self) -> Axis {
-        self.size.max_axis()
-    }
-
-    /// Returns the scalar length of the longest axis of the bounding box.
-    #[inline]
-    pub fn get_longest_axis_size(self) -> f32 {
-        let Vector3 { x, y, z } = self.size;
-        x.max(y).max(z)
-    }
-
-    /// Returns the normalized shortest axis of the bounding box.
-    #[inline]
-    pub fn get_shortest_axis(self) -> Vector3 {
-        self.size.min_axis().to_unit_vector()
-    }
-
-    /// Returns the index of the shortest axis of the bounding box.
+    /// If multiple axes have the same length, then the first in order X, Y, Z is returned.  
+    /// To get the unit vector along the axis, use [`Axis::to_unit_vector()`].
     ///
-    /// If multiple axes have the same length, then the first in order X, Y, Z is returned.
+    /// If you want to emulate the separate GDScript methods, you can do this:
+    /// ```no_run
+    /// # let aabb: gdnative::core_types::Aabb = todo!();
+    /// let (index, size) = aabb.longest_axis();
+    /// let axis = index.to_unit_vector();
+    /// ```
     #[inline]
-    pub fn get_shortest_axis_index(self) -> Axis {
-        self.size.min_axis()
+    pub fn longest_axis(self) -> (Axis, f32) {
+        let Vector3 { x, y, z } = self.size;
+
+        (self.size.max_axis(), x.max(y).max(z))
     }
 
-    /// Returns the scalar length of the shortest axis of the bounding box.
+    /// Returns the shortest side of this AABB as an axis index and its length.
+    ///
+    /// If multiple axes have the same length, then the first in order X, Y, Z is returned.  
+    /// To get the unit vector along the axis, use [`Axis::to_unit_vector()`].
+    ///
+    /// If you want to emulate the separate GDScript methods, you can do this:
+    /// ```no_run
+    /// # let aabb: gdnative::core_types::Aabb = todo!();
+    /// let (index, size) = aabb.shortest_axis();
+    /// let axis = index.to_unit_vector();
+    /// ```
     #[inline]
-    pub fn get_shortest_axis_size(self) -> f32 {
+    pub fn shortest_axis(self) -> (Axis, f32) {
         let Vector3 { x, y, z } = self.size;
-        x.min(y).min(z)
+
+        (self.size.min_axis(), x.min(y).min(z))
     }
 
     /// Returns the support point in a given direction. This is useful for collision detection
@@ -382,15 +376,22 @@ mod tests {
     }
 
     #[test]
-    fn test_get_axis() {
+    fn test_longest_shortest_axis() {
         let aabb = Aabb::new(Vector3::ZERO, Vector3::new(1.0, 2.0, 3.0));
-        assert!(aabb.get_longest_axis().is_equal_approx(Vector3::BACK));
-        assert_eq!(aabb.get_longest_axis_index(), Axis::Z);
-        assert!(aabb.get_longest_axis_size().is_equal_approx(3.0));
 
-        assert!(aabb.get_shortest_axis().is_equal_approx(Vector3::RIGHT));
-        assert_eq!(aabb.get_shortest_axis_index(), Axis::X);
-        assert!(aabb.get_shortest_axis_size().is_equal_approx(1.0));
+        let (longest_axis, longest_size) = aabb.longest_axis();
+        let longest_vector = longest_axis.to_unit_vector();
+
+        assert!(longest_vector.is_equal_approx(Vector3::BACK));
+        assert_eq!(longest_axis, Axis::Z);
+        assert!(longest_size.is_equal_approx(3.0));
+
+        let (shortest_axis, shortest_size) = aabb.shortest_axis();
+        let shortest_vector = shortest_axis.to_unit_vector();
+
+        assert!(shortest_vector.is_equal_approx(Vector3::RIGHT));
+        assert_eq!(shortest_axis, Axis::X);
+        assert!(shortest_size.is_equal_approx(1.0));
     }
 
     #[test]

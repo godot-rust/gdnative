@@ -57,18 +57,18 @@ impl Rect2 {
 
     /// Returns the area of the rectangle. See also [`has_no_area`][Self::has_no_area].
     #[inline]
-    pub fn get_area(self) -> f32 {
+    pub fn area(self) -> f32 {
         self.size.x * self.size.y
     }
 
-    /// Returns true if the rectangle is flat or empty. See also [`get_area`][Self::get_area].
+    /// Returns true if the rectangle is flat or empty. See also [`area`][Self::area].
     ///
     /// Note: If the `Rect2` has a negative size and is not flat or empty, this method will return
     /// true. Use [`abs`][Self::abs] to make the size positive.
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```
     /// # use gdnative::prelude::*;
     /// # fn main() {
     /// let rect = Rect2::new(
@@ -198,7 +198,7 @@ impl Rect2 {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```
     /// # use gdnative::prelude::*;
     /// # fn main() {
     /// let rect = Rect2::new(

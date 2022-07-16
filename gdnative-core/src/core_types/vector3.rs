@@ -24,9 +24,9 @@ pub enum Axis {
 }
 
 impl Axis {
-    /// Returns this axis as a vector.
-    // Before making public, consider also Vector3::from_unit_axis() or so.
-    pub(crate) fn to_unit_vector(self) -> Vector3 {
+    /// Returns this axis as a vector of length 1, with only one component set.
+    #[inline]
+    pub fn to_unit_vector(self) -> Vector3 {
         match self {
             Axis::X => Vector3::RIGHT,
             Axis::Y => Vector3::UP,
