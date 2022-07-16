@@ -75,6 +75,7 @@ allow = [
     "Zlib",
     "BSD-3-Clause",
     "ISC",
+    "Unicode-DFS-2016",
     #"Apache-2.0 WITH LLVM-exception",
 ]
 # What to do if a license in the above list is not actually used in a dependency

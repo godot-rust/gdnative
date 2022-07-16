@@ -242,7 +242,7 @@ impl Plane {
     fn ensure_normalized(self) {
         assert!(
             self.normal.is_normalized(),
-            "Plane::normal {:?} does not have unit length",
+            "Plane {:?} -- normal does not have unit length",
             self.normal
         );
     }
