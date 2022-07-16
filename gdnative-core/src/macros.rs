@@ -169,13 +169,37 @@ macro_rules! impl_basic_trait_as_sys {
     (
         Eq for $Type:ty as $GdType:ident : $gd_method:ident
     ) => {
-        impl PartialEq for $Type {
-            #[inline]
-            fn eq(&self, other: &Self) -> bool {
-                unsafe { (get_api().$gd_method)(self.sys(), other.sys()) }
+        impl_basic_trait_as_sys!(PartialEq for $Type as $GdType : $gd_method);
+        impl Eq for $Type {}
+    };
+
+    (
+        PartialOrd for $Type:ty as $GdType:ident : $gd_method:ident
+    ) => {
+        impl PartialOrd for $Type {
+             #[inline]
+             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                if self == other {
+                    Some(std::cmp::Ordering::Equal)
+                } else if unsafe { (get_api().$gd_method)(&self.0, &other.0) } {
+                    Some(std::cmp::Ordering::Less)
+                } else {
+                    Some(std::cmp::Ordering::Greater)
+                }
             }
         }
-        impl Eq for $Type {}
+    };
+
+    (
+        Ord for $Type:ty as $GdType:ident : $gd_method:ident
+    ) => {
+        impl_basic_trait_as_sys!(PartialOrd for $Type as $GdType : $gd_method);
+        impl Ord for $Type {
+             #[inline]
+             fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                self.partial_cmp(other).unwrap()
+            }
+        }
     };
 
     (

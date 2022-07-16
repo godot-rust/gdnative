@@ -1,6 +1,5 @@
 use crate::private::get_api;
 use crate::sys;
-use std::cmp::Ordering;
 use std::mem::transmute;
 
 // Note: for safety design, consult:
@@ -90,20 +89,8 @@ impl Rid {
 
 impl_basic_traits_as_sys! {
     for Rid as godot_rid {
-        Eq => godot_rid_operator_equal;
         Default => godot_rid_new;
-    }
-}
-
-impl PartialOrd for Rid {
-    #[inline]
-    fn partial_cmp(&self, other: &Rid) -> Option<Ordering> {
-        if PartialEq::eq(self, other) {
-            Some(Ordering::Equal)
-        } else if unsafe { (get_api().godot_rid_operator_less)(self.sys(), other.sys()) } {
-            Some(Ordering::Less)
-        } else {
-            Some(Ordering::Greater)
-        }
+        Eq => godot_rid_operator_equal;
+        PartialOrd => godot_rid_operator_less;
     }
 }

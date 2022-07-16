@@ -3,7 +3,6 @@ use crate::object::NewRef;
 use crate::private::get_api;
 use crate::sys;
 
-use std::cmp::Ordering;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem::forget;
@@ -301,6 +300,7 @@ impl_basic_traits_as_sys!(
     for GodotString as godot_string {
         Drop => godot_string_destroy;
         Eq => godot_string_operator_equal;
+        Ord => godot_string_operator_less;
         Default => godot_string_new;
         NewRef => godot_string_new_copy;
     }
@@ -379,26 +379,6 @@ where
     #[inline]
     fn add_assign(&mut self, other: S) {
         self.add_assign(&GodotString::from_str(other))
-    }
-}
-
-impl PartialOrd for GodotString {
-    #[inline]
-    fn partial_cmp(&self, other: &GodotString) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for GodotString {
-    #[inline]
-    fn cmp(&self, other: &GodotString) -> Ordering {
-        if self == other {
-            Ordering::Equal
-        } else if unsafe { (get_api().godot_string_operator_less)(&self.0, &other.0) } {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
     }
 }
 
@@ -612,6 +592,7 @@ impl_basic_traits_as_sys! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
         Eq => godot_string_name_operator_equal;
+        PartialOrd => godot_string_name_operator_less;
     }
 }
 
@@ -619,21 +600,6 @@ impl fmt::Debug for StringName {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         self.to_godot_string().fmt(f)
-    }
-}
-
-impl PartialOrd for StringName {
-    #[inline]
-    fn partial_cmp(&self, other: &StringName) -> Option<Ordering> {
-        unsafe {
-            let native = (get_api().godot_string_name_operator_less)(&self.0, &other.0);
-
-            if native {
-                Some(Ordering::Less)
-            } else {
-                Some(Ordering::Greater)
-            }
-        }
     }
 }
 
@@ -699,6 +665,7 @@ mod serialize {
 
 godot_test!(test_string {
     use crate::core_types::{GodotString, Variant, VariantType, ToVariant, VariantArray, Dictionary};
+    use std::cmp::Ordering;
 
     let foo: GodotString = "foo".into();
     assert_eq!(foo.len(), 3);
