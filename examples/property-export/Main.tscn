@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://property_export_library.gdnlib" type="GDNativeLibrary" id=1]
+[ext_resource path="res://GDScriptPrinter.gd" type="Script" id=2]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "PropertyExport"
@@ -18,3 +19,6 @@ color_map = {
 "teal": Color( 0.0941176, 0.423529, 0.564706, 1 )
 }
 id_set = [ 21, 77, 8, 90 ]
+
+[node name="GDScriptPrinter" type="Node" parent="."]
+script = ExtResource( 2 )
