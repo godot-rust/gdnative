@@ -603,7 +603,7 @@ impl_basic_traits_as_sys!(
         Drop => godot_variant_destroy;
         Clone => godot_variant_new_copy;
         PartialEq => godot_variant_operator_equal;
-        PartialOrd => godot_variant_operator_less;
+        Ord => godot_variant_operator_less;
     }
 );
 

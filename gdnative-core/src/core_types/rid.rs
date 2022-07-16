@@ -91,6 +91,6 @@ impl_basic_traits_as_sys! {
     for Rid as godot_rid {
         Default => godot_rid_new;
         Eq => godot_rid_operator_equal;
-        PartialOrd => godot_rid_operator_less;
+        Ord => godot_rid_operator_less;
     }
 }

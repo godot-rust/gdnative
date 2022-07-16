@@ -592,7 +592,7 @@ impl_basic_traits_as_sys! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
         Eq => godot_string_name_operator_equal;
-        PartialOrd => godot_string_name_operator_less;
+        Ord => godot_string_name_operator_less;
     }
 }
 
