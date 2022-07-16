@@ -14,7 +14,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="Godot Rust - Collection Properties"
+config/name="Godot Rust - Property Export"
 run/main_scene="res://Main.tscn"
 config/icon="res://icon.png"
 

@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://collection_properties_library.gdnlib" type="GDNativeLibrary" id=1]
+[ext_resource path="res://property_export_library.gdnlib" type="GDNativeLibrary" id=1]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "ExampleHashMapProperty"

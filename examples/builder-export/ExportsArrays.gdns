@@ -1,6 +1,6 @@
 [gd_resource type="NativeScript" load_steps=2 format=2]
 
-[ext_resource path="res://array_export_library.gdnlib" type="GDNativeLibrary" id=1]
+[ext_resource path="res://builder_export_library.gdnlib" type="GDNativeLibrary" id=1]
 
 [resource]
 resource_name = "ExportsArrays"
