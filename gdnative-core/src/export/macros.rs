@@ -19,14 +19,14 @@ macro_rules! godot_wrap_method_if_deref {
 // - Expand the call to the deprecated_reference_return!() macro to user code.
 #[doc(hidden)]
 #[macro_export]
-#[deprecated = "This function does not actually pass by reference to the Godot engine. You can clarify by writing #[export(deref_return)]."]
+#[deprecated = "This function does not actually pass by reference to the Godot engine. You can clarify by writing #[method(deref_return)]."]
 macro_rules! deprecated_reference_return {
     () => {};
 }
 
 #[doc(hidden)]
 #[macro_export]
-#[deprecated = "\n#[export] is deprecated and will be removed in godot-rust 0.11. Use #[method] instead.\n\
+#[deprecated = "\n#[export] is deprecated and will be removed in a future godot-rust version. Use #[method] instead. \n\
   For more information, see https://godot-rust.github.io/docs/gdnative/derive/derive.NativeClass.html."]
 macro_rules! deprecated_export_syntax {
     () => {};

@@ -16,7 +16,7 @@ mod profiled;
 mod varargs;
 mod variant;
 
-/// Collects method signatures of all functions in a `NativeClass` that have the `#[export]` attribute and registers them with Godot.
+/// Collects method signatures of all functions in a `NativeClass` that have the `#[method]` attribute and registers them with Godot.
 ///
 /// For example, in the following class
 /// ```
@@ -29,8 +29,8 @@ mod variant;
 ///
 /// #[methods]
 /// impl Foo {
-///     #[export]
-///     fn foo(&self, _owner: &Reference, bar: i64) -> i64 {
+///     #[method]
+///     fn foo(&self, #[base] _base: &Reference, bar: i64) -> i64 {
 ///         bar
 ///     }
 /// }
@@ -50,7 +50,7 @@ mod variant;
 /// impl gdnative::export::NativeClassMethods for Foo {
 ///     fn register(builder: &ClassBuilder<Self>) {
 ///         use gdnative::export::*;
-///         builder.method("foo", gdnative::export::godot_wrap_method!(Foo, false, fn foo(&self, #[base] _owner: &Reference, bar: i64) -> i64))
+///         builder.method("foo", gdnative::export::godot_wrap_method!(Foo, false, fn foo(&self, #[base] _base: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)
 ///             .done_stateless();
 ///     }
