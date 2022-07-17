@@ -1605,17 +1605,37 @@ impl<T: FromVariant> FromVariant for Vec<T> {
     }
 }
 
+/// Converts the hash map to a `Dictionary`, wrapped in a `Variant`.
+///
+/// Note that Rust's `HashMap` is non-deterministically ordered for security reasons, meaning that
+/// the order of the same elements will differ between two program invocations. To provide a
+/// deterministic output in Godot (e.g. UI elements for properties), the elements are sorted by key.
 impl<K: ToVariant + Hash + ToVariantEq, V: ToVariant> ToVariant for HashMap<K, V> {
     #[inline]
     fn to_variant(&self) -> Variant {
+        // Note: dictionary currently provides neither a sort() function nor random access (or at least bidirectional)
+        // iterators, making it difficult to sort in-place. Workaround: copy to vector
+
+        let mut intermediate: Vec<(Variant, Variant)> = self
+            .iter()
+            .map(|(k, v)| (k.to_variant(), v.to_variant()))
+            .collect();
+
+        intermediate.sort();
+
         let dict = Dictionary::new();
-        for (key, value) in self {
+        for (key, value) in intermediate.into_iter() {
             dict.insert(key, value);
         }
+
         dict.owned_to_variant()
     }
 }
 
+/// Expects a `Variant` populated with a `Dictionary` and tries to convert it into a `HashMap`.
+///
+/// Since Rust's `HashMap` is unordered, there is no guarantee about the resulting element order.
+/// In fact it is possible that two program invocations cause a different output.
 impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
@@ -1624,6 +1644,7 @@ impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
             .len()
             .try_into()
             .expect("Dictionary length should fit in usize");
+
         let mut hash_map = HashMap::with_capacity(len);
         for (key, value) in dictionary.iter() {
             hash_map.insert(K::from_variant(&key)?, V::from_variant(&value)?);
@@ -1632,6 +1653,11 @@ impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
     }
 }
 
+/// Converts the hash set to a `VariantArray`, wrapped in a `Variant`.
+///
+/// Note that Rust's `HashSet` is non-deterministically ordered for security reasons, meaning that
+/// the order of the same elements will differ between two program invocations. To provide a
+/// deterministic output in Godot (e.g. UI elements for properties), the elements are sorted by key.
 impl<T: ToVariant> ToVariant for HashSet<T> {
     #[inline]
     fn to_variant(&self) -> Variant {
@@ -1639,10 +1665,16 @@ impl<T: ToVariant> ToVariant for HashSet<T> {
         for value in self {
             array.push(value.to_variant());
         }
+
+        array.sort(); // deterministic order in Godot
         array.owned_to_variant()
     }
 }
 
+/// Expects a `Variant` populated with a `VariantArray` and tries to convert it into a `HashSet`.
+///
+/// Since Rust's `HashSet` is unordered, there is no guarantee about the resulting element order.
+/// In fact it is possible that two program invocations cause a different output.
 impl<T: FromVariant + Eq + Hash> FromVariant for HashSet<T> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
@@ -1651,6 +1683,7 @@ impl<T: FromVariant + Eq + Hash> FromVariant for HashSet<T> {
             .len()
             .try_into()
             .expect("VariantArray length should fit in usize");
+
         let mut set = HashSet::with_capacity(len);
         for idx in 0..len as i32 {
             let item =

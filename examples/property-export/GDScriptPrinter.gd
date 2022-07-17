@@ -4,7 +4,7 @@ func _ready():
 	var rust = get_node("../PropertyExport")
 
 	print("\n-----------------------------------------------------------------")
-	print("Print from GDScript (note the deterministically ordered map/set):")
+	print("Print from GDScript (note the lexicographically ordered map/set):")
 	print("  Vec (name):");
 	for name in rust.name_vec:
 		print("  * %s" % name)
