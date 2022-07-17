@@ -217,7 +217,7 @@ godot_itest! { test_from_instance_id {
         let reconstructed = unsafe { Reference::from_instance_id(instance_id) };
         assert_eq!(
             "bar",
-            String::from_variant(&reconstructed.get_meta("foo")).unwrap()
+            String::from_variant(&reconstructed.get_meta("foo", Variant::nil())).unwrap()
         );
     }
 
