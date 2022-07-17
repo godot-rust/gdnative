@@ -46,9 +46,9 @@ function findGodot() {
     # Special case for Windows when there is a .bat file
     # Also consider that 'cmd /c' would need 'cmd //c' (https://stackoverflow.com/q/21357813)
     elif
-        # Don't ask me why Godot returns 255 instead of 0
+        # Godot returns 255 for older versions, but 0 for newer ones
         godot.bat --version
-        [ $? -eq 255 ]
+        [[ $? -eq 255 || $? -eq 0 ]]
     then
         echo "Found 'godot.bat' script"
         godotBin="godot.bat"
