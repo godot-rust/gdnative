@@ -111,7 +111,8 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - [**hello-world**](https://github.com/godot-rust/godot-rust/tree/master/examples/hello-world) - Your first project, writes to the console.
 - [**spinning-cube**](https://github.com/godot-rust/godot-rust/tree/master/examples/spinning-cube) - Spin our own node in place, exposing editor properties.
 - [**scene-create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene-create) - Load, instance and place scenes using Rust code.
-- [**array-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/array-export) - Export more complex properties (here arrays) from Rust.
+- [**builder-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/builder-export) - Export using the builder API.
+- [**property-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/property-export) - Export complex properties such as collections.
 - [**dodge-the-creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge-the-creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
 - [**signals**](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Connect and emit signals.
 - [**resource**](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Create and use custom resources.

@@ -1,6 +1,6 @@
 use crate::*;
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::default::Default;
 use std::fmt;
 use std::hash::Hash;
@@ -1605,17 +1605,37 @@ impl<T: FromVariant> FromVariant for Vec<T> {
     }
 }
 
+/// Converts the hash map to a `Dictionary`, wrapped in a `Variant`.
+///
+/// Note that Rust's `HashMap` is non-deterministically ordered for security reasons, meaning that
+/// the order of the same elements will differ between two program invocations. To provide a
+/// deterministic output in Godot (e.g. UI elements for properties), the elements are sorted by key.
 impl<K: ToVariant + Hash + ToVariantEq, V: ToVariant> ToVariant for HashMap<K, V> {
     #[inline]
     fn to_variant(&self) -> Variant {
+        // Note: dictionary currently provides neither a sort() function nor random access (or at least bidirectional)
+        // iterators, making it difficult to sort in-place. Workaround: copy to vector
+
+        let mut intermediate: Vec<(Variant, Variant)> = self
+            .iter()
+            .map(|(k, v)| (k.to_variant(), v.to_variant()))
+            .collect();
+
+        intermediate.sort();
+
         let dict = Dictionary::new();
-        for (key, value) in self {
+        for (key, value) in intermediate.into_iter() {
             dict.insert(key, value);
         }
+
         dict.owned_to_variant()
     }
 }
 
+/// Expects a `Variant` populated with a `Dictionary` and tries to convert it into a `HashMap`.
+///
+/// Since Rust's `HashMap` is unordered, there is no guarantee about the resulting element order.
+/// In fact it is possible that two program invocations cause a different output.
 impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
@@ -1624,11 +1644,56 @@ impl<K: FromVariant + Hash + Eq, V: FromVariant> FromVariant for HashMap<K, V> {
             .len()
             .try_into()
             .expect("Dictionary length should fit in usize");
+
         let mut hash_map = HashMap::with_capacity(len);
         for (key, value) in dictionary.iter() {
             hash_map.insert(K::from_variant(&key)?, V::from_variant(&value)?);
         }
         Ok(hash_map)
+    }
+}
+
+/// Converts the hash set to a `VariantArray`, wrapped in a `Variant`.
+///
+/// Note that Rust's `HashSet` is non-deterministically ordered for security reasons, meaning that
+/// the order of the same elements will differ between two program invocations. To provide a
+/// deterministic output in Godot (e.g. UI elements for properties), the elements are sorted by key.
+impl<T: ToVariant> ToVariant for HashSet<T> {
+    #[inline]
+    fn to_variant(&self) -> Variant {
+        let array = VariantArray::new();
+        for value in self {
+            array.push(value.to_variant());
+        }
+
+        array.sort(); // deterministic order in Godot
+        array.owned_to_variant()
+    }
+}
+
+/// Expects a `Variant` populated with a `VariantArray` and tries to convert it into a `HashSet`.
+///
+/// Since Rust's `HashSet` is unordered, there is no guarantee about the resulting element order.
+/// In fact it is possible that two program invocations cause a different output.
+impl<T: FromVariant + Eq + Hash> FromVariant for HashSet<T> {
+    #[inline]
+    fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
+        let arr = VariantArray::from_variant(variant)?;
+        let len: usize = arr
+            .len()
+            .try_into()
+            .expect("VariantArray length should fit in usize");
+
+        let mut set = HashSet::with_capacity(len);
+        for idx in 0..len as i32 {
+            let item =
+                T::from_variant(&arr.get(idx)).map_err(|e| FromVariantError::InvalidItem {
+                    index: idx as usize,
+                    error: Box::new(e),
+                })?;
+            set.insert(item);
+        }
+        Ok(set)
     }
 }
 
@@ -1832,6 +1897,63 @@ godot_test!(
             Err(FromVariantError::InvalidVariantType {
                 variant_type: VariantType::GodotString,
                 expected: VariantType::I64
+            }),
+        );
+    }
+
+    test_variant_hash_set {
+        let original_hash_set = HashSet::from([
+            "Foo".to_string(),
+            "Bar".to_string(),
+        ]);
+        let variant = original_hash_set.to_variant();
+        let check_hash_set = variant.try_to::<HashSet<String>>().expect("should be hash set");
+        assert_eq!(original_hash_set, check_hash_set);
+
+        let duplicate_variant_set = VariantArray::new();
+        duplicate_variant_set.push("Foo".to_string());
+        duplicate_variant_set.push("Bar".to_string());
+        duplicate_variant_set.push("Bar".to_string());
+        let duplicate_hash_set = variant.try_to::<HashSet<String>>().expect("should be hash set");
+        assert_eq!(original_hash_set, duplicate_hash_set);
+
+        // Check conversion of heterogeneous set types
+        let non_homogenous_set = VariantArray::new();
+        non_homogenous_set.push("Foo".to_string());
+        non_homogenous_set.push(7);
+        assert_eq!(
+            non_homogenous_set.owned_to_variant().try_to::<HashSet<String>>(),
+            Err(FromVariantError::InvalidItem {
+                index: 1,
+                error: Box::new(FromVariantError::InvalidVariantType {
+                    variant_type: VariantType::I64,
+                    expected: VariantType::GodotString
+                })
+            }),
+        );
+    }
+
+    test_variant_vec {
+        let original_vec = Vec::from([
+            "Foo".to_string(),
+            "Bar".to_string(),
+        ]);
+        let variant = original_vec.to_variant();
+        let check_vec = variant.try_to::<Vec<String>>().expect("should be hash set");
+        assert_eq!(original_vec, check_vec);
+
+        // Check conversion of heterogeneous vec types
+        let non_homogenous_vec = VariantArray::new();
+        non_homogenous_vec.push("Foo".to_string());
+        non_homogenous_vec.push(7);
+        assert_eq!(
+            non_homogenous_vec.owned_to_variant().try_to::<Vec<String>>(),
+            Err(FromVariantError::InvalidItem {
+                index: 1,
+                error: Box::new(FromVariantError::InvalidVariantType {
+                    variant_type: VariantType::I64,
+                    expected: VariantType::GodotString
+                })
             }),
         );
     }

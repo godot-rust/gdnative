@@ -20,7 +20,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="array_export"
+config/name="builder_export"
 run/main_scene="res://ExportsArrays.tscn"
 config/icon="res://icon.png"
 

@@ -433,6 +433,8 @@ pub struct Property<T> {
 }
 
 mod impl_export {
+    use std::collections::{HashMap, HashSet};
+
     use super::*;
 
     /// Hint type indicating that there are no hints available for the time being.
@@ -589,6 +591,43 @@ mod impl_export {
         #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
             hint.unwrap_or_default().export_info()
+        }
+    }
+
+    impl<K, V> Export for HashMap<K, V>
+    where
+        K: std::hash::Hash + ToVariantEq + ToVariant,
+        V: ToVariant,
+    {
+        type Hint = NoHint;
+
+        #[inline]
+        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
+            ExportInfo::new(VariantType::Dictionary)
+        }
+    }
+
+    impl<T> Export for HashSet<T>
+    where
+        T: ToVariant,
+    {
+        type Hint = NoHint;
+
+        #[inline]
+        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
+            ExportInfo::new(VariantType::VariantArray)
+        }
+    }
+
+    impl<T> Export for Vec<T>
+    where
+        T: ToVariant,
+    {
+        type Hint = NoHint;
+
+        #[inline]
+        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
+            ExportInfo::new(VariantType::VariantArray)
         }
     }
 }
