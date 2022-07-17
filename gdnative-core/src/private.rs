@@ -52,12 +52,21 @@ unsafe fn check_api_compatibility(
             next,
         } = *api;
 
+        // Note: this code ensured that Godot 4 (which was back then GDNative 1.3) wasn't actually used.
+        // Godot uses now GDExtension, so this no longer applies. Keep this around in case old Godot 4 versions still
+        // need to be detected in the future. Now just check against minor version 1.
+        // See also: gdnative-sys/build.rs:485
+        // See also: https://github.com/godot-rust/godot-rust/issues/904
+
         // Godot 4 is not yet supported
         if type_ as crate::sys::GDNATIVE_API_TYPES == crate::sys::GDNATIVE_API_TYPES_GDNATIVE_CORE
-            && version.major == 1
-            && version.minor == 3
+            && version.major != 1
+        //  && version.major == 1 && version.minor == 3   (old check)
         {
-            return Err(sys::InitError::Generic{ message: "GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396".into() });
+            return Err(sys::InitError::Generic {
+                message: "GDNative major version 1 expected".into(),
+            });
+            //return Err(sys::InitError::Generic{ message: "GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396".into() });
         }
 
         api = next;
