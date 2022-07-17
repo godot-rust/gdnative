@@ -592,8 +592,36 @@ impl StringName {
 impl_basic_traits_as_sys! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
-        Eq => godot_string_name_operator_equal;
-        Ord => godot_string_name_operator_less;
+
+        // Note: Godot's equal/less implementations contained a bug until Godot 3.5, see https://github.com/godot-rust/godot-rust/pull/912
+        // Thus explicit impl as a workaround for now
+        // Eq => godot_string_name_operator_equal;
+        // Ord => godot_string_name_operator_less;
+    }
+}
+
+impl PartialEq for StringName {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        // Slow but correct -- see comment above
+        self.to_godot_string() == other.to_godot_string()
+    }
+}
+
+impl Eq for StringName {}
+
+impl PartialOrd for StringName {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(Ord::cmp(self, other))
+    }
+}
+
+impl Ord for StringName {
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Slow but correct -- see comment above
+        Ord::cmp(&self.to_godot_string(), &other.to_godot_string())
     }
 }
 
