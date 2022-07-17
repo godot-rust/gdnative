@@ -2,6 +2,7 @@ use crate::core_types::Variant;
 use crate::object::NewRef;
 use crate::private::get_api;
 use crate::sys;
+use std::cmp::Ordering;
 
 use std::ffi::CStr;
 use std::fmt;
@@ -591,8 +592,36 @@ impl StringName {
 impl_basic_traits_as_sys! {
     for StringName as godot_string_name {
         Drop => godot_string_name_destroy;
-        Eq => godot_string_name_operator_equal;
-        Ord => godot_string_name_operator_less;
+
+        // Note: Godot's equal/less implementations contained a bug until Godot 3.5, see https://github.com/godot-rust/godot-rust/pull/912
+        // Thus explicit impl as a workaround for now
+        // Eq => godot_string_name_operator_equal;
+        // Ord => godot_string_name_operator_less;
+    }
+}
+
+impl PartialEq for StringName {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        // Slow but correct -- see comment above
+        self.to_godot_string() == other.to_godot_string()
+    }
+}
+
+impl Eq for StringName {}
+
+impl PartialOrd for StringName {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(Ord::cmp(self, other))
+    }
+}
+
+impl Ord for StringName {
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Slow but correct -- see comment above
+        Ord::cmp(&self.to_godot_string(), &other.to_godot_string())
     }
 }
 
@@ -727,4 +756,48 @@ godot_test!(test_string {
     let fmt2 = fmt_string2.format(&fmt_data2.into_shared().to_variant());
     assert_eq!(fmt2, GodotString::from("foo bar"));
     assert_eq!(fmt_string2, GodotString::from("{0} {1}"));
+});
+
+godot_test!(test_string_name_eq {
+    use crate::core_types::{GodotString, StringName};
+
+    let a: StringName = StringName::from_str("some string");
+    let b: StringName = StringName::from_godot_string(&GodotString::from("some string"));
+    let c: StringName = StringName::from_str(String::from("some other string"));
+    let d: StringName = StringName::from_str("yet another one");
+
+    // test Eq
+    assert_eq!(a, b);
+    assert_ne!(a, c);
+    assert_ne!(a, d);
+    assert_ne!(b, c);
+    assert_ne!(b, d);
+    assert_ne!(c, d);
+
+    let back = b.to_godot_string();
+    assert_eq!(back, GodotString::from("some string"));
+});
+
+godot_test!(test_string_name_ord {
+    use crate::core_types::{GodotString, StringName};
+
+    let a: StringName = StringName::from_str("some string");
+    let b: StringName = StringName::from_godot_string(&GodotString::from("some string"));
+    let c: StringName = StringName::from_str(String::from("some other string"));
+
+    // test Ord
+    let a_b = Ord::cmp(&a, &b);
+    let b_a = Ord::cmp(&b, &a);
+    assert_eq!(a_b, Ordering::Equal);
+    assert_eq!(b_a, Ordering::Equal);
+
+    let a_c = Ord::cmp(&a, &c);
+    let c_a = Ord::cmp(&c, &a);
+    let b_c = Ord::cmp(&b, &c);
+    let c_b = Ord::cmp(&c, &b);
+    assert_ne!(a_c, Ordering::Equal);
+    assert_eq!(a_c, b_c);
+    assert_eq!(c_a, c_b);
+    assert_eq!(a_c, c_a.reverse());
+    assert_eq!(b_c, c_b.reverse());
 });
