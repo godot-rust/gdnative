@@ -482,13 +482,21 @@ mod api_wrapper {
         let api_root: ApiRoot = miniserde::json::from_str(&api_json_file)
             .unwrap_or_else(|_| panic!("Could not parse ({:?}) into ApiRoot", from_json));
 
-        for api in api_root.all_apis() {
-            // Currently don't support Godot 4.0
-            assert!(
-                !(api.version.major == 1 && api.version.minor == 3),
-                "GodotEngine v4.* is not yet supported. See https://github.com/godot-rust/godot-rust/issues/396"
-            );
-        }
+        // Note: this code ensured that Godot 4 (which was back then GDNative 1.3) wasn't actually used.
+        // Godot uses now GDExtension, so this no longer applies. In fact, different module APIs all have different versions.
+        // See also: https://github.com/godot-rust/godot-rust/issues/904
+
+        // Listed versions for Godot 3.5 RC:
+        //  * CORE 1.0
+        //  * CORE 1.1
+        //  * CORE 1.2
+        //  * NATIVESCRIPT 1.0
+        //  * NATIVESCRIPT 1.1
+        //  * PLUGINSCRIPT 1.0
+        //  * ARVR 1.1
+        //  * VIDEODECODER 0.1
+        //  * NET 3.1
+        //  * NET 3.2
 
         let struct_fields = godot_api_functions(&api_root);
         let impl_constructor = api_constructor(&api_root);
