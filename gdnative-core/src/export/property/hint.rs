@@ -116,12 +116,22 @@ where
 /// ```
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct EnumHint {
-    values: Vec<String>,
+    values: Vec<(String, Option<i64>)>,
 }
 
 impl EnumHint {
     #[inline]
     pub fn new(values: Vec<String>) -> Self {
+        let values = values.into_iter().map(|v| (v, None)).collect();
+        EnumHint { values }
+    }
+
+    #[inline]
+    pub fn with_numbers(values: Vec<(String, i64)>) -> Self {
+        let values = values
+            .into_iter()
+            .map(|(key, val)| (key, Some(val)))
+            .collect();
         EnumHint { values }
     }
 
