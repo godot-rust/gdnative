@@ -10,7 +10,12 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{parse::Parser, AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
 
+<<<<<<< HEAD
 mod init;
+=======
+mod export_enum;
+mod extend_bounds;
+>>>>>>> feat(derive): add `ExportEnum`
 mod methods;
 mod native_script;
 mod profiled;
@@ -660,6 +665,15 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
             }
             tokens.into()
         }
+    }
+}
+
+#[proc_macro_derive(ExportEnum)]
+pub fn derive_export_enum(input: TokenStream) -> TokenStream {
+    let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
+    match export_enum::derive_export_enum(&derive_input) {
+        Ok(stream) => stream.into(),
+        Err(err) => err.to_compile_error().into(),
     }
 }
 
