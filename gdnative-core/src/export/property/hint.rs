@@ -479,3 +479,13 @@ impl ArrayHint {
         }
     }
 }
+
+godot_test!(test_enum_hint_without_mapping {
+    let hint = EnumHint::new(vec!["Foo".into(), "Bar".into()]);
+    assert_eq!(hint.to_godot_hint_string().to_string(), "Foo,Bar".to_string(),);
+});
+
+godot_test!(test_enum_hint_with_mapping {
+    let hint = EnumHint::with_numbers(vec![("Foo".into(), 42), ("Bar".into(), 67)]);
+    assert_eq!(hint.to_godot_hint_string().to_string(), "Foo:42,Bar:67".to_string(),);
+});
