@@ -679,7 +679,7 @@ where
     where
         F: FnOnce(&Self::Target) -> U,
     {
-        self.inner.try_borrow().map(|r| op(&*r))
+        self.inner.try_borrow().map(|r| op(&r))
     }
 }
 
@@ -694,7 +694,7 @@ where
     where
         F: FnOnce(&mut Self::Target) -> U,
     {
-        self.inner.try_borrow_mut().map(|mut w| op(&mut *w))
+        self.inner.try_borrow_mut().map(|mut w| op(&mut w))
     }
 }
 

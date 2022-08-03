@@ -216,14 +216,14 @@ impl EmplacementOnly {
 
 crate::godot_itest! { test_derive_nativeclass_without_constructor {
     let foo = Instance::emplace(EmplacementOnly(54));
-    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
+    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&owner) }));
 
     let base = foo.into_base();
     assert_eq!(Some(54), unsafe { base.call("answer", &[]).to::<i64>() });
 
     let foo = Instance::<EmplacementOnly, _>::try_from_base(base)
         .expect("should be able to downcast");
-    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&*owner) }));
+    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&owner) }));
 }}
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
