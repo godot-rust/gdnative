@@ -243,6 +243,13 @@ jobs:
           rustup target add aarch64-linux-android armv7-linux-androideabi
           sudo apt-get update
           sudo apt-get install llvm-dev libclang-dev clang g++-multilib gcc-multilib libc6-dev libc6-dev-arm64-cross
+
+      # See https://github.com/godot-rust/godot-rust/pull/920
+      - name: "Workaround Android NDK due to Rust bug"
+        run: >
+          find -L $ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION -name libunwind.a
+          -execdir sh -c 'echo "INPUT(-lunwind)" > libgcc.a' \;
+
       - name: "Build Rust for targets: aarch64-linux-android, armv7-linux-androideabi"
         run: |
           export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++
@@ -250,7 +257,7 @@ jobs:
           cargo build --target aarch64-linux-android --release
           cargo build --target armv7-linux-androideabi --release
         env:
-          ANDROID_NDK_VERSION: 21.4.7075529
+          ANDROID_NDK_VERSION: 25.0.8775105
 
   integration-test-godot:
     name: itest-godot-${{ matrix.godot }}${{ matrix.postfix }}
