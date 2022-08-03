@@ -33,7 +33,7 @@ impl Main {
         mob_timer.stop();
 
         let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
-        hud.map(|x, o| x.show_game_over(&*o))
+        hud.map(|x, o| x.show_game_over(&o))
             .ok()
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }
@@ -51,7 +51,7 @@ impl Main {
         self.score = 0;
 
         player
-            .map(|x, o| x.start(&*o, start_position.position()))
+            .map(|x, o| x.start(&o, start_position.position()))
             .ok()
             .unwrap_or_else(|| godot_print!("Unable to get player"));
 
@@ -59,8 +59,8 @@ impl Main {
 
         let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
         hud.map(|x, o| {
-            x.update_score(&*o, self.score);
-            x.show_message(&*o, "Get Ready".into());
+            x.update_score(&o, self.score);
+            x.show_message(&o, "Get Ready".into());
         })
         .ok()
         .unwrap_or_else(|| godot_print!("Unable to get hud"));
@@ -79,7 +79,7 @@ impl Main {
         self.score += 1;
 
         let hud = unsafe { owner.get_node_as_instance::<hud::Hud>("hud").unwrap() };
-        hud.map(|x, o| x.update_score(&*o, self.score))
+        hud.map(|x, o| x.update_score(&o, self.score))
             .ok()
             .unwrap_or_else(|| godot_print!("Unable to get hud"));
     }

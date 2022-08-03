@@ -579,16 +579,14 @@ impl fmt::Debug for IndexBounds {
 impl fmt::Display for IndexBounds {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.start {
-            Some(start) => write!(f, "{}", start)?,
-            None => {}
+        if let Some(start) = self.start {
+            write!(f, "{}", start)?
         }
 
         write!(f, "..=")?;
 
-        match self.end {
-            Some(end) => write!(f, "{}", end)?,
-            None => {}
+        if let Some(end) = self.end {
+            write!(f, "{}", end)?
         }
 
         Ok(())
