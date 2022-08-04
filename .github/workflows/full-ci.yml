@@ -51,7 +51,7 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
@@ -72,7 +72,7 @@ jobs:
           - toolchain: nightly
             postfix: ' (nightly)'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: rustfmt
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Deny
       # Note: manually downloading is ~30s faster than https://github.com/EmbarkStudios/cargo-deny-action
@@ -141,7 +141,7 @@ jobs:
             rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
     runs-on: ${{ matrix.os.id }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install nightly Rust (minimal-deps only)"
         uses: actions-rs/toolchain@v1
         with:
@@ -181,7 +181,7 @@ jobs:
             name: linux
     runs-on: ${{ matrix.os.id }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
@@ -200,7 +200,7 @@ jobs:
     #    rust: [stable]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         #with:
@@ -232,7 +232,7 @@ jobs:
     #    rust: [stable]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         #with:
@@ -286,7 +286,7 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Run Godot integration test"
         uses: ./.github/composite/godot
         with:

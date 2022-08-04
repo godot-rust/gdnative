@@ -27,6 +27,6 @@ runs:
         components: ${{ inputs.components }}
 
     # For notes about the cache, see 'Full CI' workflow
-    - uses: Swatinem/rust-cache@v1
+    - uses: Swatinem/rust-cache@v2
       with:
-        sharedKey: ${{ inputs.cache-key }}
+        shared-key: ${{ inputs.cache-key }}

@@ -14,7 +14,7 @@ runs:
       id: cache-llvm
       # Note: conditionals not yet supported; see https://github.com/actions/runner/issues/834
       # if: ${{ inputs.llvm == 'true' }}
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ runner.temp }}/llvm
         key: llvm-10.0
