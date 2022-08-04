@@ -30,7 +30,7 @@ jobs:
   validation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # sed: https://unix.stackexchange.com/a/589584
       - name: "Interpret tag version"
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validation
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validation
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validation
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -119,7 +119,7 @@ jobs:
     steps:
       # Note: we cannot dry-run the publishing, since crates depend on each other, and dry-run will fail if they aren't yet on crates.io.
       # Sleep to leave crates.io and docs.rs some time to index the dependencies, before releasing dependents.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Execute crates.io publishing"
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}

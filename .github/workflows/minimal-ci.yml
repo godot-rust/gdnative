@@ -35,7 +35,7 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
         with:
@@ -60,7 +60,7 @@ jobs:
   unit-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Install Rust"
         uses: ./.github/composite/rust
       - name: "Compile tests"
@@ -71,7 +71,7 @@ jobs:
   integration-test-godot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Run Godot integration test"
         uses: ./.github/composite/godot
         with:
