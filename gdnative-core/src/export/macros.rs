@@ -2,17 +2,6 @@
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! godot_wrap_method_parameter_count {
-    () => {
-        0
-    };
-    ($name:ident, $($other:ident,)*) => {
-        1 + $crate::godot_wrap_method_parameter_count!($($other,)*)
-    }
-}
-
-#[doc(hidden)]
-#[macro_export]
 macro_rules! godot_wrap_method_if_deref {
     (true, $ret:expr) => {
         std::ops::Deref::deref(&$ret)
