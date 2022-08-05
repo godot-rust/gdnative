@@ -38,7 +38,7 @@ fn impl_to_variant(enum_ty: &syn::Ident, _data: &syn::DataEnum) -> syn::Result<T
 }
 
 fn impl_from_variant(enum_ty: &syn::Ident, data: &syn::DataEnum) -> syn::Result<TokenStream2> {
-    let as_int = quote! { n };
+    let n = quote! { n };
     let arms = data
         .variants
         .iter()
@@ -51,21 +51,27 @@ fn impl_from_variant(enum_ty: &syn::Ident, data: &syn::DataEnum) -> syn::Result<
                 ))
             } else {
                 Ok(quote! {
-                    if #as_int == #enum_ty::#ident as i64 { Ok(#enum_ty::#ident) }
+                    if #n == #enum_ty::#ident as i64 { Ok(#enum_ty::#ident) }
                 })
             }
         })
         .collect::<Result<Vec<_>, _>>()?;
+    let expected_variants = data
+        .variants
+        .iter()
+        .map(|variant| quote! { stringify!(#variant.ident) });
 
     let impl_block = quote! {
         impl ::gdnative::core_types::FromVariant for #enum_ty {
             #[inline]
             fn from_variant(variant: &::gdnative::core_types::Variant) -> Result<Self, ::gdnative::core_types::FromVariantError> {
-                let #as_int = variant.try_to::<i64>()?;
+                let #n = variant.try_to::<i64>()?;
                 #(#arms)else *
-                // TODO: return FromVariantError
                 else {
-                    Err(FromVariantError::Unspecified)
+                    Err(FromVariantError::UnknownEnumVariant {
+                        variant: variant.to_string(),
+                        expected: &[#(#expected_variants),*],
+                    })
                 }
             }
         }
