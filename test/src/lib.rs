@@ -8,6 +8,7 @@ mod test_as_arg;
 mod test_async;
 mod test_constructor;
 mod test_derive;
+mod test_export_enum;
 mod test_free_ub;
 mod test_generic_class;
 mod test_indexed_props;
@@ -52,6 +53,7 @@ pub extern "C" fn run_tests(
     status &= test_vararray_return::run_tests();
     status &= test_variant_call_args::run_tests();
     status &= test_variant_ops::run_tests();
+    status &= test_export_enum::run_tests();
 
     Variant::new(status).leak()
 }
