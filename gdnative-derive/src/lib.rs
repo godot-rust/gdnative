@@ -668,6 +668,52 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Make a rust `enum` has drop-down list in Godot editor.
+/// Note that the derived `enum` should also implements `Copy` trait.
+///
+/// Take the following example, you will see a drop-down list for the `dir`
+/// property, and `Up` and `Down` converts to `1` and `-1` in the GDScript
+/// side.
+///
+/// ```
+/// use gdnative::prelude::*;
+///
+/// #[derive(Debug, PartialEq, Clone, Copy, ExportEnum)]
+/// enum Dir {
+///     Up = 1,
+///     Down = -1,
+/// }
+///
+/// #[derive(NativeClass)]
+/// #[no_constructor]
+/// struct Move {
+///     #[property]
+///     pub dir: Dir,
+/// }
+/// ```
+///
+/// You can't derive `ExportEnum` on `enum` that has non-unit variant.
+///
+/// ```compile_fail
+/// use gdnative::prelude::*;
+///
+/// #[derive(Debug, PartialEq, Clone, Copy, ExportEnum)]
+/// enum Action {
+///     Move((f32, f32, f32)),
+///     Attack(u64),
+/// }
+/// ```
+///
+/// You can't derive `ExportEnum` on `struct` or `union`.
+///
+/// ```compile_fail
+/// use gdnative::prelude::*;
+///
+/// #[derive(ExportEnum)]
+/// struct Foo {
+///   f1: i32
+/// }
+/// ```
 #[proc_macro_derive(ExportEnum)]
 pub fn derive_export_enum(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
