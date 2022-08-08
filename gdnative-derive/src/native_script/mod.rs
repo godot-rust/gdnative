@@ -68,11 +68,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     .default
                     .map(|default_value| quote!(.with_default(#default_value)));
                 let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
-                let with_usage = if config.no_editor {
-                    Some(quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)))
-                } else {
-                    None
-                };
+                let with_usage = config.no_editor.then(|| quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)));
                 // check whether this property type is `Property<T>`. if so, extract T from it.
                 let property_ty = match config.ty {
                     Type::Path(ref path) => path
@@ -319,80 +315,61 @@ mod tests {
 
     #[test]
     fn derive_property() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
+        let input = parse_quote! {
             #[inherit(Node)]
             struct Foo {
                 #[property]
                 bar: String,
-            }"#,
-        )
-        .unwrap();
-
-        let input: DeriveInput = syn::parse2(input).unwrap();
-
+            }
+        };
         parse_derive_input(&input).unwrap();
     }
 
     #[test]
     fn derive_property_no_editor() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
+        let input = parse_quote! {
             #[inherit(Node)]
             struct Foo {
                 #[property(no_editor)]
                 bar: String,
-            }"#,
-        )
-        .unwrap();
-
-        let input: DeriveInput = syn::parse2(input).unwrap();
-
+            }
+        };
         parse_derive_input(&input).unwrap();
     }
 
     #[test]
     fn derive_property_get_set() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
+        let input = parse_quote! {
             #[inherit(Node)]
             struct Foo {
                 #[property(get = "get_bar", set = "set_bar")]
                 bar: i64,
-            }"#,
-        )
-        .unwrap();
-        let input: DeriveInput = syn::parse2(input).unwrap();
+            }
+        };
         parse_derive_input(&input).unwrap();
     }
 
     #[test]
     fn derive_property_default_get_set() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
+        let input = parse_quote! {
             #[inherit(Node)]
             struct Foo {
                 #[property(get, set)]
                 bar: i64,
-            }"#,
-        )
-        .unwrap();
-        let input: DeriveInput = syn::parse2(input).unwrap();
+            }
+        };
         parse_derive_input(&input).unwrap();
     }
 
     #[test]
     fn derive_property_default_get_ref() {
-        let input: TokenStream2 = syn::parse_str(
-            r#"
+        let input = parse_quote! {
             #[inherit(Node)]
             struct Foo {
                 #[property(get_ref = "Self::get_bar")]
                 bar: i64,
-            }"#,
-        )
-        .unwrap();
-        let input: DeriveInput = syn::parse2(input).unwrap();
+            }
+        };
         parse_derive_input(&input).unwrap();
     }
 

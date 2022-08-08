@@ -1,3 +1,5 @@
+use proc_macro2::Span;
+use std::fmt::Debug;
 use syn::spanned::Spanned;
 
 #[derive(Debug)]
@@ -46,14 +48,69 @@ impl PropertyAttrArgsBuilder {
         }
     }
 
+    /// Error returned when a value are set twice
+    /// e.g. #[property(set = "Self::set_foo", set = "Self::set_foo_again")]
+    fn err_prop_already_set<T: Debug>(span: Span, prop: &str, old: &T) -> syn::Error {
+        syn::Error::new(
+            span,
+            format!(
+                "there is already a '{}' attribute with value: {:?}",
+                prop, old,
+            ),
+        )
+    }
+
+    // Error returned when the attr value is not a string literal (i.e. not `LitStr`)
+    fn err_attr_not_a_string_literal(span: Span, attr: &str) -> syn::Error {
+        syn::Error::new(span, format!("'{}' value is not a string literal", attr))
+    }
+
+    /// Convert `Lit` to `LitStr`
+    fn extract_lit_str(lit: &syn::Lit) -> Option<&syn::LitStr> {
+        if let syn::Lit::Str(lit_str) = lit {
+            Some(lit_str)
+        } else {
+            None
+        }
+    }
+
     pub fn add_pair(&mut self, pair: &syn::MetaNameValue) -> Result<(), syn::Error> {
-        let path_span = pair.lit.span();
-        let invalid_value_path = |_| {
-            syn::Error::new(
-                path_span,
-                "Unexpected input, expected a double quoted string: \"path::to::something\"",
-            )
+        // Update property with input value.
+        // Return error when there is already a value set
+        macro_rules! update_prop {
+            ($prop:ident, $val:expr) => {
+                if let Some(old) = self.$prop.replace($val) {
+                    return Err(Self::err_prop_already_set(
+                        pair.span(),
+                        stringify!($prop),
+                        &old,
+                    ));
+                }
+            };
+        }
+
+        // Convert input literal to a `syn::Path`
+        let parse_path = |prop_name| {
+            Self::extract_lit_str(&pair.lit)
+                .ok_or_else(|| Self::err_attr_not_a_string_literal(pair.span(), prop_name))?
+                .parse::<syn::Path>()
+                .map_err(|_| {
+                    syn::Error::new(
+                        pair.lit.span(),
+                        "Unexpected input, expected a double quoted string: \"path::to::something\"",
+                    )
+                })
         };
+        // Convert input to `syn::Path`, and then update property
+        macro_rules! process_path_input {
+            ($prop:ident$(, $($mapping:path),*)?) => {{
+                let path = parse_path(stringify!($prop))?;
+                $(
+                    $(let path = $mapping(path);)*
+                )?
+                update_prop!($prop, path);
+            }};
+        }
 
         let name = pair
             .path
@@ -61,116 +118,16 @@ impl PropertyAttrArgsBuilder {
             .expect("should be single identifier")
             .to_string();
         match name.as_str() {
-            "default" => {
-                if let Some(old) = self.default.replace(pair.lit.clone()) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!(
-                            "there is already a 'default' attribute with value: {:?}",
-                            old
-                        ),
-                    ));
-                }
-            }
+            "default" => update_prop!(default, pair.lit.clone()),
             "path" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'path' value is not a string literal",
-                    ));
-                };
-
-                if let Some(old) = self.path.replace(string) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!("there is already a 'path' attribute with value: {:?}", old),
-                    ));
-                }
+                let path = Self::extract_lit_str(&pair.lit)
+                    .ok_or_else(|| Self::err_attr_not_a_string_literal(pair.span(), "path"))?;
+                update_prop!(path, path.value());
             }
-            "hint" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'hint' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                if let Some(old) = self.hint.replace(path) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!("there is already a 'hint' attribute with value: {:?}", old),
-                    ));
-                }
-            }
-            "get" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'get' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                let get = PropertyGet::Owned(path);
-                if let Some(old) = self.get.replace(get) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!("there is already a 'get' attribute with value: {:?}", old),
-                    ));
-                }
-            }
-            "get_ref" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'get_ref' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                let get_ref = PropertyGet::Ref(path);
-                if let Some(old) = self.get.replace(get_ref) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!(
-                            "there is already a 'get_ref' attribute with value: {:?}",
-                            old
-                        ),
-                    ));
-                }
-            }
-            "set" => {
-                let string = if let syn::Lit::Str(lit_str) = &pair.lit {
-                    lit_str.value()
-                } else {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        "'set' value is not a string literal",
-                    ));
-                };
-
-                let path =
-                    syn::parse_str::<syn::Path>(string.as_str()).map_err(invalid_value_path)?;
-                let set = PropertySet::WithPath(path);
-                if let Some(old) = self.set.replace(set) {
-                    return Err(syn::Error::new(
-                        pair.span(),
-                        format!("there is already a 'set' attribute with value: {:?}", old),
-                    ));
-                }
-            }
+            "hint" => process_path_input!(hint),
+            "get" => process_path_input!(get, PropertyGet::Owned),
+            "get_ref" => process_path_input!(get, PropertyGet::Ref),
+            "set" => process_path_input!(set, PropertySet::WithPath),
             _ => {
                 return Err(syn::Error::new(
                     pair.span(),
@@ -187,17 +144,11 @@ impl PropertyAttrArgsBuilder {
             self.no_editor = true;
         } else if path.is_ident("get") {
             if let Some(get) = self.get.replace(PropertyGet::Default) {
-                return Err(syn::Error::new(
-                    path.span(),
-                    format!("there is already a 'get' attribute with value: {:?}", get),
-                ));
+                return Err(Self::err_prop_already_set(path.span(), "get", &get));
             }
         } else if path.is_ident("set") {
             if let Some(set) = self.set.replace(PropertySet::Default) {
-                return Err(syn::Error::new(
-                    path.span(),
-                    format!("there is already a 'set' attribute with value: {:?}", set),
-                ));
+                return Err(Self::err_prop_already_set(path.span(), "set", &set));
             }
         } else {
             return Err(syn::Error::new(
