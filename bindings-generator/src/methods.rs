@@ -468,8 +468,12 @@ mod ptrcall {
                 .map(|(name, ty)| generate_argument_pre(ty, name));
             let return_pre = generate_return_pre(&sig.return_type);
 
+            let arg_forgets = arguments.clone().map(|(name, _)| {
+                quote! { let #name = ::std::mem::ManuallyDrop::new(#name); }
+            });
+
             let arg_drops = arguments.clone().map(|(name, _)| {
-                quote! { drop(#name); }
+                quote! { ::std::mem::ManuallyDrop::into_inner(#name); }
             });
 
             quote! {
@@ -478,6 +482,8 @@ mod ptrcall {
                 let mut argument_buffer : [*const libc::c_void; #arg_count] = [
                     #(#args),*
                 ];
+
+                #(#arg_forgets)*
 
                 #return_pre
 
