@@ -1,6 +1,7 @@
 use gdnative::derive::{methods, NativeClass};
 use gdnative::prelude::NodeResolveExt;
 use gdnative::prelude::*;
+use std::mem::MaybeUninit;
 use std::ops::Deref;
 
 pub(crate) fn register(handle: InitHandle) {
@@ -38,10 +39,10 @@ crate::godot_itest! { test_as_arg_ref {
     add_node_with(|n: Ref<Node2D, Unique>| n.into_shared());
 
     // &Ref<T, Shared>
-    let mut keeper = Node2D::new().into_shared(); // keep Ref<T, Shared> alive so we can return a reference to it
+    let mut keeper: MaybeUninit<Ref<Node2D, Shared>> = MaybeUninit::uninit(); // keep Ref<T, Shared> alive so we can return a reference to it
     add_node_with(|n: Ref<Node2D, Unique>| {
-        keeper = n.into_shared();
-        &keeper
+        keeper.write(n.into_shared());
+        unsafe { keeper.assume_init_ref() }
     });
 
     // TRef<T, Shared>
@@ -56,10 +57,10 @@ crate::godot_itest! { test_as_arg_instance {
     add_instance_with(|n: Instance<MyNode, Unique>| n.into_shared());
 
     // &Instance<T, Shared>
-    let mut keeper = MyNode { secret: "" }.emplace().into_shared(); // keep Instance<T, Shared> alive so we can return a reference to it
+    let mut keeper: MaybeUninit<Instance<MyNode, Shared>> = MaybeUninit::uninit(); // keep Instance<T, Shared> alive so we can return a reference to it
     add_instance_with(|n: Instance<MyNode, Unique>| {
-        keeper = n.into_shared();
-        &keeper
+        keeper.write(n.into_shared());
+        unsafe { keeper.assume_init_ref() }
     });
 
     // TInstance<T, Shared>
@@ -84,6 +85,7 @@ where
     let found_tref = unsafe { found.assume_safe() };
 
     assert_eq!(found_tref.get_instance_id(), child_id);
+    parent.free()
 }
 
 fn add_instance_with<F, T>(to_arg: F)
@@ -117,5 +119,6 @@ where
             assert_eq!(node.get_instance_id(), child_id);
             assert_eq!(user.secret, "yes");
         })
-        .expect("found.map()")
+        .expect("found.map()");
+    parent.free()
 }
