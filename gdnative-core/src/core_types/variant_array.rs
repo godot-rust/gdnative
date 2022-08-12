@@ -614,8 +614,8 @@ godot_test!(
     test_array_debug {
         use std::panic::catch_unwind;
 
-        println!("  -- expected 4 'Index 3 out of bounds (len 3)' error messages for edge cases");
-        println!("  -- the test is successful when and only when these errors are shown");
+        println!("  -- expecting four 'Index 3 out of bounds (len 3)' panic messages for edge cases");
+        println!("  -- the test is successful when and only when these four errors are shown");
 
         let arr = VariantArray::new(); // []
         arr.push(&Variant::new("hello world"));
