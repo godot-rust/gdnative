@@ -19,7 +19,7 @@ type-tag-fallback = []
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "=0.10.0" }
 gdnative-impl-proc-macros = { path = "../impl/proc-macros", version = "=0.10.0" }
-ahash = "0.8.0"
+ahash = "0.8"
 approx = "0.5"
 atomic-take = "1"
 bitflags = "1"
