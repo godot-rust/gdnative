@@ -46,12 +46,12 @@ impl RustTest {
         }
     }
 
-    #[godot]
+    #[method]
     fn _ready(&mut self, #[base] owner: &MeshInstance) {
         owner.set_physics_process(true);
     }
 
-    #[godot]
+    #[method]
     fn _physics_process(&mut self, #[base] owner: &MeshInstance, delta: f64) {
         use gdnative::api::SpatialMaterial;
 

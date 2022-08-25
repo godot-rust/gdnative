@@ -37,7 +37,7 @@ impl Greeter {
         }
     }
 
-    #[godot]
+    #[method]
     fn _ready(&self) {
         if let Some(greeting_resource) = self.greeting_resource.as_ref() {
             let greeting_resource = unsafe { greeting_resource.assume_safe() };

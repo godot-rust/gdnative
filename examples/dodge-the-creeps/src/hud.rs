@@ -16,7 +16,7 @@ impl Hud {
         Hud
     }
 
-    #[godot]
+    #[method]
     pub fn show_message(&self, #[base] owner: &CanvasLayer, text: String) {
         let message_label = unsafe { owner.get_node_as::<Label>("message_label").unwrap() };
         message_label.set_text(text);
@@ -37,20 +37,20 @@ impl Hud {
         button.show();
     }
 
-    #[godot]
+    #[method]
     pub fn update_score(&self, #[base] owner: &CanvasLayer, score: i64) {
         let label = unsafe { owner.get_node_as::<Label>("score_label").unwrap() };
         label.set_text(score.to_string());
     }
 
-    #[godot]
+    #[method]
     fn on_start_button_pressed(&self, #[base] owner: &CanvasLayer) {
         let button = unsafe { owner.get_node_as::<Button>("start_button").unwrap() };
         button.hide();
         owner.emit_signal("start_game", &[]);
     }
 
-    #[godot]
+    #[method]
     fn on_message_timer_timeout(&self, #[base] owner: &CanvasLayer) {
         let message_label = unsafe { owner.get_node_as::<Label>("message_label").unwrap() };
         message_label.hide()

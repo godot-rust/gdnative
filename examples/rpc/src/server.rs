@@ -16,7 +16,7 @@ impl Server {
         Self
     }
 
-    #[godot]
+    #[method]
     fn _ready(&mut self, #[base] owner: &Node) {
         let peer = NetworkedMultiplayerENet::new();
         peer.create_server(PORT, MAX_CLIENTS, IN_BANDWIDTH, OUT_BANDWIDTH)
@@ -28,7 +28,7 @@ impl Server {
         tree.set_network_peer(peer);
     }
 
-    #[godot(rpc = "master")]
+    #[method(rpc = "master")]
     fn greet_server(&mut self, #[base] owner: &Node, msg: GodotString) {
         godot_print!("Client says: {}", msg);
 

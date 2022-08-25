@@ -261,7 +261,7 @@ impl GodotAttrWithoutBase {
         Self(54)
     }
 
-    #[godot]
+    #[method]
     fn answer(&self) -> i64 {
         self.0
     }
@@ -285,7 +285,7 @@ impl GodotAttrWithBase {
         Self(54)
     }
 
-    #[godot]
+    #[method]
     fn answer(&self, #[base] _base: &Reference) -> i64 {
         self.0
     }
@@ -311,7 +311,7 @@ impl GodotAttrDerefReturn {
         Self(rc_ref)
     }
 
-    #[godot(deref_return)]
+    #[method(deref_return)]
     fn answer(&self) -> cell::Ref<Vec<i64>> {
         self.0.borrow()
     }
@@ -337,7 +337,7 @@ impl GodotAttrRenameMethod {
         Self(54)
     }
 
-    #[godot(name = "ask")]
+    #[method(name = "ask")]
     fn answer(&self) -> i64 {
         self.0
     }
@@ -363,7 +363,7 @@ impl GodotAttrAllArguments {
         Self(rc_ref)
     }
 
-    #[godot(rpc = "disabled", name = "ask", deref_return)]
+    #[method(rpc = "disabled", name = "ask", deref_return)]
     fn answer(&self, #[base] _base: &Reference) -> cell::Ref<Vec<i64>> {
         self.0.borrow()
     }

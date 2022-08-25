@@ -10,7 +10,7 @@ impl HelloWorld {
         HelloWorld
     }
 
-    #[godot]
+    #[method]
     fn _ready(&self) {
         godot_print!("hello, world.")
     }

@@ -239,7 +239,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// For additional details about how `#[methods]` expands, please refer to [gdnative::methods](macro@methods)
 ///
-/// ### `#[godot]`
+/// ### `#[method]`
 /// Registers the attributed function signature to be used by Godot.
 ///
 /// This attribute was formerly called `#[export]`, but is not directly related to the concept of
@@ -258,19 +258,19 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```ignore
 /// // No access to base parameter
-/// #[godot]
+/// #[method]
 /// fn foo(&self);
 ///
 /// // Access base parameter as &T
-/// #[godot]
+/// #[method]
 /// fn foo(&self, #[base] base: &Reference);
 ///
 /// // Access base parameter as TRef<T>
-/// #[godot]
+/// #[method]
 /// fn foo(&self, #[base] base: TRef<Reference>);
 /// ```
 ///
-/// **Note**: Marking a function with `#[godot]` does not have any effect unless inside an `impl` block that has the `#[methods]` attribute.
+/// **Note**: Marking a function with `#[method]` does not have any effect unless inside an `impl` block that has the `#[methods]` attribute.
 ///
 /// Possible arguments for this attribute are:
 ///
@@ -300,7 +300,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 ///   For example:
 ///   ```ignore
-///   #[godot(deref_return)]
+///   #[method(deref_return)]
 ///   fn get_numbers(&self) -> std::cell::Ref<Vec<i32>> {
 ///      // Assume self.cell is std::cell::RefCell<Vec<i32>>
 ///      self.cell.borrow()
@@ -312,7 +312,7 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// This is a list of common Godot virtual functions that are automatically called via [notifications](https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-notification).
 ///
-/// It is assumed that every method is exported via `#[godot]` attribute. The parameter `#[base] base: &Node` can be omitted if you don't need it.
+/// It is assumed that every method is exported via `#[method]` attribute. The parameter `#[base] base: &Node` can be omitted if you don't need it.
 ///
 /// ```ignore
 /// fn _ready(&self, #[base] base: &Node);
