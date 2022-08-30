@@ -244,8 +244,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install llvm-dev libclang-dev clang g++-multilib gcc-multilib libc6-dev libc6-dev-arm64-cross
 
+      # Relies on ls listing alphabetically, NDK versions having fixed
+      # digits, and the folder not containing any other files
+      - name: "Find highest Android NDK version"
+        run: |
+          highestNdk=$(ls $ANDROID_SDK_ROOT/ndk | tail -n1)
+          echo "Highest Android NDK: $highestNdk"
+          echo "ANDROID_NDK_VERSION=$highestNdk" >> $GITHUB_ENV
+
       # See https://github.com/godot-rust/godot-rust/pull/920
-      - name: "Workaround Android NDK due to Rust bug"
+      - name: "Found version ${{ env.ANDROID_NDK_VERSION }}. Workaround Rust bug..."
         run: >
           find -L $ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION -name libunwind.a
           -execdir sh -c 'echo "INPUT(-lunwind)" > libgcc.a' \;
@@ -256,8 +264,6 @@ jobs:
           export CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=$ANDROID_SDK_ROOT/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++
           cargo build --target aarch64-linux-android --release
           cargo build --target armv7-linux-androideabi --release
-        env:
-          ANDROID_NDK_VERSION: 25.0.8775105
 
   integration-test-godot:
     name: itest-godot-${{ matrix.godot }}${{ matrix.postfix }}
