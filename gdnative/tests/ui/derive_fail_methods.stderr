@@ -1,5 +1,10 @@
-error: cannot find attribute `export` in this scope
+error: cannot find attribute `method` in this scope
   --> $DIR/derive_fail_methods.rs:12:7
    |
-12 |     #[export]
-   |       ^^^^^^ help: a built-in attribute with a similar name exists: `expect`
+12 |     #[method]
+   |       ^^^^^^ help: an attribute macro with a similar name exists: `methods`
+   |
+  ::: $WORKSPACE/gdnative-derive/src/lib.rs
+   |
+   | pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
+   | -------------------------------------------------------------------- similarly named attribute macro `methods` defined here

@@ -48,8 +48,8 @@ impl AsyncExecutorDriver {
 
 #[methods]
 impl AsyncExecutorDriver {
-    #[export]
-    fn _process(&self, _owner: &Node, _delta: f64) {
+    #[method]
+    fn _process(&self, _delta: f64) {
         EXECUTOR.with(|e| e.pool.borrow_mut().run_until_stalled());
     }
 }

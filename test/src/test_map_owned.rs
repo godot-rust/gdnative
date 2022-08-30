@@ -23,8 +23,8 @@ struct VecBuilder {
 
 #[methods]
 impl VecBuilder {
-    #[export]
-    fn append(mut self, _owner: TRef<Reference>, mut numbers: Vec<i32>) -> Instance<Self> {
+    #[method]
+    fn append(mut self, mut numbers: Vec<i32>) -> Instance<Self> {
         self.v.append(&mut numbers);
         Instance::emplace(Self { v: self.v }).into_shared()
     }
@@ -35,7 +35,7 @@ crate::godot_itest! { test_map_owned {
     let v1 = unsafe { v1.assume_safe() };
 
     let v2 = v1
-        .map_owned(|s, owner| s.append(owner, vec![1, 2, 3]))
+        .map_owned(|s, _base| s.append(vec![1, 2, 3]))
         .unwrap();
     let v2 = unsafe { v2.assume_safe() };
     assert!(v1
@@ -43,7 +43,7 @@ crate::godot_itest! { test_map_owned {
         .is_err());
 
     let v3 = v2
-        .map_owned(|s, owner| s.append(owner, vec![4, 5, 6]))
+        .map_owned(|s, _base| s.append(vec![4, 5, 6]))
         .unwrap();
     let v3 = unsafe { v3.assume_safe() };
     assert!(v2

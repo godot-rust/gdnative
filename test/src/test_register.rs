@@ -73,13 +73,14 @@ impl StaticallyNamed for RegisterProperty {
 
 #[methods]
 impl RegisterProperty {
-    #[export]
-    fn set_value(&mut self, _owner: TRef<Reference>, value: i64) {
+    // Note: the _base parameter is necessary, because registration API with_setter/with_getter matches that signature
+    #[method]
+    fn set_value(&mut self, #[base] _base: TRef<Reference>, value: i64) {
         self.value = value;
     }
 
-    #[export]
-    fn get_value(&self, _owner: TRef<Reference>) -> i64 {
+    #[method]
+    fn get_value(&self, #[base] _base: TRef<Reference>) -> i64 {
         self.value
     }
 }
