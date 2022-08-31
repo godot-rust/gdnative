@@ -26,7 +26,7 @@ macro_rules! deprecated_reference_return {
 
 #[doc(hidden)]
 #[macro_export]
-#[deprecated = "\n#[export] is deprecated and will be removed in godot-rust 0.11. Use #[godot] instead.\n\
+#[deprecated = "\n#[export] is deprecated and will be removed in godot-rust 0.11. Use #[method] instead.\n\
   For more information, see https://godot-rust.github.io/docs/gdnative/derive/derive.NativeClass.html."]
 macro_rules! deprecated_export_syntax {
     () => {};

@@ -10,7 +10,7 @@ impl Foo {
         Foo {}
     }
 
-    #[godot]
+    #[method]
     fn bar(&self) {}
 }
 

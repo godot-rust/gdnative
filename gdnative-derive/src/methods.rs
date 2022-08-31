@@ -98,7 +98,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             if arg_count == 0 {
                 return syn::Error::new(
                     sig_span,
-                    "#[godot] exported methods must take self parameter",
+                    "#[method] exported methods must take self parameter",
                 )
                 .to_compile_error();
             }
@@ -232,8 +232,8 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                         let (is_export, is_old_syntax, macro_name) =
                             if let Some("export") = last_seg.as_deref() {
                                 (true, true, "export")
-                            } else if let Some("godot") = last_seg.as_deref() {
-                                (true, false, "godot")
+                            } else if let Some("method") = last_seg.as_deref() {
+                                (true, false, "method")
                             } else {
                                 (false, false, "unknown")
                             };

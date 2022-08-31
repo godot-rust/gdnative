@@ -40,7 +40,7 @@ impl Mob {
         }
     }
 
-    #[godot]
+    #[method]
     fn _ready(&mut self, #[base] owner: &RigidBody2D) {
         let mut rng = rand::thread_rng();
         let animated_sprite = unsafe {
@@ -51,14 +51,14 @@ impl Mob {
         animated_sprite.set_animation(MOB_TYPES.choose(&mut rng).unwrap().to_str())
     }
 
-    #[godot]
+    #[method]
     fn on_visibility_screen_exited(&self, #[base] owner: &RigidBody2D) {
         unsafe {
             owner.assume_unique().queue_free();
         }
     }
 
-    #[godot]
+    #[method]
     fn on_start_game(&self, #[base] owner: &RigidBody2D) {
         unsafe {
             owner.assume_unique().queue_free();

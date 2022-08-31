@@ -28,7 +28,7 @@ impl SignalEmitter {
         }
     }
 
-    #[godot]
+    #[method]
     fn _process(&mut self, #[base] owner: &Node, delta: f64) {
         if self.timer < 1.0 {
             self.timer += delta;
@@ -57,7 +57,7 @@ impl SignalSubscriber {
         SignalSubscriber { times_received: 0 }
     }
 
-    #[godot]
+    #[method]
     fn _ready(&mut self, #[base] owner: TRef<Label>) {
         let emitter = &mut owner.get_node("../SignalEmitter").unwrap();
         let emitter = unsafe { emitter.assume_safe() };
@@ -76,7 +76,7 @@ impl SignalSubscriber {
             .unwrap();
     }
 
-    #[godot]
+    #[method]
     fn notify(&mut self, #[base] owner: &Label) {
         self.times_received += 1;
         let msg = format!("Received signal \"tick\" {} times", self.times_received);
@@ -84,7 +84,7 @@ impl SignalSubscriber {
         owner.set_text(msg);
     }
 
-    #[godot]
+    #[method]
     fn notify_with_data(&mut self, #[base] owner: &Label, data: Variant) {
         let msg = format!(
             "Received signal \"tick_with_data\" with data {}",

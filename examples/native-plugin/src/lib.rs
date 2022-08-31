@@ -14,7 +14,7 @@ impl CustomNode {
         CustomNode
     }
 
-    #[godot]
+    #[method]
     fn _enter_tree(&self, #[base] owner: TRef<EditorPlugin>) {
         // Initialization of the plugin goes here.
         // Add the new type with a name, a parent type, a script and an icon.
@@ -25,7 +25,7 @@ impl CustomNode {
         owner.add_custom_type("MyButton", "Button", script, texture);
     }
 
-    #[godot]
+    #[method]
     fn _exit_tree(&self, #[base] owner: TRef<EditorPlugin>) {
         // Clean-up of the plugin goes here.
         // Always remember to remove it from the engine when deactivated.
@@ -43,14 +43,14 @@ impl MyButton {
         MyButton
     }
 
-    #[godot]
+    #[method]
     fn _enter_tree(&self, #[base] owner: TRef<Button>) {
         owner
             .connect("pressed", owner, "clicked", VariantArray::new_shared(), 0)
             .unwrap();
     }
 
-    #[godot]
+    #[method]
     fn clicked(&self) {
         godot_print!("You clicked me!");
     }
