@@ -433,10 +433,11 @@ impl<'a, Own: Ownership> Iterator for Iter<'a, Own> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        let n = i32::try_from(n).ok()?;
+        let n32 = i32::try_from(n).ok()?;
 
-        if self.arr.len() > n {
-            Some(self.arr.get(n))
+        if n32 < self.arr.len() {
+            self.range.nth(n);
+            Some(self.arr.get(n32))
         } else {
             None
         }
@@ -485,10 +486,11 @@ impl Iterator for IntoIter {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        let n = i32::try_from(n).ok()?;
+        let n32 = i32::try_from(n).ok()?;
 
-        if self.arr.len() > n {
-            Some(self.arr.get(n))
+        if n32 < self.arr.len() {
+            self.range.nth(n);
+            Some(self.arr.get(n32))
         } else {
             None
         }
@@ -593,9 +595,17 @@ godot_test!(test_array {
     array3.push(&Variant::new(512));
 
     assert_eq!(
-        &[42, 1337, 512],
         array3.iter().map(|v| v.try_to::<i64>().unwrap()).collect::<Vec<_>>().as_slice(),
+        &[42, 1337, 512],
     );
+
+    let mut iter = array3.iter().skip(2);
+    assert_eq!(iter.next(), Some(Variant::new(512)));
+    assert_eq!(iter.next(), None);
+
+    let mut iter = array3.into_iter().skip(2);
+    assert_eq!(iter.next(), Some(Variant::new(512)));
+    assert_eq!(iter.next(), None);
 
     let array4 = VariantArray::new(); // []
     let array5 = VariantArray::new(); // []
