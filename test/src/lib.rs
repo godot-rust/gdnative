@@ -214,11 +214,16 @@ godot_itest! { test_from_instance_id {
 
         assert!(unsafe { Node::try_from_instance_id(instance_id).is_none() });
 
-        let reconstructed = unsafe { Reference::from_instance_id(instance_id) };
-        assert_eq!(
-            "bar",
-            String::from_variant(&reconstructed.get_meta("foo", Variant::nil())).unwrap()
-        );
+        // get_meta() got a new default parameter in Godot 3.5, which is a breaking change in Rust
+        // So we cannot run this automated test for older Godot versions in CI
+        #[cfg(not(feature = "custom-godot"))]
+        {
+            let reconstructed = unsafe { Reference::from_instance_id(instance_id) };
+            assert_eq!(
+                "bar",
+                String::from_variant(&reconstructed.get_meta("foo", Variant::nil())).unwrap()
+            );
+        }
     }
 
     assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
