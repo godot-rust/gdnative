@@ -84,8 +84,8 @@ impl HelloWorld {
         HelloWorld
     }
 
-    #[export]
-    fn _ready(&self, _owner: &Node) {
+    #[method]
+    fn _ready(&self, #[base] _node: &Node) {
         godot_print!("Hello, world.");
     }
 }

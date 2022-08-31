@@ -115,19 +115,13 @@ impl NotFoo {
 
 #[methods]
 impl Foo {
-    #[export]
-    fn answer(&self, _owner: &Reference) -> i64 {
+    #[method]
+    fn answer(&self, #[base] _base: &Reference) -> i64 {
         self.0
     }
 
-    #[export]
-    fn choose(
-        &self,
-        _owner: &Reference,
-        a: GodotString,
-        which: bool,
-        b: GodotString,
-    ) -> GodotString {
+    #[method]
+    fn choose(&self, a: GodotString, which: bool, b: GodotString) -> GodotString {
         if which {
             a
         } else {
@@ -135,8 +129,8 @@ impl Foo {
         }
     }
 
-    #[export]
-    fn choose_variant(&self, _owner: &Reference, a: i32, what: Variant, b: f64) -> Variant {
+    #[method]
+    fn choose_variant(&self, a: i32, what: Variant, b: f64) -> Variant {
         let what = what.try_to::<String>().expect("should be string");
         match what.as_str() {
             "int" => a.to_variant(),
@@ -148,13 +142,13 @@ impl Foo {
 
 godot_itest! { test_rust_class_construction {
     let foo = Foo::new_instance();
-    assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&owner) }));
+    assert_eq!(Ok(42), foo.map(|foo, base| { foo.answer(&base) }));
 
     let base = foo.into_base();
     assert_eq!(Some(42), unsafe { base.call("answer", &[]).to() });
 
     let foo = Instance::<Foo, _>::try_from_base(base).expect("should be able to downcast");
-    assert_eq!(Ok(42), foo.map(|foo, owner| { foo.answer(&owner) }));
+    assert_eq!(Ok(42), foo.map(|foo, base| { foo.answer(&base) }));
 
     let base = foo.into_base();
     assert!(Instance::<NotFoo, _>::try_from_base(base).is_err());
@@ -172,11 +166,10 @@ impl OptionalArgs {
 
 #[methods]
 impl OptionalArgs {
-    #[export]
+    #[method]
     #[allow(clippy::many_single_char_names)]
     fn opt_sum(
-        &self,
-        _owner: &Reference,
+        &self, //
         a: i64,
         b: i64,
         #[opt] c: i64,

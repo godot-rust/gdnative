@@ -9,8 +9,8 @@ impl Foo {
         Foo {}
     }
 
-    #[export]
-    fn draw(&self, _owner: &Node) {}
+    #[method]
+    fn draw(&self) {}
 }
 
 fn main() {}

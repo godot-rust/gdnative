@@ -187,7 +187,7 @@ impl MinimalDerive {
         Self(54)
     }
 
-    #[export]
+    #[export] // deliberately use old attribute
     fn answer(&self, _owner: &Reference) -> i64 {
         self.0
     }
@@ -208,22 +208,22 @@ struct EmplacementOnly(i64);
 
 #[methods]
 impl EmplacementOnly {
-    #[export]
-    fn answer(&self, _owner: &Reference) -> i64 {
+    #[method]
+    fn answer(&self, #[base] _base: &Reference) -> i64 {
         self.0
     }
 }
 
 crate::godot_itest! { test_derive_nativeclass_without_constructor {
     let foo = Instance::emplace(EmplacementOnly(54));
-    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&owner) }));
+    assert_eq!(Ok(54), foo.map(|foo, base| { foo.answer(&base) }));
 
     let base = foo.into_base();
     assert_eq!(Some(54), unsafe { base.call("answer", &[]).to::<i64>() });
 
     let foo = Instance::<EmplacementOnly, _>::try_from_base(base)
         .expect("should be able to downcast");
-    assert_eq!(Ok(54), foo.map(|foo, owner| { foo.answer(&owner) }));
+    assert_eq!(Ok(54), foo.map(|foo, base| { foo.answer(&base) }));
 }}
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -237,8 +237,8 @@ impl WithoutInherit {
         Self(54)
     }
 
-    #[export]
-    fn answer(&self, _owner: &Reference) -> i64 {
+    #[method]
+    fn answer(&self) -> i64 {
         self.0
     }
 }

@@ -21,8 +21,8 @@ impl PropertyExport {
         Self::default()
     }
 
-    #[export]
-    fn _ready(&self, _base: &Node) {
+    #[method]
+    fn _ready(&self) {
         godot_print!("------------------------------------------------------------------");
         godot_print!("Print from Rust (note the unordered map/set):");
         godot_print!("  Vec (name):");

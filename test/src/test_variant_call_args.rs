@@ -30,23 +30,23 @@ impl StaticallyNamed for VariantCallArgs {
 
 #[methods]
 impl VariantCallArgs {
-    #[export]
-    fn zero(&mut self, _owner: &Reference) -> i32 {
+    #[method]
+    fn zero(&mut self) -> i32 {
         42
     }
 
-    #[export]
-    fn one(&mut self, _owner: &Reference, a: i32) -> i32 {
+    #[method]
+    fn one(&mut self, a: i32) -> i32 {
         a * 42
     }
 
-    #[export]
-    fn two(&mut self, _owner: &Reference, a: i32, b: i32) -> i32 {
+    #[method]
+    fn two(&mut self, a: i32, b: i32) -> i32 {
         a * 42 + b
     }
 
-    #[export]
-    fn three(&mut self, _owner: &Reference, a: i32, b: i32, c: i32) -> i32 {
+    #[method]
+    fn three(&mut self, a: i32, b: i32, c: i32) -> i32 {
         a * 42 + b * c
     }
 }

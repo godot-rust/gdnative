@@ -139,6 +139,7 @@ jobs:
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
             rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
+            testflags: '-- --skip ui_tests'
     runs-on: ${{ matrix.os.id }}
     steps:
       - uses: actions/checkout@v3
