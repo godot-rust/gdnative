@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.10.1] - unreleased
+
+This is a backwards-compatible release; thus no removals or breaking changes.
+
+### Added
+
+- New export API, allowing to omit owner ([#872](https://github.com/godot-rust/godot-rust/pull/872), [#933](https://github.com/godot-rust/godot-rust/pull/933))
+- Export and Variant conversion for `Vec`/`HashMap`/`HashSet` ([#883](https://github.com/godot-rust/godot-rust/pull/883))
+- Attribute `deref_return` to return reference-like objects ([#870](https://github.com/godot-rust/godot-rust/pull/870))
+- Classes `Rect2` and `Aabb` now have methods ([#867](https://github.com/godot-rust/godot-rust/pull/867))
+- Module `globalscope` with GDScript utility functions, e.g. `lerp`, `smoothstep` ([#901](https://github.com/godot-rust/godot-rust/pull/901), [#906](https://github.com/godot-rust/godot-rust/pull/906))
+- `Varargs` has new API for length checks, type conversions and errors ([#892](https://github.com/godot-rust/godot-rust/pull/892))
+- Method `Axis::to_unit_vector()` ([#867](https://github.com/godot-rust/godot-rust/pull/867))
+
+### Fixed
+
+- `StringName` traits `Eq` and `Ord` had a bug in GDNative API ([#912](https://github.com/godot-rust/godot-rust/pull/912))
+- `register_properties` naming collision ([#888](https://github.com/godot-rust/godot-rust/pull/888))
+- Outdated GDNative API checks prevented compilation of Godot 3.5 RC ([#909](https://github.com/godot-rust/godot-rust/pull/909))
+- Android: allow usage of new NDK paths ([#754](https://github.com/godot-rust/godot-rust/pull/754))
+- Use `ManuallyDrop` in ptrcalls to prevent drop reordering ([#924](https://github.com/godot-rust/godot-rust/pull/924))
+- Fix memory leaks in `as_arg` tests ([#925](https://github.com/godot-rust/godot-rust/pull/925))
+- `VariantArray` iterator skip ([#936](https://github.com/godot-rust/godot-rust/pull/936))
+- Proc-macros auto-import the macros they depend on (fixed earlier in [#425](https://github.com/godot-rust/godot-rust/pull/425)).
+
+### Config / internal
+
+- Stripped 6 unnecessary dependencies, detected by cargo-machete ([#890](https://github.com/godot-rust/godot-rust/pull/890))
+- Doc CI: improved detection of unchanged code ([#877](https://github.com/godot-rust/godot-rust/pull/877))
+- Tests for export APIs ([#891](https://github.com/godot-rust/godot-rust/pull/891))
+- `godot_test!` macro now used consistently ([#896](https://github.com/godot-rust/godot-rust/pull/896))
+- `Ord` implementation now used uniformly ([#911](https://github.com/godot-rust/godot-rust/pull/911))
+- Update Android NDK (21 -> 25), workaround Rust bug ([#920](https://github.com/godot-rust/godot-rust/pull/920))
+- Automate NDK detection ([#934](https://github.com/godot-rust/godot-rust/pull/934))
+- Refactorings in gdnative-derive crate ([#922](https://github.com/godot-rust/godot-rust/pull/922))
+
 ## [0.10.0] - 2022-03-19
 
 (Version `0.10.0-rc.0` has been integrated into this change set)

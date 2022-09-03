@@ -211,7 +211,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
     let mut methods_to_export: Vec<ExportMethod> = Vec::new();
 
-    // extract all methods that have the #[export] attribute.
+    // extract all methods that have the #[method] attribute
     // add all items back to the impl block again.
     for func in ast.items {
         let items = match func {
