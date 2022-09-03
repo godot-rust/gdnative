@@ -38,7 +38,7 @@ This is the recommended way of using godot-rust. After `bindgen` dependencies an
 
 ```toml
 [dependencies]
-gdnative = "0.10"
+gdnative = "0.10.1"
 
 [lib]
 crate-type = ["cdylib"]
@@ -80,12 +80,12 @@ pub struct HelloWorld;
 
 #[methods]
 impl HelloWorld {
-    fn new(_owner: &Node) -> Self {
+    fn new(_base: &Node) -> Self {
         HelloWorld
     }
 
     #[method]
-    fn _ready(&self, #[base] _node: &Node) {
+    fn _ready(&self, #[base] _base: &Node) {
         godot_print!("Hello, world.");
     }
 }

@@ -33,7 +33,7 @@ mod header_binding {
 
         // run `xcrun --sdk iphoneos --show-sdk-path`
         let output = Command::new("xcrun")
-            .args(&["--sdk", platform, "--show-sdk-path"])
+            .args(["--sdk", platform, "--show-sdk-path"])
             .output()?
             .stdout;
         let prefix = std::str::from_utf8(&output)
