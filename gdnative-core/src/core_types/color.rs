@@ -41,6 +41,88 @@ impl Color {
         Color::from_sys(unsafe { (get_api().godot_color_from_hsv)(color.sys(), h, s, v, a) })
     }
 
+    /// Parses from a HTML color code, or `None` on parse error.
+    ///
+    /// ```
+    /// use gdnative::prelude::Color;
+    ///
+    /// // Each of the following creates the same color RGBA(178, 217, 10, 255).
+    /// let c1 = Color::from_html("#9eb2d90a"); // ARGB format with "#".
+    /// let c2 = Color::from_html("9eb2d90a");  // ARGB format.
+    /// let c3 = Color::from_html("#b2d90a");   // RGB format with "#".
+    /// let c4 = Color::from_html("b2d90a");    // RGB format.
+    ///
+    /// let expected = Color::from_rgba_u8(178, 217, 10, 158);
+    /// assert_eq!(c1, Some(expected));
+    /// assert_eq!(c2, Some(expected));
+    ///
+    /// let expected = Color::from_rgba_u8(178, 217, 10, 255);
+    /// assert_eq!(c3, Some(expected));
+    /// assert_eq!(c4, Some(expected));
+    /// ```
+    ///
+    /// See also the corresponding [GDScript method](https://docs.godotengine.org/en/stable/classes/class_color.html#class-color-method-color).
+    #[inline]
+    pub fn from_html(mut argb_or_rgb: &str) -> Option<Self> {
+        if let Some(stripped) = argb_or_rgb.strip_prefix('#') {
+            argb_or_rgb = stripped;
+        }
+
+        let (rgb_str, a) = match argb_or_rgb.len() {
+            6 => (argb_or_rgb, 0xFF),
+            8 => {
+                let (a_str, rgb_str) = argb_or_rgb.split_at(2);
+                if let Ok(a) = u8::from_str_radix(a_str, 16) {
+                    (rgb_str, a)
+                } else {
+                    return None;
+                }
+            }
+            _ => return None,
+        };
+
+        if let Ok(rgb) = u32::from_str_radix(rgb_str, 16) {
+            let color = Self::from_rgba_u32(rgb << 8 | a as u32);
+            Some(color)
+        } else {
+            None
+        }
+    }
+
+    /// Construct a color from a single `u32` value, in `RGBA` format.
+    ///
+    /// Example:
+    /// ```
+    /// use gdnative::prelude::Color;
+    ///
+    /// // RGBA (178, 217, 10, 158)
+    /// let one = Color::from_rgba_u32(0xb2d90a9e);
+    /// let piecewise = Color::from_rgba_u8(0xB2, 0xD9, 0x0A, 0x9E);
+    /// assert_eq!(one, piecewise);
+    /// ```
+    #[inline]
+    pub fn from_rgba_u32(rgba: u32) -> Self {
+        Self::from_rgba_u8(
+            (rgba >> 24) as u8,
+            ((rgba >> 16) & 0xFF) as u8,
+            ((rgba >> 8) & 0xFF) as u8,
+            (rgba & 0xFF) as u8,
+        )
+    }
+
+    /// Constructs a color from four integer channels, each in range 0-255.
+    ///
+    /// This corresponds to the [GDScript method `Color8`](https://docs.godotengine.org/en/stable/classes/class_%40gdscript.html#class-gdscript-method-color8)
+    #[inline]
+    pub fn from_rgba_u8(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self::from_rgba(
+            r as f32 / 255.0,
+            g as f32 / 255.0,
+            b as f32 / 255.0,
+            a as f32 / 255.0,
+        )
+    }
+
     #[inline]
     pub fn h(&self) -> f32 {
         unsafe { (get_api().godot_color_get_h)(self.sys()) }
@@ -236,6 +318,7 @@ godot_test!(test_color {
     assert_eq!("ffffff", Color::from_rgba(1.0, 1.0, 1.0, 0.5).to_html(false).to_string());
     assert_eq!("ff8000", Color::from_rgb(1.0, 0.5, 0.0).to_html(false).to_string());
     assert_eq!("ff0080ff", Color::from_rgb(0.0, 0.5, 1.0).to_html(true).to_string());
+
     // Test Gray
     // String comparison due to non-trivial way to truncate floats
     use crate::core_types::IsEqualApprox;
