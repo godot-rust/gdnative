@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="NodePath" version="3.4">
+<class name="NodePath" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Pre-parsed scene tree path.
 	</brief_description>
@@ -76,7 +76,7 @@
 			<return type="String" />
 			<argument index="0" name="idx" type="int" />
 			<description>
-				Gets the node name indicated by [code]idx[/code] (0 to [method get_name_count]).
+				Gets the node name indicated by [code]idx[/code] (0 to [method get_name_count] - 1).
 				[codeblock]
 				var node_path = NodePath("Path2D/PathFollow2D/Sprite")
 				print(node_path.get_name(0)) # Path2D

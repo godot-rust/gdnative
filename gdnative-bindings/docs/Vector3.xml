@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Vector3" version="3.4">
+<class name="Vector3" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Vector used for 3D math.
 	</brief_description>
 	<description>
-		3-element structure that can be used to represent positions in 3D space or any other pair of numeric values.
+		3-element structure that can be used to represent positions in 3D space or any other triplet of numeric values.
 		[b]Note:[/b] In a boolean context, a Vector3 will evaluate to [code]false[/code] if it's equal to [code]Vector3(0, 0, 0)[/code]. Otherwise, a Vector3 will always evaluate to [code]true[/code].
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/3.4/tutorials/math/index.html</link>
-		<link title="Vector math">https://docs.godotengine.org/en/3.4/tutorials/math/vector_math.html</link>
-		<link title="Advanced vector math">https://docs.godotengine.org/en/3.4/tutorials/math/vectors_advanced.html</link>
+		<link title="Math tutorial index">https://docs.godotengine.org/en/3.5/tutorials/math/index.html</link>
+		<link title="Vector math">https://docs.godotengine.org/en/3.5/tutorials/math/vector_math.html</link>
+		<link title="Advanced vector math">https://docs.godotengine.org/en/3.5/tutorials/math/vectors_advanced.html</link>
 		<link title="3Blue1Brown Essence of Linear Algebra">https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab</link>
 		<link title="Matrix Transform Demo">https://godotengine.org/asset-library/asset/584</link>
 		<link title="All 3D Demos">https://github.com/godotengine/godot-demo-projects/tree/master/3d</link>
@@ -65,7 +65,7 @@
 			<argument index="2" name="post_b" type="Vector3" />
 			<argument index="3" name="weight" type="float" />
 			<description>
-				Performs a cubic interpolation between vectors [code]pre_a[/code], [code]a[/code], [code]b[/code], [code]post_b[/code] ([code]a[/code] is current), by the given amount [code]weight[/code]. [code]weight[/code] is on the range of 0.0 to 1.0, representing the amount of interpolation.
+				Performs a cubic interpolation between this vector and [code]b[/code] using [code]pre_a[/code] and [code]post_b[/code] as handles, and returns the result at position [code]weight[/code]. [code]weight[/code] is on the range of 0.0 to 1.0, representing the amount of interpolation.
 			</description>
 		</method>
 		<method name="direction_to">
@@ -138,6 +138,13 @@
 				This method runs faster than [method length], so prefer it if you need to compare vectors or need the squared distance for some formula.
 			</description>
 		</method>
+		<method name="limit_length">
+			<return type="Vector3" />
+			<argument index="0" name="length" type="float" default="1.0" />
+			<description>
+				Returns the vector with a maximum length by limiting its length to [code]length[/code].
+			</description>
+		</method>
 		<method name="linear_interpolate">
 			<return type="Vector3" />
 			<argument index="0" name="to" type="Vector3" />
@@ -163,7 +170,7 @@
 			<argument index="0" name="to" type="Vector3" />
 			<argument index="1" name="delta" type="float" />
 			<description>
-				Moves this vector toward [code]to[/code] by the fixed [code]delta[/code] amount.
+				Returns a new vector moved toward [code]to[/code] by the fixed [code]delta[/code] amount. Will not go past the final value.
 			</description>
 		</method>
 		<method name="normalized">
@@ -197,7 +204,7 @@
 			<return type="Vector3" />
 			<argument index="0" name="b" type="Vector3" />
 			<description>
-				Returns this vector projected onto another vector [code]b[/code].
+				Returns this vector projected onto the vector [code]b[/code].
 			</description>
 		</method>
 		<method name="reflect">
@@ -210,21 +217,21 @@
 		<method name="rotated">
 			<return type="Vector3" />
 			<argument index="0" name="axis" type="Vector3" />
-			<argument index="1" name="phi" type="float" />
+			<argument index="1" name="angle" type="float" />
 			<description>
-				Rotates this vector around a given axis by [code]phi[/code] radians. The axis must be a normalized vector.
+				Rotates this vector around a given axis by [code]angle[/code] (in radians). The axis must be a normalized vector.
 			</description>
 		</method>
 		<method name="round">
 			<return type="Vector3" />
 			<description>
-				Returns this vector with all components rounded to the nearest integer, with halfway cases rounded away from zero.
+				Returns a new vector with all components rounded to the nearest integer, with halfway cases rounded away from zero.
 			</description>
 		</method>
 		<method name="sign">
 			<return type="Vector3" />
 			<description>
-				Returns a vector with each component set to one or negative one, depending on the signs of this vector's components. If a component is zero, it returns positive one.
+				Returns a new vector with each component set to one or negative one, depending on the signs of the components. If a component is zero, it returns positive one.
 			</description>
 		</method>
 		<method name="signed_angle_to">

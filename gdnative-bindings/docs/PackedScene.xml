@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PackedScene" inherits="Resource" version="3.4">
+<class name="PackedScene" inherits="Resource" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		An abstraction of a serialized scene.
 	</brief_description>
@@ -84,6 +84,10 @@
 		</constant>
 		<constant name="GEN_EDIT_STATE_MAIN" value="2" enum="GenEditState">
 			If passed to [method instance], provides local scene resources to the local scene. Only the main scene should receive the main edit state.
+			[b]Note:[/b] Only available in editor builds.
+		</constant>
+		<constant name="GEN_EDIT_STATE_MAIN_INHERITED" value="3" enum="GenEditState">
+			It's similar to [constant GEN_EDIT_STATE_MAIN], but for the case where the scene is being instantiated to be the base of another one.
 			[b]Note:[/b] Only available in editor builds.
 		</constant>
 	</constants>

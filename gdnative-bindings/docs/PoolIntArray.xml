@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PoolIntArray" version="3.4">
+<class name="PoolIntArray" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
-		A pooled [Array] of integers ([int]).
+		A pooled array of integers ([int]).
 	</brief_description>
 	<description>
-		An [Array] specifically designed to hold integer values ([int]). Optimized for memory usage, does not fragment the memory.
-		[b]Note:[/b] This type is passed by value and not by reference.
+		An array specifically designed to hold integer values ([int]). Optimized for memory usage, does not fragment the memory.
+		[b]Note:[/b] This type is passed by value and not by reference. This means that when [i]mutating[/i] a class property of type [PoolIntArray] or mutating a [PoolIntArray] within an [Array] or [Dictionary], changes will be lost:
+		[codeblock]
+		var array = [PoolIntArray()]
+		array[0].push_back(1234)
+		print(array)  # [[]] (empty PoolIntArray within an Array)
+		[/codeblock]
+		Instead, the entire [PoolIntArray] property must be [i]reassigned[/i] with [code]=[/code] for it to be changed:
+		[codeblock]
+		var array = [PoolIntArray()]
+		var pool_array = array[0]
+		pool_array.push_back(1234)
+		array[0] = pool_array
+		print(array)  # [[1234]] (PoolIntArray with 1 element inside an Array)
+		[/codeblock]
 		[b]Note:[/b] This type is limited to signed 32-bit integers, which means it can only take values in the interval [code][-2^31, 2^31 - 1][/code], i.e. [code][-2147483648, 2147483647][/code]. Exceeding those bounds will wrap around. In comparison, [int] uses signed 64-bit integers which can hold much larger values.
 	</description>
 	<tutorials>
@@ -30,10 +43,39 @@
 				Appends a [PoolIntArray] at the end of this array.
 			</description>
 		</method>
+		<method name="count">
+			<return type="int" />
+			<argument index="0" name="value" type="int" />
+			<description>
+				Returns the number of times an element is in the array.
+			</description>
+		</method>
 		<method name="empty">
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if the array is empty.
+			</description>
+		</method>
+		<method name="fill">
+			<argument index="0" name="integer" type="int" />
+			<description>
+				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
+			</description>
+		</method>
+		<method name="find">
+			<return type="int" />
+			<argument index="0" name="value" type="int" />
+			<argument index="1" name="from" type="int" default="0" />
+			<description>
+				Searches the array for a value and returns its index or [code]-1[/code] if not found. Optionally, the initial search index can be passed. Returns [code]-1[/code] if [code]from[/code] is out of bounds.
+			</description>
+		</method>
+		<method name="has">
+			<return type="bool" />
+			<argument index="0" name="value" type="int" />
+			<description>
+				Returns [code]true[/code] if the array contains the given value.
+				[b]Note:[/b] This is equivalent to using the [code]in[/code] operator.
 			</description>
 		</method>
 		<method name="insert">
@@ -68,6 +110,14 @@
 				[b]Note:[/b] Added elements are not automatically initialized to 0 and will contain garbage, i.e. indeterminate values.
 			</description>
 		</method>
+		<method name="rfind">
+			<return type="int" />
+			<argument index="0" name="value" type="int" />
+			<argument index="1" name="from" type="int" default="-1" />
+			<description>
+				Searches the array in reverse order. Optionally, a start search index can be passed. If negative, the start index is considered relative to the end of the array. If the adjusted start index is out of bounds, this method searches from the end of the array.
+			</description>
+		</method>
 		<method name="set">
 			<argument index="0" name="idx" type="int" />
 			<argument index="1" name="integer" type="int" />
@@ -78,7 +128,12 @@
 		<method name="size">
 			<return type="int" />
 			<description>
-				Returns the array size.
+				Returns the number of elements in the array.
+			</description>
+		</method>
+		<method name="sort">
+			<description>
+				Sorts the elements of the array in ascending order.
 			</description>
 		</method>
 	</methods>

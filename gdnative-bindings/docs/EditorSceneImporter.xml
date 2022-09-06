@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="EditorSceneImporter" inherits="Reference" version="3.4">
+<class name="EditorSceneImporter" inherits="Reference" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Imports scenes from third-parties' 3D files.
 	</brief_description>
 	<description>
+		[EditorSceneImporter] allows to define an importer script for a third-party 3D format.
+		To use [EditorSceneImporter], register it using the [method EditorPlugin.add_scene_import_plugin] method first.
 	</description>
 	<tutorials>
 	</tutorials>

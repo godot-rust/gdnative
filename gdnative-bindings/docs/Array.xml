@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Array" version="3.4">
+<class name="Array" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A generic array datatype.
 	</brief_description>
@@ -172,9 +172,20 @@
 		<method name="erase">
 			<argument index="0" name="value" type="Variant" />
 			<description>
-				Removes the first occurrence of a value from the array. To remove an element by index, use [method remove] instead.
+				Removes the first occurrence of a value from the array. If the value does not exist in the array, nothing happens. To remove an element by index, use [method remove] instead.
 				[b]Note:[/b] This method acts in-place and doesn't return a value.
 				[b]Note:[/b] On large arrays, this method will be slower if the removed element is close to the beginning of the array (index 0). This is because all elements placed after the removed element have to be reindexed.
+			</description>
+		</method>
+		<method name="fill">
+			<argument index="0" name="value" type="Variant" />
+			<description>
+				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements:
+				[codeblock]
+				var array = []
+				array.resize(10)
+				array.fill(0) # Initialize the 10 elements to 0.
+				[/codeblock]
 			</description>
 		</method>
 		<method name="find">
@@ -182,7 +193,7 @@
 			<argument index="0" name="what" type="Variant" />
 			<argument index="1" name="from" type="int" default="0" />
 			<description>
-				Searches the array for a value and returns its index or [code]-1[/code] if not found. Optionally, the initial search index can be passed.
+				Searches the array for a value and returns its index or [code]-1[/code] if not found. Optionally, the initial search index can be passed. Returns [code]-1[/code] if [code]from[/code] is out of bounds.
 			</description>
 		</method>
 		<method name="find_last">
@@ -221,8 +232,8 @@
 		<method name="hash">
 			<return type="int" />
 			<description>
-				Returns a hashed integer value representing the array and its contents.
-				[b]Note:[/b] Arrays with equal contents can still produce different hashes. Only the exact same arrays will produce the same hashed integer value.
+				Returns a hashed 32-bit integer value representing the array and its contents.
+				[b]Note:[/b] [Array]s with equal content will always produce identical hash values. However, the reverse is not true. Returning identical hash values does [i]not[/i] imply the arrays are equal, because different arrays can have identical hash values due to hash collisions.
 			</description>
 		</method>
 		<method name="insert">
@@ -304,7 +315,7 @@
 			<argument index="0" name="what" type="Variant" />
 			<argument index="1" name="from" type="int" default="-1" />
 			<description>
-				Searches the array in reverse order. Optionally, a start search index can be passed. If negative, the start index is considered relative to the end of the array.
+				Searches the array in reverse order. Optionally, a start search index can be passed. If negative, the start index is considered relative to the end of the array. If the adjusted start index is out of bounds, this method searches from the end of the array.
 			</description>
 		</method>
 		<method name="shuffle">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Node" inherits="Object" version="3.4">
+<class name="Node" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base class for all [i]scene[/i] objects.
 	</brief_description>
@@ -17,7 +17,7 @@
 		[b]Networking with nodes:[/b] After connecting to a server (or making one, see [NetworkedMultiplayerENet]), it is possible to use the built-in RPC (remote procedure call) system to communicate over the network. By calling [method rpc] with a method name, it will be called locally and in all connected peers (peers = clients and the server that accepts connections). To identify which node receives the RPC call, Godot will use its [NodePath] (make sure node names are the same on all peers). Also, take a look at the high-level networking tutorial and corresponding demos.
 	</description>
 	<tutorials>
-		<link title="Scenes and nodes">https://docs.godotengine.org/en/3.4/getting_started/step_by_step/scenes_and_nodes.html</link>
+		<link title="Nodes and Scenes">https://docs.godotengine.org/en/3.5/getting_started/step_by_step/nodes_and_scenes.html</link>
 		<link title="All Demos">https://github.com/godotengine/godot-demo-projects/</link>
 	</tutorials>
 	<methods>
@@ -51,7 +51,7 @@
 				It is only called if input processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process_input].
 				To consume the input event and stop it propagating further to other nodes, [method SceneTree.set_input_as_handled] can be called.
 				For gameplay input, [method _unhandled_input] and [method _unhandled_key_input] are usually a better fit as they allow the GUI to intercept the events first.
-				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
+				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not an orphan).
 			</description>
 		</method>
 		<method name="_physics_process" qualifiers="virtual">
@@ -61,7 +61,7 @@
 				Called during the physics processing step of the main loop. Physics processing means that the frame rate is synced to the physics, i.e. the [code]delta[/code] variable should be constant. [code]delta[/code] is in seconds.
 				It is only called if physics processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_physics_process].
 				Corresponds to the [constant NOTIFICATION_PHYSICS_PROCESS] notification in [method Object._notification].
-				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
+				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not an orphan).
 			</description>
 		</method>
 		<method name="_process" qualifiers="virtual">
@@ -71,7 +71,7 @@
 				Called during the processing step of the main loop. Processing happens at every frame and as fast as possible, so the [code]delta[/code] time since the previous frame is not constant. [code]delta[/code] is in seconds.
 				It is only called if processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process].
 				Corresponds to the [constant NOTIFICATION_PROCESS] notification in [method Object._notification].
-				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
+				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not an orphan).
 			</description>
 		</method>
 		<method name="_ready" qualifiers="virtual">
@@ -80,29 +80,29 @@
 				Called when the node is "ready", i.e. when both the node and its children have entered the scene tree. If the node has children, their [method _ready] callbacks get triggered first, and the parent node will receive the ready notification afterwards.
 				Corresponds to the [constant NOTIFICATION_READY] notification in [method Object._notification]. See also the [code]onready[/code] keyword for variables.
 				Usually used for initialization. For even earlier initialization, [method Object._init] may be used. See also [method _enter_tree].
-				[b]Note:[/b] [method _ready] may be called only once for each node. After removing a node from the scene tree and adding again, [code]_ready[/code] will not be called for the second time. This can be bypassed with requesting another call with [method request_ready], which may be called anywhere before adding the node again.
+				[b]Note:[/b] [method _ready] may be called only once for each node. After removing a node from the scene tree and adding it again, [code]_ready[/code] will not be called a second time. This can be bypassed by requesting another call with [method request_ready], which may be called anywhere before adding the node again.
 			</description>
 		</method>
 		<method name="_unhandled_input" qualifiers="virtual">
 			<return type="void" />
 			<argument index="0" name="event" type="InputEvent" />
 			<description>
-				Called when an [InputEvent] hasn't been consumed by [method _input] or any GUI. The input event propagates up through the node tree until a node consumes it.
+				Called when an [InputEvent] hasn't been consumed by [method _input] or any GUI [Control] item. The input event propagates up through the node tree until a node consumes it.
 				It is only called if unhandled input processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process_unhandled_input].
 				To consume the input event and stop it propagating further to other nodes, [method SceneTree.set_input_as_handled] can be called.
 				For gameplay input, this and [method _unhandled_key_input] are usually a better fit than [method _input] as they allow the GUI to intercept the events first.
-				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
+				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not an orphan).
 			</description>
 		</method>
 		<method name="_unhandled_key_input" qualifiers="virtual">
 			<return type="void" />
 			<argument index="0" name="event" type="InputEventKey" />
 			<description>
-				Called when an [InputEventKey] hasn't been consumed by [method _input] or any GUI. The input event propagates up through the node tree until a node consumes it.
+				Called when an [InputEventKey] hasn't been consumed by [method _input] or any GUI [Control] item. The input event propagates up through the node tree until a node consumes it.
 				It is only called if unhandled key input processing is enabled, which is done automatically if this method is overridden, and can be toggled with [method set_process_unhandled_key_input].
 				To consume the input event and stop it propagating further to other nodes, [method SceneTree.set_input_as_handled] can be called.
 				For gameplay input, this and [method _unhandled_input] are usually a better fit than [method _input] as they allow the GUI to intercept the events first.
-				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not orphan).
+				[b]Note:[/b] This method is only called if the node is present in the scene tree (i.e. if it's not an orphan).
 			</description>
 		</method>
 		<method name="add_child">
@@ -118,7 +118,7 @@
 				    child_node.get_parent().remove_child(child_node)
 				add_child(child_node)
 				[/codeblock]
-				[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=https://godot.readthedocs.io/en/3.2/tutorials/misc/running_code_in_the_editor.html]tool scripts[/url] and [url=https://godot.readthedocs.io/en/latest/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
+				[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=https://docs.godotengine.org/en/3.5/tutorials/plugins/running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
 			</description>
 		</method>
 		<method name="add_child_below_node">
@@ -147,6 +147,15 @@
 				Returns [code]true[/code] if the node can process while the scene tree is paused (see [member pause_mode]). Always returns [code]true[/code] if the scene tree is not paused, and [code]false[/code] if the node is not in the tree.
 			</description>
 		</method>
+		<method name="create_tween">
+			<return type="SceneTreeTween" />
+			<description>
+				Creates a new [SceneTreeTween] and binds it to this node. This is equivalent of doing:
+				[codeblock]
+				get_tree().create_tween().bind_node(self)
+				[/codeblock]
+			</description>
+		</method>
 		<method name="duplicate" qualifiers="const">
 			<return type="Node" />
 			<argument index="0" name="flags" type="int" default="15" />
@@ -162,7 +171,7 @@
 			<argument index="1" name="recursive" type="bool" default="true" />
 			<argument index="2" name="owned" type="bool" default="true" />
 			<description>
-				Finds a descendant of this node whose name matches [code]mask[/code] as in [method String.match] (i.e. case-sensitive, but [code]"*"[/code] matches zero or more characters and [code]"?"[/code] matches any single character except [code]"."[/code]).
+				Finds a descendant of this node whose name matches [code]mask[/code] as in [method String.match] (i.e. case-sensitive, but [code]"*"[/code] matches zero or more characters and [code]"?"[/code] matches any single character except [code]"."[/code]). Returns [code]null[/code] if no matching [Node] is found.
 				[b]Note:[/b] It does not match against the full path, just against individual node names.
 				If [code]owned[/code] is [code]true[/code], this method only finds nodes whose owner is this node. This is especially important for scenes instantiated through a script, because those scenes don't have an owner.
 				[b]Note:[/b] As this method walks through all the descendants of the node, it is the slowest way to get a reference to another node. Whenever possible, consider using [method get_node] instead. To avoid using [method find_node] too often, consider caching the node reference into a variable.
@@ -202,6 +211,14 @@
 			<description>
 				Returns an array listing the groups that the node is a member of.
 				[b]Note:[/b] For performance reasons, the order of node groups is [i]not[/i] guaranteed. The order of node groups should not be relied upon as it can vary across project runs.
+				[b]Note:[/b] The engine uses some group names internally (all starting with an underscore). To avoid conflicts with internal groups, do not add custom groups whose name starts with an underscore. To exclude internal groups while looping over [method get_groups], use the following snippet:
+				[codeblock]
+				# Stores the node's non-internal groups only (as an array of Strings).
+				var non_internal_groups = []
+				for group in get_groups():
+				    if not group.begins_with("_"):
+				        non_internal_groups.push_back(group)
+				[/codeblock]
 			</description>
 		</method>
 		<method name="get_index" qualifiers="const">
@@ -220,7 +237,7 @@
 			<return type="Node" />
 			<argument index="0" name="path" type="NodePath" />
 			<description>
-				Fetches a node. The [NodePath] can be either a relative path (from the current node) or an absolute path (in the scene tree) to a node. If the path does not exist, a [code]null instance[/code] is returned and an error is logged. Attempts to access methods on the return value will result in an "Attempt to call &lt;method&gt; on a null instance." error.
+				Fetches a node. The [NodePath] can be either a relative path (from the current node) or an absolute path (in the scene tree) to a node. If the path does not exist, [code]null[/code] is returned and an error is logged. Attempts to access methods on the return value will result in an "Attempt to call &lt;method&gt; on a null instance." error.
 				[b]Note:[/b] Fetching absolute paths only works when the node is inside the scene tree (see [method is_inside_tree]).
 				[b]Example:[/b] Assume your current node is Character and the following tree:
 				[codeblock]
@@ -266,7 +283,7 @@
 		<method name="get_parent" qualifiers="const">
 			<return type="Node" />
 			<description>
-				Returns the parent node of the current node, or a [code]null instance[/code] if the node lacks a parent.
+				Returns the parent node of the current node, or [code]null[/code] if the node lacks a parent.
 			</description>
 		</method>
 		<method name="get_path" qualifiers="const">
@@ -369,6 +386,21 @@
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if the local system is the master of this node.
+			</description>
+		</method>
+		<method name="is_physics_interpolated" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if the physics interpolated flag is set for this Node (see [member physics_interpolation_mode]).
+				[b]Note:[/b] Interpolation will only be active if both the flag is set [b]and[/b] physics interpolation is enabled within the [SceneTree]. This can be tested using [method is_physics_interpolated_and_enabled].
+			</description>
+		</method>
+		<method name="is_physics_interpolated_and_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if physics interpolation is enabled (see [member physics_interpolation_mode]) [b]and[/b] enabled in the [SceneTree].
+				This is a convenience version of [method is_physics_interpolated] that also checks whether physics interpolation is enabled globally.
+				See [member SceneTree.physics_interpolation] and [member ProjectSettings.physics/common/physics_interpolation].
 			</description>
 		</method>
 		<method name="is_physics_processing" qualifiers="const">
@@ -513,6 +545,8 @@
 			<argument index="1" name="keep_data" type="bool" default="false" />
 			<description>
 				Replaces a node in a scene by the given one. Subscriptions that pass through this node will be lost.
+				[b]Note:[/b] The given node will become the new parent of any child nodes that the replaced node had.
+				[b]Note:[/b] The replaced node is not automatically freed, so you either need to keep it in a variable for later use or free it using [method Object.free].
 			</description>
 		</method>
 		<method name="request_ready">
@@ -521,11 +555,20 @@
 				Requests that [code]_ready[/code] be called again. Note that the method won't be called immediately, but is scheduled for when the node is added to the scene tree again (see [method _ready]). [code]_ready[/code] is called only for the node which requested it, which means that you need to request ready for each child if you want them to call [code]_ready[/code] too (in which case, [code]_ready[/code] will be called in the same order as it would normally).
 			</description>
 		</method>
+		<method name="reset_physics_interpolation">
+			<return type="void" />
+			<description>
+				When physics interpolation is active, moving a node to a radically different transform (such as placement within a level) can result in a visible glitch as the object is rendered moving from the old to new position over the physics tick.
+				This glitch can be prevented by calling [code]reset_physics_interpolation[/code], which temporarily turns off interpolation until the physics tick is complete.
+				[constant NOTIFICATION_RESET_PHYSICS_INTERPOLATION] will be received by the node and all children recursively.
+				[b]Note:[/b] This function should be called [b]after[/b] moving the node, rather than before.
+			</description>
+		</method>
 		<method name="rpc" qualifiers="vararg">
 			<return type="Variant" />
 			<argument index="0" name="method" type="String" />
 			<description>
-				Sends a remote procedure call request for the given [code]method[/code] to peers on the network (and locally), optionally sending all additional arguments as arguments to the method called by the RPC. The call request will only be received by nodes with the same [NodePath], including the exact same node name. Behaviour depends on the RPC configuration for the given method, see [method rpc_config]. Methods are not exposed to RPCs by default. See also [method rset] and [method rset_config] for properties. Returns an empty [Variant].
+				Sends a remote procedure call request for the given [code]method[/code] to peers on the network (and locally), optionally sending all additional arguments as arguments to the method called by the RPC. The call request will only be received by nodes with the same [NodePath], including the exact same node name. Behaviour depends on the RPC configuration for the given method, see [method rpc_config]. Methods are not exposed to RPCs by default. See also [method rset] and [method rset_config] for properties. Returns [code]null[/code].
 				[b]Note:[/b] You can only safely use RPCs on clients after you received the [code]connected_to_server[/code] signal from the [SceneTree]. You also need to keep track of the connection state, either by the [SceneTree] signals like [code]server_disconnected[/code] or by checking [code]SceneTree.network_peer.get_connection_status() == CONNECTION_CONNECTED[/code].
 			</description>
 		</method>
@@ -542,14 +585,14 @@
 			<argument index="0" name="peer_id" type="int" />
 			<argument index="1" name="method" type="String" />
 			<description>
-				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns an empty [Variant].
+				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns [code]null[/code].
 			</description>
 		</method>
 		<method name="rpc_unreliable" qualifiers="vararg">
 			<return type="Variant" />
 			<argument index="0" name="method" type="String" />
 			<description>
-				Sends a [method rpc] using an unreliable protocol. Returns an empty [Variant].
+				Sends a [method rpc] using an unreliable protocol. Returns [code]null[/code].
 			</description>
 		</method>
 		<method name="rpc_unreliable_id" qualifiers="vararg">
@@ -557,7 +600,7 @@
 			<argument index="0" name="peer_id" type="int" />
 			<argument index="1" name="method" type="String" />
 			<description>
-				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] using an unreliable protocol (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns an empty [Variant].
+				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] using an unreliable protocol (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns [code]null[/code].
 			</description>
 		</method>
 		<method name="rset">
@@ -699,15 +742,38 @@
 		</member>
 		<member name="owner" type="Node" setter="set_owner" getter="get_owner">
 			The node owner. A node can have any other node as owner (as long as it is a valid parent, grandparent, etc. ascending in the tree). When saving a node (using [PackedScene]), all the nodes it owns will be saved with it. This allows for the creation of complex [SceneTree]s, with instancing and subinstancing.
+			[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=https://docs.godotengine.org/en/3.5/tutorials/plugins/running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
 		</member>
 		<member name="pause_mode" type="int" setter="set_pause_mode" getter="get_pause_mode" enum="Node.PauseMode" default="0">
 			Pause mode. How the node will behave if the [SceneTree] is paused.
 		</member>
+		<member name="physics_interpolation_mode" type="int" setter="set_physics_interpolation_mode" getter="get_physics_interpolation_mode" enum="Node.PhysicsInterpolationMode" default="0">
+			Allows enabling or disabling physics interpolation per node, offering a finer grain of control than turning physics interpolation on and off globally.
+			[b]Note:[/b] This can be especially useful for [Camera]s, where custom interpolation can sometimes give superior results.
+		</member>
 		<member name="process_priority" type="int" setter="set_process_priority" getter="get_process_priority" default="0">
 			The node's priority in the execution order of the enabled processing callbacks (i.e. [constant NOTIFICATION_PROCESS], [constant NOTIFICATION_PHYSICS_PROCESS] and their internal counterparts). Nodes whose process priority value is [i]lower[/i] will have their processing callbacks executed first.
 		</member>
+		<member name="unique_name_in_owner" type="bool" setter="set_unique_name_in_owner" getter="is_unique_name_in_owner" default="false">
+			Sets this node's name as a unique name in its [member owner]. This allows the node to be accessed as [code]%Name[/code] instead of the full path, from any node within that scene.
+			If another node with the same owner already had that name declared as unique, that other node's name will no longer be set as having a unique name.
+		</member>
 	</members>
 	<signals>
+		<signal name="child_entered_tree">
+			<argument index="0" name="node" type="Node" />
+			<description>
+				Emitted when a child node enters the scene tree, either because it entered on its own or because this node entered with it.
+				This signal is emitted [i]after[/i] the child node's own [constant NOTIFICATION_ENTER_TREE] and [signal tree_entered].
+			</description>
+		</signal>
+		<signal name="child_exiting_tree">
+			<argument index="0" name="node" type="Node" />
+			<description>
+				Emitted when a child node is about to exit the scene tree, either because it is being removed or freed directly, or because this node is exiting the tree.
+				When this signal is received, the child [code]node[/code] is still in the tree and valid. This signal is emitted [i]after[/i] the child node's own [signal tree_exiting] and [constant NOTIFICATION_EXIT_TREE].
+			</description>
+		</signal>
 		<signal name="ready">
 			<description>
 				Emitted when the node is ready.
@@ -721,6 +787,7 @@
 		<signal name="tree_entered">
 			<description>
 				Emitted when the node enters the tree.
+				This signal is emitted [i]after[/i] the related [constant NOTIFICATION_ENTER_TREE] notification.
 			</description>
 		</signal>
 		<signal name="tree_exited">
@@ -731,15 +798,18 @@
 		<signal name="tree_exiting">
 			<description>
 				Emitted when the node is still active but about to exit the tree. This is the right place for de-initialization (or a "destructor", if you will).
+				This signal is emitted [i]before[/i] the related [constant NOTIFICATION_EXIT_TREE] notification.
 			</description>
 		</signal>
 	</signals>
 	<constants>
 		<constant name="NOTIFICATION_ENTER_TREE" value="10">
 			Notification received when the node enters a [SceneTree].
+			This notification is emitted [i]before[/i] the related [signal tree_entered].
 		</constant>
 		<constant name="NOTIFICATION_EXIT_TREE" value="11">
 			Notification received when the node is about to exit a [SceneTree].
+			This notification is emitted [i]after[/i] the related [signal tree_exiting].
 		</constant>
 		<constant name="NOTIFICATION_MOVED_IN_PARENT" value="12">
 			Notification received when the node is moved in the parent.
@@ -770,10 +840,13 @@
 			Notification received when the node is instanced.
 		</constant>
 		<constant name="NOTIFICATION_DRAG_BEGIN" value="21">
-			Notification received when a drag begins.
+			Notification received when a drag operation begins. All nodes receive this notification, not only the dragged one.
+			Can be triggered either by dragging a [Control] that provides drag data (see [method Control.get_drag_data]) or using [method Control.force_drag].
+			Use [method Viewport.gui_get_drag_data] to get the dragged data.
 		</constant>
 		<constant name="NOTIFICATION_DRAG_END" value="22">
-			Notification received when a drag ends.
+			Notification received when a drag operation ends.
+			Use [method Viewport.gui_is_drag_successful] to check if the drag succeeded.
 		</constant>
 		<constant name="NOTIFICATION_PATH_CHANGED" value="23">
 			Notification received when the node's [NodePath] changed.
@@ -786,6 +859,9 @@
 		</constant>
 		<constant name="NOTIFICATION_POST_ENTER_TREE" value="27">
 			Notification received when the node is ready, just before [constant NOTIFICATION_READY] is received. Unlike the latter, it's sent every time the node enters tree, instead of only once.
+		</constant>
+		<constant name="NOTIFICATION_RESET_PHYSICS_INTERPOLATION" value="28">
+			Notification received when [method reset_physics_interpolation] is called on the node or parent nodes.
 		</constant>
 		<constant name="NOTIFICATION_WM_MOUSE_ENTER" value="1002">
 			Notification received from the OS when the mouse enters the game window.
@@ -850,6 +926,15 @@
 		</constant>
 		<constant name="PAUSE_MODE_PROCESS" value="2" enum="PauseMode">
 			Continue to process regardless of the [SceneTree] pause state.
+		</constant>
+		<constant name="PHYSICS_INTERPOLATION_MODE_INHERIT" value="0" enum="PhysicsInterpolationMode">
+			Inherits physics interpolation mode from the node's parent. For the root node, it is equivalent to [constant PHYSICS_INTERPOLATION_MODE_ON]. Default.
+		</constant>
+		<constant name="PHYSICS_INTERPOLATION_MODE_OFF" value="1" enum="PhysicsInterpolationMode">
+			Turn off physics interpolation in this node and children set to [constant PHYSICS_INTERPOLATION_MODE_INHERIT].
+		</constant>
+		<constant name="PHYSICS_INTERPOLATION_MODE_ON" value="2" enum="PhysicsInterpolationMode">
+			Turn on physics interpolation in this node and children set to [constant PHYSICS_INTERPOLATION_MODE_INHERIT].
 		</constant>
 		<constant name="DUPLICATE_SIGNALS" value="1" enum="DuplicateFlags">
 			Duplicate the node's signals.

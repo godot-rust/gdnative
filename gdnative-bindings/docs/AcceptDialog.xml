@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AcceptDialog" inherits="WindowDialog" version="3.4">
+<class name="AcceptDialog" inherits="WindowDialog" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base dialog for user notification.
 	</brief_description>
@@ -68,7 +68,7 @@
 		<member name="dialog_text" type="String" setter="set_text" getter="get_text" default="&quot;&quot;">
 			The text displayed by the dialog.
 		</member>
-		<member name="window_title" type="String" setter="set_title" getter="get_title" override="true" default="&quot;Alert!&quot;" />
+		<member name="window_title" type="String" setter="set_title" getter="get_title" overrides="WindowDialog" default="&quot;Alert!&quot;" />
 	</members>
 	<signals>
 		<signal name="confirmed">

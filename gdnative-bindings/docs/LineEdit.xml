@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="LineEdit" inherits="Control" version="3.4">
+<class name="LineEdit" inherits="Control" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Control that provides single-line string editing.
 	</brief_description>
@@ -74,6 +74,24 @@
 				Returns the scroll offset due to [member caret_position], as a number of characters.
 			</description>
 		</method>
+		<method name="get_selection_from_column" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the selection begin column.
+			</description>
+		</method>
+		<method name="get_selection_to_column" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the selection end column.
+			</description>
+		</method>
+		<method name="has_selection" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if the user has selected text.
+			</description>
+		</method>
 		<method name="menu_option">
 			<return type="void" />
 			<argument index="0" name="option" type="int" />
@@ -121,13 +139,16 @@
 		<member name="context_menu_enabled" type="bool" setter="set_context_menu_enabled" getter="is_context_menu_enabled" default="true">
 			If [code]true[/code], the context menu will appear when right-clicked.
 		</member>
+		<member name="deselect_on_focus_loss_enabled" type="bool" setter="set_deselect_on_focus_loss_enabled" getter="is_deselect_on_focus_loss_enabled" default="true">
+			If [code]true[/code], the selected text will be deselected when focus is lost.
+		</member>
 		<member name="editable" type="bool" setter="set_editable" getter="is_editable" default="true">
 			If [code]false[/code], existing text cannot be modified and new text cannot be added.
 		</member>
 		<member name="expand_to_text_length" type="bool" setter="set_expand_to_text_length" getter="get_expand_to_text_length" default="false">
 			If [code]true[/code], the [LineEdit] width will increase to stay longer than the [member text]. It will [b]not[/b] compress if the [member text] is shortened.
 		</member>
-		<member name="focus_mode" type="int" setter="set_focus_mode" getter="get_focus_mode" override="true" enum="Control.FocusMode" default="2" />
+		<member name="focus_mode" type="int" setter="set_focus_mode" getter="get_focus_mode" overrides="Control" enum="Control.FocusMode" default="2" />
 		<member name="max_length" type="int" setter="set_max_length" getter="get_max_length" default="0">
 			Maximum amount of characters that can be entered inside the [LineEdit]. If [code]0[/code], there is no limit.
 			When a limit is defined, characters that would exceed [member max_length] are truncated. This happens both for existing [member text] contents when setting the max length, or for new text inserted in the [LineEdit], including pasting. If any input text is truncated, the [signal text_change_rejected] signal is emitted with the truncated substring as parameter.
@@ -142,7 +163,11 @@
 			# `text_change_rejected` is emitted with "bye" as parameter.
 			[/codeblock]
 		</member>
-		<member name="mouse_default_cursor_shape" type="int" setter="set_default_cursor_shape" getter="get_default_cursor_shape" override="true" enum="Control.CursorShape" default="1" />
+		<member name="middle_mouse_paste_enabled" type="bool" setter="set_middle_mouse_paste_enabled" getter="is_middle_mouse_paste_enabled" default="true">
+			If [code]false[/code], using middle mouse button to paste clipboard will be disabled.
+			[b]Note:[/b] This method is only implemented on Linux.
+		</member>
+		<member name="mouse_default_cursor_shape" type="int" setter="set_default_cursor_shape" getter="get_default_cursor_shape" overrides="Control" enum="Control.CursorShape" default="1" />
 		<member name="placeholder_alpha" type="float" setter="set_placeholder_alpha" getter="get_placeholder_alpha" default="0.6">
 			Opacity of the [member placeholder_text]. From [code]0[/code] to [code]1[/code].
 		</member>
@@ -232,9 +257,6 @@
 		</constant>
 	</constants>
 	<theme_items>
-		<theme_item name="clear" data_type="icon" type="Texture">
-			Texture for the clear button. See [member clear_button_enabled].
-		</theme_item>
 		<theme_item name="clear_button_color" data_type="color" type="Color" default="Color( 0.88, 0.88, 0.88, 1 )">
 			Color used as default tint for the clear button.
 		</theme_item>
@@ -243,12 +265,6 @@
 		</theme_item>
 		<theme_item name="cursor_color" data_type="color" type="Color" default="Color( 0.94, 0.94, 0.94, 1 )">
 			Color of the [LineEdit]'s visual cursor (caret).
-		</theme_item>
-		<theme_item name="focus" data_type="style" type="StyleBox">
-			Background used when [LineEdit] has GUI focus.
-		</theme_item>
-		<theme_item name="font" data_type="font" type="Font">
-			Font used for the text.
 		</theme_item>
 		<theme_item name="font_color" data_type="color" type="Color" default="Color( 0.88, 0.88, 0.88, 1 )">
 			Default font color.
@@ -259,17 +275,26 @@
 		<theme_item name="font_color_uneditable" data_type="color" type="Color" default="Color( 0.88, 0.88, 0.88, 0.5 )">
 			Font color when editing is disabled.
 		</theme_item>
+		<theme_item name="selection_color" data_type="color" type="Color" default="Color( 0.49, 0.49, 0.49, 1 )">
+			Color of the selection rectangle.
+		</theme_item>
 		<theme_item name="minimum_spaces" data_type="constant" type="int" default="12">
 			Minimum horizontal space for the text (not counting the clear button and content margins). This value is measured in count of space characters (i.e. this amount of space characters can be displayed without scrolling).
+		</theme_item>
+		<theme_item name="font" data_type="font" type="Font">
+			Font used for the text.
+		</theme_item>
+		<theme_item name="clear" data_type="icon" type="Texture">
+			Texture for the clear button. See [member clear_button_enabled].
+		</theme_item>
+		<theme_item name="focus" data_type="style" type="StyleBox">
+			Background used when [LineEdit] has GUI focus.
 		</theme_item>
 		<theme_item name="normal" data_type="style" type="StyleBox">
 			Default background for the [LineEdit].
 		</theme_item>
 		<theme_item name="read_only" data_type="style" type="StyleBox">
 			Background used when [LineEdit] is in read-only mode ([member editable] is set to [code]false[/code]).
-		</theme_item>
-		<theme_item name="selection_color" data_type="color" type="Color" default="Color( 0.49, 0.49, 0.49, 1 )">
-			Color of the selection rectangle.
 		</theme_item>
 	</theme_items>
 </class>

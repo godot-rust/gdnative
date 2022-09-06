@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Dictionary" version="3.4">
+<class name="Dictionary" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Dictionary type.
 	</brief_description>
@@ -31,7 +31,7 @@
 		[/codeblock]
 		You can access a dictionary's values by referencing the appropriate key. In the above example, [code]points_dict["White"][/code] will return [code]50[/code]. You can also write [code]points_dict.White[/code], which is equivalent. However, you'll have to use the bracket syntax if the key you're accessing the dictionary with isn't a fixed string (such as a number or variable).
 		[codeblock]
-		export(string, "White", "Yellow", "Orange") var my_color
+		export(String, "White", "Yellow", "Orange") var my_color
 		var points_dict = {"White": 50, "Yellow": 75, "Orange": 100}
 		func _ready():
 		    # We can't use dot syntax here as `my_color` is a variable.
@@ -84,7 +84,7 @@
 		[b]Note:[/b] When declaring a dictionary with [code]const[/code], the dictionary itself can still be mutated by defining the values of individual keys. Using [code]const[/code] will only prevent assigning the constant with another value after it was initialized.
 	</description>
 	<tutorials>
-		<link title="GDScript basics: Dictionary">https://docs.godotengine.org/en/3.4/getting_started/scripting/gdscript/gdscript_basics.html#dictionary</link>
+		<link title="GDScript basics: Dictionary">https://docs.godotengine.org/en/3.5/tutorials/scripting/gdscript/gdscript_basics.html#dictionary</link>
 		<link title="3D Voxel Demo">https://godotengine.org/asset-library/asset/676</link>
 		<link title="OS Test Demo">https://godotengine.org/asset-library/asset/677</link>
 	</tutorials>
@@ -147,7 +147,7 @@
 		<method name="hash">
 			<return type="int" />
 			<description>
-				Returns a hashed integer value representing the dictionary contents. This can be used to compare dictionaries by value:
+				Returns a hashed 32-bit integer value representing the dictionary contents. This can be used to compare dictionaries by value:
 				[codeblock]
 				var dict1 = {0: 10}
 				var dict2 = {0: 10}
@@ -155,12 +155,20 @@
 				print(dict1.hash() == dict2.hash())
 				[/codeblock]
 				[b]Note:[/b] Dictionaries with the same keys/values but in a different order will have a different hash.
+				[b]Note:[/b] Dictionaries with equal content will always produce identical hash values. However, the reverse is not true. Returning identical hash values does [i]not[/i] imply the dictionaries are equal, because different dictionaries can have identical hash values due to hash collisions.
 			</description>
 		</method>
 		<method name="keys">
 			<return type="Array" />
 			<description>
 				Returns the list of keys in the [Dictionary].
+			</description>
+		</method>
+		<method name="merge">
+			<argument index="0" name="dictionary" type="Dictionary" />
+			<argument index="1" name="overwrite" type="bool" default="false" />
+			<description>
+				Adds elements from [code]dictionary[/code] to this [Dictionary]. By default, duplicate keys will not be copied over, unless [code]overwrite[/code] is [code]true[/code].
 			</description>
 		</method>
 		<method name="size">

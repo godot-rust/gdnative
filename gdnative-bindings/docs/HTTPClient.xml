@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="HTTPClient" inherits="Reference" version="3.4">
+<class name="HTTPClient" inherits="Reference" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Low-level hyper-text transfer protocol client.
 	</brief_description>
 	<description>
-		Hyper-text transfer protocol client (sometimes called "User Agent"). Used to make HTTP requests to download web content, upload files and other data or to communicate with various services, among other use cases. [b]See the [HTTPRequest] node for a higher-level alternative.[/b]
+		Hyper-text transfer protocol client (sometimes called "User Agent"). Used to make HTTP requests to download web content, upload files and other data or to communicate with various services, among other use cases.
+		See the [HTTPRequest] node for a higher-level alternative.
 		[b]Note:[/b] This client only needs to connect to a host once (see [method connect_to_host]) to send multiple requests. Because of this, methods that take URLs usually take just the part after the host instead of the full URL, as the client is already connected to a host. See [method request] for a full example and to get started.
 		A [HTTPClient] should be reused between multiple requests or to connect to different hosts instead of creating one client per request. Supports SSL and SSL server certificate verification. HTTP status codes in the 2xx range indicate success, 3xx redirection (i.e. "try again, but over here"), 4xx something was wrong with the request, and 5xx something went wrong on the server's side.
 		For more information on HTTP, see https://developer.mozilla.org/en-US/docs/Web/HTTP (or read RFC 2616 to get it straight from the source: https://tools.ietf.org/html/rfc2616).
@@ -13,8 +14,8 @@
 		[b]Warning:[/b] SSL/TLS certificate revocation and certificate pinning are currently not supported. Revoked certificates are accepted as long as they are otherwise valid. If this is a concern, you may want to use automatically managed certificates with a short validity period.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/networking/http_client_class.html</link>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/networking/ssl_certificates.html</link>
+		<link>https://docs.godotengine.org/en/3.5/tutorials/networking/http_client_class.html</link>
+		<link>https://docs.godotengine.org/en/3.5/tutorials/networking/ssl_certificates.html</link>
 	</tutorials>
 	<methods>
 		<method name="close">
@@ -147,6 +148,24 @@
 				The URL parameter is usually just the part after the host, so for [code]http://somehost.com/index.php[/code], it is [code]/index.php[/code]. When sending requests to an HTTP proxy server, it should be an absolute URL. For [constant HTTPClient.METHOD_OPTIONS] requests, [code]*[/code] is also allowed. For [constant HTTPClient.METHOD_CONNECT] requests, it should be the authority component ([code]host:port[/code]).
 				Headers are HTTP request headers. For available HTTP methods, see [enum Method].
 				Sends the body data raw, as a byte array and does not encode it in any way.
+			</description>
+		</method>
+		<method name="set_http_proxy">
+			<return type="void" />
+			<argument index="0" name="host" type="String" />
+			<argument index="1" name="port" type="int" />
+			<description>
+				Sets the proxy server for HTTP requests.
+				The proxy server is unset if [code]host[/code] is empty or [code]port[/code] is -1.
+			</description>
+		</method>
+		<method name="set_https_proxy">
+			<return type="void" />
+			<argument index="0" name="host" type="String" />
+			<argument index="1" name="port" type="int" />
+			<description>
+				Sets the proxy server for HTTPS requests.
+				The proxy server is unset if [code]host[/code] is empty or [code]port[/code] is -1.
 			</description>
 		</method>
 	</methods>

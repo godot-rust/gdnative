@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Sprite3D" inherits="SpriteBase3D" version="3.4">
+<class name="Sprite3D" inherits="SpriteBase3D" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		2D sprite node in a 3D world.
 	</brief_description>
@@ -27,7 +27,7 @@
 			The region of the atlas texture to display. [member region_enabled] must be [code]true[/code].
 		</member>
 		<member name="texture" type="Texture" setter="set_texture" getter="get_texture">
-			[Texture] object to draw. If [member GeometryInstance.material_override] is used, this will be overridden.
+			[Texture] object to draw. If [member GeometryInstance.material_override] is used, this will be overridden. The size information is still used.
 		</member>
 		<member name="vframes" type="int" setter="set_vframes" getter="get_vframes" default="1">
 			The number of rows in the sprite sheet.

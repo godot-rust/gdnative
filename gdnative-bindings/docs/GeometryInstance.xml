@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="GeometryInstance" inherits="VisualInstance" version="3.4">
+<class name="GeometryInstance" inherits="VisualInstance" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base node for geometry-based visual instances.
 	</brief_description>
@@ -60,6 +60,10 @@
 		<member name="lod_min_hysteresis" type="float" setter="set_lod_min_hysteresis" getter="get_lod_min_hysteresis" default="0.0">
 			The GeometryInstance's min LOD margin.
 			[b]Note:[/b] This property currently has no effect.
+		</member>
+		<member name="material_overlay" type="Material" setter="set_material_overlay" getter="get_material_overlay">
+			The material overlay for the whole geometry.
+			If a material is assigned to this property, it will be rendered on top of any other active material for all the surfaces.
 		</member>
 		<member name="material_override" type="Material" setter="set_material_override" getter="get_material_override">
 			The material override for the whole geometry.

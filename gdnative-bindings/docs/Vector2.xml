@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Vector2" version="3.4">
+<class name="Vector2" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Vector used for 2D math.
 	</brief_description>
@@ -8,9 +8,9 @@
 		[b]Note:[/b] In a boolean context, a Vector2 will evaluate to [code]false[/code] if it's equal to [code]Vector2(0, 0)[/code]. Otherwise, a Vector2 will always evaluate to [code]true[/code].
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/3.4/tutorials/math/index.html</link>
-		<link title="Vector math">https://docs.godotengine.org/en/3.4/tutorials/math/vector_math.html</link>
-		<link title="Advanced vector math">https://docs.godotengine.org/en/3.4/tutorials/math/vectors_advanced.html</link>
+		<link title="Math tutorial index">https://docs.godotengine.org/en/3.5/tutorials/math/index.html</link>
+		<link title="Vector math">https://docs.godotengine.org/en/3.5/tutorials/math/vector_math.html</link>
+		<link title="Advanced vector math">https://docs.godotengine.org/en/3.5/tutorials/math/vectors_advanced.html</link>
 		<link title="3Blue1Brown Essence of Linear Algebra">https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab</link>
 		<link title="Matrix Transform Demo">https://godotengine.org/asset-library/asset/584</link>
 		<link title="All 2D Demos">https://github.com/godotengine/godot-demo-projects/tree/master/2d</link>
@@ -52,7 +52,7 @@
 			<argument index="0" name="to" type="Vector2" />
 			<description>
 				Returns the angle between the line connecting the two points and the X axis, in radians.
-				[url=https://raw.githubusercontent.com/godotengine/godot-docs/master/img/vector2_angle_to_point.png]Illustration of the returned angle.[/url]
+				[url=https://raw.githubusercontent.com/godotengine/godot-docs/stable/img/vector2_angle_to_point.png]Illustration of the returned angle.[/url]
 			</description>
 		</method>
 		<method name="aspect">
@@ -71,13 +71,14 @@
 		<method name="ceil">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with all components rounded up (towards positive infinity).
+				Returns a new vector with all components rounded up (towards positive infinity).
 			</description>
 		</method>
 		<method name="clamped">
 			<return type="Vector2" />
 			<argument index="0" name="length" type="float" />
 			<description>
+				Deprecated, please use [method limit_length] instead.
 				Returns the vector with a maximum length by limiting its length to [code]length[/code].
 			</description>
 		</method>
@@ -85,7 +86,9 @@
 			<return type="float" />
 			<argument index="0" name="with" type="Vector2" />
 			<description>
-				Returns the cross product of this vector and [code]with[/code].
+				Returns the 2D analog of the cross product for this vector and [code]with[/code].
+				This is the signed area of the parallelogram formed by the two vectors. If the second vector is clockwise from the first vector, then the cross product is the positive area. If counter-clockwise, the cross product is the negative area.
+				[b]Note:[/b] Cross product is not defined in 2D mathematically. This method embeds the 2D vectors in the XY plane of 3D space and uses their cross product's Z component as the analog.
 			</description>
 		</method>
 		<method name="cubic_interpolate">
@@ -133,7 +136,7 @@
 		<method name="floor">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with all components rounded down (towards negative infinity).
+				Returns a new vector with all components rounded down (towards negative infinity).
 			</description>
 		</method>
 		<method name="is_equal_approx">
@@ -162,6 +165,13 @@
 				This method runs faster than [method length], so prefer it if you need to compare vectors or need the squared distance for some formula.
 			</description>
 		</method>
+		<method name="limit_length">
+			<return type="Vector2" />
+			<argument index="0" name="length" type="float" default="1.0" />
+			<description>
+				Returns the vector with a maximum length by limiting its length to [code]length[/code].
+			</description>
+		</method>
 		<method name="linear_interpolate">
 			<return type="Vector2" />
 			<argument index="0" name="to" type="Vector2" />
@@ -175,7 +185,7 @@
 			<argument index="0" name="to" type="Vector2" />
 			<argument index="1" name="delta" type="float" />
 			<description>
-				Moves the vector toward [code]to[/code] by the fixed [code]delta[/code] amount.
+				Returns a new vector moved toward [code]to[/code] by the fixed [code]delta[/code] amount. Will not go past the final value.
 			</description>
 		</method>
 		<method name="normalized">
@@ -202,33 +212,33 @@
 			<return type="Vector2" />
 			<argument index="0" name="b" type="Vector2" />
 			<description>
-				Returns the vector projected onto the vector [code]b[/code].
+				Returns this vector projected onto the vector [code]b[/code].
 			</description>
 		</method>
 		<method name="reflect">
 			<return type="Vector2" />
 			<argument index="0" name="n" type="Vector2" />
 			<description>
-				Returns the vector reflected from a plane defined by the given normal.
+				Returns the vector reflected (i.e. mirrored, or symmetric) over a line defined by the given direction vector [code]n[/code].
 			</description>
 		</method>
 		<method name="rotated">
 			<return type="Vector2" />
-			<argument index="0" name="phi" type="float" />
+			<argument index="0" name="angle" type="float" />
 			<description>
-				Returns the vector rotated by [code]phi[/code] radians. See also [method @GDScript.deg2rad].
+				Returns the vector rotated by [code]angle[/code] (in radians). See also [method @GDScript.deg2rad].
 			</description>
 		</method>
 		<method name="round">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with all components rounded to the nearest integer, with halfway cases rounded away from zero.
+				Returns a new vector with all components rounded to the nearest integer, with halfway cases rounded away from zero.
 			</description>
 		</method>
 		<method name="sign">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with each component set to one or negative one, depending on the signs of the components. If a component is zero, it returns positive one.
+				Returns a new vector with each component set to one or negative one, depending on the signs of the components. If a component is zero, it returns positive one.
 			</description>
 		</method>
 		<method name="slerp">

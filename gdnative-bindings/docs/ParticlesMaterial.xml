@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ParticlesMaterial" inherits="Material" version="3.4">
+<class name="ParticlesMaterial" inherits="Material" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Particle properties for [Particles] and [Particles2D] nodes.
 	</brief_description>
@@ -75,7 +75,7 @@
 	<members>
 		<member name="angle" type="float" setter="set_param" getter="get_param" default="0.0">
 			Initial rotation applied to each particle, in degrees.
-			Only applied when [member flag_disable_z] or [member flag_rotate_y] are [code]true[/code] or the [SpatialMaterial] being used to draw the particle is using [constant SpatialMaterial.BILLBOARD_PARTICLES].
+			[b]Note:[/b] Only applied when [member flag_disable_z] or [member flag_rotate_y] are [code]true[/code] or the [SpatialMaterial] being used to draw the particle is using [constant SpatialMaterial.BILLBOARD_PARTICLES].
 		</member>
 		<member name="angle_curve" type="Texture" setter="set_param_texture" getter="get_param_texture">
 			Each particle's rotation will be animated along this [CurveTexture].
@@ -84,8 +84,8 @@
 			Rotation randomness ratio.
 		</member>
 		<member name="angular_velocity" type="float" setter="set_param" getter="get_param" default="0.0">
-			Initial angular velocity applied to each particle. Sets the speed of rotation of the particle.
-			Only applied when [member flag_disable_z] or [member flag_rotate_y] are [code]true[/code] or the [SpatialMaterial] being used to draw the particle is using [constant SpatialMaterial.BILLBOARD_PARTICLES].
+			Initial angular velocity applied to each particle in [i]degrees[/i] per second. Sets the speed of rotation of the particle.
+			[b]Note:[/b] Only applied when [member flag_disable_z] or [member flag_rotate_y] are [code]true[/code] or the [SpatialMaterial] being used to draw the particle is using [constant SpatialMaterial.BILLBOARD_PARTICLES].
 		</member>
 		<member name="angular_velocity_curve" type="Texture" setter="set_param_texture" getter="get_param_texture">
 			Each particle's angular velocity will vary along this [CurveTexture].
@@ -113,6 +113,9 @@
 		</member>
 		<member name="color" type="Color" setter="set_color" getter="get_color" default="Color( 1, 1, 1, 1 )">
 			Each particle's initial color. If the [Particles2D]'s [code]texture[/code] is defined, it will be multiplied by this color. To have particle display color in a [SpatialMaterial] make sure to set [member SpatialMaterial.vertex_color_use_as_albedo] to [code]true[/code].
+		</member>
+		<member name="color_initial_ramp" type="Texture" setter="set_color_initial_ramp" getter="get_color_initial_ramp">
+			Each particle's initial color will vary along this [GradientTexture] (multiplied with [member color]).
 		</member>
 		<member name="color_ramp" type="Texture" setter="set_color_ramp" getter="get_color_ramp">
 			Each particle's color will vary along this [GradientTexture] over its lifetime (multiplied with [member color]).
@@ -144,7 +147,7 @@
 		<member name="emission_point_texture" type="Texture" setter="set_emission_point_texture" getter="get_emission_point_texture">
 			Particles will be emitted at positions determined by sampling this texture at a random position. Used with [constant EMISSION_SHAPE_POINTS] and [constant EMISSION_SHAPE_DIRECTED_POINTS]. Can be created automatically from mesh or node by selecting "Create Emission Points from Mesh/Node" under the "Particles" tool in the toolbar.
 		</member>
-		<member name="emission_ring_axis" type="Vector3" setter="set_emission_ring_axis" getter="get_emission_ring_axis" default="Vector3( 0, 0, 1 )">
+		<member name="emission_ring_axis" type="Vector3" setter="set_emission_ring_axis" getter="get_emission_ring_axis">
 			The axis of the ring when using the emitter [constant EMISSION_SHAPE_RING].
 		</member>
 		<member name="emission_ring_height" type="float" setter="set_emission_ring_height" getter="get_emission_ring_height">
@@ -206,7 +209,7 @@
 		</member>
 		<member name="orbit_velocity" type="float" setter="set_param" getter="get_param">
 			Orbital velocity applied to each particle. Makes the particles circle around origin. Specified in number of full rotations around origin per second.
-			Only available when [member flag_disable_z] is [code]true[/code].
+			[b]Note:[/b] Only available when [member flag_disable_z] is [code]true[/code].
 		</member>
 		<member name="orbit_velocity_curve" type="Texture" setter="set_param_texture" getter="get_param_texture">
 			Each particle's orbital velocity will vary along this [CurveTexture].

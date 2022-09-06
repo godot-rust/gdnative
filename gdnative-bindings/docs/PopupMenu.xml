@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PopupMenu" inherits="Popup" version="3.4">
+<class name="PopupMenu" inherits="Popup" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		PopupMenu displays a list of options.
 	</brief_description>
 	<description>
 		[PopupMenu] is a [Control] that displays a list of options. They are popular in toolbars or context menus.
+		[b]Incremental search:[/b] Like [ItemList] and [Tree], [PopupMenu] supports searching within the list while the control is focused. Press a key that matches the first letter of an item's name to select the first item starting with the given letter. After that point, there are two ways to perform incremental search: 1) Press the same key again before the timeout duration to select the next item starting with the same letter. 2) Press letter keys that match the rest of the word before the timeout duration to match to select the item in question directly. Both of these actions will be reset to the beginning of the list if the timeout duration has passed since the last keystroke was registered. You can adjust the timeout duration by changing [member ProjectSettings.gui/timers/incremental_search_max_interval_msec].
 	</description>
 	<tutorials>
 	</tutorials>
@@ -249,7 +250,7 @@
 			<return type="String" />
 			<argument index="0" name="idx" type="int" />
 			<description>
-				Returns the tooltip associated with the specified index index [code]idx[/code].
+				Returns the tooltip associated with the specified index [code]idx[/code].
 			</description>
 		</method>
 		<method name="is_hide_on_window_lose_focus" qualifiers="const">
@@ -309,6 +310,13 @@
 			<description>
 				Removes the item at index [code]idx[/code] from the menu.
 				[b]Note:[/b] The indices of items after the removed item will be shifted by one.
+			</description>
+		</method>
+		<method name="set_current_index">
+			<return type="void" />
+			<argument index="0" name="index" type="int" />
+			<description>
+				Sets the currently focused item as the given [code]index[/code].
 			</description>
 		</method>
 		<method name="set_hide_on_window_lose_focus">
@@ -459,7 +467,7 @@
 		<member name="allow_search" type="bool" setter="set_allow_search" getter="get_allow_search" default="false">
 			If [code]true[/code], allows navigating [PopupMenu] with letter keys.
 		</member>
-		<member name="focus_mode" type="int" setter="set_focus_mode" getter="get_focus_mode" override="true" enum="Control.FocusMode" default="2" />
+		<member name="focus_mode" type="int" setter="set_focus_mode" getter="get_focus_mode" overrides="Control" enum="Control.FocusMode" default="2" />
 		<member name="hide_on_checkable_item_selection" type="bool" setter="set_hide_on_checkable_item_selection" getter="is_hide_on_checkable_item_selection" default="true">
 			If [code]true[/code], hides the [PopupMenu] when a checkbox or radio button is selected.
 		</member>
@@ -496,12 +504,6 @@
 	<constants>
 	</constants>
 	<theme_items>
-		<theme_item name="checked" data_type="icon" type="Texture">
-			[Texture] icon for the checked checkbox items.
-		</theme_item>
-		<theme_item name="font" data_type="font" type="Font">
-			[Font] used for the menu items.
-		</theme_item>
 		<theme_item name="font_color" data_type="color" type="Color" default="Color( 0.88, 0.88, 0.88, 1 )">
 			The default text [Color] for menu items' names.
 		</theme_item>
@@ -517,11 +519,35 @@
 		<theme_item name="font_color_separator" data_type="color" type="Color" default="Color( 0.88, 0.88, 0.88, 1 )">
 			[Color] used for labeled separators' text. See [method add_separator].
 		</theme_item>
-		<theme_item name="hover" data_type="style" type="StyleBox">
-			[StyleBox] displayed when the [PopupMenu] item is hovered.
-		</theme_item>
 		<theme_item name="hseparation" data_type="constant" type="int" default="4">
 			The horizontal space between the item's name and the shortcut text/submenu arrow.
+		</theme_item>
+		<theme_item name="vseparation" data_type="constant" type="int" default="4">
+			The vertical space between each menu item.
+		</theme_item>
+		<theme_item name="font" data_type="font" type="Font">
+			[Font] used for the menu items.
+		</theme_item>
+		<theme_item name="font_separator" data_type="font" type="Font">
+			[Font] used for the labeled separator.
+		</theme_item>
+		<theme_item name="checked" data_type="icon" type="Texture">
+			[Texture] icon for the checked checkbox items.
+		</theme_item>
+		<theme_item name="radio_checked" data_type="icon" type="Texture">
+			[Texture] icon for the checked radio button items.
+		</theme_item>
+		<theme_item name="radio_unchecked" data_type="icon" type="Texture">
+			[Texture] icon for the unchecked radio button items.
+		</theme_item>
+		<theme_item name="submenu" data_type="icon" type="Texture">
+			[Texture] icon for the submenu arrow.
+		</theme_item>
+		<theme_item name="unchecked" data_type="icon" type="Texture">
+			[Texture] icon for the unchecked checkbox items.
+		</theme_item>
+		<theme_item name="hover" data_type="style" type="StyleBox">
+			[StyleBox] displayed when the [PopupMenu] item is hovered.
 		</theme_item>
 		<theme_item name="labeled_separator_left" data_type="style" type="StyleBox">
 			[StyleBox] for the left side of labeled separator. See [method add_separator].
@@ -535,23 +561,8 @@
 		<theme_item name="panel_disabled" data_type="style" type="StyleBox">
 			[StyleBox] used when the [PopupMenu] item is disabled.
 		</theme_item>
-		<theme_item name="radio_checked" data_type="icon" type="Texture">
-			[Texture] icon for the checked radio button items.
-		</theme_item>
-		<theme_item name="radio_unchecked" data_type="icon" type="Texture">
-			[Texture] icon for the unchecked radio button items.
-		</theme_item>
 		<theme_item name="separator" data_type="style" type="StyleBox">
 			[StyleBox] used for the separators. See [method add_separator].
-		</theme_item>
-		<theme_item name="submenu" data_type="icon" type="Texture">
-			[Texture] icon for the submenu arrow.
-		</theme_item>
-		<theme_item name="unchecked" data_type="icon" type="Texture">
-			[Texture] icon for the unchecked checkbox items.
-		</theme_item>
-		<theme_item name="vseparation" data_type="constant" type="int" default="4">
-			The vertical space between each menu item.
 		</theme_item>
 	</theme_items>
 </class>

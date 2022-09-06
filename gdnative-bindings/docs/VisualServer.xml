@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VisualServer" inherits="Object" version="3.4">
+<class name="VisualServer" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Server for anything visible.
 	</brief_description>
@@ -15,7 +15,7 @@
 		In 2D, all visible objects are some form of canvas item. In order to be visible, a canvas item needs to be the child of a canvas attached to a viewport, or it needs to be the child of another canvas item that is eventually attached to the canvas.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/optimization/using_servers.html</link>
+		<link>https://docs.godotengine.org/en/3.5/tutorials/performance/using_servers.html</link>
 	</tutorials>
 	<methods>
 		<method name="black_bars_set_images">
@@ -1178,8 +1178,10 @@
 		</method>
 		<method name="has_changed" qualifiers="const">
 			<return type="bool" />
+			<argument index="0" name="queried_priority" type="int" enum="VisualServer.ChangedPriority" default="0" />
 			<description>
 				Returns [code]true[/code] if changes have been made to the VisualServer's data. [method draw] is usually called if this happens.
+				As changes are registered as either high or low priority (e.g. dynamic shaders), this function takes an optional argument to query either low or high priority changes, or any changes.
 			</description>
 		</method>
 		<method name="has_feature" qualifiers="const">
@@ -1372,6 +1374,14 @@
 			<argument index="2" name="enabled" type="bool" />
 			<description>
 				Sets the flag for a given [enum InstanceFlags]. See [enum InstanceFlags] for more details.
+			</description>
+		</method>
+		<method name="instance_geometry_set_material_overlay">
+			<return type="void" />
+			<argument index="0" name="instance" type="RID" />
+			<argument index="1" name="material" type="RID" />
+			<description>
+				Sets a material that will be rendered for all surfaces on top of active materials for the mesh associated with this instance. Equivalent to [member GeometryInstance.material_overlay].
 			</description>
 		</method>
 		<method name="instance_geometry_set_material_override">
@@ -1751,7 +1761,7 @@
 			<argument index="0" name="material" type="RID" />
 			<argument index="1" name="parameter" type="String" />
 			<description>
-				Returns the default value for the param if available. Otherwise returns an empty [Variant].
+				Returns the default value for the param if available. Returns [code]null[/code] otherwise.
 			</description>
 		</method>
 		<method name="material_get_shader" qualifiers="const">
@@ -2525,6 +2535,15 @@
 				Sets the default clear color which is used when a specific clear color has not been selected.
 			</description>
 		</method>
+		<method name="set_shader_async_hidden_forbidden">
+			<return type="void" />
+			<argument index="0" name="forbidden" type="bool" />
+			<description>
+				If asynchronous shader compilation is enabled, this controls whether [constant SpatialMaterial.ASYNC_MODE_HIDDEN] is obeyed.
+				For instance, you may want to enable this temporarily before taking a screenshot. This ensures everything is visible even if shaders with async mode [i]hidden[/i] are not ready yet.
+				Reflection probes use this internally to ensure they capture everything regardless the shaders are ready or not.
+			</description>
+		</method>
 		<method name="set_shader_time_scale">
 			<return type="void" />
 			<argument index="0" name="scale" type="float" />
@@ -2820,6 +2839,29 @@
 				Sets the texture's path.
 			</description>
 		</method>
+		<method name="texture_set_proxy">
+			<return type="void" />
+			<argument index="0" name="proxy" type="RID" />
+			<argument index="1" name="base" type="RID" />
+			<description>
+				Creates an update link between two textures, similar to how [ViewportTexture]s operate. When the base texture is the texture of a [Viewport], every time the viewport renders a new frame, the proxy texture automatically receives an update.
+				For example, this code links a generic [ImageTexture] to the texture output of the [Viewport] using the VisualServer API:
+				[codeblock]
+				func _ready():
+				    var viewport_rid = get_viewport().get_viewport_rid()
+				    var viewport_texture_rid = VisualServer.viewport_get_texture(viewport_rid)
+
+				    var proxy_texture = ImageTexture.new()
+				    var viewport_texture_image_data = VisualServer.texture_get_data(viewport_texture_rid)
+
+				    proxy_texture.create_from_image(viewport_texture_image_data)
+				    var proxy_texture_rid = proxy_texture.get_rid()
+				    VisualServer.texture_set_proxy(proxy_texture_rid, viewport_texture_rid)
+
+				    $TextureRect.texture = proxy_texture
+				[/codeblock]
+			</description>
+		</method>
 		<method name="texture_set_shrink_all_x2_on_set_data">
 			<return type="void" />
 			<argument index="0" name="shrink" type="bool" />
@@ -2873,7 +2915,7 @@
 				    get_viewport().set_attach_to_screen_rect(Rect2())
 				    $Viewport.set_attach_to_screen_rect(Rect2(0, 0, 600, 600))
 				[/codeblock]
-				Using this can result in significant optimization, especially on lower-end devices. However, it comes at the cost of having to manage your viewports manually. For a further optimization see, [method viewport_set_render_direct_to_screen].
+				Using this can result in significant optimization, especially on lower-end devices. However, it comes at the cost of having to manage your viewports manually. For further optimization, see [method viewport_set_render_direct_to_screen].
 			</description>
 		</method>
 		<method name="viewport_create">
@@ -2986,7 +3028,8 @@
 			<argument index="0" name="viewport" type="RID" />
 			<argument index="1" name="enabled" type="bool" />
 			<description>
-				If [code]true[/code], the viewport renders to hdr.
+				If [code]true[/code], the viewport renders to high dynamic range (HDR) instead of standard dynamic range (SDR). See also [method viewport_set_use_32_bpc_depth].
+				[b]Note:[/b] Only available on the GLES3 backend.
 			</description>
 		</method>
 		<method name="viewport_set_hide_canvas">
@@ -3094,6 +3137,15 @@
 			<argument index="1" name="usage" type="int" enum="VisualServer.ViewportUsage" />
 			<description>
 				Sets the viewport's 2D/3D mode. See [enum ViewportUsage] constants for options.
+			</description>
+		</method>
+		<method name="viewport_set_use_32_bpc_depth">
+			<return type="void" />
+			<argument index="0" name="viewport" type="RID" />
+			<argument index="1" name="enabled" type="bool" />
+			<description>
+				If [code]true[/code], allocates the viewport's framebuffer with full floating-point precision (32-bit) instead of half floating-point precision (16-bit). Only effective if [method viewport_set_use_32_bpc_depth] is used on the same [Viewport] to set HDR to [code]true[/code].
+				[b]Note:[/b] Only available on the GLES3 backend.
 			</description>
 		</method>
 		<method name="viewport_set_use_arvr">
@@ -3677,28 +3729,34 @@
 		<constant name="INFO_SHADER_CHANGES_IN_FRAME" value="3" enum="RenderInfo">
 			The amount of shader rebinds in the frame.
 		</constant>
-		<constant name="INFO_SURFACE_CHANGES_IN_FRAME" value="4" enum="RenderInfo">
+		<constant name="INFO_SHADER_COMPILES_IN_FRAME" value="4" enum="RenderInfo">
+			The peak amount of shaders that have been under compilation in the frame.
+			This is useful to know when asynchronous shader compilation has finished for the current shaders on screen.
+			[b]Note:[/b] For complete certainty, only assume there are no outstanding compilations when this value is zero for at least two frames in a row.
+			Unimplemented in the GLES2 rendering backend, always returns 0.
+		</constant>
+		<constant name="INFO_SURFACE_CHANGES_IN_FRAME" value="5" enum="RenderInfo">
 			The amount of surface changes in the frame.
 		</constant>
-		<constant name="INFO_DRAW_CALLS_IN_FRAME" value="5" enum="RenderInfo">
+		<constant name="INFO_DRAW_CALLS_IN_FRAME" value="6" enum="RenderInfo">
 			The amount of draw calls in frame.
 		</constant>
-		<constant name="INFO_2D_ITEMS_IN_FRAME" value="6" enum="RenderInfo">
+		<constant name="INFO_2D_ITEMS_IN_FRAME" value="7" enum="RenderInfo">
 			The amount of 2d items in the frame.
 		</constant>
-		<constant name="INFO_2D_DRAW_CALLS_IN_FRAME" value="7" enum="RenderInfo">
+		<constant name="INFO_2D_DRAW_CALLS_IN_FRAME" value="8" enum="RenderInfo">
 			The amount of 2d draw calls in frame.
 		</constant>
-		<constant name="INFO_USAGE_VIDEO_MEM_TOTAL" value="8" enum="RenderInfo">
+		<constant name="INFO_USAGE_VIDEO_MEM_TOTAL" value="9" enum="RenderInfo">
 			Unimplemented in the GLES2 and GLES3 rendering backends, always returns 0.
 		</constant>
-		<constant name="INFO_VIDEO_MEM_USED" value="9" enum="RenderInfo">
+		<constant name="INFO_VIDEO_MEM_USED" value="10" enum="RenderInfo">
 			The amount of video memory used, i.e. texture and vertex memory combined.
 		</constant>
-		<constant name="INFO_TEXTURE_MEM_USED" value="10" enum="RenderInfo">
+		<constant name="INFO_TEXTURE_MEM_USED" value="11" enum="RenderInfo">
 			The amount of texture memory used.
 		</constant>
-		<constant name="INFO_VERTEX_MEM_USED" value="11" enum="RenderInfo">
+		<constant name="INFO_VERTEX_MEM_USED" value="12" enum="RenderInfo">
 			The amount of vertex memory used.
 		</constant>
 		<constant name="FEATURE_SHADERS" value="0" enum="Features">
@@ -3789,19 +3847,20 @@
 			Shows the glow effect by itself without the underlying scene.
 		</constant>
 		<constant name="ENV_TONE_MAPPER_LINEAR" value="0" enum="EnvironmentToneMapper">
-			Output color as they came in.
+			Output color as they came in. This can cause bright lighting to look blown out, with noticeable clipping in the output colors.
 		</constant>
 		<constant name="ENV_TONE_MAPPER_REINHARD" value="1" enum="EnvironmentToneMapper">
-			Use the Reinhard tonemapper.
+			Use the Reinhard tonemapper. Performs a variation on rendered pixels' colors by this formula: [code]color = color / (1 + color)[/code]. This avoids clipping bright highlights, but the resulting image can look a bit dull.
 		</constant>
 		<constant name="ENV_TONE_MAPPER_FILMIC" value="2" enum="EnvironmentToneMapper">
-			Use the filmic tonemapper.
+			Use the filmic tonemapper. This avoids clipping bright highlights, with a resulting image that usually looks more vivid than [constant ENV_TONE_MAPPER_REINHARD].
 		</constant>
 		<constant name="ENV_TONE_MAPPER_ACES" value="3" enum="EnvironmentToneMapper">
-			Use the ACES tonemapper.
+			Use the legacy Godot version of the Academy Color Encoding System tonemapper. Unlike [constant ENV_TONE_MAPPER_ACES_FITTED], this version of ACES does not handle bright lighting in a physically accurate way. ACES typically has a more contrasted output compared to [constant ENV_TONE_MAPPER_REINHARD] and [constant ENV_TONE_MAPPER_FILMIC].
+			[b]Note:[/b] This tonemapping operator will be removed in Godot 4.0 in favor of the more accurate [constant ENV_TONE_MAPPER_ACES_FITTED].
 		</constant>
 		<constant name="ENV_TONE_MAPPER_ACES_FITTED" value="4" enum="EnvironmentToneMapper">
-			Use the ACES Fitted tonemapper.
+			Use the Academy Color Encoding System tonemapper. ACES is slightly more expensive than other options, but it handles bright lighting in a more realistic fashion by desaturating it as it becomes brighter. ACES typically has a more contrasted output compared to [constant ENV_TONE_MAPPER_REINHARD] and [constant ENV_TONE_MAPPER_FILMIC].
 		</constant>
 		<constant name="ENV_SSAO_QUALITY_LOW" value="0" enum="EnvironmentSSAOQuality">
 			Lowest quality of screen space ambient occlusion.
@@ -3823,6 +3882,15 @@
 		</constant>
 		<constant name="ENV_SSAO_BLUR_3x3" value="3" enum="EnvironmentSSAOBlur">
 			Performs a 3x3 blur on the SSAO output. Use this for smoothest SSAO.
+		</constant>
+		<constant name="CHANGED_PRIORITY_ANY" value="0" enum="ChangedPriority">
+			Used to query for any changes that request a redraw, whatever the priority.
+		</constant>
+		<constant name="CHANGED_PRIORITY_LOW" value="1" enum="ChangedPriority">
+			Registered changes which have low priority can be optionally prevented from causing editor redraws. Examples might include dynamic shaders (typically using the [code]TIME[/code] built-in).
+		</constant>
+		<constant name="CHANGED_PRIORITY_HIGH" value="2" enum="ChangedPriority">
+			Registered changes which can cause a redraw default to high priority.
 		</constant>
 	</constants>
 </class>

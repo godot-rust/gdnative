@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Object" version="3.4">
+<class name="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base class for all non-built-in types.
 	</brief_description>
@@ -21,8 +21,8 @@
 		[b]Note:[/b] Due to a bug, you can't create a "plain" Object using [code]Object.new()[/code]. Instead, use [code]ClassDB.instance("Object")[/code]. This bug only applies to Object itself, not any of its descendents like [Reference].
 	</description>
 	<tutorials>
-		<link title="When and how to avoid using nodes for everything">https://docs.godotengine.org/en/3.4/getting_started/workflow/best_practices/node_alternatives.html</link>
-		<link title="Advanced exports using _get_property_list()">https://docs.godotengine.org/en/3.4/getting_started/scripting/gdscript/gdscript_exports.html#advanced-exports</link>
+		<link title="When and how to avoid using nodes for everything">https://docs.godotengine.org/en/3.5/tutorials/best_practices/node_alternatives.html</link>
+		<link title="Advanced exports using _get_property_list()">https://docs.godotengine.org/en/3.5/tutorials/scripting/gdscript/gdscript_exports.html#advanced-exports</link>
 	</tutorials>
 	<methods>
 		<method name="_get" qualifiers="virtual">
@@ -44,7 +44,8 @@
 		<method name="_init" qualifiers="virtual">
 			<return type="void" />
 			<description>
-				Called when the object is initialized.
+				Called when the object is initialized in memory. Can be defined to take in parameters, that are passed in when constructing.
+				[b]Note:[/b] If [method _init] is defined with required parameters, then explicit construction is the only valid means of creating an Object of the class. If any other means (such as [method PackedScene.instance]) is used, then initialization will fail.
 			</description>
 		</method>
 		<method name="_notification" qualifiers="virtual">
@@ -126,7 +127,7 @@
 			<argument index="4" name="flags" type="int" default="0" />
 			<description>
 				Connects a [code]signal[/code] to a [code]method[/code] on a [code]target[/code] object. Pass optional [code]binds[/code] to the call as an [Array] of parameters. These parameters will be passed to the method after any parameter used in the call to [method emit_signal]. Use [code]flags[/code] to set deferred or one-shot connections. See [enum ConnectFlags] constants.
-				A [code]signal[/code] can only be connected once to a [code]method[/code]. It will throw an error if already connected, unless the signal was connected with [constant CONNECT_REFERENCE_COUNTED]. To avoid this, first, use [method is_connected] to check for existing connections.
+				A [code]signal[/code] can only be connected once to a [code]method[/code]. It will print an error if already connected, unless the signal was connected with [constant CONNECT_REFERENCE_COUNTED]. To avoid this, first, use [method is_connected] to check for existing connections.
 				If the [code]target[/code] is destroyed in the game's lifecycle, the connection will be lost.
 				Examples:
 				[codeblock]
@@ -150,7 +151,7 @@
 			<argument index="2" name="method" type="String" />
 			<description>
 				Disconnects a [code]signal[/code] from a [code]method[/code] on the given [code]target[/code].
-				If you try to disconnect a connection that does not exist, the method will throw an error. Use [method is_connected] to ensure that the connection exists.
+				If you try to disconnect a connection that does not exist, the method will print an error. Use [method is_connected] to ensure that the connection exists.
 			</description>
 		</method>
 		<method name="emit_signal" qualifiers="vararg">
@@ -201,6 +202,7 @@
 			<argument index="0" name="property" type="NodePath" />
 			<description>
 				Gets the object's property indexed by the given [NodePath]. The node path should be relative to the current object and can use the colon character ([code]:[/code]) to access nested properties. Examples: [code]"position:x"[/code] or [code]"material:next_pass:blend_mode"[/code].
+				[b]Note:[/b] Even though the method takes [NodePath] argument, it doesn't support actual paths to [Node]s in the scene tree, only colon-separated sub-property paths. For the purpose of nodes, use [method Node.get_node_and_resource] instead.
 			</description>
 		</method>
 		<method name="get_instance_id" qualifiers="const">
@@ -213,8 +215,10 @@
 		<method name="get_meta" qualifiers="const">
 			<return type="Variant" />
 			<argument index="0" name="name" type="String" />
+			<argument index="1" name="default" type="Variant" default="null" />
 			<description>
 				Returns the object's metadata entry for the given [code]name[/code].
+				Throws error if the entry does not exist, unless [code]default[/code] is not [code]null[/code] (in which case the default value will be returned).
 			</description>
 		</method>
 		<method name="get_meta_list" qualifiers="const">
@@ -339,7 +343,7 @@
 			<argument index="0" name="property" type="String" />
 			<argument index="1" name="value" type="Variant" />
 			<description>
-				Assigns a new value to the given property. If the [code]property[/code] does not exist, nothing will happen.
+				Assigns a new value to the given property. If the [code]property[/code] does not exist or the given value's type doesn't match, nothing will happen.
 				[b]Note:[/b] In C#, the property name must be specified as snake_case if it is defined by a built-in Godot node. This doesn't apply to user-defined properties where you should use the same convention as in the C# source (typically PascalCase).
 			</description>
 		</method>

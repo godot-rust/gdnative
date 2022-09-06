@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ARVRController" inherits="Spatial" version="3.4">
+<class name="ARVRController" inherits="Spatial" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A spatial node representing a spatially-tracked controller.
 	</brief_description>
@@ -9,7 +9,7 @@
 		The position of the controller node is automatically updated by the [ARVRServer]. This makes this node ideal to add child nodes to visualize the controller.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/vr/index.html</link>
+		<link>https://docs.godotengine.org/en/3.5/tutorials/vr/index.html</link>
 	</tutorials>
 	<methods>
 		<method name="get_controller_name" qualifiers="const">
@@ -65,7 +65,7 @@
 			When a controller is turned off, its slot is freed. This ensures controllers will keep the same ID even when controllers with lower IDs are turned off.
 		</member>
 		<member name="rumble" type="float" setter="set_rumble" getter="get_rumble" default="0.0">
-			The degree to which the controller vibrates. Ranges from [code]0.0[/code] to [code]1.0[/code] with precision [code].01[/code]. If changed, updates [member ARVRPositionalTracker.rumble] accordingly.
+			The degree to which the controller vibrates. Ranges from [code]0.0[/code] to [code]1.0[/code]. If changed, updates [member ARVRPositionalTracker.rumble] accordingly.
 			This is a useful property to animate if you want the controller to vibrate for a limited duration.
 		</member>
 	</members>

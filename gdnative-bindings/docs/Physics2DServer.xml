@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Physics2DServer" inherits="Object" version="3.4">
+<class name="Physics2DServer" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Server interface for low-level 2D physics access.
 	</brief_description>
@@ -348,7 +348,7 @@
 			<return type="Physics2DDirectBodyState" />
 			<argument index="0" name="body" type="RID" />
 			<description>
-				Returns the [Physics2DDirectBodyState] of the body.
+				Returns the [Physics2DDirectBodyState] of the body. Returns [code]null[/code] if the body is destroyed or removed from the physics space.
 			</description>
 		</method>
 		<method name="body_get_max_contacts_reported" qualifiers="const">

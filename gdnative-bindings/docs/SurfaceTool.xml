@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="SurfaceTool" inherits="Reference" version="3.4">
+<class name="SurfaceTool" inherits="Reference" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Helper tool to create geometry.
 	</brief_description>
@@ -113,6 +113,7 @@
 			<argument index="2" name="transform" type="Transform" />
 			<description>
 				Append vertices from a given [Mesh] surface onto the current vertex array with specified [Transform].
+				[b]Note:[/b] Using [method append_from] on a [Thread] is much slower as the GPU must communicate data back to the CPU, while also causing the main thread to stall (as OpenGL is not thread-safe). Consider requesting a copy of the mesh, converting it to an [ArrayMesh] and adding vertices manually instead.
 			</description>
 		</method>
 		<method name="begin">

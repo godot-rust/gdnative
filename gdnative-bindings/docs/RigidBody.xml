@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="RigidBody" inherits="PhysicsBody" version="3.4">
+<class name="RigidBody" inherits="PhysicsBody" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Physics Body whose position is determined through physics simulation in 3D space.
 	</brief_description>
@@ -11,7 +11,7 @@
 		With Bullet physics (the default), the center of mass is the RigidBody3D center. With GodotPhysics, the center of mass is the average of the [CollisionShape] centers.
 	</description>
 	<tutorials>
-		<link title="Physics introduction">https://docs.godotengine.org/en/3.4/tutorials/physics/physics_introduction.html</link>
+		<link title="Physics introduction">https://docs.godotengine.org/en/3.5/tutorials/physics/physics_introduction.html</link>
 		<link title="3D Truck Town Demo">https://godotengine.org/asset-library/asset/524</link>
 		<link title="3D Physics Tests Demo">https://godotengine.org/asset-library/asset/675</link>
 	</tutorials>
@@ -108,11 +108,11 @@
 	</methods>
 	<members>
 		<member name="angular_damp" type="float" setter="set_angular_damp" getter="get_angular_damp" default="-1.0">
-			Damps RigidBody's rotational forces.
+			Damps the body's rotational forces. If this value is different from -1.0 it will be added to any angular damp derived from the world or areas.
 			See [member ProjectSettings.physics/3d/default_angular_damp] for more details about damping.
 		</member>
 		<member name="angular_velocity" type="Vector3" setter="set_angular_velocity" getter="get_angular_velocity" default="Vector3( 0, 0, 0 )">
-			RigidBody's rotational velocity.
+			The body's rotational velocity in axis-angle format. The magnitude of the vector is the rotation rate in [i]radians[/i] per second.
 		</member>
 		<member name="axis_lock_angular_x" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
 			Lock the body's rotation in the X axis.
@@ -162,11 +162,11 @@
 			This is multiplied by the global 3D gravity setting found in [b]Project &gt; Project Settings &gt; Physics &gt; 3d[/b] to produce RigidBody's gravity. For example, a value of 1 will be normal gravity, 2 will apply double gravity, and 0.5 will apply half gravity to this object.
 		</member>
 		<member name="linear_damp" type="float" setter="set_linear_damp" getter="get_linear_damp" default="-1.0">
-			The body's linear damp. Cannot be less than -1.0. If this value is different from -1.0, any linear damp derived from the world or areas will be overridden.
+			The body's linear damp. Cannot be less than -1.0. If this value is different from -1.0 it will be added to any linear damp derived from the world or areas.
 			See [member ProjectSettings.physics/3d/default_linear_damp] for more details about damping.
 		</member>
 		<member name="linear_velocity" type="Vector3" setter="set_linear_velocity" getter="get_linear_velocity" default="Vector3( 0, 0, 0 )">
-			The body's linear velocity. Can be used sporadically, but [b]don't set this every frame[/b], because physics may run in another thread and runs at a different granularity. Use [method _integrate_forces] as your process loop for precise control of the body state.
+			The body's linear velocity in units per second. Can be used sporadically, but [b]don't set this every frame[/b], because physics may run in another thread and runs at a different granularity. Use [method _integrate_forces] as your process loop for precise control of the body state.
 		</member>
 		<member name="mass" type="float" setter="set_mass" getter="get_mass" default="1.0">
 			The body's mass.
