@@ -35,6 +35,24 @@ macro_rules! godot_nativescript_init {
                 return;
             }
 
+            // Compatibility warning if using in-house Godot version (not applicable for custom ones)
+            #[cfg(not(feature = "custom-godot"))]
+            {
+                let engine = gdnative::api::Engine::godot_singleton();
+                let info = engine.get_version_info();
+
+                if info.get("major").expect("major version") != Variant::new(3)
+                || info.get("minor").expect("minor version") != Variant::new(4) {
+                    let string = info.get("string").expect("version str").to::<String>().expect("version str type");
+                    gdnative::log::godot_warn!(
+                        "This godot-rust version is only compatible with Godot 3.4.x; detected version {}.\n\
+                        GDNative mismatches may lead to subtle bugs, undefined behavior or crashes at runtime.\n\
+                	    Apply the 'custom-godot' feature if you want to use current godot-rust with another Godot engine version.",
+                        string
+                    );
+                }
+            }
+
             let __result = ::std::panic::catch_unwind(|| {
                 $callback($crate::init::InitHandle::new(handle));
             });
