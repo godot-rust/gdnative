@@ -20,12 +20,12 @@ use gdnative_core::{
 /// let scene = load::<PackedScene>("res://path").unwrap();
 /// ```
 #[inline]
-pub fn load<T>(path: impl Into<NodePath>) -> Option<Ref<T>>
+pub fn load<T>(path: &str) -> Option<Ref<T>>
 where
     T: SubClass<Resource> + GodotObject<Memory = RefCounted>,
 {
     ResourceLoader::godot_singleton()
-        .load(path.into(), "", false)
+        .load(path, "", false)
         .unwrap()
         .cast::<T>()
 }
