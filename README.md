@@ -12,20 +12,27 @@
 
 ## Stability
 
-The bindings cover most of the exposed API of Godot 3.4, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
+The bindings cover most of the exposed API of Godot 3.5, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
 
 Minimum supported Rust version (MSRV) is **1.56**. We use the Rust 2021 Edition.
 
 ## Engine compatibility
 
-We are committed to keeping compatibility with the latest stable patch releases of all minor versions of the engine, starting from Godot 3.2:
-* Godot 3.4 (works out-of-the-box)
-* Godot 3.3 (needs feature `custom-godot`)
-* Godot 3.2 (needs feature `custom-godot`)
+Due to GDNative API not strictly following SemVer and some concepts not mapping 1:1 to Rust (default parameters),
+it is difficult for a godot-rust version to remain compatible with multiple Godot versions simultaneously.
 
-For versions 3.2 and 3.3, some extra steps are needed, see _Custom builds_ below.
+However, we support the latest stable Godot 3 minor release out-of-the-box, and allow to easily use custom engine
+versions using the `custom-godot` feature flag (see [below](#Custom builds)).
 
-The bindings do _**not**_ support in-development Godot 4 versions at the moment. Support is planned as the native extensions become more stable.
+Compatibility list:
+
+* Godot 3.5.1 (works with gdnative 0.11)
+* Godot 3.4 (works with gdnative 0.10, custom build for 0.11)
+* Godot 3.3 (custom build)
+* Godot 3.2 (custom build)
+
+The bindings do _**not**_ support in-development Godot 4 versions.
+A GDExtension binding is planned.
 
 
 ## Getting started
@@ -38,7 +45,7 @@ This is the recommended way of using godot-rust. After `bindgen` dependencies an
 
 ```toml
 [dependencies]
-gdnative = "0.10.1"
+gdnative = "0.11"
 
 [lib]
 crate-type = ["cdylib"]
@@ -59,7 +66,8 @@ crate-type = ["cdylib"]
 
 ### Custom builds
 
-To use the bindings with a different Godot version or a custom build of the engine, see [Custom Godot builds](https://godot-rust.github.io/book/advanced-guides/custom-godot.html) in the user guide.
+To use the bindings with a different Godot version or a custom build of the engine, see
+[Custom Godot builds](https://godot-rust.github.io/book/advanced-guides/custom-godot.html) in the user guide.
 
 ### Async/yield support
 
