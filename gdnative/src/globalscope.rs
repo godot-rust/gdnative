@@ -56,7 +56,8 @@ pub fn load<T>(path: &str) -> Option<Ref<T>>
 where
     T: SubClass<Resource> + GodotObject<Memory = RefCounted>,
 {
+    let type_hint = T::class_name();
     ResourceLoader::godot_singleton()
-        .load(path, "", false)
+        .load(path, type_hint, false)
         .and_then(|res| res.cast::<T>())
 }
