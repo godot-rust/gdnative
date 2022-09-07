@@ -20,6 +20,7 @@
 //! [@GDScript]: https://docs.godotengine.org/en/stable/classes/class_@gdscript.html
 
 use crate::api::{Resource, ResourceLoader};
+use crate::core_types::NodePath;
 use crate::object::{memory::RefCounted, GodotObject, Ref, SubClass};
 
 #[doc(inline)]
@@ -50,14 +51,13 @@ pub use gdnative_core::globalscope::*;
 ///
 /// let scene = load::<PackedScene>("res://path/to/Main.tscn").unwrap();
 /// ```
-// TODO generalize parameter to `impl Into<NodePath>` once MSRV >= 1.63
 #[inline]
-pub fn load<T>(path: &str) -> Option<Ref<T>>
+pub fn load<T>(path: impl Into<NodePath>) -> Option<Ref<T>>
 where
     T: SubClass<Resource> + GodotObject<Memory = RefCounted>,
 {
     let type_hint = T::class_name();
     ResourceLoader::godot_singleton()
-        .load(path, type_hint, false)
+        .load(path.into(), type_hint, false)
         .and_then(|res| res.cast::<T>())
 }

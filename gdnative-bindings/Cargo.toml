@@ -9,7 +9,7 @@ version = "0.10.1"
 license = "MIT"
 workspace = ".."
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.63"
 
 [features]
 formatted = []

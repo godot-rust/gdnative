@@ -14,7 +14,7 @@
 
 The bindings cover most of the exposed API of Godot 3.5, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
 
-Minimum supported Rust version (MSRV) is **1.56**. We use the Rust 2021 Edition.
+Minimum supported Rust version (MSRV) is **1.63**. We use the Rust 2021 Edition.
 
 ## Engine compatibility
 
