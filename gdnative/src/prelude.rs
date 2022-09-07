@@ -34,6 +34,8 @@ pub mod user_data {
         Aether, ArcData, LocalCellData, MutexData, RwLockData,
     };
 }
+#[doc(inline)]
+pub use crate::globalscope::load;
 
 // Deprecated symbols. Keep them only in prelude, as all the other paths have changed anyway.
 // This way, old symbol names are still discoverable and users who used prelude won't have (as many) breaking changes.

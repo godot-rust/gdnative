@@ -7,7 +7,9 @@ use gdnative_core::object::{SubClass, TInstance, TRef};
 use super::generated::{Engine, Node, SceneTree};
 
 /// Convenience method  to obtain a reference to an "auto-load" node, that is a child of the root
-/// node. Returns `None` if the node does not exist or is not of the correct type.
+/// node.
+///
+/// Returns `None` if the node does not exist or is not of the correct type.
 ///
 /// # Safety
 ///

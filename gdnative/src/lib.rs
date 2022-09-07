@@ -83,12 +83,7 @@
 #[doc(inline)]
 pub use gdnative_core::{core_types, export, init, log, object, profiler};
 
-mod gdscript; // new methods from `@GDscript`, so far only `load`
-pub mod globalscope {
-    pub use crate::gdscript::*;
-    #[doc(inline)]
-    pub use gdnative_core::globalscope::*;
-}
+pub mod globalscope;
 
 // Implementation details (e.g. used by macros).
 // However, do not re-export macros (on crate level), thus no wildcard
