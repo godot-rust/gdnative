@@ -3,7 +3,8 @@ use crate::sys;
 use std::mem::transmute;
 
 use crate::core_types::GodotString;
-/// RGBA color with 32 bits floating point components.
+
+/// RGBA color with 32-bit floating point components.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -43,20 +44,22 @@ impl Color {
 
     /// Parses from a HTML color code, or `None` on parse error.
     ///
+    /// Note that unlike most other constructors, this has `ARGB` and not `RGBA` format.
+    /// In particular, `from_html("AB123456")` would correspond to `from_rgba_u32(0x123456AB)`.
+    ///
     /// ```
     /// use gdnative::prelude::Color;
     ///
-    /// // Each of the following creates the same color RGBA(178, 217, 10, 255).
     /// let c1 = Color::from_html("#9eb2d90a"); // ARGB format with "#".
     /// let c2 = Color::from_html("9eb2d90a");  // ARGB format.
     /// let c3 = Color::from_html("#b2d90a");   // RGB format with "#".
     /// let c4 = Color::from_html("b2d90a");    // RGB format.
     ///
-    /// let expected = Color::from_rgba_u8(178, 217, 10, 158);
+    /// let expected = Color::from_rgba_u8(0xb2, 0xd9, 0x0a, 0x9e);
     /// assert_eq!(c1, Some(expected));
     /// assert_eq!(c2, Some(expected));
     ///
-    /// let expected = Color::from_rgba_u8(178, 217, 10, 255);
+    /// let expected = Color::from_rgba_u8(0xb2, 0xd9, 0x0a, 0xff);
     /// assert_eq!(c3, Some(expected));
     /// assert_eq!(c4, Some(expected));
     /// ```
@@ -112,7 +115,8 @@ impl Color {
 
     /// Constructs a color from four integer channels, each in range 0-255.
     ///
-    /// This corresponds to the [GDScript method `Color8`](https://docs.godotengine.org/en/stable/classes/class_%40gdscript.html#class-gdscript-method-color8)
+    /// This corresponds to the
+    /// [GDScript method `Color8`](https://docs.godotengine.org/en/stable/classes/class_%40gdscript.html#class-gdscript-method-color8).
     #[inline]
     pub fn from_rgba_u8(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self::from_rgba(

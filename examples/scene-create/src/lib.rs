@@ -105,11 +105,9 @@ fn init(handle: InitHandle) {
 }
 
 pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
-    let scene = ResourceLoader::godot_singleton().load(path, "PackedScene", false)?;
-
+    let scene = load::<PackedScene>(path)?;
     let scene = unsafe { scene.assume_thread_local() };
-
-    scene.cast::<PackedScene>()
+    Some(scene)
 }
 
 /// Root here is needs to be the same type (or a parent type) of the node that you put in the child

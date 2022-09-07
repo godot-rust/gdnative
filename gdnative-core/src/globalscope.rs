@@ -1,24 +1,3 @@
-//! Port of selected GDScript built-in functions.
-//!
-//! This module contains _some_ of the functions available in the [@GDScript] documentation.
-//!
-//! Reasons why a GDScript function may _not_ be ported to Rust include:
-//! * they are in the Rust standard library (`abs`, `sin`, `floor`, `assert`, ...)
-//! * they are already part of a godot-rust API
-//!   * `print` -> [`godot_print!`][crate::log::godot_print!]
-//!   * `instance_from_id` -> [`GodotObject::from_instance_id()`][crate::object::GodotObject::from_instance_id]
-//!   * ...
-//! * they have a private implementation, i.e. a Rust port would have different semantics
-//!   * `randi`, `randf` etc. -- users should use `rand` crate
-//!   * `str2var`, `bytes2var`, `hash` etc -- to be verified
-//!
-//! This above list is not a definitive inclusion/exclusion criterion, just a rough guideline.
-//!
-//! Other noteworthy special cases:
-//! * GDScript `fmod` corresponds to Rust's `%` operator on `f32` (also known as the `Rem` trait).
-//!
-//! [@GDScript]: https://docs.godotengine.org/en/stable/classes/class_@gdscript.html
-
 use std::f32::consts::TAU;
 use std::ops::Rem;
 use std::ops::{Range, RangeInclusive};

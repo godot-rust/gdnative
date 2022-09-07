@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.10.2] - unreleased
+
+Last maintenance release for Godot 3.4.
+
+# Added
+
+- `globalscope::load` method ([#940](https://github.com/godot-rust/godot-rust/pull/940), [#941](https://github.com/godot-rust/godot-rust/pull/941))
+- `Color` constructors from HTML string and integers ([#939](https://github.com/godot-rust/godot-rust/pull/939))
+- Version check to warn if Godot is not 3.4 ([#942](https://github.com/godot-rust/godot-rust/pull/942))
+
 ## [0.10.1] - 2022-09-03
 
 This is a backwards-compatible release; thus no removals or breaking changes.

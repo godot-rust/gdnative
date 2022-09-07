@@ -1,7 +1,7 @@
 // Rust GDNative implementation of this Godot tutorial:
 // https://docs.godotengine.org/en/stable/tutorials/plugins/editor/making_plugins.html#a-custom-node
 
-use gdnative::api::{EditorPlugin, Resource, Script, Texture};
+use gdnative::api::{EditorPlugin, Script, Texture};
 use gdnative::prelude::*;
 
 #[derive(NativeClass)]
@@ -18,10 +18,8 @@ impl CustomNode {
     fn _enter_tree(&self, #[base] owner: TRef<EditorPlugin>) {
         // Initialization of the plugin goes here.
         // Add the new type with a name, a parent type, a script and an icon.
-        let script = unsafe { load::<Script>("res://my_button.gdns", "Script").unwrap() };
-        let texture = unsafe {
-            load::<Texture>("res://making_plugins-custom_node_icon.png", "Texture").unwrap()
-        };
+        let script = load::<Script>("res://my_button.gdns").unwrap();
+        let texture = load::<Texture>("res://making_plugins-custom_node_icon.png").unwrap();
         owner.add_custom_type("MyButton", "Button", script, texture);
     }
 
@@ -54,15 +52,6 @@ impl MyButton {
     fn clicked(&self) {
         godot_print!("You clicked me!");
     }
-}
-
-unsafe fn load<T>(path: &str, hint: &str) -> Option<Ref<T, Shared>>
-where
-    T: GodotObject<Memory = RefCounted> + SubClass<Resource>,
-{
-    let resource = ResourceLoader::godot_singleton().load(path, hint, false)?;
-    let resource = resource.assume_safe().claim();
-    resource.cast::<T>()
 }
 
 fn init(handle: InitHandle) {
