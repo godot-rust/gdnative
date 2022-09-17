@@ -245,7 +245,12 @@ macro_rules! godot_test_impl {
                 ).is_ok();
 
                 if !ok {
-                    $crate::godot_error!("   !! Test {} failed", str_name);
+                    if ::std::panic::catch_unwind(|| {
+                        $crate::godot_error!("   !! Test {} failed", str_name);
+                    }).is_err() {
+                        eprintln!("   !! Test {} failed", str_name);
+                        eprintln!("   !! And failed to call Godot API to log error message");
+                    }
                 }
 
                 ok

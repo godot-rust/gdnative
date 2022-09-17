@@ -80,13 +80,44 @@ unsafe fn check_api_compatibility(
 /// Returns a reference to the current API struct.
 ///
 /// This function is intended to be part of the internal API. It should only be called after
-/// `gdnative_init` and before `gdnative_terminate`. **Calling this function when the API is
-/// not bound will lead to an abort**, since in most cases there is simply no point to continue
-/// if `get_api` failed. This allows it to be used in FFI contexts without a `catch_unwind`.
+/// `gdnative_init` and before `gdnative_terminate`.
+///
+/// # Panics
+///
+/// **Calling this function when the API is not bound will panic**. Note that it will abort
+/// directly during tests (i.e. in unit testing or enable `feature = gd-test`). Since in
+/// most cases there is simply no point to continue if `get_api` failed. This allows it to
+/// be used in FFI contexts without a `catch_unwind`. (Unwinding across FFI boundary is an
+/// undefined behavior.)
+///
+/// In testing environment, this function use `Option::expect` because unwinding in this
+/// scenario should be safe.
+///
+/// See more: https://github.com/godot-rust/godot-rust/pull/929
 #[inline]
-#[allow(clippy::redundant_closure)] // clippy false positive: https://github.com/rust-lang/rust-clippy/issues/7812
 pub fn get_api() -> &'static sys::GodotApi {
-    unsafe { GODOT_API.as_ref().unwrap_or_else(|| std::process::abort()) }
+    const ERR_MSG: &str = "
+    This code requires the Godot engine to be running and the GDNative initialization \
+    to have completed. It cannot execute as a standalone Rust program.
+    
+    Hint: If you encounter this issue during unit testing, you might \
+    need to use the godot_test! macro, and invoke the test functions in test/src/lib.rs.
+    ";
+
+    // Unwinding during tests should be safe and provide more ergonomic UI.
+    #[cfg(any(test, feature = "gd-test"))]
+    unsafe {
+        return GODOT_API.as_ref().expect(ERR_MSG);
+    }
+
+    // Abort directly to avoid undefined behaviors.
+    #[cfg(not(any(test, feature = "gd-test")))]
+    unsafe {
+        return GODOT_API.as_ref().unwrap_or_else(|| {
+            eprintln!("{}", ERR_MSG);
+            std::process::abort();
+        });
+    }
 }
 
 /// Returns a reference to the current API struct if it is bounds, or `None` otherwise.
