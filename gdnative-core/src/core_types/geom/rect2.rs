@@ -115,7 +115,7 @@ impl Rect2 {
         self.position.x < b.position.x + b.size.x
             && self.position.x + self.size.x > b.position.x
             && self.position.y < b.position.y + b.size.y
-            && self.position.y + self.size.y > b.size.y
+            && self.position.y + self.size.y > b.position.y
     }
 
     /// Returns true if the rectangle overlaps with `b` (i.e. they have at least one point in
@@ -130,7 +130,7 @@ impl Rect2 {
         self.position.x <= b.position.x + b.size.x
             && self.position.x + self.size.x >= b.position.x
             && self.position.y <= b.position.y + b.size.y
-            && self.position.y + self.size.y >= b.size.y
+            && self.position.y + self.size.y >= b.position.y
     }
 
     /// Returns true if this rectangle (inclusively) encloses `b`.
