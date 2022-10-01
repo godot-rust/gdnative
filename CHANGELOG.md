@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed supported Godot version to 3.5.1 ([#910](https://github.com/godot-rust/godot-rust/pull/910))
 - MSRV is now 1.63 ([#910](https://github.com/godot-rust/godot-rust/pull/910))
 
+### Removed
+
+- `Transform2D::from_rotation_translation_scale()` constructor needs more intuitive API ([#910](https://github.com/godot-rust/godot-rust/pull/910))
+
+
 ## [0.10.2] - unreleased
 
 Last maintenance release for Godot 3.4.

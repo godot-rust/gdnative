@@ -75,19 +75,6 @@ impl Transform2D {
         }
     }
 
-    /// Constructs the transform from a given angle (in radians), translation, and scale.
-    #[inline]
-    pub fn from_rotation_translation_scale(
-        translation: Vector2,
-        rotation: f32,
-        scale: Vector2,
-    ) -> Self {
-        Self::IDENTITY
-            .translated(translation)
-            .rotated(rotation)
-            .scaled(scale)
-    }
-
     /// Returns the inverse of the transform, under the assumption that the transformation is composed of rotation, scaling and translation.
     #[inline]
     pub fn affine_inverse(&self) -> Self {
