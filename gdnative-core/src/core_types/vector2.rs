@@ -251,7 +251,7 @@ impl Vector2 {
     #[inline]
     pub fn rotated(self, angle: f32) -> Self {
         let (cos, sin) = (angle.cos(), angle.sin());
-        Self::new(cos * self.x + sin * self.y, sin * self.x + cos * self.y)
+        Self::new(cos * self.x - sin * self.y, sin * self.x + cos * self.y)
     }
 
     /// Returns the vector with all components rounded to the nearest integer, with halfway cases
