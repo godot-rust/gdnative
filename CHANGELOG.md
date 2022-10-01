@@ -6,15 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.10.2] - unreleased
+## [0.10.2] - 2022-10-01
 
 Last maintenance release for Godot 3.4.
 
-# Added
+### Added
 
-- `globalscope::load` method ([#940](https://github.com/godot-rust/godot-rust/pull/940), [#941](https://github.com/godot-rust/godot-rust/pull/941))
+- `globalscope::load()` function ([#940](https://github.com/godot-rust/godot-rust/pull/940), [#941](https://github.com/godot-rust/godot-rust/pull/941))
 - `Color` constructors from HTML string and integers ([#939](https://github.com/godot-rust/godot-rust/pull/939))
 - Version check to warn if Godot is not 3.4 ([#942](https://github.com/godot-rust/godot-rust/pull/942))
+- Support for iOS simulator on Mac M1 ([#944](https://github.com/godot-rust/godot-rust/pull/944))
+
+### Fixed
+
+- During tests, `get_api()` no longer aborts  ([#929](https://github.com/godot-rust/godot-rust/pull/929))
+- Bug in `Rect2::intersects()` ([#948](https://github.com/godot-rust/godot-rust/pull/948))
+- Bug in `Vector2::rotated()` ([#952](https://github.com/godot-rust/godot-rust/pull/952))
+
 
 ## [0.10.1] - 2022-09-03
 
