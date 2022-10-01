@@ -9,7 +9,7 @@
 		[b]Note:[/b] If you use InputEventMouseMotion to draw lines, consider implementing [url=https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm]Bresenham's line algorithm[/url] as well to avoid visible gaps in lines if the user is moving the mouse quickly.
 	</description>
 	<tutorials>
-		<link title="Mouse and input coordinates">https://docs.godotengine.org/en/3.5/tutorials/inputs/mouse_and_input_coordinates.html</link>
+		<link title="Mouse and input coordinates">https://docs.godotengine.org/en/3.5.1/tutorials/inputs/mouse_and_input_coordinates.html</link>
 		<link title="3D Voxel Demo">https://godotengine.org/asset-library/asset/676</link>
 	</tutorials>
 	<methods>

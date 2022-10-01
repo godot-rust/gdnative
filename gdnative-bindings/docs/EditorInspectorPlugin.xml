@@ -13,7 +13,7 @@
 		To use [EditorInspectorPlugin], register it using the [method EditorPlugin.add_inspector_plugin] method first.
 	</description>
 	<tutorials>
-		<link title="Inspector plugins">https://docs.godotengine.org/en/3.5/tutorials/plugins/editor/inspector_plugins.html</link>
+		<link title="Inspector plugins">https://docs.godotengine.org/en/3.5.1/tutorials/plugins/editor/inspector_plugins.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_custom_control">

@@ -8,7 +8,7 @@
 		To use [EditorSpatialGizmoPlugin], register it using the [method EditorPlugin.add_spatial_gizmo_plugin] method first.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.5/tutorials/plugins/editor/spatial_gizmos.html</link>
+		<link>https://docs.godotengine.org/en/3.5.1/tutorials/plugins/editor/spatial_gizmos.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_material">

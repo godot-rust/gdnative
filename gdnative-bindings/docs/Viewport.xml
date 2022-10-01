@@ -13,8 +13,8 @@
 		[b]Note:[/b] By default, a newly created Viewport in Godot 3.x will appear to be upside down. Enabling [member render_target_v_flip] will display the Viewport with the correct orientation.
 	</description>
 	<tutorials>
-		<link title="Viewport and canvas transforms">https://docs.godotengine.org/en/3.5/tutorials/2d/2d_transforms.html</link>
-		<link title="Viewports tutorial index">https://docs.godotengine.org/en/3.5/tutorials/rendering/index.html</link>
+		<link title="Viewport and canvas transforms">https://docs.godotengine.org/en/3.5.1/tutorials/2d/2d_transforms.html</link>
+		<link title="Viewports tutorial index">https://docs.godotengine.org/en/3.5.1/tutorials/rendering/index.html</link>
 		<link title="GUI in 3D Demo">https://godotengine.org/asset-library/asset/127</link>
 		<link title="3D in 2D Demo">https://godotengine.org/asset-library/asset/128</link>
 		<link title="2D in 3D Demo">https://godotengine.org/asset-library/asset/129</link>

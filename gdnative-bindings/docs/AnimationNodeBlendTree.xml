@@ -8,7 +8,7 @@
 		An [AnimationNodeOutput] node named [code]output[/code] is created by default.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.5/tutorials/animation/animation_tree.html</link>
+		<link>https://docs.godotengine.org/en/3.5.1/tutorials/animation/animation_tree.html</link>
 	</tutorials>
 	<methods>
 		<method name="add_node">

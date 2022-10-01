@@ -7,7 +7,7 @@
 		Node used for displaying a [Mesh] in 2D. A [MeshInstance2D] can be automatically created from an existing [Sprite] via a tool in the editor toolbar. Select the [Sprite] node, then choose [b]Sprite &gt; Convert to MeshInstance2D[/b] at the top of the 2D editor viewport.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.5/tutorials/2d/2d_meshes.html</link>
+		<link>https://docs.godotengine.org/en/3.5.1/tutorials/2d/2d_meshes.html</link>
 	</tutorials>
 	<methods>
 	</methods>
