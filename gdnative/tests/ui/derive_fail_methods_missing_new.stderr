@@ -5,7 +5,7 @@ error[E0599]: no function or associated item named `new` found for struct `Foo` 
   |          ^^^^^^^^^^^ function or associated item not found in `Foo`
 4 | #[inherit(Node)]
 5 | struct Foo {}
-  | ---------- function or associated item `new` not found for this
+  | ---------- function or associated item `new` not found for this struct
   |
   = help: items from traits can only be used if the trait is implemented and in scope
   = note: the following traits define an item `new`, perhaps you need to implement one of them:
