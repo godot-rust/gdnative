@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.10.2] - 2022-10-01
+## [0.10.2] - 2022-10-02
 
 Last maintenance release for Godot 3.4.
 
@@ -20,6 +20,7 @@ Last maintenance release for Godot 3.4.
 ### Fixed
 
 - During tests, `get_api()` no longer aborts  ([#929](https://github.com/godot-rust/godot-rust/pull/929))
+- Confusing `Transform2D` constructor ([#930](https://github.com/godot-rust/godot-rust/pull/930))
 - Bug in `Rect2::intersects()` ([#948](https://github.com/godot-rust/godot-rust/pull/948))
 - Bug in `Vector2::rotated()` ([#952](https://github.com/godot-rust/godot-rust/pull/952))
 
