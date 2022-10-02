@@ -5,7 +5,7 @@ on:
     branches:
       - '!**'
     tags:
-      - '0.10.[0-9]+-?*'
+      - '0.11.[0-9]+-?*'
 
 env:
   # Note: used for test and clippy, not for publish
