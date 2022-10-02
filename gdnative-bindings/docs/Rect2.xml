@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Rect2" version="3.4">
+<class name="Rect2" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		2D axis-aligned bounding box.
 	</brief_description>
@@ -9,9 +9,9 @@
 		The 3D counterpart to [Rect2] is [AABB].
 	</description>
 	<tutorials>
-		<link title="Math tutorial index">https://docs.godotengine.org/en/3.4/tutorials/math/index.html</link>
-		<link title="Vector math">https://docs.godotengine.org/en/3.4/tutorials/math/vector_math.html</link>
-		<link title="Advanced vector math">https://docs.godotengine.org/en/3.4/tutorials/math/vectors_advanced.html</link>
+		<link title="Math tutorial index">https://docs.godotengine.org/en/3.5.1/tutorials/math/index.html</link>
+		<link title="Vector math">https://docs.godotengine.org/en/3.5.1/tutorials/math/vector_math.html</link>
+		<link title="Advanced vector math">https://docs.godotengine.org/en/3.5.1/tutorials/math/vectors_advanced.html</link>
 	</tutorials>
 	<methods>
 		<method name="Rect2">
@@ -56,13 +56,26 @@
 			<return type="Rect2" />
 			<argument index="0" name="to" type="Vector2" />
 			<description>
-				Returns this [Rect2] expanded to include a given point.
+				Returns a copy of this [Rect2] expanded to include a given point.
+				[b]Example:[/b]
+				[codeblock]
+				# position (-3, 2), size (1, 1)
+				var rect = Rect2(Vector2(-3, 2), Vector2(1, 1))
+				# position (-3, -1), size (3, 4), so we fit both rect and Vector2(0, -1)
+				var rect2 = rect.expand(Vector2(0, -1))
+				[/codeblock]
 			</description>
 		</method>
 		<method name="get_area">
 			<return type="float" />
 			<description>
-				Returns the area of the [Rect2].
+				Returns the area of the [Rect2]. See also [method has_no_area].
+			</description>
+		</method>
+		<method name="get_center">
+			<return type="Vector2" />
+			<description>
+				Returns the center of the [Rect2], which is equal to [member position] + ([member size] / 2).
 			</description>
 		</method>
 		<method name="grow">
@@ -93,14 +106,16 @@
 		<method name="has_no_area">
 			<return type="bool" />
 			<description>
-				Returns [code]true[/code] if the [Rect2] is flat or empty.
+				Returns [code]true[/code] if the [Rect2] is flat or empty, [code]false[/code] otherwise. See also [method get_area].
+				[b]Note:[/b] If the [Rect2] has a negative size and is not flat or empty, [method has_no_area] will return [code]true[/code].
 			</description>
 		</method>
 		<method name="has_point">
 			<return type="bool" />
 			<argument index="0" name="point" type="Vector2" />
 			<description>
-				Returns [code]true[/code] if the [Rect2] contains a point.
+				Returns [code]true[/code] if the [Rect2] contains a point. By convention, the right and bottom edges of the [Rect2] are considered exclusive, so points on these edges are [b]not[/b] included.
+				[b]Note:[/b] This method is not reliable for [Rect2] with a [i]negative size[/i]. Use [method abs] to get a positive sized equivalent rectangle to check for contained points.
 			</description>
 		</method>
 		<method name="intersects">

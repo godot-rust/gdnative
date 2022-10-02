@@ -42,10 +42,11 @@ macro_rules! godot_nativescript_init {
                 let info = engine.get_version_info();
 
                 if info.get("major").expect("major version") != Variant::new(3)
-                || info.get("minor").expect("minor version") != Variant::new(4) {
+                || info.get("minor").expect("minor version") != Variant::new(5)
+                || info.get("patch").expect("patch version") < Variant::new(1) {
                     let string = info.get("string").expect("version str").to::<String>().expect("version str type");
                     gdnative::log::godot_warn!(
-                        "This godot-rust version is only compatible with Godot 3.4.x; detected version {}.\n\
+                        "This godot-rust version is only compatible with Godot >= 3.5.1 and < 3.6; detected version {}.\n\
                         GDNative mismatches may lead to subtle bugs, undefined behavior or crashes at runtime.\n\
                 	    Apply the 'custom-godot' feature if you want to use current godot-rust with another Godot engine version.",
                         string

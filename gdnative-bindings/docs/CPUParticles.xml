@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="CPUParticles" inherits="GeometryInstance" version="3.4">
+<class name="CPUParticles" inherits="GeometryInstance" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		CPU-based 3D particle emitter.
 	</brief_description>
@@ -100,7 +100,7 @@
 			Rotation randomness ratio.
 		</member>
 		<member name="angular_velocity" type="float" setter="set_param" getter="get_param" default="0.0">
-			Initial angular velocity applied to each particle. Sets the speed of rotation of the particle.
+			Initial angular velocity applied to each particle in [i]degrees[/i] per second. Sets the speed of rotation of the particle.
 		</member>
 		<member name="angular_velocity_curve" type="Curve" setter="set_param_curve" getter="get_param_curve">
 			Each particle's angular velocity will vary along this [Curve].
@@ -128,6 +128,9 @@
 		</member>
 		<member name="color" type="Color" setter="set_color" getter="get_color" default="Color( 1, 1, 1, 1 )">
 			Each particle's initial color. To have particle display color in a [SpatialMaterial] make sure to set [member SpatialMaterial.vertex_color_use_as_albedo] to [code]true[/code].
+		</member>
+		<member name="color_initial_ramp" type="Gradient" setter="set_color_initial_ramp" getter="get_color_initial_ramp">
+			Each particle's initial color will vary along this [GradientTexture] (multiplied with [member color]).
 		</member>
 		<member name="color_ramp" type="Gradient" setter="set_color_ramp" getter="get_color_ramp">
 			Each particle's color will vary along this [GradientTexture] over its lifetime (multiplied with [member color]).

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ResourceImporter" inherits="Reference" version="3.4">
+<class name="ResourceImporter" inherits="Reference" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base class for the implementation of core resource importers.
 	</brief_description>
@@ -7,7 +7,7 @@
 		This is the base class for the resource importers implemented in core. To implement your own resource importers using editor plugins, see [EditorImportPlugin].
 	</description>
 	<tutorials>
-		<link title="Import plugins">https://docs.godotengine.org/en/3.4/tutorials/plugins/editor/import_plugins.html</link>
+		<link title="Import plugins">https://docs.godotengine.org/en/3.5.1/tutorials/plugins/editor/import_plugins.html</link>
 	</tutorials>
 	<methods>
 	</methods>

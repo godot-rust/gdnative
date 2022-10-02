@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Font" inherits="Resource" version="3.4">
+<class name="Font" inherits="Resource" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Internationalized font and text drawing support.
 	</brief_description>
@@ -35,6 +35,7 @@
 			<argument index="5" name="outline" type="bool" default="false" />
 			<description>
 				Draw character [code]char[/code] into a canvas item using the font at a given position, with [code]modulate[/code] color, and optionally kerning if [code]next[/code] is passed. clipping the width. [code]position[/code] specifies the baseline, not the top. To draw from the top, [i]ascent[/i] must be added to the Y axis. The width used by the character is returned, making this function useful for drawing strings character by character.
+				If [code]outline[/code] is [code]true[/code], the outline of the character is drawn instead of the character itself.
 			</description>
 		</method>
 		<method name="get_ascent" qualifiers="const">
@@ -43,12 +44,68 @@
 				Returns the font ascent (number of pixels above the baseline).
 			</description>
 		</method>
+		<method name="get_char_contours" qualifiers="const">
+			<return type="Dictionary" />
+			<argument index="0" name="char" type="int" />
+			<argument index="1" name="next" type="int" default="0" />
+			<description>
+				Returns outline contours of the glyph as a [code]Dictionary[/code] with the following contents:
+				[code]points[/code]         - [PoolVector3Array], containing outline points. [code]x[/code] and [code]y[/code] are point coordinates. [code]z[/code] is the type of the point, using the [enum ContourPointTag] values.
+				[code]contours[/code]       - [PoolIntArray], containing indices the end points of each contour.
+				[code]orientation[/code]    - [bool], contour orientation. If [code]true[/code], clockwise contours must be filled.
+			</description>
+		</method>
 		<method name="get_char_size" qualifiers="const">
 			<return type="Vector2" />
 			<argument index="0" name="char" type="int" />
 			<argument index="1" name="next" type="int" default="0" />
 			<description>
 				Returns the size of a character, optionally taking kerning into account if the next character is provided. Note that the height returned is the font height (see [method get_height]) and has no relation to the glyph height.
+			</description>
+		</method>
+		<method name="get_char_texture" qualifiers="const">
+			<return type="RID" />
+			<argument index="0" name="char" type="int" />
+			<argument index="1" name="next" type="int" default="0" />
+			<argument index="2" name="outline" type="bool" default="false" />
+			<description>
+				Returns resource id of the cache texture containing the char.
+			</description>
+		</method>
+		<method name="get_char_texture_size" qualifiers="const">
+			<return type="Vector2" />
+			<argument index="0" name="char" type="int" />
+			<argument index="1" name="next" type="int" default="0" />
+			<argument index="2" name="outline" type="bool" default="false" />
+			<description>
+				Returns size of the cache texture containing the char.
+			</description>
+		</method>
+		<method name="get_char_tx_offset" qualifiers="const">
+			<return type="Vector2" />
+			<argument index="0" name="char" type="int" />
+			<argument index="1" name="next" type="int" default="0" />
+			<argument index="2" name="outline" type="bool" default="false" />
+			<description>
+				Returns char offset from the baseline.
+			</description>
+		</method>
+		<method name="get_char_tx_size" qualifiers="const">
+			<return type="Vector2" />
+			<argument index="0" name="char" type="int" />
+			<argument index="1" name="next" type="int" default="0" />
+			<argument index="2" name="outline" type="bool" default="false" />
+			<description>
+				Returns size of the char.
+			</description>
+		</method>
+		<method name="get_char_tx_uv_rect" qualifiers="const">
+			<return type="Rect2" />
+			<argument index="0" name="char" type="int" />
+			<argument index="1" name="next" type="int" default="0" />
+			<argument index="2" name="outline" type="bool" default="false" />
+			<description>
+				Returns rectangle in the cache texture containing the char.
 			</description>
 		</method>
 		<method name="get_descent" qualifiers="const">
@@ -97,5 +154,14 @@
 		</method>
 	</methods>
 	<constants>
+		<constant name="CONTOUR_CURVE_TAG_ON" value="1" enum="ContourPointTag">
+			Contour point is on the curve.
+		</constant>
+		<constant name="CONTOUR_CURVE_TAG_OFF_CONIC" value="0" enum="ContourPointTag">
+			Contour point isn't on the curve, but serves as a control point for a conic (quadratic) Bézier arc.
+		</constant>
+		<constant name="CONTOUR_CURVE_TAG_OFF_CUBIC" value="2" enum="ContourPointTag">
+			Contour point isn't on the curve, but serves as a control point for a cubic Bézier arc.
+		</constant>
 	</constants>
 </class>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="HTTPRequest" inherits="Node" version="3.4">
+<class name="HTTPRequest" inherits="Node" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A node with the ability to send HTTP(S) requests.
 	</brief_description>
@@ -23,7 +23,7 @@
 		    # Perform a POST request. The URL below returns JSON as of writing.
 		    # Note: Don't make simultaneous requests using a single HTTPRequest node.
 		    # The snippet below is provided for reference only.
-		    var body = {"name": "Godette"}
+		    var body = to_json({"name": "Godette"})
 		    error = http_request.request("https://httpbin.org/post", [], true, HTTPClient.METHOD_POST, body)
 		    if error != OK:
 		        push_error("An error occurred in the HTTP request.")
@@ -67,8 +67,8 @@
 		[/codeblock]
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/networking/http_request_class.html</link>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/networking/ssl_certificates.html</link>
+		<link>https://docs.godotengine.org/en/3.5.1/tutorials/networking/http_request_class.html</link>
+		<link>https://docs.godotengine.org/en/3.5.1/tutorials/networking/ssl_certificates.html</link>
 	</tutorials>
 	<methods>
 		<method name="cancel_request">
@@ -121,22 +121,42 @@
 				Returns [constant OK] if request is successfully created. (Does not imply that the server has responded), [constant ERR_UNCONFIGURED] if not in the tree, [constant ERR_BUSY] if still processing previous request, [constant ERR_INVALID_PARAMETER] if given string is not a valid URL format, or [constant ERR_CANT_CONNECT] if not using thread and the [HTTPClient] cannot connect to host.
 			</description>
 		</method>
+		<method name="set_http_proxy">
+			<return type="void" />
+			<argument index="0" name="host" type="String" />
+			<argument index="1" name="port" type="int" />
+			<description>
+				Sets the proxy server for HTTP requests.
+				The proxy server is unset if [code]host[/code] is empty or [code]port[/code] is -1.
+			</description>
+		</method>
+		<method name="set_https_proxy">
+			<return type="void" />
+			<argument index="0" name="host" type="String" />
+			<argument index="1" name="port" type="int" />
+			<description>
+				Sets the proxy server for HTTPS requests.
+				The proxy server is unset if [code]host[/code] is empty or [code]port[/code] is -1.
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="body_size_limit" type="int" setter="set_body_size_limit" getter="get_body_size_limit" default="-1">
-			Maximum allowed size for response bodies.
+			Maximum allowed size for response bodies ([code]-1[/code] means no limit). When only small files are expected, this can be used to prevent disallow receiving files that are too large, preventing potential denial of service attacks.
 		</member>
 		<member name="download_chunk_size" type="int" setter="set_download_chunk_size" getter="get_download_chunk_size" default="65536">
 			The size of the buffer used and maximum bytes to read per iteration. See [member HTTPClient.read_chunk_size].
 			Set this to a lower value (e.g. 4096 for 4 KiB) when downloading small files to decrease memory usage at the cost of download speeds.
 		</member>
 		<member name="download_file" type="String" setter="set_download_file" getter="get_download_file" default="&quot;&quot;">
-			The file to download into. Will output any received file into it.
+			The file to download into. If set to a non-empty string, the request output will be written to the file located at the path. If a file already exists at the specified location, it will be overwritten as soon as body data begins to be received.
+			[b]Note:[/b] Folders are not automatically created when the file is created. If [member download_file] points to a subfolder, it's recommended to create the necessary folders beforehand using [method Directory.make_dir_recursive] to ensure the file can be written.
 		</member>
 		<member name="max_redirects" type="int" setter="set_max_redirects" getter="get_max_redirects" default="8">
-			Maximum number of allowed redirects.
+			Maximum number of allowed redirects. This is used to prevent endless redirect loops.
 		</member>
-		<member name="timeout" type="int" setter="set_timeout" getter="get_timeout" default="0">
+		<member name="timeout" type="float" setter="set_timeout" getter="get_timeout" default="0.0">
+			If set to a value greater than [code]0.0[/code] before the request starts, the HTTP request will time out after [code]timeout[/code] seconds have passed and the request is not [i]completed[/i] yet. For small HTTP requests such as REST API usage, set [member timeout] to a value between [code]10.0[/code] and [code]30.0[/code] to prevent the application from getting stuck if the request fails to get a response in a timely manner. For file downloads, leave this to [code]0.0[/code] to prevent the download from failing if it takes too much time.
 		</member>
 		<member name="use_threads" type="bool" setter="set_use_threads" getter="is_using_threads" default="false">
 			If [code]true[/code], multithreading is used to improve performance.

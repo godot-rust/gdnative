@@ -33,13 +33,15 @@ runs:
         key: godot-${{ runner.os }}-v${{ inputs.godot_ver }}
     - name: "Install Godot"
       if: steps.cache-godot.outputs.cache-hit != 'true'
+      # filePath: transforms '3.5.1-rc1' into '3.5.1/rc1' and '3.5.1-stable' into '3.5.1'
       run: |
-        wget --no-verbose "https://downloads.tuxfamily.org/godotengine/${{ inputs.godot_ver }}/Godot_v${{ inputs.godot_ver }}-stable_linux_headless.64.zip" -O /tmp/godot.zip
+        filePath=$(echo "${{ inputs.godot_ver }}" | sed "s!-stable!!" | sed "s!-!/!")
+        wget --no-verbose "https://downloads.tuxfamily.org/godotengine/$filePath/Godot_v${{ inputs.godot_ver }}_linux_headless.64.zip" -O /tmp/godot.zip
         unzip -o /tmp/godot.zip -d ${{ runner.temp }}/godot_bin
       shell: bash
     - name: "Set environment variable"
       run: |
-        echo "GODOT_BIN=${{ runner.temp }}/godot_bin/Godot_v${{ inputs.godot_ver }}-stable_linux_headless.64" >> $GITHUB_ENV
+        echo "GODOT_BIN=${{ runner.temp }}/godot_bin/Godot_v${{ inputs.godot_ver }}_linux_headless.64" >> $GITHUB_ENV
       shell: bash
     - name: "Build godot-rust"
       run: |
@@ -68,7 +70,7 @@ runs:
         if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
           exit 1;
         fi;
-        cargo build --features type-tag-fallback;
+        cargo build --features type-tag-fallback ${{ inputs.rust_extra_args }}
         mkdir -p ./project/lib;
         cp ../target/debug/libgdnative_test.so ./project/lib/;
         ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");

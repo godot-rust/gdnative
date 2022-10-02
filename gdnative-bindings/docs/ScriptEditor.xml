@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ScriptEditor" inherits="PanelContainer" version="3.4">
+<class name="ScriptEditor" inherits="PanelContainer" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Godot editor's script editor.
 	</brief_description>
@@ -57,6 +57,12 @@
 			<argument index="1" name="base_path" type="String" />
 			<description>
 				Opens the script create dialog. The script will extend [code]base_name[/code]. The file extension can be omitted from [code]base_path[/code]. It will be added based on the selected scripting language.
+			</description>
+		</method>
+		<method name="reload_scripts">
+			<return type="void" />
+			<description>
+				Reload all currently opened scripts from disk in case the file contents are newer.
 			</description>
 		</method>
 	</methods>

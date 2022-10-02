@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="KinematicBody" inherits="PhysicsBody" version="3.4">
+<class name="KinematicBody" inherits="PhysicsBody" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Kinematic body 3D node.
 	</brief_description>
@@ -9,7 +9,7 @@
 		[b]Kinematic characters:[/b] KinematicBody also has an API for moving objects (the [method move_and_collide] and [method move_and_slide] methods) while performing collision tests. This makes them really useful to implement characters that collide against a world, but don't require advanced physics.
 	</description>
 	<tutorials>
-		<link title="Kinematic character (2D)">https://docs.godotengine.org/en/3.4/tutorials/physics/kinematic_character_2d.html</link>
+		<link title="Kinematic character (2D)">https://docs.godotengine.org/en/3.5.1/tutorials/physics/kinematic_character_2d.html</link>
 		<link title="3D Kinematic Character Demo">https://godotengine.org/asset-library/asset/126</link>
 		<link title="3D Platformer Demo">https://godotengine.org/asset-library/asset/125</link>
 		<link title="3D Voxel Demo">https://godotengine.org/asset-library/asset/676</link>
@@ -86,7 +86,7 @@
 			<argument index="2" name="exclude_raycast_shapes" type="bool" default="true" />
 			<argument index="3" name="test_only" type="bool" default="false" />
 			<description>
-				Moves the body along the vector [code]rel_vec[/code]. The body will stop if it collides. Returns a [KinematicCollision], which contains information about the collision.
+				Moves the body along the vector [code]rel_vec[/code]. The body will stop if it collides. Returns a [KinematicCollision], which contains information about the collision when stopped, or when touching another body along the motion.
 				If [code]test_only[/code] is [code]true[/code], the body does not move but the would-be collision information is given.
 			</description>
 		</method>
@@ -139,7 +139,8 @@
 			<argument index="1" name="rel_vec" type="Vector3" />
 			<argument index="2" name="infinite_inertia" type="bool" default="true" />
 			<description>
-				Checks for collisions without moving the body. Virtually sets the node's position, scale and rotation to that of the given [Transform], then tries to move the body along the vector [code]rel_vec[/code]. Returns [code]true[/code] if a collision would occur.
+				Checks for collisions without moving the body. Virtually sets the node's position, scale and rotation to that of the given [Transform], then tries to move the body along the vector [code]rel_vec[/code]. Returns [code]true[/code] if a collision would stop the body from moving along the whole path.
+				Use [method move_and_collide] instead for detecting collision with touching bodies.
 			</description>
 		</method>
 	</methods>
@@ -171,7 +172,19 @@
 		<member name="move_lock_z" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
 			Lock the body's Z axis movement. Deprecated alias for [member axis_lock_motion_z].
 		</member>
+		<member name="moving_platform_apply_velocity_on_leave" type="int" setter="set_moving_platform_apply_velocity_on_leave" getter="get_moving_platform_apply_velocity_on_leave" enum="KinematicBody.MovingPlatformApplyVelocityOnLeave" default="0">
+			Sets the behavior to apply when you leave a moving platform. By default, to be physically accurate, when you leave the last platform velocity is applied. See [enum MovingPlatformApplyVelocityOnLeave] constants for available behavior.
+		</member>
 	</members>
 	<constants>
+		<constant name="PLATFORM_VEL_ON_LEAVE_ALWAYS" value="0" enum="MovingPlatformApplyVelocityOnLeave">
+			Add the last platform velocity when you leave a moving platform.
+		</constant>
+		<constant name="PLATFORM_VEL_ON_LEAVE_UPWARD_ONLY" value="1" enum="MovingPlatformApplyVelocityOnLeave">
+			Add the last platform velocity when you leave a moving platform, but any downward motion is ignored. It's useful to keep full jump height even when the platform is moving down.
+		</constant>
+		<constant name="PLATFORM_VEL_ON_LEAVE_NEVER" value="2" enum="MovingPlatformApplyVelocityOnLeave">
+			Do nothing when leaving a platform.
+		</constant>
 	</constants>
 </class>

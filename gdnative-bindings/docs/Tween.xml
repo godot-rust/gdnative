@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Tween" inherits="Node" version="3.4">
+<class name="Tween" inherits="Node" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Smoothly animates a node's properties over time.
 	</brief_description>
@@ -17,6 +17,8 @@
 		Many methods require a property name, such as [code]"position"[/code] above. You can find the correct property name by hovering over the property in the Inspector. You can also provide the components of a property directly by using [code]"property:component"[/code] (e.g. [code]position:x[/code]), where it would only apply to that particular component.
 		Many of the methods accept [code]trans_type[/code] and [code]ease_type[/code]. The first accepts an [enum TransitionType] constant, and refers to the way the timing of the animation is handled (see [url=https://easings.net/]easings.net[/url] for some examples). The second accepts an [enum EaseType] constant, and controls where the [code]trans_type[/code] is applied to the interpolation (in the beginning, the end, or both). If you don't know which transition and easing to pick, you can try different [enum TransitionType] constants with [constant EASE_IN_OUT], and use the one that looks best.
 		[url=https://raw.githubusercontent.com/godotengine/godot-docs/master/img/tween_cheatsheet.png]Tween easing and transition types cheatsheet[/url]
+		[b]Note:[/b] Tween methods will return [code]false[/code] if the requested operation cannot be completed.
+		[b]Note:[/b] For an alternative method of tweening, that doesn't require using nodes, see [SceneTreeTween].
 	</description>
 	<tutorials>
 	</tutorials>
@@ -69,6 +71,9 @@
 			<argument index="5" name="arg3" type="Variant" default="null" />
 			<argument index="6" name="arg4" type="Variant" default="null" />
 			<argument index="7" name="arg5" type="Variant" default="null" />
+			<argument index="8" name="arg6" type="Variant" default="null" />
+			<argument index="9" name="arg7" type="Variant" default="null" />
+			<argument index="10" name="arg8" type="Variant" default="null" />
 			<description>
 				Calls [code]callback[/code] of [code]object[/code] after [code]duration[/code]. [code]arg1[/code]-[code]arg5[/code] are arguments to be passed to the callback.
 			</description>
@@ -83,6 +88,9 @@
 			<argument index="5" name="arg3" type="Variant" default="null" />
 			<argument index="6" name="arg4" type="Variant" default="null" />
 			<argument index="7" name="arg5" type="Variant" default="null" />
+			<argument index="8" name="arg6" type="Variant" default="null" />
+			<argument index="9" name="arg7" type="Variant" default="null" />
+			<argument index="10" name="arg8" type="Variant" default="null" />
 			<description>
 				Calls [code]callback[/code] of [code]object[/code] after [code]duration[/code] on the main thread (similar to [method Object.call_deferred]). [code]arg1[/code]-[code]arg5[/code] are arguments to be passed to the callback.
 			</description>
@@ -143,7 +151,7 @@
 			<argument index="0" name="object" type="Object" />
 			<argument index="1" name="key" type="String" default="&quot;&quot;" />
 			<description>
-				Resets a tween to its initial value (the one given, not the one before the tween), given its object and property/method pair. By default, all tweens are removed, unless [code]key[/code] is specified.
+				Resets a tween to its initial value (the one given, not the one before the tween), given its object and property/method pair. By default, all tweens are reset, unless [code]key[/code] is specified.
 			</description>
 		</method>
 		<method name="reset_all">

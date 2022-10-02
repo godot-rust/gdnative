@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VisualShaderNodeInput" inherits="VisualShaderNode" version="3.4">
+<class name="VisualShaderNodeInput" inherits="VisualShaderNode" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 	</brief_description>
 	<description>
 		Gives access to input variables (built-ins) available for the shader. See the shading reference for the list of available built-ins for each shader type (check [code]Tutorials[/code] section for link).
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/shading/shading_reference/index.html</link>
+		<link>https://docs.godotengine.org/en/3.5.1/tutorials/shaders/shader_reference/index.html</link>
 	</tutorials>
 	<methods>
 		<method name="get_input_real_name" qualifiers="const">

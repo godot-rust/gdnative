@@ -75,26 +75,6 @@ impl Transform2D {
         }
     }
 
-    /// Constructs the transform from a given angle (in radians), translation, and scale.
-    ///
-    /// # Deprecation
-    /// This constructor has been deprecated due to the order of transformations applied deviate from one's expectations.
-    /// Using a non-zero rotation will affect the resulting transform's origin.
-    ///
-    /// Consider using [`Transform2D::from_scale_rotation_origin`] or applying transformations manually.
-    #[deprecated = "Misleading behavior (see description); consider `from_scale_rotation_origin` or manual transformations."]
-    #[inline]
-    pub fn from_rotation_translation_scale(
-        translation: Vector2,
-        rotation: f32,
-        scale: Vector2,
-    ) -> Self {
-        Self::IDENTITY
-            .translated(translation)
-            .rotated(rotation)
-            .scaled(scale)
-    }
-
     /// Constructs the transform from a given scale, angle (in radians), and origin.
     ///
     /// This is **NOT** equivalent to either of these two lines:

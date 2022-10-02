@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TreeItem" inherits="Object" version="3.4">
+<class name="TreeItem" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Control for a single item inside a [Tree].
 	</brief_description>
@@ -14,11 +14,11 @@
 			<return type="void" />
 			<argument index="0" name="column" type="int" />
 			<argument index="1" name="button" type="Texture" />
-			<argument index="2" name="button_idx" type="int" default="-1" />
+			<argument index="2" name="id" type="int" default="-1" />
 			<argument index="3" name="disabled" type="bool" default="false" />
 			<argument index="4" name="tooltip" type="String" default="&quot;&quot;" />
 			<description>
-				Adds a button with [Texture] [code]button[/code] at column [code]column[/code]. The [code]button_idx[/code] index is used to identify the button when calling other methods. If not specified, the next available index is used, which may be retrieved by calling [method get_button_count] immediately after this method. Optionally, the button can be [code]disabled[/code] and have a [code]tooltip[/code].
+				Adds a button with [Texture] [code]button[/code] at column [code]column[/code]. The [code]id[/code] is used to identify the button. If not specified, the next available index is used, which may be retrieved by calling [method get_button_count] immediately before this method. Optionally, the button can be [code]disabled[/code] and have a [code]tooltip[/code].
 			</description>
 		</method>
 		<method name="call_recursive" qualifiers="vararg">
@@ -65,11 +65,27 @@
 				Returns the [Texture] of the button at index [code]button_idx[/code] in column [code]column[/code].
 			</description>
 		</method>
+		<method name="get_button_by_id" qualifiers="const">
+			<return type="int" />
+			<argument index="0" name="column" type="int" />
+			<argument index="1" name="id" type="int" />
+			<description>
+				Returns the button index if there is a button with id [code]id[/code] in column [code]column[/code], otherwise returns -1.
+			</description>
+		</method>
 		<method name="get_button_count" qualifiers="const">
 			<return type="int" />
 			<argument index="0" name="column" type="int" />
 			<description>
-				Returns the number of buttons in column [code]column[/code]. May be used to get the most recently added button's index, if no index was specified.
+				Returns the number of buttons in column [code]column[/code].
+			</description>
+		</method>
+		<method name="get_button_id" qualifiers="const">
+			<return type="int" />
+			<argument index="0" name="column" type="int" />
+			<argument index="1" name="button_idx" type="int" />
+			<description>
+				Returns the id for the button at index [code]button_idx[/code] in column [code]column[/code].
 			</description>
 		</method>
 		<method name="get_button_tooltip" qualifiers="const">
@@ -152,14 +168,14 @@
 		<method name="get_next">
 			<return type="TreeItem" />
 			<description>
-				Returns the next TreeItem in the tree or a null object if there is none.
+				Returns the next sibling TreeItem in the tree or a null object if there is none.
 			</description>
 		</method>
 		<method name="get_next_visible">
 			<return type="TreeItem" />
 			<argument index="0" name="wrap" type="bool" default="false" />
 			<description>
-				Returns the next visible TreeItem in the tree or a null object if there is none.
+				Returns the next visible sibling TreeItem in the tree or a null object if there is none.
 				If [code]wrap[/code] is enabled, the method will wrap around to the first visible element in the tree when called on the last visible element, otherwise it returns [code]null[/code].
 			</description>
 		</method>
@@ -172,14 +188,14 @@
 		<method name="get_prev">
 			<return type="TreeItem" />
 			<description>
-				Returns the previous TreeItem in the tree or a null object if there is none.
+				Returns the previous sibling TreeItem in the tree or a null object if there is none.
 			</description>
 		</method>
 		<method name="get_prev_visible">
 			<return type="TreeItem" />
 			<argument index="0" name="wrap" type="bool" default="false" />
 			<description>
-				Returns the previous visible TreeItem in the tree or a null object if there is none.
+				Returns the previous visible sibling TreeItem in the tree or a null object if there is none.
 				If [code]wrap[/code] is enabled, the method will wrap around to the last visible element in the tree when called on the first visible element, otherwise it returns [code]null[/code].
 			</description>
 		</method>

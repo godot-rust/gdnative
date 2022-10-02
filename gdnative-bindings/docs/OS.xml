@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="OS" inherits="Object" version="3.4">
+<class name="OS" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Operating System functions.
 	</brief_description>
@@ -41,6 +41,13 @@
 			<description>
 				Shuts down system MIDI driver.
 				[b]Note:[/b] This method is implemented on Linux, macOS and Windows.
+			</description>
+		</method>
+		<method name="crash">
+			<return type="void" />
+			<argument index="0" name="message" type="String" />
+			<description>
+				Crashes the engine (or the editor if called within a [code]tool[/code] script). This should [i]only[/i] be used for testing the system's crash handler, not for any other purpose. For general error reporting, use (in order of preference) [method @GDScript.assert], [method @GDScript.push_error] or [method alert]. See also [method kill].
 			</description>
 		</method>
 		<method name="delay_msec" qualifiers="const">
@@ -85,12 +92,14 @@
 			<argument index="2" name="blocking" type="bool" default="true" />
 			<argument index="3" name="output" type="Array" default="[  ]" />
 			<argument index="4" name="read_stderr" type="bool" default="false" />
+			<argument index="5" name="open_console" type="bool" default="false" />
 			<description>
 				Execute the file at the given path with the arguments passed as an array of strings. Platform path resolution will take place. The resolved file must exist and be executable.
 				The arguments are used in the given order and separated by a space, so [code]OS.execute("ping", ["-w", "3", "godotengine.org"], false)[/code] will resolve to [code]ping -w 3 godotengine.org[/code] in the system's shell.
 				This method has slightly different behavior based on whether the [code]blocking[/code] mode is enabled.
 				If [code]blocking[/code] is [code]true[/code], the Godot thread will pause its execution while waiting for the process to terminate. The shell output of the process will be written to the [code]output[/code] array as a single string. When the process terminates, the Godot thread will resume execution.
 				If [code]blocking[/code] is [code]false[/code], the Godot thread will continue while the new process runs. It is not possible to retrieve the shell output in non-blocking mode, so [code]output[/code] will be empty.
+				On Windows, if [code]open_console[/code] is [code]true[/code] and process is console app, new terminal window will be opened, it's ignored on other platforms.
 				The return value also depends on the blocking mode. When blocking, the method will return an exit code of the process. When non-blocking, the method returns a process ID, which you can use to monitor the process (and potentially terminate it with [method kill]). If the process forking (non-blocking) or opening (blocking) fails, the method will return [code]-1[/code] or another exit code.
 				Example of blocking mode and retrieving the shell output:
 				[codeblock]
@@ -106,6 +115,9 @@
 				OS.execute("CMD.exe", ["/C", "cd %TEMP% &amp;&amp; dir"], true, output)
 				[/codeblock]
 				[b]Note:[/b] This method is implemented on Android, iOS, Linux, macOS and Windows.
+				[b]Note:[/b] To execute a Windows command interpreter built-in command, specify [code]cmd.exe[/code] in [code]path[/code], [code]/c[/code] as the first argument, and the desired command as the second argument.
+				[b]Note:[/b] To execute a PowerShell built-in command, specify [code]powershell.exe[/code] in [code]path[/code], [code]-Command[/code] as the first argument, and the desired command as the second argument.
+				[b]Note:[/b] To execute a Unix shell built-in command, specify shell executable name in [code]path[/code], [code]-c[/code] as the first argument, and the desired command as the second argument.
 			</description>
 		</method>
 		<method name="find_scancode_from_string" qualifiers="const">
@@ -131,7 +143,7 @@
 		<method name="get_cache_dir" qualifiers="const">
 			<return type="String" />
 			<description>
-				Returns the [i]global[/i] cache data directory according to the operating system's standards. On desktop platforms, this path can be overridden by setting the [code]XDG_CACHE_HOME[/code] environment variable before starting the project. See [url=https://docs.godotengine.org/en/latest/tutorials/io/data_paths.html]File paths in Godot projects[/url] in the documentation for more information. See also [method get_config_dir] and [method get_data_dir].
+				Returns the [i]global[/i] cache data directory according to the operating system's standards. On desktop platforms, this path can be overridden by setting the [code]XDG_CACHE_HOME[/code] environment variable before starting the project. See [url=https://docs.godotengine.org/en/3.5.1/tutorials/io/data_paths.html]File paths in Godot projects[/url] in the documentation for more information. See also [method get_config_dir] and [method get_data_dir].
 				Not to be confused with [method get_user_data_dir], which returns the [i]project-specific[/i] user data path.
 			</description>
 		</method>
@@ -149,13 +161,17 @@
 				    if argument.find("=") &gt; -1:
 				        var key_value = argument.split("=")
 				        arguments[key_value[0].lstrip("--")] = key_value[1]
+				    else:
+				        # Options without an argument will be present in the dictionary,
+				        # with the value set to an empty string.
+				        arguments[argument.lstrip("--")] = ""
 				[/codeblock]
 			</description>
 		</method>
 		<method name="get_config_dir" qualifiers="const">
 			<return type="String" />
 			<description>
-				Returns the [i]global[/i] user configuration directory according to the operating system's standards. On desktop platforms, this path can be overridden by setting the [code]XDG_CONFIG_HOME[/code] environment variable before starting the project. See [url=https://docs.godotengine.org/en/latest/tutorials/io/data_paths.html]File paths in Godot projects[/url] in the documentation for more information. See also [method get_cache_dir] and [method get_data_dir].
+				Returns the [i]global[/i] user configuration directory according to the operating system's standards. On desktop platforms, this path can be overridden by setting the [code]XDG_CONFIG_HOME[/code] environment variable before starting the project. See [url=https://docs.godotengine.org/en/3.5.1/tutorials/io/data_paths.html]File paths in Godot projects[/url] in the documentation for more information. See also [method get_cache_dir] and [method get_data_dir].
 				Not to be confused with [method get_user_data_dir], which returns the [i]project-specific[/i] user data path.
 			</description>
 		</method>
@@ -176,7 +192,7 @@
 		<method name="get_data_dir" qualifiers="const">
 			<return type="String" />
 			<description>
-				Returns the [i]global[/i] user data directory according to the operating system's standards. On desktop platforms, this path can be overridden by setting the [code]XDG_DATA_HOME[/code] environment variable before starting the project. See [url=https://docs.godotengine.org/en/latest/tutorials/io/data_paths.html]File paths in Godot projects[/url] in the documentation for more information. See also [method get_cache_dir] and [method get_config_dir].
+				Returns the [i]global[/i] user data directory according to the operating system's standards. On desktop platforms, this path can be overridden by setting the [code]XDG_DATA_HOME[/code] environment variable before starting the project. See [url=https://docs.godotengine.org/en/3.5.1/tutorials/io/data_paths.html]File paths in Godot projects[/url] in the documentation for more information. See also [method get_cache_dir] and [method get_config_dir].
 				Not to be confused with [method get_user_data_dir], which returns the [i]project-specific[/i] user data path.
 			</description>
 		</method>
@@ -184,6 +200,7 @@
 			<return type="Dictionary" />
 			<argument index="0" name="utc" type="bool" default="false" />
 			<description>
+				Deprecated, use [method Time.get_date_dict_from_system] instead.
 				Returns current date as a dictionary of keys: [code]year[/code], [code]month[/code], [code]day[/code], [code]weekday[/code], [code]dst[/code] (Daylight Savings Time).
 			</description>
 		</method>
@@ -191,6 +208,7 @@
 			<return type="Dictionary" />
 			<argument index="0" name="utc" type="bool" default="false" />
 			<description>
+				Deprecated, use [method Time.get_datetime_dict_from_system] instead.
 				Returns current datetime as a dictionary of keys: [code]year[/code], [code]month[/code], [code]day[/code], [code]weekday[/code], [code]dst[/code] (Daylight Savings Time), [code]hour[/code], [code]minute[/code], [code]second[/code].
 			</description>
 		</method>
@@ -198,8 +216,16 @@
 			<return type="Dictionary" />
 			<argument index="0" name="unix_time_val" type="int" />
 			<description>
+				Deprecated, use [method Time.get_datetime_dict_from_unix_time] instead.
 				Gets a dictionary of time values corresponding to the given UNIX epoch time (in seconds).
 				The returned Dictionary's values will be the same as [method get_datetime], with the exception of Daylight Savings Time as it cannot be determined from the epoch.
+			</description>
+		</method>
+		<method name="get_display_cutouts" qualifiers="const">
+			<return type="Array" />
+			<description>
+				Returns an [Array] of [Rect2], each of which is the bounding rectangle for a display cutout or notch. These are non-functional areas on edge-to-edge screens used by cameras and sensors. Returns an empty array if the device does not have cutouts. See also [method get_window_safe_area].
+				[b]Note:[/b] Currently only implemented on Android. Other platforms will return an empty array even if they do have display cutouts or notches.
 			</description>
 		</method>
 		<method name="get_dynamic_memory_usage" qualifiers="const">
@@ -271,6 +297,13 @@
 				This can be used to narrow down fully specified locale strings to only the "common" language code, when you don't need the additional information about country code or variants. For example, for a French Canadian user with [code]fr_CA[/code] locale, this would return [code]fr[/code].
 			</description>
 		</method>
+		<method name="get_main_thread_id" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the ID of the main thread. See [method get_thread_caller_id].
+				[b]Note:[/b] Thread IDs are not deterministic and may be reused across application restarts.
+			</description>
+		</method>
 		<method name="get_model_name" qualifiers="const">
 			<return type="String" />
 			<description>
@@ -323,7 +356,14 @@
 		<method name="get_processor_count" qualifiers="const">
 			<return type="int" />
 			<description>
-				Returns the number of threads available on the host machine.
+				Returns the number of [i]logical[/i] CPU cores available on the host machine. On CPUs with HyperThreading enabled, this number will be greater than the number of [i]physical[/i] CPU cores.
+			</description>
+		</method>
+		<method name="get_processor_name" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the name of the CPU model on the host machine (e.g. "Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz").
+				[b]Note:[/b] This method is only implemented on Windows, macOS, Linux and iOS. On Android, HTML5 and UWP, [method get_processor_name] returns an empty string.
 			</description>
 		</method>
 		<method name="get_real_window_size" qualifiers="const">
@@ -350,7 +390,7 @@
 			<return type="int" />
 			<argument index="0" name="screen" type="int" default="-1" />
 			<description>
-				Returns the dots per inch density of the specified screen. If [code]screen[/code] is [/code]-1[/code] (the default value), the current screen will be used.
+				Returns the dots per inch density of the specified screen. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
 				[b]Note:[/b] On macOS, returned value is inaccurate if fractional display scaling mode is used.
 				[b]Note:[/b] On Android devices, the actual screen densities are grouped into six generalized densities:
 				[codeblock]
@@ -376,14 +416,28 @@
 			<return type="Vector2" />
 			<argument index="0" name="screen" type="int" default="-1" />
 			<description>
-				Returns the position of the specified screen by index. If [code]screen[/code] is [/code]-1[/code] (the default value), the current screen will be used.
+				Returns the position of the specified screen by index. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
+			</description>
+		</method>
+		<method name="get_screen_refresh_rate" qualifiers="const">
+			<return type="float" />
+			<argument index="0" name="screen" type="int" default="-1" />
+			<description>
+				Returns the current refresh rate of the specified screen. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
+				[b]Note:[/b] Returns [code]-1.0[/code] if Godot fails to find the refresh rate for the specified screen. On HTML5, [method get_screen_refresh_rate] will always return [code]-1.0[/code] as there is no way to retrieve the refresh rate on that platform.
+				To fallback to a default refresh rate if the method fails, try:
+				[codeblock]
+				var refresh_rate = OS.get_screen_refresh_rate()
+				if refresh_rate &lt; 0:
+				    refresh_rate = 60.0
+				[/codeblock]
 			</description>
 		</method>
 		<method name="get_screen_scale" qualifiers="const">
 			<return type="float" />
 			<argument index="0" name="screen" type="int" default="-1" />
 			<description>
-				Return the scale factor of the specified screen by index. If [code]screen[/code] is [/code]-1[/code] (the default value), the current screen will be used.
+				Return the scale factor of the specified screen by index. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
 				[b]Note:[/b] On macOS returned value is [code]2.0[/code] for hiDPI (Retina) screen, and [code]1.0[/code] for all other cases.
 				[b]Note:[/b] This method is implemented on macOS.
 			</description>
@@ -392,7 +446,7 @@
 			<return type="Vector2" />
 			<argument index="0" name="screen" type="int" default="-1" />
 			<description>
-				Returns the dimensions in pixels of the specified screen. If [code]screen[/code] is [/code]-1[/code] (the default value), the current screen will be used.
+				Returns the dimensions in pixels of the specified screen. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
 			</description>
 		</method>
 		<method name="get_splash_tick_msec" qualifiers="const">
@@ -410,7 +464,7 @@
 		<method name="get_static_memory_usage" qualifiers="const">
 			<return type="int" />
 			<description>
-				Returns the amount of static memory being used by the program in bytes.
+				Returns the amount of static memory being used by the program in bytes (only works in debug).
 			</description>
 		</method>
 		<method name="get_system_dir" qualifiers="const">
@@ -460,12 +514,14 @@
 		<method name="get_ticks_msec" qualifiers="const">
 			<return type="int" />
 			<description>
+				Deprecated, use [method Time.get_ticks_msec] instead.
 				Returns the amount of time passed in milliseconds since the engine started.
 			</description>
 		</method>
 		<method name="get_ticks_usec" qualifiers="const">
 			<return type="int" />
 			<description>
+				Deprecated, use [method Time.get_ticks_usec] instead.
 				Returns the amount of time passed in microseconds since the engine started.
 			</description>
 		</method>
@@ -473,6 +529,7 @@
 			<return type="Dictionary" />
 			<argument index="0" name="utc" type="bool" default="false" />
 			<description>
+				Deprecated, use [method Time.get_time_dict_from_system] instead.
 				Returns current time as a dictionary of keys: hour, minute, second.
 			</description>
 		</method>
@@ -495,6 +552,7 @@
 			<description>
 				Returns the current UNIX epoch timestamp in seconds.
 				[b]Important:[/b] This is the system clock that the user can manually set. [b]Never use[/b] this method for precise time calculation since its results are also subject to automatic adjustments by the operating system. [b]Always use[/b] [method get_ticks_usec] or [method get_ticks_msec] for precise time calculation instead, since they are guaranteed to be monotonic (i.e. never decrease).
+				[b]Note:[/b] To get a floating point timestamp with sub-second precision, use [method Time.get_unix_time_from_system].
 			</description>
 		</method>
 		<method name="get_unix_time_from_datetime" qualifiers="const">
@@ -579,6 +637,12 @@
 				[b]Note:[/b] This method is implemented on macOS.
 			</description>
 		</method>
+		<method name="has_clipboard" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if there is content on the clipboard.
+			</description>
+		</method>
 		<method name="has_environment" qualifiers="const">
 			<return type="bool" />
 			<argument index="0" name="variable" type="String" />
@@ -591,7 +655,7 @@
 			<return type="bool" />
 			<argument index="0" name="tag_name" type="String" />
 			<description>
-				Returns [code]true[/code] if the feature for the given feature tag is supported in the currently running instance, depending on the platform, build etc. Can be used to check whether you're currently running a debug build, on a certain platform or arch, etc. Refer to the [url=https://docs.godotengine.org/en/3.4/getting_started/workflow/export/feature_tags.html]Feature Tags[/url] documentation for more details.
+				Returns [code]true[/code] if the feature for the given feature tag is supported in the currently running instance, depending on the platform, build etc. Can be used to check whether you're currently running a debug build, on a certain platform or arch, etc. Refer to the [url=https://docs.godotengine.org/en/3.5.1/tutorials/export/feature_tags.html]Feature Tags[/url] documentation for more details.
 				[b]Note:[/b] Tag names are case-sensitive.
 			</description>
 		</method>
@@ -625,6 +689,15 @@
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if the [b]OK[/b] button should appear on the left and [b]Cancel[/b] on the right.
+			</description>
+		</method>
+		<method name="is_process_running" qualifiers="const">
+			<return type="bool" />
+			<argument index="0" name="pid" type="int" />
+			<description>
+				Returns [code]true[/code] if the child process ID ([code]pid[/code]) is still running or [code]false[/code] if it has terminated.
+				Must be a valid ID generated from [method execute].
+				[b]Note:[/b] This method is implemented on Android, iOS, Linux, macOS and Windows.
 			</description>
 		</method>
 		<method name="is_scancode_unicode" qualifiers="const">
@@ -689,6 +762,14 @@
 				[b]Note:[/b] This method is implemented on Linux, macOS and Windows.
 			</description>
 		</method>
+		<method name="keyboard_get_scancode_from_physical" qualifiers="const">
+			<return type="int" />
+			<argument index="0" name="scancode" type="int" />
+			<description>
+				Converts a physical (US QWERTY) [code]scancode[/code] to one in the active keyboard layout.
+				[b]Note:[/b] This method is implemented on Linux, macOS and Windows.
+			</description>
+		</method>
 		<method name="keyboard_set_current_layout">
 			<return type="void" />
 			<argument index="0" name="index" type="int" />
@@ -701,9 +782,22 @@
 			<return type="int" enum="Error" />
 			<argument index="0" name="pid" type="int" />
 			<description>
-				Kill (terminate) the process identified by the given process ID ([code]pid[/code]), e.g. the one returned by [method execute] in non-blocking mode.
+				Kill (terminate) the process identified by the given process ID ([code]pid[/code]), e.g. the one returned by [method execute] in non-blocking mode. See also [method crash].
 				[b]Note:[/b] This method can also be used to kill processes that were not spawned by the game.
 				[b]Note:[/b] This method is implemented on Android, iOS, Linux, macOS and Windows.
+			</description>
+		</method>
+		<method name="move_to_trash" qualifiers="const">
+			<return type="int" enum="Error" />
+			<argument index="0" name="path" type="String" />
+			<description>
+				Moves the file or directory to the system's recycle bin. See also [method Directory.remove].
+				The method takes only global paths, so you may need to use [method ProjectSettings.globalize_path]. Do not use it for files in [code]res://[/code] as it will not work in exported project.
+				[b]Note:[/b] If the user has disabled the recycle bin on their system, the file will be permanently deleted instead.
+				[codeblock]
+				var file_to_remove = "user://slot1.sav"
+				OS.move_to_trash(ProjectSettings.globalize_path(file_to_remove))
+				[/codeblock]
 			</description>
 		</method>
 		<method name="move_window_to_foreground">
@@ -911,7 +1005,7 @@
 				Requests the OS to open a resource with the most appropriate program. For example:
 				- [code]OS.shell_open("C:\\Users\name\Downloads")[/code] on Windows opens the file explorer at the user's Downloads folder.
 				- [code]OS.shell_open("https://godotengine.org")[/code] opens the default web browser on the official Godot website.
-				- [code]OS.shell_open("mailto:example@example.com")[/code] opens the default email client with the "To" field set to [code]example@example.com[/code]. See [url=https://blog.escapecreative.com/customizing-mailto-links/]Customizing [code]mailto:[/code] Links[/url] for a list of fields that can be added.
+				- [code]OS.shell_open("mailto:example@example.com")[/code] opens the default email client with the "To" field set to [code]example@example.com[/code]. See [url=https://datatracker.ietf.org/doc/html/rfc2368]RFC 2368 - The [code]mailto[/code] URL scheme[/url] for a list of fields that can be added.
 				Use [method ProjectSettings.globalize_path] to convert a [code]res://[/code] or [code]user://[/code] path into a system path for use with this method.
 				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS and Windows.
 			</description>

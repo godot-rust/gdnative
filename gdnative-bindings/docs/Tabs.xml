@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Tabs" inherits="Control" version="3.4">
+<class name="Tabs" inherits="Control" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Tabs control.
 	</brief_description>
@@ -40,6 +40,13 @@
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if select with right mouse button is enabled.
+			</description>
+		</method>
+		<method name="get_tab_button_icon" qualifiers="const">
+			<return type="Texture" />
+			<argument index="0" name="tab_idx" type="int" />
+			<description>
+				Returns the button icon from the tab at index [code]tab_idx[/code].
 			</description>
 		</method>
 		<method name="get_tab_count" qualifiers="const">
@@ -110,6 +117,14 @@
 				If [code]true[/code], enables selecting a tab with the right mouse button.
 			</description>
 		</method>
+		<method name="set_tab_button_icon">
+			<return type="void" />
+			<argument index="0" name="tab_idx" type="int" />
+			<argument index="1" name="icon" type="Texture" />
+			<description>
+				Sets the button icon from the tab at index [code]tab_idx[/code].
+			</description>
+		</method>
 		<method name="set_tab_disabled">
 			<return type="void" />
 			<argument index="0" name="tab_idx" type="int" />
@@ -169,7 +184,7 @@
 		<signal name="right_button_pressed">
 			<argument index="0" name="tab" type="int" />
 			<description>
-				Emitted when a tab is right-clicked.
+				Emitted when a tab's right button is pressed. See [method set_tab_button_icon].
 			</description>
 		</signal>
 		<signal name="tab_changed">
@@ -224,24 +239,6 @@
 		</constant>
 	</constants>
 	<theme_items>
-		<theme_item name="button" data_type="style" type="StyleBox">
-			Background of the close button when it's being hovered with the cursor.
-		</theme_item>
-		<theme_item name="button_pressed" data_type="style" type="StyleBox">
-			Background of the close button when it's being pressed.
-		</theme_item>
-		<theme_item name="close" data_type="icon" type="Texture">
-			The icon for the close button (see [member tab_close_display_policy]).
-		</theme_item>
-		<theme_item name="decrement" data_type="icon" type="Texture">
-			Icon for the left arrow button that appears when there are too many tabs to fit in the container width. When the button is disabled (i.e. the first tab is visible), it appears semi-transparent.
-		</theme_item>
-		<theme_item name="decrement_highlight" data_type="icon" type="Texture">
-			Icon for the left arrow button that appears when there are too many tabs to fit in the container width. Used when the button is being hovered with the cursor.
-		</theme_item>
-		<theme_item name="font" data_type="font" type="Font">
-			The font used to draw tab names.
-		</theme_item>
 		<theme_item name="font_color_bg" data_type="color" type="Color" default="Color( 0.69, 0.69, 0.69, 1 )">
 			Font color of inactive tabs.
 		</theme_item>
@@ -254,15 +251,35 @@
 		<theme_item name="hseparation" data_type="constant" type="int" default="4">
 			The horizontal separation between the tabs.
 		</theme_item>
+		<theme_item name="label_valign_bg" data_type="constant" type="int" default="2">
+		</theme_item>
+		<theme_item name="label_valign_fg" data_type="constant" type="int" default="0">
+		</theme_item>
+		<theme_item name="top_margin" data_type="constant" type="int" default="24">
+		</theme_item>
+		<theme_item name="font" data_type="font" type="Font">
+			The font used to draw tab names.
+		</theme_item>
+		<theme_item name="close" data_type="icon" type="Texture">
+			The icon for the close button (see [member tab_close_display_policy]).
+		</theme_item>
+		<theme_item name="decrement" data_type="icon" type="Texture">
+			Icon for the left arrow button that appears when there are too many tabs to fit in the container width. When the button is disabled (i.e. the first tab is visible), it appears semi-transparent.
+		</theme_item>
+		<theme_item name="decrement_highlight" data_type="icon" type="Texture">
+			Icon for the left arrow button that appears when there are too many tabs to fit in the container width. Used when the button is being hovered with the cursor.
+		</theme_item>
 		<theme_item name="increment" data_type="icon" type="Texture">
 			Icon for the right arrow button that appears when there are too many tabs to fit in the container width. When the button is disabled (i.e. the last tab is visible) it appears semi-transparent.
 		</theme_item>
 		<theme_item name="increment_highlight" data_type="icon" type="Texture">
 			Icon for the right arrow button that appears when there are too many tabs to fit in the container width. Used when the button is being hovered with the cursor.
 		</theme_item>
-		<theme_item name="label_valign_bg" data_type="constant" type="int" default="2">
+		<theme_item name="button" data_type="style" type="StyleBox">
+			Background of the close button when it's being hovered with the cursor.
 		</theme_item>
-		<theme_item name="label_valign_fg" data_type="constant" type="int" default="0">
+		<theme_item name="button_pressed" data_type="style" type="StyleBox">
+			Background of the close button when it's being pressed.
 		</theme_item>
 		<theme_item name="tab_bg" data_type="style" type="StyleBox">
 			The style of an inactive tab.
@@ -272,8 +289,6 @@
 		</theme_item>
 		<theme_item name="tab_fg" data_type="style" type="StyleBox">
 			The style of the currently selected tab.
-		</theme_item>
-		<theme_item name="top_margin" data_type="constant" type="int" default="24">
 		</theme_item>
 	</theme_items>
 </class>

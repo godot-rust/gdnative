@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="NavigationPolygon" inherits="Resource" version="3.4">
+<class name="NavigationPolygon" inherits="Resource" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A node that has methods to draw outlines or use indices of vertices to create navigation polygons.
 	</brief_description>
@@ -18,7 +18,7 @@
 		var polygon = NavigationPolygon.new()
 		var vertices = PoolVector2Array([Vector2(0, 0), Vector2(0, 50), Vector2(50, 50), Vector2(50, 0)])
 		polygon.set_vertices(vertices)
-		var indices = PoolIntArray(0, 3, 1)
+		var indices = PoolIntArray([0, 1, 2, 3])
 		polygon.add_polygon(indices)
 		$NavigationPolygonInstance.navpoly = polygon
 		[/codeblock]
@@ -59,6 +59,12 @@
 			<return type="void" />
 			<description>
 				Clears the array of polygons, but it doesn't clear the array of outlines and vertices.
+			</description>
+		</method>
+		<method name="get_mesh">
+			<return type="NavigationMesh" />
+			<description>
+				Returns the [NavigationMesh] resulting from this navigation polygon. This navmesh can be used to update the navmesh of a region with the [method NavigationServer.region_set_navmesh] API directly (as 2D uses the 3D server behind the scene).
 			</description>
 		</method>
 		<method name="get_outline" qualifiers="const">

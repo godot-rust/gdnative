@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PhysicsServer" inherits="Object" version="3.4">
+<class name="PhysicsServer" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Server interface for low-level physics access.
 	</brief_description>
@@ -325,14 +325,13 @@
 			<argument index="0" name="body" type="RID" />
 			<description>
 				Returns the physics layer or layers a body can collide with.
--
 			</description>
 		</method>
 		<method name="body_get_direct_state">
 			<return type="PhysicsDirectBodyState" />
 			<argument index="0" name="body" type="RID" />
 			<description>
-				Returns the [PhysicsDirectBodyState] of the body.
+				Returns the [PhysicsDirectBodyState] of the body. Returns [code]null[/code] if the body is destroyed or removed from the physics space.
 			</description>
 		</method>
 		<method name="body_get_kinematic_safe_margin" qualifiers="const">
@@ -674,7 +673,7 @@
 			<return type="int" />
 			<argument index="0" name="process_info" type="int" enum="PhysicsServer.ProcessInfo" />
 			<description>
-				Returns an Info defined by the [enum ProcessInfo] input given.
+				Returns information about the current state of the 3D physics engine. See [enum ProcessInfo] for a list of available states. Only implemented for Godot Physics.
 			</description>
 		</method>
 		<method name="hinge_joint_get_flag" qualifiers="const">
@@ -1131,16 +1130,16 @@
 			Maximum acceleration for the motor at the axes.
 		</constant>
 		<constant name="G6DOF_JOINT_FLAG_ENABLE_LINEAR_LIMIT" value="0" enum="G6DOFJointAxisFlag">
-			If [code]set[/code] there is linear motion possible within the given limits.
+			If set, linear motion is possible within the given limits.
 		</constant>
 		<constant name="G6DOF_JOINT_FLAG_ENABLE_ANGULAR_LIMIT" value="1" enum="G6DOFJointAxisFlag">
-			If [code]set[/code] there is rotational motion possible.
+			If set, rotational motion is possible.
 		</constant>
 		<constant name="G6DOF_JOINT_FLAG_ENABLE_MOTOR" value="4" enum="G6DOFJointAxisFlag">
-			If [code]set[/code] there is a rotational motor across these axes.
+			If set, there is a rotational motor across these axes.
 		</constant>
 		<constant name="G6DOF_JOINT_FLAG_ENABLE_LINEAR_MOTOR" value="5" enum="G6DOFJointAxisFlag">
-			If [code]set[/code] there is a linear motor on this axis that targets a specific velocity.
+			If set, there is a linear motor on this axis that targets a specific velocity.
 		</constant>
 		<constant name="SHAPE_PLANE" value="0" enum="ShapeType">
 			The [Shape] is a [PlaneShape].

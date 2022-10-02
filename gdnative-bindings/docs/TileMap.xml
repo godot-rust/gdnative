@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TileMap" inherits="Node2D" version="3.4">
+<class name="TileMap" inherits="Node2D" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Node for 2D tile-based maps.
 	</brief_description>
@@ -8,7 +8,7 @@
 		When doing physics queries against the tilemap, the cell coordinates are encoded as [code]metadata[/code] for each detected collision shape returned by methods such as [method Physics2DDirectSpaceState.intersect_shape], [method Physics2DDirectBodyState.get_contact_collider_shape_metadata], etc.
 	</description>
 	<tutorials>
-		<link title="Using Tilemaps">https://docs.godotengine.org/en/3.4/tutorials/2d/using_tilemaps.html</link>
+		<link title="Using Tilemaps">https://docs.godotengine.org/en/3.5.1/tutorials/2d/using_tilemaps.html</link>
 		<link title="2D Platformer Demo">https://godotengine.org/asset-library/asset/120</link>
 		<link title="2D Isometric Demo">https://godotengine.org/asset-library/asset/112</link>
 		<link title="2D Hexagonal Demo">https://godotengine.org/asset-library/asset/111</link>
@@ -133,7 +133,7 @@
 			<argument index="5" name="transpose" type="bool" default="false" />
 			<argument index="6" name="autotile_coord" type="Vector2" default="Vector2( 0, 0 )" />
 			<description>
-				Sets the tile index for the cell given by a Vector2.
+				Sets the tile index for the given cell.
 				An index of [code]-1[/code] clears the cell.
 				Optionally, the tile can also be flipped, transposed, or given autotile coordinates. The autotile coordinate refers to the column and row of the subtile.
 				[b]Note:[/b] Data such as navigation polygons and collision shapes are not immediately updated for performance reasons.
@@ -154,10 +154,11 @@
 			<argument index="2" name="flip_x" type="bool" default="false" />
 			<argument index="3" name="flip_y" type="bool" default="false" />
 			<argument index="4" name="transpose" type="bool" default="false" />
+			<argument index="5" name="autotile_coord" type="Vector2" default="Vector2( 0, 0 )" />
 			<description>
-				Sets the tile index for the given cell.
+				Sets the tile index for the cell given by a Vector2.
 				An index of [code]-1[/code] clears the cell.
-				Optionally, the tile can also be flipped or transposed.
+				Optionally, the tile can also be flipped, transposed, or given autotile coordinates. The autotile coordinate refers to the column and row of the subtile.
 				[b]Note:[/b] Data such as navigation polygons and collision shapes are not immediately updated for performance reasons.
 				If you need these to be immediately updated, you can call [method update_dirty_quadrants].
 			</description>
@@ -214,6 +215,9 @@
 		</method>
 	</methods>
 	<members>
+		<member name="bake_navigation" type="bool" setter="set_bake_navigation" getter="is_baking_navigation" default="false">
+			If [code]true[/code], this TileMap bakes a navigation region.
+		</member>
 		<member name="cell_clip_uv" type="bool" setter="set_clip_uv" getter="get_clip_uv" default="false">
 			If [code]true[/code], the cell's UVs will be clipped.
 		</member>
@@ -246,10 +250,10 @@
 			Friction value for static body collisions (see [code]collision_use_kinematic[/code]).
 		</member>
 		<member name="collision_layer" type="int" setter="set_collision_layer" getter="get_collision_layer" default="1">
-			The collision layer(s) for all colliders in the TileMap. See [url=https://docs.godotengine.org/en/3.4/tutorials/physics/physics_introduction.html#collision-layers-and-masks]Collision layers and masks[/url] in the documentation for more information.
+			The collision layer(s) for all colliders in the TileMap. See [url=https://docs.godotengine.org/en/3.5.1/tutorials/physics/physics_introduction.html#collision-layers-and-masks]Collision layers and masks[/url] in the documentation for more information.
 		</member>
 		<member name="collision_mask" type="int" setter="set_collision_mask" getter="get_collision_mask" default="1">
-			The collision mask(s) for all colliders in the TileMap. See [url=https://docs.godotengine.org/en/3.4/tutorials/physics/physics_introduction.html#collision-layers-and-masks]Collision layers and masks[/url] in the documentation for more information.
+			The collision mask(s) for all colliders in the TileMap. See [url=https://docs.godotengine.org/en/3.5.1/tutorials/physics/physics_introduction.html#collision-layers-and-masks]Collision layers and masks[/url] in the documentation for more information.
 		</member>
 		<member name="collision_use_kinematic" type="bool" setter="set_collision_use_kinematic" getter="get_collision_use_kinematic" default="false">
 			If [code]true[/code], TileMap collisions will be handled as a kinematic body. If [code]false[/code], collisions will be handled as static body.
@@ -264,6 +268,9 @@
 		</member>
 		<member name="mode" type="int" setter="set_mode" getter="get_mode" enum="TileMap.Mode" default="0">
 			The TileMap orientation mode. See [enum Mode] for possible values.
+		</member>
+		<member name="navigation_layers" type="int" setter="set_navigation_layers" getter="get_navigation_layers" default="1">
+			The navigation layers the TileMap generates its navigation regions in.
 		</member>
 		<member name="occluder_light_mask" type="int" setter="set_occluder_light_mask" getter="get_occluder_light_mask" default="1">
 			The light mask assigned to all light occluders in the TileMap. The TileSet's light occluders will cast shadows only from Light2D(s) that have the same light mask(s).

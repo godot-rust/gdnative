@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PoolColorArray" version="3.4">
+<class name="PoolColorArray" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
-		A pooled [Array] of [Color].
+		A pooled array of [Color]s.
 	</brief_description>
 	<description>
-		An [Array] specifically designed to hold [Color]. Optimized for memory usage, does not fragment the memory.
-		[b]Note:[/b] This type is passed by value and not by reference.
+		An array specifically designed to hold [Color]. Optimized for memory usage, does not fragment the memory.
+		[b]Note:[/b] This type is passed by value and not by reference. This means that when [i]mutating[/i] a class property of type [PoolColorArray] or mutating a [PoolColorArray] within an [Array] or [Dictionary], changes will be lost:
+		[codeblock]
+		var array = [PoolColorArray()]
+		array[0].push_back(Color(0.1, 0.2, 0.3, 0.4))
+		print(array)  # [[]] (empty PoolColorArray within an Array)
+		[/codeblock]
+		Instead, the entire [PoolColorArray] property must be [i]reassigned[/i] with [code]=[/code] for it to be changed:
+		[codeblock]
+		var array = [PoolColorArray()]
+		var pool_array = array[0]
+		pool_array.push_back(Color(0.1, 0.2, 0.3, 0.4))
+		array[0] = pool_array
+		print(array)  # [[(0.1, 0.2, 0.3, 0.4)]] (PoolColorArray with 1 element inside an Array)
+		[/codeblock]
 	</description>
 	<tutorials>
 	</tutorials>
@@ -29,10 +42,39 @@
 				Appends a [PoolColorArray] at the end of this array.
 			</description>
 		</method>
+		<method name="count">
+			<return type="int" />
+			<argument index="0" name="value" type="Color" />
+			<description>
+				Returns the number of times an element is in the array.
+			</description>
+		</method>
 		<method name="empty">
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if the array is empty.
+			</description>
+		</method>
+		<method name="fill">
+			<argument index="0" name="color" type="Color" />
+			<description>
+				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
+			</description>
+		</method>
+		<method name="find">
+			<return type="int" />
+			<argument index="0" name="value" type="Color" />
+			<argument index="1" name="from" type="int" default="0" />
+			<description>
+				Searches the array for a value and returns its index or [code]-1[/code] if not found. Optionally, the initial search index can be passed. Returns [code]-1[/code] if [code]from[/code] is out of bounds.
+			</description>
+		</method>
+		<method name="has">
+			<return type="bool" />
+			<argument index="0" name="value" type="Color" />
+			<description>
+				Returns [code]true[/code] if the array contains the given value.
+				[b]Note:[/b] This is equivalent to using the [code]in[/code] operator.
 			</description>
 		</method>
 		<method name="insert">
@@ -66,6 +108,14 @@
 				Sets the size of the array. If the array is grown, reserves elements at the end of the array. If the array is shrunk, truncates the array to the new size.
 			</description>
 		</method>
+		<method name="rfind">
+			<return type="int" />
+			<argument index="0" name="value" type="Color" />
+			<argument index="1" name="from" type="int" default="-1" />
+			<description>
+				Searches the array in reverse order. Optionally, a start search index can be passed. If negative, the start index is considered relative to the end of the array. If the adjusted start index is out of bounds, this method searches from the end of the array.
+			</description>
+		</method>
 		<method name="set">
 			<argument index="0" name="idx" type="int" />
 			<argument index="1" name="color" type="Color" />
@@ -76,7 +126,12 @@
 		<method name="size">
 			<return type="int" />
 			<description>
-				Returns the size of the array.
+				Returns the number of elements in the array.
+			</description>
+		</method>
+		<method name="sort">
+			<description>
+				Sorts the elements of the array in ascending order.
 			</description>
 		</method>
 	</methods>

@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Area2D" inherits="CollisionObject2D" version="3.4">
+<class name="Area2D" inherits="CollisionObject2D" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		2D area for detection and physics and audio influence.
 	</brief_description>
 	<description>
 		2D area that detects [CollisionObject2D] nodes overlapping, entering, or exiting. Can also alter or override local physics parameters (gravity, damping) and route audio to a custom audio bus.
+		To give the area its shape, add a [CollisionShape2D] or a [CollisionPolygon2D] node as a [i]direct[/i] child (or add multiple such nodes as direct children) of the area.
+		[b]Warning:[/b] See [ConcavePolygonShape2D] for a warning about possibly unexpected behavior when using that shape for an area.
 	</description>
 	<tutorials>
-		<link title="Using Area2D">https://docs.godotengine.org/en/3.4/tutorials/physics/using_area_2d.html</link>
+		<link title="Using Area2D">https://docs.godotengine.org/en/3.5.1/tutorials/physics/using_area_2d.html</link>
 		<link title="2D Dodge The Creeps Demo">https://godotengine.org/asset-library/asset/515</link>
 		<link title="2D Pong Demo">https://godotengine.org/asset-library/asset/121</link>
 		<link title="2D Platformer Demo">https://godotengine.org/asset-library/asset/120</link>

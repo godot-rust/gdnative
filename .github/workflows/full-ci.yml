@@ -135,7 +135,7 @@ jobs:
           - rust: { toolchain: 'nightly' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
-            rust: { toolchain: '1.56', postfix: ' (msrv 1.56)' }
+            rust: { toolchain: '1.63', postfix: ' (msrv 1.63)' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
             rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
@@ -276,18 +276,18 @@ jobs:
         include:
           # Latest Godot with different Rust versions
           - rust: stable
-            godot: "3.4.3"
+            godot: "3.5.1-stable"
             postfix: ''
           - rust: nightly
-            godot: "3.4.3"
+            godot: "3.5.1-stable"
             postfix: ' (nightly)'
-          - rust: '1.56'
-            godot: "3.4.3"
-            postfix: ' (msrv 1.56)'
+          - rust: '1.63'
+            godot: "3.5.1-stable"
+            postfix: ' (msrv 1.63)'
 
           # Test with oldest supported engine version
           - rust: stable
-            godot: "3.2"
+            godot: "3.2-stable"
             postfix: ''
             build_args: '--features custom-godot'
 

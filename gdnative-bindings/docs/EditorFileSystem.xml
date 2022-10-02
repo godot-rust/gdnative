@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="EditorFileSystem" inherits="Node" version="3.4">
+<class name="EditorFileSystem" inherits="Node" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Resource filesystem, as the editor sees it.
 	</brief_description>
@@ -39,7 +39,7 @@
 		<method name="is_scanning" qualifiers="const">
 			<return type="bool" />
 			<description>
-				Returns [code]true[/code] of the filesystem is being scanned.
+				Returns [code]true[/code] if the filesystem is being scanned.
 			</description>
 		</method>
 		<method name="scan">

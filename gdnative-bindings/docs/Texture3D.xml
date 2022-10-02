@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Texture3D" inherits="TextureLayered" version="3.4">
+<class name="Texture3D" inherits="TextureLayered" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Texture with 3 dimensions.
 	</brief_description>
 	<description>
-		Texture3D is a 3-dimensional texture that has a width, height, and depth.
+		Texture3D is a 3-dimensional [Texture] that has a width, height, and depth. See also [TextureArray].
+		[b]Note:[/b] [Texture3D]s can only be sampled in shaders in the GLES3 backend. In GLES2, their data can be accessed via scripting, but there is no way to render them in a hardware-accelerated manner.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -22,8 +23,8 @@
 		</method>
 	</methods>
 	<members>
-		<member name="data" type="Dictionary" setter="_set_data" getter="_get_data" override="true" default="{&quot;depth&quot;: 0,&quot;flags&quot;: 4,&quot;format&quot;: 37,&quot;height&quot;: 0,&quot;layers&quot;: [  ],&quot;width&quot;: 0}" />
-		<member name="flags" type="int" setter="set_flags" getter="get_flags" override="true" default="4" />
+		<member name="data" type="Dictionary" setter="_set_data" getter="_get_data" overrides="TextureLayered" default="{&quot;depth&quot;: 0,&quot;flags&quot;: 4,&quot;format&quot;: 37,&quot;height&quot;: 0,&quot;layers&quot;: [  ],&quot;width&quot;: 0}" />
+		<member name="flags" type="int" setter="set_flags" getter="get_flags" overrides="TextureLayered" default="4" />
 	</members>
 	<constants>
 	</constants>

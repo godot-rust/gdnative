@@ -12,14 +12,7 @@ error[E0599]: no function or associated item named `new` found for struct `Foo` 
           candidate #1: `UserData`
           candidate #2: `PtrWrapper`
           candidate #3: `gdnative::prelude::GodotObject`
-          candidate #4: `glam::core::traits::matrix::Matrix2x2`
-          candidate #5: `glam::core::traits::vector::MaskVector2`
-          candidate #6: `glam::core::traits::vector::MaskVector3`
-          candidate #7: `glam::core::traits::vector::MaskVector4`
-          candidate #8: `glam::core::traits::vector::Vector2`
-          candidate #9: `glam::core::traits::vector::Vector3`
-          candidate #10: `glam::core::traits::vector::Vector4`
-          candidate #11: `parking_lot_core::thread_parker::ThreadParkerT`
-          candidate #12: `ahash::HashMapExt`
-          candidate #13: `ahash::HashSetExt`
+          candidate #4: `parking_lot_core::thread_parker::ThreadParkerT`
+          candidate #5: `ahash::HashMapExt`
+          candidate #6: `ahash::HashSetExt`
   = note: this error originates in the derive macro `NativeClass` (in Nightly builds, run with -Z macro-backtrace for more info)

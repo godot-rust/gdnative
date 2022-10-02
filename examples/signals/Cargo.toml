@@ -3,7 +3,7 @@ name = "signals"
 version = "0.1.0"
 authors = ["The godot-rust developers"]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.63"
 license = "MIT"
 publish = false
 
