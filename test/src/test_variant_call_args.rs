@@ -18,10 +18,10 @@ struct VariantCallArgs;
 impl NativeClass for VariantCallArgs {
     type Base = Reference;
     type UserData = user_data::MutexData<VariantCallArgs>;
-    fn init(_owner: TRef<Reference>) -> VariantCallArgs {
+    fn nativeclass_init(_owner: TRef<Reference>) -> VariantCallArgs {
         VariantCallArgs
     }
-    fn register_properties(_builder: &ClassBuilder<Self>) {}
+    fn nativeclass_register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 impl StaticallyNamed for VariantCallArgs {

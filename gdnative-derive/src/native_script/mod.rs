@@ -38,7 +38,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
             type Base = ::gdnative::api::Object;
             type UserData = ::gdnative::export::user_data::LocalCellData<Self>;
 
-            fn init(owner: ::gdnative::object::TRef<'_, Self::Base, Shared>) -> Self {
+            fn nativeclass_init(owner: ::gdnative::object::TRef<'_, Self::Base, Shared>) -> Self {
                 unimplemented!()
             }
         }
@@ -165,7 +165,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             None
         } else {
             Some(quote! {
-                fn init(owner: ::gdnative::object::TRef<Self::Base>) -> Self {
+                fn nativeclass_init(owner: ::gdnative::object::TRef<Self::Base>) -> Self {
                     Self::new(::gdnative::export::OwnerArg::from_safe_ref(owner))
                 }
             })
@@ -179,7 +179,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
 
                 #init
 
-                fn register_properties(builder: &::gdnative::export::ClassBuilder<Self>) {
+                fn nativeclass_register_properties(builder: &::gdnative::export::ClassBuilder<Self>) {
                     #(#properties)*;
                     #register_callback
                 }

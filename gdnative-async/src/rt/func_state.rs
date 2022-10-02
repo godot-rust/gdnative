@@ -25,7 +25,7 @@ impl NativeClass for FuncState {
     type Base = Reference;
     type UserData = LocalCellData<FuncState>;
 
-    fn register_properties(builder: &ClassBuilder<Self>) {
+    fn nativeclass_register_properties(builder: &ClassBuilder<Self>) {
         builder
             .signal("completed")
             .with_param_untyped("value")
@@ -153,7 +153,7 @@ impl StaticArgsMethod<FuncState> for ResumeFn {
 }
 
 impl NativeClassMethods for FuncState {
-    fn register(builder: &ClassBuilder<Self>) {
+    fn nativeclass_register(builder: &ClassBuilder<Self>) {
         builder
             .method("is_valid", StaticArgs::new(IsValidFn))
             .done_stateless();

@@ -52,7 +52,7 @@ impl NativeClass for SignalBridge {
     type Base = Reference;
     type UserData = ArcData<SignalBridge>;
 
-    fn register_properties(_builder: &ClassBuilder<Self>) {}
+    fn nativeclass_register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 impl SignalBridge {
@@ -128,7 +128,7 @@ impl Method<SignalBridge> for OnSignalFn {
 }
 
 impl NativeClassMethods for SignalBridge {
-    fn register(builder: &ClassBuilder<Self>) {
+    fn nativeclass_register(builder: &ClassBuilder<Self>) {
         builder.method("_on_signal", OnSignalFn).done_stateless();
     }
 }
