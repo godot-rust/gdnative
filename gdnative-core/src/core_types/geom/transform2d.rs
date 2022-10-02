@@ -76,6 +76,13 @@ impl Transform2D {
     }
 
     /// Constructs the transform from a given angle (in radians), translation, and scale.
+    ///
+    /// # Deprecation
+    /// This constructor has been deprecated due to the order of transformations applied deviate from one's expectations.
+    /// Using a non-zero rotation will affect the resulting transform's origin.
+    ///
+    /// Consider using [`Transform2D::from_scale_rotation_origin`] or applying transformations manually.
+    #[deprecated = "Misleading behavior (see description); consider `from_scale_rotation_origin` or manual transformations."]
     #[inline]
     pub fn from_rotation_translation_scale(
         translation: Vector2,
@@ -86,6 +93,29 @@ impl Transform2D {
             .translated(translation)
             .rotated(rotation)
             .scaled(scale)
+    }
+
+    /// Constructs the transform from a given scale, angle (in radians), and origin.
+    ///
+    /// This is **NOT** equivalent to either of these two lines:
+    /// ```ignore
+    /// Transform2D::IDENTITY.scaled(scale).rotated(rotation).translated(origin)
+    /// Transform2D::IDENTITY.translated(origin).rotated(rotation).scaled(scale)
+    /// ```
+    ///
+    /// Those transformations do not preserve the given origin; see documentation for [`rotated`], [`scaled`], and [`translated`].
+    ///
+    /// [`rotated`]: Self::rotated
+    /// [`scaled`]: Self::scaled
+    /// [`translated`]: Self::translated
+    #[inline]
+    pub fn from_scale_rotation_origin(scale: Vector2, rotation: f32, origin: Vector2) -> Self {
+        let mut tr = Self::IDENTITY;
+        tr.set_scale(scale);
+        tr.set_rotation(rotation);
+        tr.origin = origin;
+
+        tr
     }
 
     /// Returns the inverse of the transform, under the assumption that the transformation is composed of rotation, scaling and translation.
@@ -164,7 +194,7 @@ impl Transform2D {
         self.set_scale(scale);
     }
 
-    /// Rotates the transform by the given angle (in radians), using matrix multiplication.
+    /// Rotates the transform by the given angle (in radians), using matrix multiplication. This will modify the transform's origin.
     #[inline]
     pub fn rotated(&self, rotation: f32) -> Self {
         let mut tr = Self::IDENTITY;
@@ -186,7 +216,7 @@ impl Transform2D {
         self.b = self.b.normalized() * scale.y;
     }
 
-    /// Scales the transform by the given scale factor, using matrix multiplication.
+    /// Scales the transform by the given scale factor, using matrix multiplication. This will modify the transform's origin.
     #[inline]
     pub fn scaled(&self, scale: Vector2) -> Self {
         let mut new = *self;
@@ -445,3 +475,25 @@ godot_test!(
         test_transform2d_behavior_impl()
     }
 );
+
+#[test]
+fn test_transform2d_constructor() {
+    use std::f32::consts::PI;
+
+    let scale = Vector2::new(2.0, 0.5);
+    let rotation = PI / 4.0;
+    let origin = Vector2::new(250.0, 150.0);
+
+    let tr = Transform2D::from_scale_rotation_origin(scale, rotation, origin);
+
+    assert_eq!(tr.origin, origin);
+
+    let actual_local_right = tr.basis_xform(Vector2::RIGHT);
+    let expected_local_right = Vector2::RIGHT.rotated(-rotation) * scale;
+    assert!(
+        actual_local_right.is_equal_approx(expected_local_right),
+        "{:?} != {:?}",
+        actual_local_right,
+        expected_local_right
+    );
+}
