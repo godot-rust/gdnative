@@ -38,7 +38,7 @@ This is the recommended way of using godot-rust. After `bindgen` dependencies an
 
 ```toml
 [dependencies]
-gdnative = "0.10.1"
+gdnative = "0.10.2"
 
 [lib]
 crate-type = ["cdylib"]
