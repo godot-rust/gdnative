@@ -22,7 +22,7 @@ Due to GDNative API not strictly following SemVer and some concepts not mapping 
 it is difficult for a godot-rust version to remain compatible with multiple Godot versions simultaneously.
 
 However, we support the latest stable Godot 3 minor release out-of-the-box, and allow to easily use custom engine
-versions using the `custom-godot` feature flag (see [below](#Custom builds)).
+versions using the `custom-godot` feature flag (see [below](#custom-builds)).
 
 Compatibility list:
 
