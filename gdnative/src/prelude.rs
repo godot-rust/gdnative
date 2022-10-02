@@ -36,16 +36,3 @@ pub mod user_data {
 }
 #[doc(inline)]
 pub use crate::globalscope::load;
-
-// Deprecated symbols. Keep them only in prelude, as all the other paths have changed anyway.
-// This way, old symbol names are still discoverable and users who used prelude won't have (as many) breaking changes.
-// Important: the referred-to type (right-hand-side) should point into the full path, not the prelude re-export.
-
-#[deprecated(since = "0.10.0", note = "Confusing name; use TInstance instead.")]
-pub type RefInstance<'a, T, Own> = crate::object::TInstance<'a, T, Own>;
-
-#[deprecated(
-    since = "0.10.0",
-    note = "Renamed for GDScript consistency; use PoolArray instead."
-)]
-pub type TypedArray<T> = crate::core_types::PoolArray<T>;

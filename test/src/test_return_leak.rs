@@ -28,7 +28,7 @@ impl NativeClass for Probe {
     type Base = api::AnimationNodeAdd2;
     type UserData = user_data::RwLockData<Probe>;
 
-    fn register_properties(_builder: &ClassBuilder<Self>) {}
+    fn nativeclass_register_properties(_builder: &ClassBuilder<Self>) {}
 }
 
 impl StaticallyNamed for Probe {

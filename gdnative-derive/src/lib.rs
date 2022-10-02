@@ -48,7 +48,7 @@ mod variant;
 ///     const CLASS_NAME: &'static str = "Foo";
 /// }
 /// impl gdnative::export::NativeClassMethods for Foo {
-///     fn register(builder: &ClassBuilder<Self>) {
+///     fn nativeclass_register(builder: &ClassBuilder<Self>) {
 ///         use gdnative::export::*;
 ///         builder.method("foo", gdnative::export::godot_wrap_method!(Foo, false, fn foo(&self, #[base] _base: &Reference, bar: i64) -> i64))
 ///             .with_rpc_mode(RpcMode::Disabled)

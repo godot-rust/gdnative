@@ -118,8 +118,9 @@ impl InitHandle {
                     };
 
                     let val = match panic::catch_unwind(AssertUnwindSafe(|| {
-                        emplace::take()
-                            .unwrap_or_else(|| C::init(TRef::new(C::Base::cast_ref(owner))))
+                        emplace::take().unwrap_or_else(|| {
+                            C::nativeclass_init(TRef::new(C::Base::cast_ref(owner)))
+                        })
                     })) {
                         Ok(val) => val,
                         Err(_) => {
@@ -193,10 +194,10 @@ impl InitHandle {
 
             let builder = ClassBuilder::new(self.handle, c_class_name);
 
-            C::register_properties(&builder);
+            C::nativeclass_register_properties(&builder);
 
             // register methods
-            C::register(&builder);
+            C::nativeclass_register(&builder);
         }
     }
 }

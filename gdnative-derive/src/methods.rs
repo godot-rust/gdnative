@@ -182,7 +182,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
 
         #derived
         impl gdnative::export::NativeClassMethods for #class_name {
-            fn register(#builder: &::gdnative::export::ClassBuilder<Self>) {
+            fn nativeclass_register(#builder: &::gdnative::export::ClassBuilder<Self>) {
                 use gdnative::export::*;
 
                 #(#methods)*
