@@ -5,16 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.0] - unreleased
+## [0.11.0] - 2022-10-02
 
 ### Changed
 
 - Changed supported Godot version to 3.5.1 ([#910](https://github.com/godot-rust/godot-rust/pull/910))
 - MSRV is now 1.63 ([#910](https://github.com/godot-rust/godot-rust/pull/910))
+- Prefixed `NativeClass` methods for manual implementors ([#955](https://github.com/godot-rust/godot-rust/pull/955))
+
+### Fixed
+
+- `godot_init` may not find some symbols ([#954](https://github.com/godot-rust/godot-rust/pull/954))
 
 ### Removed
 
-- `Transform2D::from_rotation_translation_scale()` constructor needs more intuitive API ([#910](https://github.com/godot-rust/godot-rust/pull/910))
+- `Transform2D::from_rotation_translation_scale()` constructor ([#910](https://github.com/godot-rust/godot-rust/pull/910))
+- `RefInstance` and `TypedArray` type aliases ([#955](https://github.com/godot-rust/godot-rust/pull/955))
 
 
 ## [0.10.2] - 2022-10-02
