@@ -78,12 +78,11 @@ impl Transform2D {
     /// Constructs the transform from a given angle (in radians), translation, and scale.
     ///
     /// # Deprecation
-    /// This constructor has been deprecated due to the order of transformations applied deviate from one's expectations. An identity transform is translated, rotated, and scaled. Using a non-zero rotation will affect the resulting transform's origin.
+    /// This constructor has been deprecated due to the order of transformations applied deviate from one's expectations.
+    /// Using a non-zero rotation will affect the resulting transform's origin.
     ///
     /// Consider using [`Transform2D::from_scale_rotation_origin`] or applying transformations manually.
-    #[deprecated(
-        note = "This constructor is misleading because a non-zero rotation would affect the resulting origin. Consider using Transform2D::from_scale_rotation_origin or apply transformations manually."
-    )]
+    #[deprecated = "Misleading behavior (see description); consider `from_scale_rotation_origin` or manual transformations."]
     #[inline]
     pub fn from_rotation_translation_scale(
         translation: Vector2,
@@ -98,7 +97,13 @@ impl Transform2D {
 
     /// Constructs the transform from a given scale, angle (in radians), and origin.
     ///
-    /// This is **NOT** equivalent to `Transform2D::IDENTITY.scaled(scale).rotated(rotation).translated(origin)` or `Transform2D::IDENTITY.translated(origin).rotated(rotation).scaled(scale)`. Those transformations do not preserve the given origin, see the documentation for [`rotated`], [`scaled`], and [`translated`] for more information.
+    /// This is **NOT** equivalent to either of these two lines:
+    /// ```ignore
+    /// Transform2D::IDENTITY.scaled(scale).rotated(rotation).translated(origin)
+    /// Transform2D::IDENTITY.translated(origin).rotated(rotation).scaled(scale)
+    /// ```
+    ///
+    /// Those transformations do not preserve the given origin; see documentation for [`rotated`], [`scaled`], and [`translated`].
     ///
     /// [`rotated`]: Self::rotated
     /// [`scaled`]: Self::scaled
