@@ -5,7 +5,7 @@ description = "The Godot game engine's automatcally generated bindings to Godot 
 documentation = "https://docs.rs/crate/gdnative-bindings"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
-version = "0.10.2"
+version = "0.11.0"
 license = "MIT"
 workspace = ".."
 edition = "2021"
@@ -17,8 +17,8 @@ one-class-one-file = []
 custom-godot = ["gdnative_bindings_generator/custom-godot"]
 
 [dependencies]
-gdnative-core = { path = "../gdnative-core", version = "=0.10.2" }
+gdnative-core = { path = "../gdnative-core", version = "=0.11.0" }
 libc = "0.2"
 
 [build-dependencies]
-gdnative_bindings_generator = { path = "../bindings-generator", version = "=0.10.2" }
+gdnative_bindings_generator = { path = "../bindings-generator", version = "=0.11.0" }
