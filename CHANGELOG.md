@@ -17,15 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Transform2D::from_rotation_translation_scale()` constructor needs more intuitive API ([#910](https://github.com/godot-rust/godot-rust/pull/910))
 
 
-## [0.10.2] - unreleased
+## [0.10.2] - 2022-10-02
 
 Last maintenance release for Godot 3.4.
 
-# Added
+### Added
 
-- `globalscope::load` method ([#940](https://github.com/godot-rust/godot-rust/pull/940), [#941](https://github.com/godot-rust/godot-rust/pull/941))
+- `globalscope::load()` function ([#940](https://github.com/godot-rust/godot-rust/pull/940), [#941](https://github.com/godot-rust/godot-rust/pull/941))
 - `Color` constructors from HTML string and integers ([#939](https://github.com/godot-rust/godot-rust/pull/939))
 - Version check to warn if Godot is not 3.4 ([#942](https://github.com/godot-rust/godot-rust/pull/942))
+- Support for iOS simulator on Mac M1 ([#944](https://github.com/godot-rust/godot-rust/pull/944))
+
+### Fixed
+
+- During tests, `get_api()` no longer aborts  ([#929](https://github.com/godot-rust/godot-rust/pull/929))
+- Confusing `Transform2D` constructor ([#930](https://github.com/godot-rust/godot-rust/pull/930))
+- Bug in `Rect2::intersects()` ([#948](https://github.com/godot-rust/godot-rust/pull/948))
+- Bug in `Vector2::rotated()` ([#952](https://github.com/godot-rust/godot-rust/pull/952))
+
 
 ## [0.10.1] - 2022-09-03
 

@@ -23,7 +23,7 @@ mod header_binding {
         let target = std::env::var("TARGET").unwrap();
         let platform = if target.contains("apple-darwin") {
             "macosx"
-        } else if target == "x86_64-apple-ios" {
+        } else if target == "x86_64-apple-ios" || target == "aarch64-apple-ios-sim" {
             "iphonesimulator"
         } else if target == "aarch64-apple-ios" {
             "iphoneos"
@@ -214,7 +214,11 @@ mod header_binding {
         // Workaround for https://github.com/rust-lang/rust-bindgen/issues/1211: manually set
         // target triple to `arm64-apple-ios` in place of `aarch64-apple-ios`.
         if target_arch == "aarch64" && target_os == "ios" {
-            builder = builder.clang_arg("--target=arm64-apple-ios");
+            if target_env == "sim" {
+                builder = builder.clang_arg("--target=arm64-apple-ios-sim");
+            } else {
+                builder = builder.clang_arg("--target=arm64-apple-ios");
+            }
         }
 
         // Workaround: Microsoft extensions aren't enabled by default for the `gnu` toolchain
