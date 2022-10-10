@@ -123,11 +123,12 @@ impl InitHandle {
                         })
                     })) {
                         Ok(val) => val,
-                        Err(_) => {
+                        Err(e) => {
                             godot_error!(
                                 "gdnative-core: error constructing {}: constructor panicked",
                                 class_registry::class_name_or_default::<C>(),
                             );
+                            crate::private::print_panic_error(e);
                             return ptr::null_mut();
                         }
                     };

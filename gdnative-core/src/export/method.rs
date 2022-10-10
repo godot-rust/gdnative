@@ -876,11 +876,12 @@ unsafe extern "C" fn method_wrapper<C: NativeClass, F: Method<C>>(
     });
 
     result
-        .unwrap_or_else(|_| {
+        .unwrap_or_else(|e| {
             crate::log::error(
                 F::site().unwrap_or_default(),
                 "gdnative-core: method panicked (check stderr for output)",
             );
+            crate::private::print_panic_error(e);
             Variant::nil()
         })
         .leak()

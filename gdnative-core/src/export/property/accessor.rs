@@ -252,8 +252,9 @@ where
                 }
             });
 
-            result.unwrap_or_else(|_| {
+            result.unwrap_or_else(|e| {
                 godot_error!("gdnative-core: property setter panicked (check stderr for output)");
+                crate::private::print_panic_error(e);
             })
         }
         set.set_func = Some(invoke::<SelfArg, C, F, T>);
@@ -324,8 +325,9 @@ where
                 }
             });
 
-            result.unwrap_or_else(|_| {
+            result.unwrap_or_else(|e| {
                 godot_error!("gdnative-core: property getter panicked (check stderr for output)");
+                crate::private::print_panic_error(e);
                 Variant::nil().leak()
             })
         }

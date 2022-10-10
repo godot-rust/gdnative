@@ -188,11 +188,11 @@ pub fn report_panics(context: &str, callback: impl FnOnce() + UnwindSafe) {
 
     if let Err(e) = __result {
         godot_error!("gdnative-core: {} callback panicked", context);
-        print_error(e);
+        print_panic_error(e);
     }
 }
 
-fn print_error(err: Box<dyn std::any::Any + Send>) {
+pub(crate) fn print_panic_error(err: Box<dyn std::any::Any + Send>) {
     if let Some(s) = err.downcast_ref::<String>() {
         godot_error!("Panic message: {}", s);
     } else if let Some(s) = err.downcast_ref::<&'static str>() {
