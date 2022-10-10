@@ -1,4 +1,5 @@
 use std::ffi::CString;
+use std::panic::{catch_unwind, UnwindSafe};
 
 use crate::sys;
 
@@ -178,6 +179,26 @@ unsafe fn report_init_error(
                 f((*options).gd_native_library, message.as_ptr());
             }
         }
+    }
+}
+
+#[inline]
+pub fn report_panics(context: &str, callback: impl FnOnce() + UnwindSafe) {
+    let __result = catch_unwind(callback);
+
+    if let Err(e) = __result {
+        godot_error!("gdnative-core: {} callback panicked", context);
+        print_error(e);
+    }
+}
+
+fn print_error(err: Box<dyn std::any::Any + Send>) {
+    if let Some(s) = err.downcast_ref::<String>() {
+        godot_error!("Panic message: {}", s);
+    } else if let Some(s) = err.downcast_ref::<&'static str>() {
+        godot_error!("Panic message: {}", s);
+    } else {
+        godot_error!("Panic message unknown, type {:?}", err.type_id());
     }
 }
 
