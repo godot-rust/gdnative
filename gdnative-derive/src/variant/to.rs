@@ -1,3 +1,4 @@
+use crate::variant::bounds;
 use proc_macro2::{Literal, TokenStream as TokenStream2};
 
 use super::repr::Repr;
@@ -69,11 +70,12 @@ pub(crate) fn expand_to_variant(
         }
     };
 
+    let generics_no_bounds = bounds::remove_bounds(generics.clone());
     let where_clause = &generics.where_clause;
 
     let result = quote! {
         #derived
-        impl #generics #trait_path for #ident #generics #where_clause {
+        impl #generics #trait_path for #ident #generics_no_bounds #where_clause {
             fn #to_variant_fn(#to_variant_receiver) -> ::gdnative::core_types::Variant {
                 use #trait_path;
                 use ::gdnative::core_types::FromVariant;

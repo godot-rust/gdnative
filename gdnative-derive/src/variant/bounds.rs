@@ -1,5 +1,6 @@
+use syn::punctuated::Punctuated;
 use syn::visit::Visit;
-use syn::Generics;
+use syn::{GenericParam, Generics};
 
 use crate::extend_bounds::{with_visitor, BoundsVisitor};
 
@@ -49,4 +50,21 @@ pub(crate) fn extend_bounds(
             }
         }
     })
+}
+
+pub(crate) fn remove_bounds(mut generics: Generics) -> Generics {
+    for param in generics.params.iter_mut() {
+        match param {
+            GenericParam::Type(ty) => {
+                ty.colon_token = None;
+                ty.bounds = Punctuated::new();
+            }
+            GenericParam::Lifetime(lt) => {
+                lt.colon_token = None;
+                lt.bounds = Punctuated::new();
+            }
+            GenericParam::Const(_) => {}
+        }
+    }
+    generics
 }
