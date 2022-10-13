@@ -1,4 +1,5 @@
 use std::cell::{self, Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use gdnative::export::Property;
@@ -143,6 +144,19 @@ crate::godot_itest! { test_derive_to_variant {
     assert_eq!(
         Ok(ToVarTuple::<f64, i128>(1, 0, false)),
         ToVarTuple::from_variant(&variant)
+    );
+
+    // Derive on uninhabitable enum results an error
+    #[derive(Debug, PartialEq, FromVariant)]
+    enum NoVariant {}
+
+    let input = HashMap::from_iter([("foo", "bar")]).to_variant();
+    assert_eq!(
+        NoVariant::from_variant(&input),
+        Err(FromVariantError::UnknownEnumVariant {
+            variant: "foo".into(),
+            expected: &[]
+        })
     );
 }}
 

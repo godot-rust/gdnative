@@ -30,13 +30,6 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
             }
         }
         Repr::Enum(variants) => {
-            if variants.is_empty() {
-                return Err(syn::Error::new(
-                    ident.span(),
-                    "cannot derive FromVariant for an uninhabited enum",
-                ));
-            }
-
             let var_input_ident = Ident::new("__enum_variant", Span::call_site());
 
             let var_ident_strings: Vec<String> = variants
@@ -61,46 +54,55 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
 
             let var_input_ident_iter = std::iter::repeat(&var_input_ident);
 
-            quote! {
-                {
-                    let __dict = ::gdnative::core_types::Dictionary::from_variant(#input_ident)
-                        .map_err(|__err| FVE::InvalidEnumRepr {
-                            expected: VariantEnumRepr::ExternallyTagged,
-                            error: std::boxed::Box::new(__err),
-                        })?;
+            // Return `FromVariantError` if input is an uninhabitable enum
+            let early_return = variants.is_empty().then(|| {
+                quote! {
+                    return Err(FVE::UnknownEnumVariant {
+                        variant: __key,
+                        expected: &[],
+                    });
+                }
+            });
 
-                    let __keys = __dict.keys();
-                    if __keys.len() != 1 {
-                        Err(FVE::InvalidEnumRepr {
-                            expected: VariantEnumRepr::ExternallyTagged,
-                            error: std::boxed::Box::new(FVE::InvalidLength {
-                                expected: 1,
-                                len: __keys.len() as usize,
-                            }),
-                        })
-                    }
-                    else {
-                        let __key = String::from_variant(&__keys.get(0))
-                            .map_err(|__err| FVE::InvalidEnumRepr {
-                                expected: VariantEnumRepr::ExternallyTagged,
-                                error: std::boxed::Box::new(__err),
-                            })?;
-                        match __key.as_str() {
-                            #(
-                                #ref_var_ident_string_literals => {
-                                    let #var_input_ident_iter = &__dict.get_or_nil(&__keys.get(0));
-                                    (#var_from_variants).map_err(|err| FVE::InvalidEnumVariant {
-                                        variant: #ref_var_ident_string_literals,
-                                        error: std::boxed::Box::new(err),
-                                    })
-                                },
-                            )*
-                            variant => Err(FVE::UnknownEnumVariant {
-                                variant: variant.to_string(),
-                                expected: &[#(#ref_var_ident_string_literals),*],
-                            }),
-                        }
-                    }
+            quote! {
+                let __dict = ::gdnative::core_types::Dictionary::from_variant(#input_ident)
+                    .map_err(|__err| FVE::InvalidEnumRepr {
+                        expected: VariantEnumRepr::ExternallyTagged,
+                        error: std::boxed::Box::new(__err),
+                    })?;
+                let __keys = __dict.keys();
+                if __keys.len() != 1 {
+                    return Err(FVE::InvalidEnumRepr {
+                        expected: VariantEnumRepr::ExternallyTagged,
+                        error: std::boxed::Box::new(FVE::InvalidLength {
+                            expected: 1,
+                            len: __keys.len() as usize,
+                        }),
+                    })
+                }
+
+                let __key = String::from_variant(&__keys.get(0))
+                .map_err(|__err| FVE::InvalidEnumRepr {
+                    expected: VariantEnumRepr::ExternallyTagged,
+                    error: std::boxed::Box::new(__err),
+                })?;
+
+                #early_return
+
+                match __key.as_str() {
+                    #(
+                        #ref_var_ident_string_literals => {
+                            let #var_input_ident_iter = &__dict.get_or_nil(&__keys.get(0));
+                            (#var_from_variants).map_err(|err| FVE::InvalidEnumVariant {
+                                variant: #ref_var_ident_string_literals,
+                                error: std::boxed::Box::new(err),
+                            })
+                        },
+                    )*
+                    variant => Err(FVE::UnknownEnumVariant {
+                        variant: variant.to_string(),
+                        expected: &[#(#ref_var_ident_string_literals),*],
+                    }),
                 }
             }
         }
