@@ -40,9 +40,8 @@ pub(crate) fn register(handle: InitHandle) {
 
 crate::godot_itest! { test_derive_to_variant {
     #[derive(Clone, Eq, PartialEq, Debug, ToVariant, FromVariant)]
-    struct ToVar<T, R>
+    struct ToVar<T: Associated, R>
     where
-        T: Associated,
         R: Default,
     {
         foo: T::A,
@@ -55,7 +54,7 @@ crate::godot_itest! { test_derive_to_variant {
     }
 
     #[derive(Clone, Eq, PartialEq, Debug, ToVariant, FromVariant)]
-    enum ToVarEnum<T> {
+    enum ToVarEnum<T: Bound> {
         Foo(T),
         Bar,
         Baz { baz: u8 },
@@ -67,9 +66,12 @@ crate::godot_itest! { test_derive_to_variant {
         T: Associated,
         R: Default;
 
+    trait Bound {}
+    impl Bound for bool {}
+
     trait Associated {
         type A;
-        type B;
+        type B : Bound;
     }
 
     impl Associated for f64 {

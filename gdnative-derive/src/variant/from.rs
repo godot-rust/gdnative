@@ -1,5 +1,6 @@
 use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
 
+use crate::variant::bounds;
 use syn::Ident;
 
 use super::repr::Repr;
@@ -106,11 +107,12 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
         }
     };
 
+    let generics_no_bounds = bounds::remove_bounds(generics.clone());
     let where_clause = &generics.where_clause;
 
     let result = quote! {
         #derived
-        impl #generics ::gdnative::core_types::FromVariant for #ident #generics #where_clause {
+        impl #generics ::gdnative::core_types::FromVariant for #ident #generics_no_bounds #where_clause {
             fn from_variant(
                 #input_ident: &::gdnative::core_types::Variant
             ) -> ::std::result::Result<Self, ::gdnative::core_types::FromVariantError> {
