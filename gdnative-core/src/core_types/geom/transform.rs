@@ -2,6 +2,17 @@ use std::ops::Mul;
 
 use crate::core_types::{Basis, Vector3};
 
+// Note regarding naming of interpolation: there are 3 namings in Godot.
+// * `lerp` + `slerp` for simple types
+// * `linear_interpolate` for vectors and colors
+//    (now renamed to [`lerp`](https://docs.godotengine.org/en/latest/classes/class_vector3.html?highlight=vector3#class-vector3-method-lerp) + `slerp`)
+// * `Vector3` also has `cubic_interpolate` and `bezier_interpolate`, which might explain the origins
+// * `interpolate_with` for transforms; in Godot 4 also
+//   [`sphere_interpolate_with`](https://docs.godotengine.org/en/latest/classes/class_transform3d.html#class-transform3d-method-sphere-interpolate-with)
+//
+// We currently also have `Transform2D::interpolate_with()`.
+// In an ideal world, all those would be called `lerp` and `slerp`.
+
 /// Affine 3D transform (3x4 matrix).
 ///
 /// Used for 3D linear transformations. Uses a basis + origin representation.
@@ -89,7 +100,7 @@ impl Transform {
     /// Returns this transform, with its origin moved by a certain `translation`
     #[deprecated = "`translated` is not relative to the transform's coordinate system \
     and thus inconsistent with GDScript. Please use translated_global() instead. \
-    This method will be renamed to translated_local in gdnative 0.11."]
+    This method will be renamed to translated_local in gdnative 0.12."]
     #[inline]
     pub fn translated(&self, translation: Vector3) -> Self {
         Self {
@@ -119,9 +130,10 @@ impl Transform {
     /// affine_inverse for transforms with scaling).
     #[inline]
     pub fn inverse(&self) -> Self {
+        let basis = self.basis.transposed();
         Transform {
-            basis: self.basis.transposed(),
-            origin: self.basis.xform(-self.origin),
+            basis,
+            origin: basis.xform(-self.origin),
         }
     }
 
@@ -129,7 +141,7 @@ impl Transform {
     /// transformation is composed of rotation, scaling and translation.
     #[inline]
     pub fn affine_inverse(&self) -> Self {
-        let basis_inv = self.basis.inverted();
+        let basis_inv = self.basis.inverse();
         let origin_inv = basis_inv.xform(-self.origin);
 
         Self {
@@ -150,12 +162,14 @@ impl Transform {
         } * (*self)
     }
 
+    /*
     /// Returns the rotated transform around the given axis by the given angle (in radians),
     /// using matrix multiplication. The axis must be a normalized vector.
     #[inline]
     fn rotate(&mut self, axis: Vector3, phi: f32) {
         *self = self.rotated(axis, phi);
     }
+    */
 
     /// Returns a copy of the transform rotated such that its -Z axis points
     /// towards the target position.
@@ -189,7 +203,7 @@ impl Transform {
     /// In-place translates the transform by the given offset, relative to
     /// the transform's basis vectors.
     #[inline]
-    fn translate_withbasis(&mut self, translation: Vector3) {
+    fn translate_global(&mut self, translation: Vector3) {
         // Note: Godot source uses origin + basis dot translation,
         // but self.translate() uses only origin + translation
         self.origin.x += self.basis.elements[0].dot(translation);
@@ -204,7 +218,7 @@ impl Transform {
     #[inline]
     pub fn translated_global(&self, translation: Vector3) -> Self {
         let mut copy = *self;
-        copy.translate_withbasis(translation);
+        copy.translate_global(translation);
         copy
     }
 
@@ -355,6 +369,23 @@ mod tests {
         );
         assert!(expected.is_equal_approx(&t))
     }
+
+    /*
+    #[test]
+    fn inverse_is_sane() {
+        let t = test_inputs().0.inverse();
+        let expected = Transform::from_basis_origin(
+            // Fix values
+            Vector3::new(0.309725, -0.66022015, 3.9329607),
+            Vector3::new(-0.57629496, 1.8808193, 0.3611141),
+            Vector3::new(-0.47722515, -0.14864945, 0.012628445),
+            Vector3::new(-0.7398631, 0.0425314, 0.03682696),
+        );
+
+        println!("TF:  {t:?}");
+        assert!(expected.is_equal_approx(&t))
+    }
+    */
 
     #[test]
     fn orthonormalization_is_sane() {

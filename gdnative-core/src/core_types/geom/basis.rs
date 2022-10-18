@@ -1,6 +1,7 @@
 use crate::core_types::{IsEqualApprox, Quat, Vector3};
-use core::ops::Mul;
+use crate::globalscope::lerp;
 use glam::Mat3;
+use std::ops::Mul;
 
 /// A 3x3 matrix, typically used as an orthogonal basis for [`Transform`][crate::core_types::Transform].
 ///
@@ -241,37 +242,31 @@ impl Basis {
     ///
     /// If the determinant of `self` is zero.
     #[inline]
-    pub fn inverted(&self) -> Self {
+    pub fn inverse(&self) -> Self {
         let mut copy = *self;
         copy.invert();
         copy
     }
 
+    #[inline]
+    #[deprecated = "Use `inverse` instead."]
+    pub fn inverted(&self) -> Self {
+        self.inverse()
+    }
+
     /// Returns linear interpolation on a sphere between two basis by weight amount (on the range of 0.0 to 1.0).
     #[inline]
     pub fn slerp(&self, other: &Basis, weight: f32) -> Self {
-        #[inline]
-        fn lerp_f(from: f32, to: f32, weight: f32) -> f32 {
-            from + (to - from) * weight
-        }
         let from = self.to_quat();
         let to = other.to_quat();
         let mut result = Basis::from_quat(from.slerp(to, weight));
-        result.elements[0] *= lerp_f(
-            self.elements[0].length(),
-            other.elements[0].length(),
-            weight,
-        );
-        result.elements[1] *= lerp_f(
-            self.elements[1].length(),
-            other.elements[1].length(),
-            weight,
-        );
-        result.elements[2] *= lerp_f(
-            self.elements[2].length(),
-            other.elements[2].length(),
-            weight,
-        );
+
+        for i in 0..3 {
+            result.elements[i] *= lerp(
+                self.elements[i].length()..=other.elements[i].length(),
+                weight,
+            );
+        }
 
         result
     }
@@ -350,7 +345,7 @@ impl Basis {
     }
 
     #[inline]
-    pub fn orthogonalize(&mut self) {
+    fn orthogonalize(&mut self) {
         let scale = self.scale();
         self.orthonormalize();
         self.scale_local(scale);
@@ -855,6 +850,6 @@ mod tests {
             Vector3::new(-0.165055, 0.94041, -0.297299),
             Vector3::new(0.98324, 0.180557, 0.025257),
         );
-        assert!(expected.is_equal_approx(&b.inverted()));
+        assert!(expected.is_equal_approx(&b.inverse()));
     }
 }
