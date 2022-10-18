@@ -107,3 +107,17 @@ pub(crate) fn derive_from_variant(derive_input: DeriveInput) -> Result<TokenStre
     let variant = parse_derive_input(derive_input, &bound, Direction::From);
     from::expand_from_variant(variant?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn derive_from_variant_on_uninhabitable_enums() {
+        let input = parse_quote! {
+            enum Test {}
+        };
+
+        derive_from_variant(input).unwrap();
+    }
+}
