@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Small utility to run tests locally
 # Similar to minimal-ci
 
@@ -77,7 +79,7 @@ for arg in "${args[@]}"; do
     itest)
         findGodot
         cmds+=("cargo build --manifest-path test/Cargo.toml --features $features")
-        cmds+=("cp target/debug/gdnative_test* test/project/lib/")
+        cmds+=("cp target/debug/*gdnative_test* test/project/lib/")
         cmds+=("$godotBin --path test/project")
         ;;
     doc)
