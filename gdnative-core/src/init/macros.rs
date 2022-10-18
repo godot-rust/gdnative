@@ -56,13 +56,9 @@ macro_rules! godot_nativescript_init {
                 }
             }
 
-            let __result = ::std::panic::catch_unwind(|| {
+            $crate::private::report_panics("nativescript_init", || {
                 $callback($crate::init::InitHandle::new(handle));
             });
-
-            if __result.is_err() {
-                $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
-            }
         }
     };
 }
@@ -104,13 +100,10 @@ macro_rules! godot_gdnative_init {
                 return;
             }
 
-            let __result = ::std::panic::catch_unwind(|| {
-                let callback_options = $crate::init::InitializeInfo::new(options);
-                $callback(&callback_options)
+            $crate::private::report_panics("gdnative_init", || {
+                let init_info = $crate::init::InitializeInfo::new(options);
+                $callback(&init_info)
             });
-            if __result.is_err() {
-                $crate::godot_error!("gdnative-core: gdnative_init callback panicked");
-            }
         }
     };
 }
@@ -152,13 +145,10 @@ macro_rules! godot_gdnative_terminate {
                 return;
             }
 
-            let __result = ::std::panic::catch_unwind(|| {
+            $crate::private::report_panics("gdnative_terminate", || {
                 let term_info = $crate::init::TerminateInfo::new(options);
                 $callback(&term_info)
             });
-            if __result.is_err() {
-                $crate::godot_error!("gdnative-core: nativescript_init callback panicked");
-            }
 
             $crate::private::cleanup_internal_state();
         }
