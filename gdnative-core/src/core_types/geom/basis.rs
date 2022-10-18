@@ -1,6 +1,7 @@
 use crate::core_types::{IsEqualApprox, Quat, Vector3};
-use core::ops::Mul;
+use crate::globalscope::lerp;
 use glam::Mat3;
+use std::ops::Mul;
 
 /// A 3x3 matrix, typically used as an orthogonal basis for [`Transform`][crate::core_types::Transform].
 ///
@@ -241,10 +242,44 @@ impl Basis {
     ///
     /// If the determinant of `self` is zero.
     #[inline]
-    pub fn inverted(&self) -> Self {
+    pub fn inverse(&self) -> Self {
         let mut copy = *self;
         copy.invert();
         copy
+    }
+
+    #[inline]
+    #[deprecated = "Use `inverse` instead."]
+    pub fn inverted(&self) -> Self {
+        self.inverse()
+    }
+
+    /// Returns linear interpolation on a sphere between two basis by weight amount (on the range of 0.0 to 1.0).
+    #[inline]
+    pub fn slerp(&self, other: &Basis, weight: f32) -> Self {
+        let from = self.to_quat();
+        let to = other.to_quat();
+        let mut result = Basis::from_quat(from.slerp(to, weight));
+
+        for i in 0..3 {
+            result.elements[i] *= lerp(
+                self.elements[i].length()..=other.elements[i].length(),
+                weight,
+            );
+        }
+
+        result
+    }
+
+    /// Returns linear interpolation between two basis by weight amount (on the range of 0.0 to 1.0).
+    #[inline]
+    pub fn lerp(&self, other: &Basis, weight: f32) -> Self {
+        // this is how godot is doing it at https://github.com/godotengine/godot/blob/master/core/math/basis.cpp#L964
+        // but Godot engine output for me differs than godot-rust
+        let a = self.elements[0].linear_interpolate(other.elements[0], weight);
+        let b = self.elements[1].linear_interpolate(other.elements[1], weight);
+        let c = self.elements[2].linear_interpolate(other.elements[2], weight);
+        Basis::from_rows(a, b, c)
     }
 
     /// Transposes the matrix.
@@ -309,6 +344,20 @@ impl Basis {
         m.is_equal_approx(&Self::IDENTITY)
     }
 
+    #[inline]
+    fn orthogonalize(&mut self) {
+        let scale = self.scale();
+        self.orthonormalize();
+        self.scale_local(scale);
+    }
+
+    #[inline]
+    pub fn orthogonalized(&self) -> Self {
+        let mut copy = *self;
+        copy.orthogonalize();
+        copy
+    }
+
     /// Returns an orthonormalized version of the matrix: 3 orthogonal basis vectors of unit length.
     #[inline]
     pub fn orthonormalized(&self) -> Self {
@@ -367,6 +416,18 @@ impl Basis {
         let mut copy = *self;
         copy.scale_self(scale);
         copy
+    }
+
+    /// In-place basis scaling in object-local coordinate system
+    #[inline]
+    fn scale_local(&mut self, scale: Vector3) {
+        *self = self.scaled_local(scale);
+    }
+
+    /// Returns basis scaled in object-local coordinate system
+    #[inline]
+    fn scaled_local(&self, scale: Vector3) -> Self {
+        (*self) * Basis::from_diagonal(scale)
     }
 
     /// Multiplies the matrix from left with the scaling matrix: M -> S·M
@@ -789,6 +850,6 @@ mod tests {
             Vector3::new(-0.165055, 0.94041, -0.297299),
             Vector3::new(0.98324, 0.180557, 0.025257),
         );
-        assert!(expected.is_equal_approx(&b.inverted()));
+        assert!(expected.is_equal_approx(&b.inverse()));
     }
 }
