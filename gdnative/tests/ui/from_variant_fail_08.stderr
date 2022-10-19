@@ -1,0 +1,17 @@
+error: `enum` representation can only be set for enums
+ --> tests/ui/from_variant_fail_08.rs:5:18
+  |
+5 | #[variant(enum = "repr")]
+  |                  ^^^^^^
+
+error: a primitive representation must be specified using `#[repr]`
+  --> tests/ui/from_variant_fail_08.rs:13:10
+   |
+13 | pub enum Bar {
+   |          ^^^
+
+error: `repr` representation can only be used for fieldless enums
+  --> tests/ui/from_variant_fail_08.rs:25:5
+   |
+25 |     B(String),
+   |     ^

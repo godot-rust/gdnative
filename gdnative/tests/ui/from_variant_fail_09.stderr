@@ -1,0 +1,11 @@
+error: `enum` representation can only be set for enums
+ --> tests/ui/from_variant_fail_09.rs:5:18
+  |
+5 | #[variant(enum = "str")]
+  |                  ^^^^^
+
+error: `str` representation can only be used for fieldless enums
+  --> tests/ui/from_variant_fail_09.rs:15:5
+   |
+15 |     B(String),
+   |     ^
