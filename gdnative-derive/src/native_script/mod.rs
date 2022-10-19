@@ -430,14 +430,14 @@ mod tests {
             assert!(
                 derived.is_ok(),
                 "Valid derive expression fails to compile:\n{}",
-                input().to_string()
+                input()
             );
         } else {
             assert_eq!(
                 derived.unwrap_err().to_string(),
                 "The `#[property]` attribute requires explicit paths for `get` and `set` argument; \
                 the defaults #[property], #[property(get)] and #[property(set)] are not allowed.",
-                "Invalid derive expression compiles by mistake:\n{}", input().to_string()
+                "Invalid derive expression compiles by mistake:\n{}", input()
             );
         }
     }

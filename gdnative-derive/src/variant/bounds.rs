@@ -3,8 +3,9 @@ use syn::visit::Visit;
 use syn::{GenericParam, Generics};
 
 use crate::extend_bounds::{with_visitor, BoundsVisitor};
+use crate::variant::repr::StructRepr;
 
-use super::repr::{Field, Repr, VariantRepr};
+use super::repr::{EnumRepr, Field, Repr, VariantRepr};
 use super::Direction;
 
 pub(crate) fn extend_bounds(
@@ -21,7 +22,7 @@ pub(crate) fn extend_bounds(
             dir: Direction,
         ) {
             match repr {
-                VariantRepr::Unit => {}
+                VariantRepr::Unit(_) => {}
                 VariantRepr::Tuple(tys) => {
                     for Field { ty, attr, .. } in tys.iter() {
                         if !attr.skip_bounds(dir) {
@@ -40,12 +41,12 @@ pub(crate) fn extend_bounds(
         }
 
         match repr {
-            Repr::Enum(ref variants) => {
+            Repr::Enum(EnumRepr { ref variants, .. }) => {
                 for (_, var_repr) in variants.iter() {
                     visit_var_repr(visitor, var_repr, dir);
                 }
             }
-            Repr::Struct(var_repr) => {
+            Repr::Struct(StructRepr(var_repr)) => {
                 visit_var_repr(visitor, var_repr, dir);
             }
         }

@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use syn::{spanned::Spanned, Data, DeriveInput, Generics, Ident};
+use syn::{spanned::Spanned, Data, DeriveInput, Generics, Ident, Meta};
 
 mod attr;
 mod bounds;
@@ -8,7 +8,12 @@ mod repr;
 mod to;
 
 use bounds::extend_bounds;
-use repr::{Repr, VariantRepr};
+use repr::Repr;
+
+use self::{
+    attr::{AttrBuilder, ItemAttrBuilder},
+    repr::{EnumRepr, StructRepr},
+};
 
 pub(crate) struct DeriveData {
     pub(crate) ident: Ident,
@@ -51,25 +56,75 @@ impl ToVariantTrait {
     }
 }
 
+fn improve_meta_error(err: syn::Error) -> syn::Error {
+    let error = err.to_string();
+    match error.as_str() {
+        "expected literal" => {
+            syn::Error::new(err.span(), "String expected, wrap with double quotes.")
+        }
+        other => syn::Error::new(
+            err.span(),
+            format!("{}, ie: #[variant(with = \"...\")]", other),
+        ),
+    }
+}
+
+fn parse_attrs<'a, A, I>(attrs: I) -> Result<A::Attr, syn::Error>
+where
+    A: AttrBuilder,
+    I: IntoIterator<Item = &'a syn::Attribute>,
+{
+    attrs
+        .into_iter()
+        .filter(|attr| attr.path.is_ident("variant"))
+        .map(|attr| attr.parse_meta().map_err(improve_meta_error))
+        .collect::<Result<A, syn::Error>>()?
+        .done()
+}
+
 pub(crate) fn parse_derive_input(
     input: DeriveInput,
     bound: &syn::Path,
     dir: Direction,
 ) -> Result<DeriveData, syn::Error> {
+    let item_attr = parse_attrs::<ItemAttrBuilder, _>(&input.attrs)?;
+
     let repr = match input.data {
-        Data::Struct(struct_data) => Repr::Struct(VariantRepr::repr_for(&struct_data.fields)?),
-        Data::Enum(enum_data) => Repr::Enum(
-            enum_data
-                .variants
-                .iter()
-                .map(|variant| {
-                    Ok((
-                        variant.ident.clone(),
-                        VariantRepr::repr_for(&variant.fields)?,
-                    ))
-                })
-                .collect::<Result<_, syn::Error>>()?,
-        ),
+        Data::Struct(struct_data) => {
+            Repr::Struct(StructRepr::repr_for(item_attr, &struct_data.fields)?)
+        }
+        Data::Enum(enum_data) => {
+            let primitive_repr = input.attrs.iter().find_map(|attr| {
+                if !attr.path.is_ident("repr") {
+                    return None;
+                }
+
+                // rustc should do the complaining for us if the `repr` attribute is invalid
+                if let Ok(Meta::List(list)) = attr.parse_meta() {
+                    list.nested.iter().find_map(|meta| {
+                        if let syn::NestedMeta::Meta(Meta::Path(p)) = meta {
+                            p.get_ident()
+                                .map_or(false, |ident| {
+                                    let ident = ident.to_string();
+                                    ident.starts_with('u') || ident.starts_with('i')
+                                })
+                                .then(|| {
+                                    syn::Type::Path(syn::TypePath {
+                                        qself: None,
+                                        path: p.clone(),
+                                    })
+                                })
+                        } else {
+                            None
+                        }
+                    })
+                } else {
+                    None
+                }
+            });
+
+            Repr::Enum(EnumRepr::repr_for(item_attr, primitive_repr, &enum_data)?)
+        }
         Data::Union(_) => {
             return Err(syn::Error::new(
                 input.span(),

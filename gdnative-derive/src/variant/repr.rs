@@ -1,18 +1,22 @@
 use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
-use syn::{Fields, Ident, Type};
+use syn::{DataEnum, Fields, Ident, Type};
 
-use super::attr::{Attr, AttrBuilder};
-use super::ToVariantTrait;
+use super::attr::{FieldAttr, FieldAttrBuilder, ItemAttr};
+use super::{parse_attrs, ToVariantTrait};
 
+// Shouldn't matter since this is immediately unpacked anyway.
+// Boxing would add too much noise to the match statements.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) enum Repr {
-    Struct(VariantRepr),
-    Enum(Vec<(Ident, VariantRepr)>),
+    Struct(StructRepr),
+    Enum(EnumRepr),
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) enum VariantRepr {
-    Unit,
+    Unit(Option<syn::Expr>),
     Struct(Vec<Field>),
     Tuple(Vec<Field>),
 }
@@ -21,32 +25,71 @@ pub(crate) enum VariantRepr {
 pub(crate) struct Field {
     pub ident: Ident,
     pub ty: Type,
-    pub attr: Attr,
+    pub attr: FieldAttr,
 }
 
-fn improve_meta_error(err: syn::Error) -> syn::Error {
-    let error = err.to_string();
-    match error.as_str() {
-        "expected literal" => {
-            syn::Error::new(err.span(), "String expected, wrap with double quotes.")
-        }
-        other => syn::Error::new(
-            err.span(),
-            format!("{}, ie: #[variant(with = \"...\")]", other),
-        ),
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub(crate) struct StructRepr(pub VariantRepr);
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub(crate) struct EnumRepr {
+    pub kind: EnumReprKind,
+    pub primitive_repr: Option<Type>,
+    pub variants: Vec<(Ident, VariantRepr)>,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum EnumReprKind {
+    /// Externally-tagged objects, i.e. the original behavior.
+    External,
+    /// The integer type specified by the `repr` attribute of the enum.
+    Repr,
+    /// Represent as strings.
+    Str,
+}
+
+impl EnumRepr {
+    pub(crate) fn repr_for(
+        attr: ItemAttr,
+        primitive_repr: Option<syn::Type>,
+        enum_data: &DataEnum,
+    ) -> Result<Self, syn::Error> {
+        let variants = enum_data
+            .variants
+            .iter()
+            .map(|variant| {
+                let mut repr = VariantRepr::repr_for(&variant.fields)?;
+                if let VariantRepr::Unit(discriminant) = &mut repr {
+                    if let Some((_, expr)) = &variant.discriminant {
+                        *discriminant = Some(expr.clone());
+                    }
+                }
+
+                Ok((variant.ident.clone(), repr))
+            })
+            .collect::<Result<_, syn::Error>>()?;
+
+        Ok(EnumRepr {
+            kind: attr
+                .enum_repr_kind
+                .map_or(EnumReprKind::External, |(kind, _)| kind),
+            primitive_repr,
+            variants,
+        })
     }
 }
 
-fn parse_attrs<'a, I>(attrs: I) -> Result<Attr, syn::Error>
-where
-    I: IntoIterator<Item = &'a syn::Attribute>,
-{
-    attrs
-        .into_iter()
-        .filter(|attr| attr.path.is_ident("variant"))
-        .map(|attr| attr.parse_meta().map_err(improve_meta_error))
-        .collect::<Result<AttrBuilder, syn::Error>>()?
-        .done()
+impl StructRepr {
+    pub(crate) fn repr_for(attr: ItemAttr, fields: &Fields) -> Result<Self, syn::Error> {
+        if let Some((_, span)) = attr.enum_repr_kind {
+            return Err(syn::Error::new(
+                span,
+                "`enum` representation can only be set for enums",
+            ));
+        }
+
+        VariantRepr::repr_for(fields).map(StructRepr)
+    }
 }
 
 impl VariantRepr {
@@ -59,7 +102,7 @@ impl VariantRepr {
                     .map(|f| {
                         let ident = f.ident.clone().expect("fields should be named");
                         let ty = f.ty.clone();
-                        let attr = parse_attrs(&f.attrs)?;
+                        let attr = parse_attrs::<FieldAttrBuilder, _>(&f.attrs)?;
                         Ok(Field { ident, ty, attr })
                     })
                     .collect::<Result<Vec<_>, syn::Error>>()?,
@@ -72,12 +115,12 @@ impl VariantRepr {
                     .map(|(n, f)| {
                         let ident = Ident::new(&format!("__field_{}", n), Span::call_site());
                         let ty = f.ty.clone();
-                        let attr = parse_attrs(&f.attrs)?;
+                        let attr = parse_attrs::<FieldAttrBuilder, _>(&f.attrs)?;
                         Ok(Field { ident, ty, attr })
                     })
                     .collect::<Result<_, syn::Error>>()?,
             ),
-            Fields::Unit => VariantRepr::Unit,
+            Fields::Unit => VariantRepr::Unit(None),
         };
 
         Ok(this)
@@ -85,7 +128,7 @@ impl VariantRepr {
 
     pub(crate) fn destructure_pattern(&self) -> TokenStream2 {
         match self {
-            VariantRepr::Unit => quote! {},
+            VariantRepr::Unit(_) => quote! {},
             VariantRepr::Tuple(fields) => {
                 let names = fields.iter().map(|f| &f.ident);
                 quote! {
@@ -106,7 +149,7 @@ impl VariantRepr {
         trait_kind: ToVariantTrait,
     ) -> Result<TokenStream2, syn::Error> {
         let tokens = match self {
-            VariantRepr::Unit => {
+            VariantRepr::Unit(_) => {
                 quote! { ::gdnative::core_types::Dictionary::new().into_shared().to_variant() }
             }
             VariantRepr::Tuple(fields) => {
@@ -176,7 +219,7 @@ impl VariantRepr {
         ctor: &TokenStream2,
     ) -> Result<TokenStream2, syn::Error> {
         let tokens = match self {
-            VariantRepr::Unit => {
+            VariantRepr::Unit(_) => {
                 quote! {
                     if #variant.is_nil() {
                         Err(FVE::InvalidStructRepr {

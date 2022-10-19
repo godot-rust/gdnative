@@ -25,6 +25,8 @@ fn ui_tests() {
     t.compile_fail("tests/ui/to_variant_fail_05.rs");
     t.compile_fail("tests/ui/to_variant_fail_06.rs");
     t.compile_fail("tests/ui/to_variant_fail_07.rs");
+    t.compile_fail("tests/ui/to_variant_fail_08.rs");
+    t.compile_fail("tests/ui/to_variant_fail_09.rs");
 
     // FromVariant
     t.compile_fail("tests/ui/from_variant_fail_01.rs");
@@ -33,6 +35,8 @@ fn ui_tests() {
     t.compile_fail("tests/ui/from_variant_fail_05.rs");
     t.compile_fail("tests/ui/from_variant_fail_06.rs");
     t.compile_fail("tests/ui/from_variant_fail_07.rs");
+    t.compile_fail("tests/ui/from_variant_fail_08.rs");
+    t.compile_fail("tests/ui/from_variant_fail_09.rs");
 }
 
 // FIXME(rust/issues/54725): Full path spans are only available on nightly as of now
