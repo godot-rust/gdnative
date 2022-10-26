@@ -25,11 +25,6 @@
 name: Full CI
 
 env:
-  # Environment variables used by toolchain
-  CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: 0
-  RUST_BACKTRACE: 1
-
   # Local variables
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
   GDRUST_FEATURES: "gdnative/async,gdnative/serde,gdnative_bindings_generator/debug"
