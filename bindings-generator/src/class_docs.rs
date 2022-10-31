@@ -44,15 +44,17 @@ impl GodotXmlDocs {
             .find(|node| node.tag_name().name() == "class")
         {
             if let Some(class_name) = class.attribute("name") {
-                let methods_node = class
-                    .descendants()
-                    .find(|node| node.tag_name().name() == "methods");
-                self.parse_methods(class_name, methods_node);
-
+                // Parse members first, so more general docs for indexed accessors can be used
+                // if they exist.
                 let members_node = class
                     .descendants()
                     .find(|node| node.tag_name().name() == "members");
                 self.parse_members(class_name, members_node);
+
+                let methods_node = class
+                    .descendants()
+                    .find(|node| node.tag_name().name() == "methods");
+                self.parse_methods(class_name, methods_node);
             }
         }
     }
@@ -62,6 +64,26 @@ impl GodotXmlDocs {
             for node in members.descendants() {
                 if node.tag_name().name() == "member" {
                     if let Some(desc) = node.text() {
+                        if let Some(property_name) = node.attribute("name") {
+                            if !property_name.contains('/') {
+                                if node.has_attribute("setter") {
+                                    self.add_fn(
+                                        class,
+                                        &format!("set_{}", property_name),
+                                        desc,
+                                        &[],
+                                    );
+                                }
+                                if node.has_attribute("getter") {
+                                    self.add_fn(
+                                        class,
+                                        &format!("get_{}", property_name),
+                                        desc,
+                                        &[],
+                                    );
+                                }
+                            }
+                        }
                         if let Some(func) = node.attribute("setter") {
                             self.add_fn(class, func, desc, &[]);
                         }

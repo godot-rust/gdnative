@@ -9,6 +9,7 @@ mod test_async;
 mod test_constructor;
 mod test_derive;
 mod test_free_ub;
+mod test_indexed_props;
 mod test_map_owned;
 mod test_register;
 mod test_return_leak;
@@ -76,6 +77,7 @@ pub extern "C" fn run_tests(
     status &= test_constructor::run_tests();
     status &= test_derive::run_tests();
     status &= test_free_ub::run_tests();
+    status &= test_indexed_props::run_tests();
     status &= test_map_owned::run_tests();
     status &= test_register::run_tests();
     status &= test_return_leak::run_tests();
@@ -238,6 +240,7 @@ fn init(handle: InitHandle) {
     test_constructor::register(handle);
     test_derive::register(handle);
     test_free_ub::register(handle);
+    test_indexed_props::register(handle);
     test_map_owned::register(handle);
     test_register::register(handle);
     test_return_leak::register(handle);
