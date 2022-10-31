@@ -6,9 +6,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use std::collections::HashMap;
-use std::collections::HashSet;
 
 /// Types of icalls.
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum IcallType {
     Ptr,
     Varargs,
@@ -265,6 +265,14 @@ pub(crate) fn generate_methods(
     icalls: &mut HashMap<String, MethodSig>,
     docs: Option<&GodotXmlDocs>,
 ) -> TokenStream {
+    /// Memorized information about generated methods. Used to generate indexed property accessors.
+    struct Generated {
+        icall: proc_macro2::Ident,
+        icall_ty: IcallType,
+        maybe_unsafe: TokenStream,
+        maybe_unsafe_reason: &'static str,
+    }
+
     // Brings values of some types to a type with less information.
     fn arg_erase(ty: &Ty, name: &proc_macro2::Ident) -> TokenStream {
         match ty {
@@ -280,11 +288,14 @@ pub(crate) fn generate_methods(
 
             Ty::Object(_) => quote! { #name.as_arg_ptr() },
 
+            // Allow lossy casting of numeric types into similar primitives, see also to_return_post
+            Ty::I64 | Ty::F64 | Ty::Bool => quote! { #name as _ },
+
             _ => quote! { #name },
         }
     }
 
-    let mut method_set = HashSet::new();
+    let mut generated = HashMap::new();
     let mut result = TokenStream::new();
 
     for method in &class.methods {
@@ -301,11 +312,9 @@ pub(crate) fn generate_methods(
         let mut rust_ret_type = ret_type.to_rust();
 
         // Ensure that methods are not injected several times.
-        let method_name_string = method_name.to_string();
-        if method_set.contains(&method_name_string) {
+        if generated.contains_key(method_name) {
             continue;
         }
-        method_set.insert(method_name_string);
 
         let mut params_decl = TokenStream::new();
         let mut params_use = TokenStream::new();
@@ -387,7 +396,126 @@ pub(crate) fn generate_methods(
                 }
             }
         };
+
         result.extend(output);
+
+        generated.insert(
+            method_name.to_string(),
+            Generated {
+                icall,
+                icall_ty,
+                maybe_unsafe,
+                maybe_unsafe_reason,
+            },
+        );
+    }
+
+    for property in &class.properties {
+        if property.index < 0 || property.name.contains('/') {
+            continue;
+        }
+
+        let property_index = property.index;
+        let ty = Ty::from_src(&property.type_);
+
+        if let Some(Generated {
+            icall,
+            icall_ty,
+            maybe_unsafe,
+            maybe_unsafe_reason,
+        }) = generated.get(&property.getter)
+        {
+            let rusty_name = rust_safe_name(&property.name);
+            let rust_ret_type = ty.to_rust();
+
+            let method_bind_fetch = {
+                let method_table = format_ident!("{}MethodTable", class.name);
+                let rust_method_name = format_ident!("{}", property.getter);
+
+                quote! {
+                    let method_bind: *mut sys::godot_method_bind = #method_table::get(get_api()).#rust_method_name;
+                }
+            };
+
+            let doc_comment = docs
+                .and_then(|docs| {
+                    docs.get_class_method_desc(
+                        class.name.as_str(),
+                        &format!("get_{}", property.name),
+                    )
+                })
+                .unwrap_or("");
+
+            let recover = ret_recover(&ty, *icall_ty);
+
+            let output = quote! {
+                #[doc = #doc_comment]
+                #[doc = #maybe_unsafe_reason]
+                #[inline]
+                pub #maybe_unsafe fn #rusty_name(&self) -> #rust_ret_type {
+                    unsafe {
+                        #method_bind_fetch
+
+                        let ret = crate::icalls::#icall(method_bind, self.this.sys().as_ptr(), #property_index);
+
+                        #recover
+                    }
+                }
+            };
+
+            result.extend(output);
+        }
+
+        if let Some(Generated {
+            icall,
+            icall_ty,
+            maybe_unsafe,
+            maybe_unsafe_reason,
+        }) = generated.get(&property.setter)
+        {
+            let rusty_name = rust_safe_name(&format!("set_{}", property.name));
+
+            let rust_arg_ty = ty.to_rust_arg();
+            let arg_ident = format_ident!("value");
+            let arg_erased = arg_erase(&ty, &arg_ident);
+
+            let method_bind_fetch = {
+                let method_table = format_ident!("{}MethodTable", class.name);
+                let rust_method_name = format_ident!("{}", property.setter);
+
+                quote! {
+                    let method_bind: *mut sys::godot_method_bind = #method_table::get(get_api()).#rust_method_name;
+                }
+            };
+
+            let doc_comment = docs
+                .and_then(|docs| {
+                    docs.get_class_method_desc(
+                        class.name.as_str(),
+                        &format!("set_{}", property.name),
+                    )
+                })
+                .unwrap_or("");
+
+            let recover = ret_recover(&Ty::Void, *icall_ty);
+
+            let output = quote! {
+                #[doc = #doc_comment]
+                #[doc = #maybe_unsafe_reason]
+                #[inline]
+                pub #maybe_unsafe fn #rusty_name(&self, #arg_ident: #rust_arg_ty) {
+                    unsafe {
+                        #method_bind_fetch
+
+                        let ret = crate::icalls::#icall(method_bind, self.this.sys().as_ptr(), #property_index, #arg_erased);
+
+                        #recover
+                    }
+                }
+            };
+
+            result.extend(output);
+        }
     }
 
     result
