@@ -709,9 +709,22 @@ godot_test!(
 /// - `Struct { a, b, c }` is represented as a `Dictionary` (`{ "a": a, "b": b, "c": c }`)
 /// - `Unit` is represented as an empty `Dictionary` (`{}`)
 /// - `Enum::Variant(a, b, c)` is represented as an externally tagged `Dictionary`
-///   (`{ "Variant": [a, b, c] }`)
+///   (`{ "Variant": [a, b, c] }`), unless another representation is specified with
+///   `#[variant(enum)]` (see below).
 ///
 /// Behavior of the derive macros can be customized using attributes:
+///
+/// ### Item attributes
+///
+/// - `#[variant(enum = "str")]`
+///
+/// Only applicable to field-less enums. Variants of types annotated with this attribute
+/// are represented as stringified values of their names, i.e. `"Variant"` for `Enum::Variant`.
+///
+/// - `#[variant(enum = "repr")]`
+///
+/// Only applicable to field-less enums with a explicit primitive `#[repr]` type. Variants of
+/// types annotated with this attribute are represented as their primitive integral values.
 ///
 /// ### Field attributes
 ///
