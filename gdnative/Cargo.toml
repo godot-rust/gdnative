@@ -19,6 +19,7 @@ default = []
 async = ["gdnative-async"]
 custom-godot = ["gdnative-bindings/custom-godot"]
 formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one-class-one-file"]
+ptrcall = ["gdnative-bindings/ptrcall"]
 serde = ["gdnative-core/serde"]
 
 # Internal

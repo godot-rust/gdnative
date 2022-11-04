@@ -135,6 +135,13 @@ pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
                     v.0
                 }
             }
+
+            impl FromVariant for #typ_name {
+                #[inline]
+                fn from_variant(v: &Variant) -> Result<Self, FromVariantError> {
+                    i64::from_variant(v).map(Self::from)
+                }
+            }
         }
     });
 

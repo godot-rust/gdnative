@@ -10,11 +10,14 @@ use std::collections::HashMap;
 /// Types of icalls.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub(crate) enum IcallType {
+    #[cfg(feature = "ptrcall")]
     Ptr,
     Varargs,
     Var,
 }
 
+// The `return_type` field is currently only used when ptrcall is enabled
+#[cfg_attr(not(feature = "ptrcall"), allow(dead_code))]
 pub(crate) struct MethodSig {
     pub(crate) return_type: Ty,
     pub(crate) arguments: Vec<Ty>,
@@ -107,6 +110,7 @@ impl MethodSig {
         // Only ptrcalls have "static" typing on their return types.
         // The other calling types always return `Variant`.
         let mut name = match icall_ty {
+            #[cfg(feature = "ptrcall")]
             IcallType::Ptr => format!("icallptr_{}", ty_arg_name(&self.return_type)),
             IcallType::Varargs => String::from("icallvarargs_"),
             IcallType::Var => String::from("icallvar_"),
@@ -121,6 +125,7 @@ impl MethodSig {
     }
 
     #[allow(clippy::single_match)]
+    #[cfg(feature = "ptrcall")]
     pub(crate) fn icall_type(&self) -> IcallType {
         if self.has_varargs {
             return IcallType::Varargs;
@@ -132,6 +137,15 @@ impl MethodSig {
         }
 
         IcallType::Ptr
+    }
+
+    #[cfg(not(feature = "ptrcall"))]
+    pub(crate) fn icall_type(&self) -> IcallType {
+        if self.has_varargs {
+            return IcallType::Varargs;
+        }
+
+        IcallType::Var
     }
 }
 
@@ -544,29 +558,26 @@ fn unsafe_reason(
 
 fn ret_recover(ty: &Ty, icall_ty: IcallType) -> TokenStream {
     match icall_ty {
+        #[cfg(feature = "ptrcall")]
         IcallType::Ptr => ty.to_return_post(),
         IcallType::Varargs => {
             // only variant possible
             quote! { ret }
         }
-        IcallType::Var => {
-            let rust_type = ty.to_rust();
-            // always a variant returned, use FromVariant
-            quote! {
-                <#rust_type>::from_variant(&ret).expect("Unexpected variant type")
-            }
-        }
+        IcallType::Var => ty.to_return_post_variant(),
     }
 }
 
 pub(crate) fn generate_icall(name: String, sig: MethodSig) -> TokenStream {
     match sig.icall_type() {
+        #[cfg(feature = "ptrcall")]
         IcallType::Ptr => ptrcall::generate_icall(name, sig),
         IcallType::Varargs => varargs_call::generate_icall(name, sig),
         IcallType::Var => varcall::generate_icall(name, sig),
     }
 }
 
+#[cfg(feature = "ptrcall")]
 mod ptrcall {
     use super::*;
     use quote::{format_ident, quote};

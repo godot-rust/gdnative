@@ -69,6 +69,16 @@
 //!   Enable if the generated binding source code should be human-readable and split
 //!   into multiple files. This can also help IDEs that struggle with a single huge file.
 //!
+//! * **`ptrcall`**<br>
+//!   Enables the `ptrcall` convention for calling Godot API methods. This increases performance, at the
+//!   cost of forward binary compatibility with the engine. Binaries built with `ptrcall` enabled
+//!   **may exhibit undefined behavior** when loaded by a different version of Godot, even when there are
+//!   no breaking API changes as far as GDScript is concerned. Notably, the addition of new default
+//!   parameters breaks any code using `ptrcall`.
+//!
+//!   Cargo features are additive, and as such, it's only necessary to enable this feature for the final
+//!   `cdylib` crates, whenever desired.
+//!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 //! [gdnative-overview]: https://godot-rust.github.io/book/gdnative-overview.html
 //! [custom-godot]: https://godot-rust.github.io/book/advanced-guides/custom-godot.html
