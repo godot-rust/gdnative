@@ -10,11 +10,15 @@
 
 **godot-rust** is a Rust library that implements native bindings for the [Godot game engine](http://godotengine.org/). This allows you to develop games or other applications in Godot, while benefiting from Rust's strengths, such as its type system, scalability and performance.
 
+> **Note**: if you are looking for a Rust binding for GDExtension (Godot 4), checkout [`gdextension`](https://github.com/godot-rust/gdextension).
+
+
 ## Stability
 
 The bindings cover most of the exposed API of Godot 3.5, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
 
 Minimum supported Rust version (MSRV) is **1.63**. We use the Rust 2021 Edition.
+
 
 ## Engine compatibility
 
@@ -63,7 +67,6 @@ gdnative = { git = "https://github.com/godot-rust/godot-rust.git" }
 crate-type = ["cdylib"]
 ```
 
-
 ### Custom builds
 
 To use the bindings with a different Godot version or a custom build of the engine, see
@@ -72,6 +75,7 @@ To use the bindings with a different Godot version or a custom build of the engi
 ### Async/yield support
 
 Async support is a work-in-progress, with a low-level API available in `gdnative::tasks`, if the `async` feature is enabled on `gdnative`. See [this page](https://godot-rust.github.io/book/recipes/async-tokio.html) in the book for an introduction to use the async feature with Tokio.
+
 
 ## Example
 
@@ -105,7 +109,6 @@ fn init(handle: InitHandle) {
 godot_init!(init);
 ```
 
-
 ### Further examples
 
 > **Important note:**
@@ -126,7 +129,6 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - [**resource**](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Create and use custom resources.
 - [**rpc**](https://github.com/godot-rust/godot-rust/tree/master/examples/rpc) - Simple peer-to-peer networking.
 - [**native-plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native-plugin) - Create custom node plugins.
-
 
 ### Third-party projects
 
