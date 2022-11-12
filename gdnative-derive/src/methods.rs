@@ -57,10 +57,265 @@ pub(crate) struct ClassMethodExport {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub(crate) struct ExportMethod {
+    /// Signature of the method *with argument attributes stripped*
     pub(crate) sig: Signature,
     pub(crate) export_args: ExportArgs,
-    pub(crate) optional_args: Option<usize>,
-    pub(crate) exist_base_arg: bool,
+    pub(crate) arg_kind: Vec<ArgKind>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub(crate) enum ArgKind {
+    /// Variations of `self`
+    Receiver,
+    /// `#[base]`
+    Base,
+    /// `#[async_ctx]`
+    AsyncCtx,
+    /// Regular arguments
+    Regular {
+        /// `#[opt]`
+        optional: bool,
+    },
+}
+
+impl std::fmt::Display for ArgKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Receiver => write!(f, "method receiver"),
+            Self::Base => write!(f, "base/owner object"),
+            Self::AsyncCtx => write!(f, "async context"),
+            Self::Regular { optional: true } => write!(f, "optional argument"),
+            Self::Regular { optional: false } => write!(f, "regular argument"),
+        }
+    }
+}
+
+impl ArgKind {
+    fn strip_parse(arg: &mut FnArg, errors: &mut Vec<syn::Error>) -> (bool, Self) {
+        let (receiver, attrs) = match arg {
+            FnArg::Receiver(a) => (Some(a.self_token.span), &mut a.attrs),
+            FnArg::Typed(a) => (None, &mut a.attrs),
+        };
+
+        let mut optional = None;
+        let mut base = None;
+        let mut async_ctx = None;
+
+        let mut fail = false;
+
+        attrs.retain(|attr| {
+            if attr.path.is_ident("opt") {
+                if let Some(old_span) = optional.replace(attr.path.span()) {
+                    fail = true;
+                    optional = Some(old_span);
+                    errors.push(syn::Error::new(attr.path.span(), "duplicate attribute"));
+                }
+                false
+            } else if attr.path.is_ident("base") {
+                if let Some(old_span) = base.replace(attr.path.span()) {
+                    fail = true;
+                    base = Some(old_span);
+                    errors.push(syn::Error::new(attr.path.span(), "duplicate attribute"));
+                }
+                false
+            } else if attr.path.is_ident("async_ctx") {
+                if let Some(old_span) = async_ctx.replace(attr.path.span()) {
+                    fail = true;
+                    async_ctx = Some(old_span);
+                    errors.push(syn::Error::new(attr.path.span(), "duplicate attribute"));
+                }
+                false
+            } else {
+                true
+            }
+        });
+
+        let mut special_kind = None;
+
+        macro_rules! check_special_kind {
+            ($ident:ident => $var:expr) => {
+                if let Some($ident) = $ident {
+                    if let Some(kind) = special_kind.replace($var) {
+                        fail = true;
+                        errors.push(syn::Error::new(
+                            $ident,
+                            format_args!("the {} cannot also be the {}", kind, $var),
+                        ));
+                        special_kind = Some(kind);
+                    }
+                }
+            };
+        }
+
+        check_special_kind!(receiver => ArgKind::Receiver);
+        check_special_kind!(base => ArgKind::Base);
+        check_special_kind!(async_ctx => ArgKind::AsyncCtx);
+
+        let kind = if let Some(special_kind) = special_kind {
+            if let Some(optional) = optional {
+                fail = true;
+                errors.push(syn::Error::new(
+                    optional,
+                    format_args!(
+                        "the {} cannot be optional (instead, remove the argument entirely)",
+                        special_kind
+                    ),
+                ));
+            }
+
+            special_kind
+        } else {
+            ArgKind::Regular {
+                optional: optional.is_some(),
+            }
+        };
+
+        (fail, kind)
+    }
+}
+
+impl ExportMethod {
+    fn strip_parse(
+        sig: &mut Signature,
+        export_args: ExportArgs,
+        errors: &mut Vec<syn::Error>,
+    ) -> Option<Self> {
+        let mut arg_kind = Vec::new();
+        let sig_span = sig.ident.span();
+
+        let mut inputs = sig.inputs.iter_mut().enumerate();
+
+        let mut receiver_seen = None;
+        let mut base_seen = None;
+        let mut async_ctx_seen = None;
+
+        let mut fail = false;
+
+        let is_async = export_args.is_async || sig.asyncness.is_some();
+
+        if export_args.is_old_syntax {
+            if inputs.len() < 2 {
+                fail = true;
+            } else {
+                match inputs.next().expect("argument count checked") {
+                    (n, FnArg::Receiver(_)) => {
+                        arg_kind.push(ArgKind::Receiver);
+                        receiver_seen = Some(n);
+                    }
+                    (_, arg) => {
+                        errors.push(syn::Error::new(arg.span(), "expecting method receiver"));
+                        fail = true;
+                    }
+                }
+
+                let (n, arg) = inputs.next().expect("argument count checked");
+                let (arg_fail, kind) = ArgKind::strip_parse(arg, errors);
+                fail |= arg_fail;
+                match kind {
+                    ArgKind::Base | ArgKind::Regular { .. } => {
+                        arg_kind.push(ArgKind::Base);
+                        base_seen = Some(n);
+                    }
+                    kind => {
+                        errors.push(syn::Error::new(
+                            arg.span(),
+                            format_args!("expecting {}, found {}", ArgKind::Base, kind),
+                        ));
+                        fail = true;
+                    }
+                };
+            }
+
+            if fail {
+                errors.push(syn::Error::new(
+                    sig_span,
+                    "methods exported using the old syntax must declare both `self` and `owner`.",
+                ));
+            }
+        }
+
+        let mut regular_argument_seen = None;
+        let mut optional_argument_seen = None;
+
+        for (n, arg) in inputs {
+            let (arg_fail, kind) = ArgKind::strip_parse(arg, errors);
+            fail |= arg_fail;
+
+            if let ArgKind::Regular { optional } = &kind {
+                regular_argument_seen.get_or_insert(n);
+
+                if *optional {
+                    optional_argument_seen.get_or_insert(n);
+                } else if let Some(idx) = optional_argument_seen {
+                    fail = true;
+                    errors.push(syn::Error::new(
+                        arg.span(),
+                        format_args!(
+                            "required parameters must precede all optional ones (an optional parameter is defined at #{})",
+                            idx,
+                        )
+                    ));
+                }
+            } else if let Some(idx) = regular_argument_seen {
+                fail = true;
+                errors.push(syn::Error::new(
+                    arg.span(),
+                    format_args!(
+                        "special parameters must precede all regular ones (a regular parameter is defined at #{})",
+                        idx,
+                    )
+                ));
+            } else {
+                let seen = match &kind {
+                    ArgKind::Receiver => &mut receiver_seen,
+                    ArgKind::Base => &mut base_seen,
+                    ArgKind::AsyncCtx => &mut async_ctx_seen,
+                    ArgKind::Regular { .. } => unreachable!(),
+                };
+
+                if let Some(idx) = seen.replace(n) {
+                    *seen = Some(idx);
+                    fail = true;
+                    errors.push(syn::Error::new(
+                        arg.span(),
+                        format_args!(
+                            "the special parameter {} must only be declared once (the same parameter is already defined at #{})",
+                            kind,
+                            idx,
+                        )
+                    ));
+                }
+            }
+
+            if matches!(kind, ArgKind::Receiver) && !matches!(arg, FnArg::Receiver(_)) {
+                fail = true;
+                errors.push(syn::Error::new(
+                    arg.span(),
+                    "non-self receivers aren't supported yet",
+                ));
+            }
+
+            if matches!(kind, ArgKind::AsyncCtx) && !is_async {
+                fail = true;
+                errors.push(syn::Error::new(
+                    arg.span(),
+                    "the async context is only available to async methods",
+                ));
+            }
+
+            arg_kind.push(kind);
+        }
+
+        if fail {
+            None
+        } else {
+            Some(ExportMethod {
+                sig: sig.clone(),
+                export_args,
+                arg_kind,
+            })
+        }
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -69,6 +324,7 @@ pub(crate) struct ExportArgs {
     pub(crate) rpc_mode: Option<RpcMode>,
     pub(crate) name_override: Option<String>,
     pub(crate) is_deref_return: bool,
+    pub(crate) is_async: bool,
 }
 
 pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
@@ -86,7 +342,6 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
             let ExportMethod {
                 sig,
                 export_args,
-                exist_base_arg,
                 ..
             } = &export_method;
 
@@ -98,24 +353,6 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 .clone()
                 .unwrap_or_else(|| name.to_string());
             let ret_span = sig.output.span();
-
-            let arg_count = sig.inputs.len();
-
-            if arg_count == 0 {
-                return syn::Error::new(
-                    sig_span,
-                    "#[method] exported methods must take self parameter",
-                )
-                .to_compile_error();
-            }
-
-            if export_args.is_old_syntax && !exist_base_arg {
-                return syn::Error::new(
-                    sig_span,
-                    "deprecated #[export] methods must take second parameter (base/owner)",
-                )
-                .to_compile_error();
-            }
 
             let rpc = export_args.rpc_mode.unwrap_or(RpcMode::Disabled);
             let is_deref_return = export_args.is_deref_return;
@@ -353,6 +590,21 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                     } else {
                                         export_args.is_deref_return = true;
                                     }
+                                } else if path.is_ident("async") {
+                                    // deref return value
+                                    if lit.is_some() {
+                                        errors.push(syn::Error::new(
+                                            nested_meta.span(),
+                                            "`async` does not take any values",
+                                        ));
+                                    } else if export_args.is_async {
+                                        errors.push(syn::Error::new(
+                                            nested_meta.span(),
+                                            "`async` was set more than once",
+                                        ));
+                                    } else {
+                                        export_args.is_async = true;
+                                    }
                                 } else {
                                     let msg = format!(
                                         "unknown option for #[{}]: `{}`",
@@ -370,15 +622,11 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 });
 
                 if let Some(export_args) = export_args.take() {
-                    let (optional_args, exist_base_arg) =
-                        parse_signature_attrs(&mut method.sig, &export_args, &mut errors);
-
-                    methods_to_export.push(ExportMethod {
-                        sig: method.sig.clone(),
+                    methods_to_export.extend(ExportMethod::strip_parse(
+                        &mut method.sig,
                         export_args,
-                        optional_args,
-                        exist_base_arg,
-                    });
+                        &mut errors,
+                    ));
                 }
 
                 errors
@@ -464,70 +712,6 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     (result, export)
 }
 
-fn parse_signature_attrs(
-    sig: &mut syn::Signature,
-    export_args: &ExportArgs,
-    errors: &mut Vec<syn::Error>,
-) -> (Option<usize>, bool) {
-    let mut optional_args = None;
-    let mut exist_base_arg = false;
-
-    for (n, arg) in sig.inputs.iter_mut().enumerate() {
-        let attrs = match arg {
-            FnArg::Receiver(a) => &mut a.attrs,
-            FnArg::Typed(a) => &mut a.attrs,
-        };
-
-        let mut is_optional = false;
-        let mut is_base = false;
-
-        attrs.retain(|attr| {
-            if attr.path.is_ident("opt") {
-                is_optional = true;
-                false
-            } else if attr.path.is_ident("base") {
-                is_base = true;
-                false
-            } else {
-                true
-            }
-        });
-
-        // In the old syntax, the second parameter is always the base parameter.
-        if export_args.is_old_syntax && n == 1 {
-            is_base = true;
-        }
-
-        if is_optional {
-            if n < 2 {
-                errors.push(syn::Error::new(
-                    arg.span(),
-                    "self or base cannot be optional",
-                ));
-            } else {
-                *optional_args.get_or_insert(0) += 1;
-            }
-        } else if optional_args.is_some() {
-            errors.push(syn::Error::new(
-                arg.span(),
-                "cannot add required parameters after optional ones",
-            ));
-        }
-
-        if is_base {
-            exist_base_arg = true;
-            if n != 1 {
-                errors.push(syn::Error::new(
-                    arg.span(),
-                    "base must be the second parameter.",
-                ));
-            }
-        }
-    }
-
-    (optional_args, exist_base_arg)
-}
-
 pub(crate) fn expand_godot_wrap_method(
     input: TokenStream2,
 ) -> Result<TokenStream2, Vec<syn::Error>> {
@@ -547,7 +731,8 @@ pub(crate) fn expand_godot_wrap_method(
 
             let signature = input.parse()?;
 
-            input.parse::<Token![,]>().ok();
+            // Ignore the trailing comma
+            let _ = input.parse::<Token![,]>();
 
             if input.is_empty() {
                 Ok(Input {
@@ -567,30 +752,22 @@ pub(crate) fn expand_godot_wrap_method(
         mut signature,
     } = syn::parse2(input).map_err(|e| vec![e])?;
 
-    let mut errors = Vec::new();
-
     let export_args = ExportArgs {
         is_old_syntax: false,
         rpc_mode: None,
         name_override: None,
         is_deref_return: is_deref_return.value,
+        is_async: false,
     };
 
-    let (optional_args, exist_base_arg) =
-        parse_signature_attrs(&mut signature, &export_args, &mut errors);
+    let mut errors = Vec::new();
+    let export_method = ExportMethod::strip_parse(&mut signature, export_args, &mut errors);
 
     if !errors.is_empty() {
         return Err(errors);
     }
 
-    let export_method = ExportMethod {
-        sig: signature,
-        export_args,
-        optional_args,
-        exist_base_arg,
-    };
-
-    wrap_method(&class_name, &export_method).map_err(|e| vec![e])
+    wrap_method(&class_name, &export_method.expect("ExportMethod is valid")).map_err(|e| vec![e])
 }
 
 fn wrap_method(
@@ -600,8 +777,7 @@ fn wrap_method(
     let ExportMethod {
         sig,
         export_args,
-        exist_base_arg,
-        optional_args,
+        arg_kind,
     } = &export_method;
 
     let gdnative_core = crate::crate_gdnative_core();
@@ -612,51 +788,81 @@ fn wrap_method(
 
     let method_name = &sig.ident;
 
-    let maybe_owner_arg = if *exist_base_arg {
-        Some(quote_spanned! { sig_span => OwnerArg::from_safe_ref(__base), })
-    } else {
-        None
-    };
-
-    let normal_args_start = if *exist_base_arg { 2 } else { 1 };
-
-    let required_args = sig.inputs.len() - normal_args_start - optional_args.unwrap_or(0);
-
-    let declare_arg_list = sig
-        .inputs
+    let declare_arg_list = arg_kind
         .iter()
-        .skip(normal_args_start)
-        .enumerate()
-        .filter_map(|(n, arg)| match arg {
-            FnArg::Typed(_) => {
-                let span = arg.span();
-                let required = n < required_args;
-                let maybe_opt = if required {
-                    None
+        .zip(&sig.inputs)
+        .filter_map(|(kind, arg)| {
+            if let ArgKind::Regular { optional } = kind {
+                if let FnArg::Typed(arg) = arg {
+                    let span = arg.span();
+                    let maybe_opt = if *optional {
+                        Some(quote_spanned!(span => #[opt]))
+                    } else {
+                        None
+                    };
+                    Some(quote_spanned!(span => #maybe_opt #arg))
                 } else {
-                    Some(quote_spanned!(span => #[opt]))
-                };
-                Some(quote_spanned!(span => #maybe_opt #arg))
-            }
-            FnArg::Receiver(_) => None,
-        })
-        .collect::<Vec<_>>();
-
-    let invoke_arg_list = sig
-        .inputs
-        .iter()
-        .enumerate()
-        .filter_map(|(n, arg)| match arg {
-            FnArg::Typed(pat) => {
-                if n > 1 || !*exist_base_arg {
-                    Some(&pat.pat)
-                } else {
-                    None
+                    unreachable!("regular arguments should always be FnArg::Typed")
                 }
+            } else {
+                None
             }
-            FnArg::Receiver(_) => None,
         })
         .collect::<Vec<_>>();
+
+    let destructure_arg_list = arg_kind
+        .iter()
+        .zip(&sig.inputs)
+        .filter_map(|(kind, arg)| {
+            if matches!(kind, ArgKind::Regular { .. }) {
+                if let FnArg::Typed(arg) = arg {
+                    Some(&arg.pat)
+                } else {
+                    unreachable!("regular arguments should always be FnArg::Typed")
+                }
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let is_async = export_args.is_async || sig.asyncness.is_some();
+    let mut map_method = None;
+
+    let invoke_arg_list = arg_kind
+        .iter()
+        .zip(&sig.inputs)
+        .map(|(kind, arg)| match kind {
+            ArgKind::Receiver => {
+                if let FnArg::Receiver(receiver) = arg {
+                    map_method = Some(if receiver.reference.is_some() {
+                        if receiver.mutability.is_some() {
+                            syn::Ident::new("map_mut", sig_span)
+                        } else {
+                            syn::Ident::new("map", sig_span)
+                        }
+                    } else {
+                        syn::Ident::new("map_owned", sig_span)
+                    });
+                }
+
+                Ok(quote_spanned! { sig_span => __rust_val })
+            }
+            ArgKind::Base => Ok(quote_spanned! { sig_span => OwnerArg::from_safe_ref(__base) }),
+            ArgKind::AsyncCtx => Ok(quote_spanned! { sig_span => __ctx }),
+            ArgKind::Regular { .. } => match arg {
+                FnArg::Receiver(_) => {
+                    unreachable!("receivers cannot be regular arguments")
+                }
+                FnArg::Typed(arg) => {
+                    let pat = &arg.pat;
+                    Ok(quote_spanned! { sig_span => #pat })
+                }
+            },
+        })
+        .collect::<Result<Vec<_>, syn::Error>>()?;
+
+    let map_method = map_method.unwrap_or_else(|| syn::Ident::new("map", sig_span));
 
     let recover = if export_args.is_deref_return {
         quote_spanned! { ret_span => std::ops::Deref::deref(&ret) }
@@ -664,26 +870,88 @@ fn wrap_method(
         quote_spanned! { ret_span => ret }
     };
 
-    let receiver = sig
-        .inputs
-        .first()
-        .and_then(|pat| {
-            if let FnArg::Receiver(r) = pat {
-                Some(r)
-            } else {
-                None
-            }
-        })
-        .ok_or_else(|| syn::Error::new(sig_span, "exported method must declare a receiver"))?;
+    let impl_body = if is_async {
+        let gdnative_async = crate::crate_gdnative_async();
 
-    let map_method = if receiver.reference.is_some() {
-        if receiver.mutability.is_some() {
-            syn::Ident::new("map_mut", sig_span)
-        } else {
-            syn::Ident::new("map", sig_span)
+        quote_spanned! { sig_span =>
+            #automatically_derived
+            impl #gdnative_async::StaticArgsAsyncMethod<#class_name> for ThisMethod {
+                type Args = Args;
+
+                fn spawn_with(
+                    &self,
+                    __spawner: #gdnative_async::Spawner::<'_, #class_name, Self::Args>,
+                ) {
+                    __spawner.spawn(move |__ctx, __this, __args| {
+                        let __future = __this
+                            .#map_method(move |__rust_val, __base| {
+                                let Args { #(#destructure_arg_list,)* } = __args;
+
+                                #[allow(unused_unsafe)]
+                                unsafe {
+                                    Some(<#class_name>::#method_name(
+                                        #(#invoke_arg_list,)*
+                                    ))
+                                }
+                            })
+                            .unwrap_or_else(|err| {
+                                #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
+                                #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                                None
+                            });
+
+                        async move {
+                            if let Some(__future) = __future {
+                                let ret = __future.await;
+                                #gdnative_core::core_types::OwnedToVariant::owned_to_variant(#recover)
+                            } else {
+                                #gdnative_core::core_types::Variant::nil()
+                            }
+                        }
+                    });
+                }
+
+                fn site() -> Option<#gdnative_core::log::Site<'static>> {
+                    Some(#gdnative_core::godot_site!(#class_name::#method_name))
+                }
+            }
+
+            #gdnative_async::Async::new(#gdnative_async::StaticArgs::new(ThisMethod))
         }
     } else {
-        syn::Ident::new("map_owned", sig_span)
+        quote_spanned! { sig_span =>
+            #automatically_derived
+            impl #gdnative_core::export::StaticArgsMethod<#class_name> for ThisMethod {
+                type Args = Args;
+                fn call(
+                    &self,
+                    __this: TInstance<'_, #class_name, #gdnative_core::object::ownership::Shared>,
+                    Args { #(#destructure_arg_list,)* }: Args,
+                ) -> #gdnative_core::core_types::Variant {
+                    __this
+                        .#map_method(|__rust_val, __base| {
+                            #[allow(unused_unsafe)]
+                            unsafe {
+                                let ret = <#class_name>::#method_name(
+                                    #(#invoke_arg_list,)*
+                                );
+                                #gdnative_core::core_types::OwnedToVariant::owned_to_variant(#recover)
+                            }
+                        })
+                        .unwrap_or_else(|err| {
+                            #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
+                            #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                            #gdnative_core::core_types::Variant::nil()
+                        })
+                }
+
+                fn site() -> Option<#gdnative_core::log::Site<'static>> {
+                    Some(#gdnative_core::godot_site!(#class_name::#method_name))
+                }
+            }
+
+            #gdnative_core::export::StaticArgs::new(ThisMethod)
+        }
     };
 
     let output = quote_spanned! { sig_span =>
@@ -701,38 +969,7 @@ fn wrap_method(
                 #(#declare_arg_list,)*
             }
 
-            #automatically_derived
-            impl #gdnative_core::export::StaticArgsMethod<#class_name> for ThisMethod {
-                type Args = Args;
-                fn call(
-                    &self,
-                    this: TInstance<'_, #class_name, #gdnative_core::object::ownership::Shared>,
-                    Args { #(#invoke_arg_list,)* }: Args,
-                ) -> #gdnative_core::core_types::Variant {
-                    this
-                        .#map_method(|__rust_val, __base| {
-                            #[allow(unused_unsafe)]
-                            unsafe {
-                                let ret = __rust_val.#method_name(
-                                    #maybe_owner_arg
-                                    #(#invoke_arg_list,)*
-                                );
-                                gdnative::core_types::OwnedToVariant::owned_to_variant(#recover)
-                            }
-                        })
-                        .unwrap_or_else(|err| {
-                            #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
-                            #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                            #gdnative_core::core_types::Variant::nil()
-                        })
-                }
-
-                fn site() -> Option<#gdnative_core::log::Site<'static>> {
-                    Some(#gdnative_core::godot_site!(#class_name::#method_name))
-                }
-            }
-
-            #gdnative_core::export::StaticArgs::new(ThisMethod)
+            #impl_body
         }
     };
 

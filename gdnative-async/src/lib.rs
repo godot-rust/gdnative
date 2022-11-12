@@ -16,5 +16,5 @@ mod rt;
 
 pub use executor::{set_boxed_executor, set_executor};
 pub use future::Yield;
-pub use method::{Async, AsyncMethod, Spawner};
+pub use method::{Async, AsyncMethod, Spawner, StaticArgs, StaticArgsAsyncMethod};
 pub use rt::{register_runtime, terminate_runtime, Context};
