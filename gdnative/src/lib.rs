@@ -81,7 +81,10 @@
 // Items, which are #[doc(hidden)] in their original crate and re-exported with a wildcard, lose
 // their hidden status. Re-exporting them manually and hiding the wildcard solves this.
 #[doc(inline)]
-pub use gdnative_core::{core_types, export, init, log, object, profiler};
+pub use gdnative_core::{
+    core_types, derive, export, godot_dbg, godot_error, godot_print, godot_site, init, log, object,
+    profiler,
+};
 
 pub mod globalscope;
 
@@ -89,10 +92,6 @@ pub mod globalscope;
 // However, do not re-export macros (on crate level), thus no wildcard
 #[doc(hidden)]
 pub use gdnative_core::{libc, sys};
-
-/// Derive macros and macro attributes.
-#[doc(inline)]
-pub use gdnative_derive as derive;
 
 /// Curated re-exports of common items.
 pub mod prelude;

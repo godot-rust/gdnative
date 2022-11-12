@@ -18,6 +18,7 @@ proc-macro = true
 syn = { version = "1", features = ["full", "extra-traits", "visit"] }
 quote = "1"
 proc-macro2 = "1"
+proc-macro-crate = "1"
 
 [dev-dependencies]
 # This is included for the doc tests.

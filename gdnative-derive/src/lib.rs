@@ -482,6 +482,24 @@ pub fn derive_from_varargs(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Convenience macro to wrap an object's method into a `Method` implementor
+/// that can be passed to the engine when registering a class.
+#[proc_macro]
+#[deprecated = "The legacy manual export macro is deprecated and will be removed in a future godot-rust version. \
+Either use the `#[methods]` attribute macro, or implement the `Method` trait manually instead."]
+pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
+    match methods::expand_godot_wrap_method(input.into()) {
+        Ok(stream) => stream.into(),
+        Err(xs) => {
+            let mut tokens = TokenStream2::new();
+            for err in xs {
+                tokens.extend(err.to_compile_error());
+            }
+            tokens.into()
+        }
+    }
+}
+
 /// Returns a standard header for derived implementations.
 ///
 /// Adds the `automatically_derived` attribute and prevents common lints from triggering
@@ -494,5 +512,39 @@ fn automatically_derived() -> proc_macro2::TokenStream {
     quote! {
         #[automatically_derived]
         #[allow(nonstandard_style, unused, clippy::style, clippy::complexity, clippy::perf, clippy::pedantic)]
+    }
+}
+
+/// Returns the (possibly renamed or imported as `gdnative`) identifier of the `gdnative_core` crate.
+fn crate_gdnative_core() -> proc_macro2::TokenStream {
+    let found_crate = proc_macro_crate::crate_name("gdnative-core")
+        .or_else(|_| proc_macro_crate::crate_name("gdnative"))
+        .expect("crate not found");
+
+    match found_crate {
+        proc_macro_crate::FoundCrate::Itself => quote!(crate),
+        proc_macro_crate::FoundCrate::Name(name) => {
+            let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
+            quote!( #ident )
+        }
+    }
+}
+
+/// Hack to emit a warning in expression position through `deprecated`.
+/// This is because there is no way to emit warnings from macros in stable Rust.
+fn emit_warning<S: std::fmt::Display>(
+    span: proc_macro2::Span,
+    warning_name: &str,
+    message: S,
+) -> proc_macro2::TokenStream {
+    let warning_name = proc_macro2::Ident::new(warning_name, span);
+    let message = message.to_string();
+
+    quote_spanned! { span =>
+        {
+            #[deprecated = #message]
+            fn #warning_name() {}
+            #warning_name()
+        }
     }
 }

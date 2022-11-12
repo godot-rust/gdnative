@@ -4,7 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use std::boxed::Box;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum RpcMode {
     Disabled,
     Remote,
@@ -82,16 +82,22 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
     let methods = export
         .methods
         .into_iter()
-        .map(|ExportMethod { sig, export_args, optional_args, exist_base_arg}| {
+        .map(|export_method| {
+            let ExportMethod {
+                sig,
+                export_args,
+                exist_base_arg,
+                ..
+            } = &export_method;
+
             let sig_span = sig.ident.span();
 
-            let name = sig.ident;
-            let name_string = export_args.name_override.unwrap_or_else(|| name.to_string());
+            let name = sig.ident.clone();
+            let name_string = export_args
+                .name_override
+                .clone()
+                .unwrap_or_else(|| name.to_string());
             let ret_span = sig.output.span();
-            let ret_ty = match &sig.output {
-                syn::ReturnType::Default => quote_spanned!(ret_span => ()),
-                syn::ReturnType::Type(_, ty) => quote_spanned!( ret_span => #ty ),
-            };
 
             let arg_count = sig.inputs.len();
 
@@ -111,46 +117,35 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 .to_compile_error();
             }
 
-            let optional_args = match optional_args {
-                Some(count) => {
-                    let max_optional = arg_count - 2; // self and owner
-                    if count > max_optional {
-                        let message = format!(
-                            "there can be at most {} optional parameters, got {}",
-                            max_optional, count,
-                        );
-                        return syn::Error::new(sig_span, message).to_compile_error();
-                    }
-                    count
-                }
-                None => 0,
-            };
-
             let rpc = export_args.rpc_mode.unwrap_or(RpcMode::Disabled);
             let is_deref_return = export_args.is_deref_return;
 
-            let args = sig.inputs.iter().enumerate().map(|(n, arg)| {
-                let span = arg.span();
-                if exist_base_arg && n == 1 {
-                    quote_spanned!(span => #[base] #arg ,)
-                }
-                else if n < arg_count - optional_args {
-                    quote_spanned!(span => #arg ,)
-                } else {
-                    quote_spanned!(span => #[opt] #arg ,)
-                }
-            });
-
             let warn_deprecated_export = if export_args.is_old_syntax {
-                Some(quote_spanned!(ret_span=> ::gdnative::export::deprecated_export_syntax!();))
+                let warning = crate::emit_warning(
+                    sig_span,
+                    "deprecated_export_syntax",
+                    concat!(
+                        "\n",
+                        "#[export] is deprecated and will be removed in a future godot-rust version. Use #[method] instead.\n\n",
+                        "For more information, see https://godot-rust.github.io/docs/gdnative/derive/derive.NativeClass.html."
+                    )
+                );
+
+                Some(quote_spanned!(sig_span=>#warning;))
             } else {
                 None
             };
 
             // See gdnative-core::export::deprecated_reference_return!()
-            let warn_deprecated_ref_return  = if let syn::ReturnType::Type(_, ty) = &sig.output {
+            let warn_deprecated_ref_return = if let syn::ReturnType::Type(_, ty) = &sig.output {
                 if !is_deref_return && matches!(**ty, syn::Type::Reference(_)) {
-                    quote_spanned!(ret_span=> ::gdnative::export::deprecated_reference_return!();)
+                    let warning = crate::emit_warning(
+                        ret_span,
+                        "deprecated_reference_return",
+                        "This function does not actually pass by reference to the Godot engine. You can clarify by writing #[method(deref_return)]."
+                    );
+
+                    quote_spanned!(ret_span=>#warning;)
                 } else {
                     quote_spanned!(ret_span=>)
                 }
@@ -158,15 +153,12 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 quote_spanned!(ret_span=>)
             };
 
+            let method = wrap_method(&class_name, &export_method)
+                .unwrap_or_else(|err| err.to_compile_error());
+
             quote_spanned!( sig_span=>
                 {
-                    let method = ::gdnative::export::godot_wrap_method!(
-                        #class_name,
-                        #is_deref_return,
-                        fn #name ( #( #args )* ) -> #ret_ty
-                    );
-
-                    #builder.method(#name_string, method)
+                    #builder.method(#name_string, #method)
                         .with_rpc_mode(#rpc)
                         .done_stateless();
 
@@ -378,61 +370,8 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 });
 
                 if let Some(export_args) = export_args.take() {
-                    let mut optional_args = None;
-                    let mut exist_base_arg = false;
-
-                    for (n, arg) in method.sig.inputs.iter_mut().enumerate() {
-                        let attrs = match arg {
-                            FnArg::Receiver(a) => &mut a.attrs,
-                            FnArg::Typed(a) => &mut a.attrs,
-                        };
-
-                        let mut is_optional = false;
-                        let mut is_base = false;
-
-                        attrs.retain(|attr| {
-                            if attr.path.is_ident("opt") {
-                                is_optional = true;
-                                false
-                            } else if attr.path.is_ident("base") {
-                                is_base = true;
-                                false
-                            } else {
-                                true
-                            }
-                        });
-
-                        // In the old syntax, the second parameter is always the base parameter.
-                        if export_args.is_old_syntax && n == 1 {
-                            is_base = true;
-                        }
-
-                        if is_optional {
-                            if n < 2 {
-                                errors.push(syn::Error::new(
-                                    arg.span(),
-                                    "self or base cannot be optional",
-                                ));
-                            } else {
-                                *optional_args.get_or_insert(0) += 1;
-                            }
-                        } else if optional_args.is_some() {
-                            errors.push(syn::Error::new(
-                                arg.span(),
-                                "cannot add required parameters after optional ones",
-                            ));
-                        }
-
-                        if is_base {
-                            exist_base_arg = true;
-                            if n != 1 {
-                                errors.push(syn::Error::new(
-                                    arg.span(),
-                                    "base must be the second parameter.",
-                                ));
-                            }
-                        }
-                    }
+                    let (optional_args, exist_base_arg) =
+                        parse_signature_attrs(&mut method.sig, &export_args, &mut errors);
 
                     methods_to_export.push(ExportMethod {
                         sig: method.sig.clone(),
@@ -523,4 +462,279 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
     }
 
     (result, export)
+}
+
+fn parse_signature_attrs(
+    sig: &mut syn::Signature,
+    export_args: &ExportArgs,
+    errors: &mut Vec<syn::Error>,
+) -> (Option<usize>, bool) {
+    let mut optional_args = None;
+    let mut exist_base_arg = false;
+
+    for (n, arg) in sig.inputs.iter_mut().enumerate() {
+        let attrs = match arg {
+            FnArg::Receiver(a) => &mut a.attrs,
+            FnArg::Typed(a) => &mut a.attrs,
+        };
+
+        let mut is_optional = false;
+        let mut is_base = false;
+
+        attrs.retain(|attr| {
+            if attr.path.is_ident("opt") {
+                is_optional = true;
+                false
+            } else if attr.path.is_ident("base") {
+                is_base = true;
+                false
+            } else {
+                true
+            }
+        });
+
+        // In the old syntax, the second parameter is always the base parameter.
+        if export_args.is_old_syntax && n == 1 {
+            is_base = true;
+        }
+
+        if is_optional {
+            if n < 2 {
+                errors.push(syn::Error::new(
+                    arg.span(),
+                    "self or base cannot be optional",
+                ));
+            } else {
+                *optional_args.get_or_insert(0) += 1;
+            }
+        } else if optional_args.is_some() {
+            errors.push(syn::Error::new(
+                arg.span(),
+                "cannot add required parameters after optional ones",
+            ));
+        }
+
+        if is_base {
+            exist_base_arg = true;
+            if n != 1 {
+                errors.push(syn::Error::new(
+                    arg.span(),
+                    "base must be the second parameter.",
+                ));
+            }
+        }
+    }
+
+    (optional_args, exist_base_arg)
+}
+
+pub(crate) fn expand_godot_wrap_method(
+    input: TokenStream2,
+) -> Result<TokenStream2, Vec<syn::Error>> {
+    struct Input {
+        class_name: syn::Type,
+        is_deref_return: syn::LitBool,
+        signature: syn::Signature,
+    }
+
+    impl syn::parse::Parse for Input {
+        fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+            let class_name = input.parse()?;
+            input.parse::<Token![,]>()?;
+
+            let is_deref_return = input.parse()?;
+            input.parse::<Token![,]>()?;
+
+            let signature = input.parse()?;
+
+            input.parse::<Token![,]>().ok();
+
+            if input.is_empty() {
+                Ok(Input {
+                    class_name,
+                    is_deref_return,
+                    signature,
+                })
+            } else {
+                Err(syn::Error::new(input.span(), "expecting end of input"))
+            }
+        }
+    }
+
+    let Input {
+        class_name,
+        is_deref_return,
+        mut signature,
+    } = syn::parse2(input).map_err(|e| vec![e])?;
+
+    let mut errors = Vec::new();
+
+    let export_args = ExportArgs {
+        is_old_syntax: false,
+        rpc_mode: None,
+        name_override: None,
+        is_deref_return: is_deref_return.value,
+    };
+
+    let (optional_args, exist_base_arg) =
+        parse_signature_attrs(&mut signature, &export_args, &mut errors);
+
+    if !errors.is_empty() {
+        return Err(errors);
+    }
+
+    let export_method = ExportMethod {
+        sig: signature,
+        export_args,
+        optional_args,
+        exist_base_arg,
+    };
+
+    wrap_method(&class_name, &export_method).map_err(|e| vec![e])
+}
+
+fn wrap_method(
+    class_name: &Type,
+    export_method: &ExportMethod,
+) -> Result<TokenStream2, syn::Error> {
+    let ExportMethod {
+        sig,
+        export_args,
+        exist_base_arg,
+        optional_args,
+    } = &export_method;
+
+    let gdnative_core = crate::crate_gdnative_core();
+    let automatically_derived = crate::automatically_derived();
+
+    let sig_span = sig.ident.span();
+    let ret_span = sig.output.span();
+
+    let method_name = &sig.ident;
+
+    let maybe_owner_arg = if *exist_base_arg {
+        Some(quote_spanned! { sig_span => OwnerArg::from_safe_ref(__base), })
+    } else {
+        None
+    };
+
+    let normal_args_start = if *exist_base_arg { 2 } else { 1 };
+
+    let required_args = sig.inputs.len() - normal_args_start - optional_args.unwrap_or(0);
+
+    let declare_arg_list = sig
+        .inputs
+        .iter()
+        .skip(normal_args_start)
+        .enumerate()
+        .filter_map(|(n, arg)| match arg {
+            FnArg::Typed(_) => {
+                let span = arg.span();
+                let required = n < required_args;
+                let maybe_opt = if required {
+                    None
+                } else {
+                    Some(quote_spanned!(span => #[opt]))
+                };
+                Some(quote_spanned!(span => #maybe_opt #arg))
+            }
+            FnArg::Receiver(_) => None,
+        })
+        .collect::<Vec<_>>();
+
+    let invoke_arg_list = sig
+        .inputs
+        .iter()
+        .enumerate()
+        .filter_map(|(n, arg)| match arg {
+            FnArg::Typed(pat) => {
+                if n > 1 || !*exist_base_arg {
+                    Some(&pat.pat)
+                } else {
+                    None
+                }
+            }
+            FnArg::Receiver(_) => None,
+        })
+        .collect::<Vec<_>>();
+
+    let recover = if export_args.is_deref_return {
+        quote_spanned! { ret_span => std::ops::Deref::deref(&ret) }
+    } else {
+        quote_spanned! { ret_span => ret }
+    };
+
+    let receiver = sig
+        .inputs
+        .first()
+        .and_then(|pat| {
+            if let FnArg::Receiver(r) = pat {
+                Some(r)
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| syn::Error::new(sig_span, "exported method must declare a receiver"))?;
+
+    let map_method = if receiver.reference.is_some() {
+        if receiver.mutability.is_some() {
+            syn::Ident::new("map_mut", sig_span)
+        } else {
+            syn::Ident::new("map", sig_span)
+        }
+    } else {
+        syn::Ident::new("map_owned", sig_span)
+    };
+
+    let output = quote_spanned! { sig_span =>
+        {
+            #[derive(Copy, Clone, Default)]
+            struct ThisMethod;
+
+            use #gdnative_core::export::{NativeClass, OwnerArg};
+            use #gdnative_core::object::{Instance, TInstance};
+            use #gdnative_core::derive::FromVarargs;
+
+            #[derive(FromVarargs)]
+            #automatically_derived
+            struct Args {
+                #(#declare_arg_list,)*
+            }
+
+            #automatically_derived
+            impl #gdnative_core::export::StaticArgsMethod<#class_name> for ThisMethod {
+                type Args = Args;
+                fn call(
+                    &self,
+                    this: TInstance<'_, #class_name, #gdnative_core::object::ownership::Shared>,
+                    Args { #(#invoke_arg_list,)* }: Args,
+                ) -> #gdnative_core::core_types::Variant {
+                    this
+                        .#map_method(|__rust_val, __base| {
+                            #[allow(unused_unsafe)]
+                            unsafe {
+                                let ret = __rust_val.#method_name(
+                                    #maybe_owner_arg
+                                    #(#invoke_arg_list,)*
+                                );
+                                gdnative::core_types::OwnedToVariant::owned_to_variant(#recover)
+                            }
+                        })
+                        .unwrap_or_else(|err| {
+                            #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
+                            #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                            #gdnative_core::core_types::Variant::nil()
+                        })
+                }
+
+                fn site() -> Option<#gdnative_core::log::Site<'static>> {
+                    Some(#gdnative_core::godot_site!(#class_name::#method_name))
+                }
+            }
+
+            #gdnative_core::export::StaticArgs::new(ThisMethod)
+        }
+    };
+
+    Ok(output)
 }
