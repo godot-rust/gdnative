@@ -1,0 +1,17 @@
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true
+
+[entry]
+
+Windows.64="res://../../target/debug/tps_controller_port.dll"
+X11.64="res://../../target/debug/libtps_controller_port.so"
+OSX.64="res://../../target/debug/libtps_controller_port.dylib"
+
+[dependencies]
+
+X11.64=[  ]
+OSX.64=[  ]
