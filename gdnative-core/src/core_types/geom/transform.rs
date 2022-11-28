@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::ops::{Mul, MulAssign};
 
 use crate::core_types::{Basis, Vector3};
 
@@ -295,12 +295,18 @@ impl Transform {
 
 impl Mul<Transform> for Transform {
     type Output = Transform;
-
     #[inline]
-    fn mul(self, rhs: Self) -> Self::Output {
-        let origin = self.xform(rhs.origin);
-        let basis = self.basis * rhs.basis;
-        Self { origin, basis }
+    fn mul(mut self, rhs: Self) -> Self::Output {
+        self *= rhs;
+        self
+    }
+}
+
+impl MulAssign<Transform> for Transform {
+    #[inline]
+    fn mul_assign(&mut self, rhs: Self) {
+        self.origin = self.xform(rhs.origin);
+        self.basis = self.basis * rhs.basis;
     }
 }
 
