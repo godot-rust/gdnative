@@ -62,6 +62,7 @@ mod header_binding {
         // to double-check them wherever they occur.
 
         assert!(
+            cfg!(target_os = "macos") || // All macOS architectures are supported
             cfg!(target_arch = "x86_64"),
             "unsupported host architecture: build from x86_64 instead"
         );
