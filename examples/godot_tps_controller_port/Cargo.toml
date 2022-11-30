@@ -1,0 +1,14 @@
+[package]
+name = "tps_controller_port"
+version = "0.1.0"
+edition = "2021"
+authors = ["The godot-rust developers"]
+publish = false
+rust-version = "1.63"
+license = "MIT"
+
+[dependencies]
+gdnative = { path = "../../gdnative" , features = ["formatted"] }
+
+[lib]
+crate-type = ["cdylib"]

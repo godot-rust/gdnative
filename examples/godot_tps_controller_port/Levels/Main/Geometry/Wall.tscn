@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Levels/Main/Materials/M_Dark.tres" type="Material" id=1]
+
+[sub_resource type="CubeMesh" id=2]
+material = ExtResource( 1 )
+size = Vector3( 40, 12, 1 )
+
+[sub_resource type="BoxShape" id=4]
+extents = Vector3( 20, 6, 0.5 )
+
+[node name="Wall" type="MeshInstance"]
+mesh = SubResource( 2 )
+material/0 = null
+
+[node name="StaticBody" type="StaticBody" parent="."]
+
+[node name="CollisionShape" type="CollisionShape" parent="StaticBody"]
+shape = SubResource( 4 )
