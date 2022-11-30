@@ -1,6 +1,8 @@
 #![allow(unused_variables)]
 
+#[cfg(feature = "ptrcall")]
 use libc;
+
 use libc::c_char;
 use std::mem;
 use std::ptr;

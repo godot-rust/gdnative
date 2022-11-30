@@ -80,12 +80,18 @@ pub fn generate_queue_free_impl(api: &Api, class: &GodotClass) -> TokenStream {
     let class_name = format_ident!("{}", class.name);
 
     let queue_free_output = if class.name == "Node" || api.class_inherits(class, "Node") {
+        #[cfg(feature = "ptrcall")]
+        let icall_ident = proc_macro2::Ident::new("icallptr_void", proc_macro2::Span::call_site());
+
+        #[cfg(not(feature = "ptrcall"))]
+        let icall_ident = proc_macro2::Ident::new("icallvar_", proc_macro2::Span::call_site());
+
         quote! {
             impl QueueFree for #class_name {
                 #[inline]
                 unsafe fn godot_queue_free(obj: *mut sys::godot_object) {
                     let method_bind: *mut sys::godot_method_bind = crate::generated::node::NodeMethodTable::get(get_api()).queue_free;
-                    crate::icalls::icallptr_void(method_bind, obj)
+                    crate::icalls::#icall_ident(method_bind, obj);
                 }
             }
         }

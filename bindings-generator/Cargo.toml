@@ -13,6 +13,7 @@ rust-version = "1.63"
 
 [features]
 debug = []
+ptrcall = []
 custom-godot = ["which"]
 
 [dependencies]

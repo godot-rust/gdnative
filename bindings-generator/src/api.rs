@@ -612,6 +612,48 @@ impl Ty {
             }
         }
     }
+
+    pub fn to_return_post_variant(&self) -> TokenStream {
+        match self {
+            Ty::Void => Default::default(),
+            Ty::F64 | Ty::I64 | Ty::Bool => {
+                let rust_type = self.to_rust();
+                quote! {
+                    <#rust_type>::coerce_from_variant(&ret)
+                }
+            }
+
+            // The `sys` type aliases here can point to different types depending on the platform.
+            // Do not simplify to (Linux) primitive types.
+            Ty::Result => {
+                quote! { GodotError::result_from_sys(sys::godot_error::from_variant(&ret).expect("Unexpected variant type")) }
+            }
+            Ty::VariantType => {
+                quote! { VariantType::from_sys(sys::godot_variant_type::from_variant(&ret).expect("Unexpected variant type")) }
+            }
+            Ty::VariantOperator => {
+                quote! {
+                    VariantOperator::try_from_sys(sys::godot_variant_operator::from_variant(&ret).expect("Unexpected variant type"))
+                        .expect("enum variant should be valid")
+                }
+            }
+
+            Ty::Vector3Axis => {
+                quote! {
+                    unsafe {
+                        mem::transmute::<u32, Axis>(u32::from_variant(&ret).expect("Unexpected variant type") as _)
+                    }
+                }
+            }
+            _ => {
+                let rust_type = self.to_rust();
+                // always a variant returned, use FromVariant
+                quote! {
+                    <#rust_type>::from_variant(&ret).expect("Unexpected variant type")
+                }
+            }
+        }
+    }
 }
 
 pub fn module_name_from_class_name(class_name: &str) -> String {

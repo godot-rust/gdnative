@@ -273,19 +273,34 @@ jobs:
           - rust: stable
             godot: "3.5.1-stable"
             postfix: ''
+          - rust: stable
+            godot: "3.5.1-stable"
+            postfix: ' (ptrcall)'
+            build_args: '--features ptrcall'
           - rust: nightly
             godot: "3.5.1-stable"
             postfix: ' (nightly)'
+          - rust: nightly
+            godot: "3.5.1-stable"
+            postfix: ' (nightly, ptrcall)'
+            build_args: '--features ptrcall'
           - rust: '1.63'
             godot: "3.5.1-stable"
             postfix: ' (msrv 1.63)'
+          - rust: '1.63'
+            godot: "3.5.1-stable"
+            postfix: ' (msrv 1.63, ptrcall)'
+            build_args: '--features ptrcall'
 
           # Test with oldest supported engine version
           - rust: stable
             godot: "3.2-stable"
             postfix: ''
             build_args: '--features custom-godot'
-
+          - rust: stable
+            godot: "3.2-stable"
+            postfix: ' (ptrcall)'
+            build_args: '--features custom-godot,ptrcall'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
