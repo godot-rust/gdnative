@@ -18,6 +18,7 @@ type-tag-fallback = []
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "=0.11.0" }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.11.0" }
 gdnative-impl-proc-macros = { path = "../impl/proc-macros", version = "=0.11.0" }
 ahash = "0.8"
 approx = "0.5"

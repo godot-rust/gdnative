@@ -1,7 +1,6 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 
-use gdnative::prelude::*;
-use gdnative::tasks::{Async, AsyncMethod, Spawner};
+use gdnative::{prelude::*, tasks::Context};
 
 pub(crate) fn run_tests() -> bool {
     // Relevant tests in GDScript
@@ -56,7 +55,6 @@ impl AsyncExecutorDriver {
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
-#[register_with(register_methods)]
 struct AsyncMethods;
 
 #[methods]
@@ -64,34 +62,27 @@ impl AsyncMethods {
     fn new(_owner: TRef<Reference>) -> Self {
         AsyncMethods
     }
-}
 
-struct ResumeAddFn;
+    #[method(async)]
+    fn resume_add(
+        &self,
+        #[async_ctx] ctx: Arc<Context>,
+        a: i32,
+        obj: Ref<Object>,
+        name: String,
+    ) -> impl std::future::Future<Output = i32> + 'static {
+        async move {
+            let b = ctx.until_resume().await;
+            let b = i32::from_variant(&b).unwrap();
 
-impl AsyncMethod<AsyncMethods> for ResumeAddFn {
-    fn spawn_with(&self, spawner: Spawner<'_, AsyncMethods>) {
-        spawner.spawn(|ctx, _this, mut args| {
-            let a = args.read::<i32>().get().unwrap();
-            let obj = args.read::<Ref<Object>>().get().unwrap();
-            let name = args.read::<GodotString>().get().unwrap();
+            let c = unsafe { obj.assume_safe().call(name, &[]) };
+            let c = Ref::<Reference>::from_variant(&c).unwrap();
+            let c = unsafe { c.assume_safe() };
+            let c = ctx.signal(c, "completed").unwrap().await;
+            assert_eq!(1, c.len());
+            let c = i32::from_variant(&c[0]).unwrap();
 
-            async move {
-                let b = ctx.until_resume().await;
-                let b = i32::from_variant(&b).unwrap();
-
-                let c = unsafe { obj.assume_safe().call(name, &[]) };
-                let c = Ref::<Reference>::from_variant(&c).unwrap();
-                let c = unsafe { c.assume_safe() };
-                let c = ctx.signal(c, "completed").unwrap().await;
-                assert_eq!(1, c.len());
-                let c = i32::from_variant(&c[0]).unwrap();
-
-                (a + b + c).to_variant()
-            }
-        });
+            a + b + c
+        }
     }
-}
-
-fn register_methods(builder: &ClassBuilder<AsyncMethods>) {
-    builder.method("resume_add", Async::new(ResumeAddFn)).done();
 }

@@ -37,6 +37,13 @@ pub extern crate libc;
 #[macro_use]
 extern crate approx;
 
+#[doc(inline)]
+pub use gdnative_derive::godot_wrap_method;
+
+/// Derive macros and macro attributes.
+#[doc(inline)]
+pub use gdnative_derive as derive;
+
 // Macros have to be processed before they are used.
 mod macros;
 

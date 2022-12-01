@@ -1,0 +1,59 @@
+error: the method receiver cannot be optional (instead, remove the argument entirely)
+  --> tests/ui/derive_fail_methods_special_args.rs:14:25
+   |
+14 |     async fn optional(#[opt] self, #[base] #[opt] _base: &Node, #[async_ctx] #[opt] ctx: ()) {}
+   |                         ^^^
+
+error: the base/owner object cannot be optional (instead, remove the argument entirely)
+  --> tests/ui/derive_fail_methods_special_args.rs:14:46
+   |
+14 |     async fn optional(#[opt] self, #[base] #[opt] _base: &Node, #[async_ctx] #[opt] ctx: ()) {}
+   |                                              ^^^
+
+error: the async context cannot be optional (instead, remove the argument entirely)
+  --> tests/ui/derive_fail_methods_special_args.rs:14:80
+   |
+14 |     async fn optional(#[opt] self, #[base] #[opt] _base: &Node, #[async_ctx] #[opt] ctx: ()) {}
+   |                                                                                ^^^
+
+error: the method receiver cannot also be the base/owner object
+  --> tests/ui/derive_fail_methods_special_args.rs:17:16
+   |
+17 |     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
+   |                ^^^^
+
+error: duplicate attribute
+  --> tests/ui/derive_fail_methods_special_args.rs:17:60
+   |
+17 |     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
+   |                                                            ^^^^
+
+error: the special parameter base/owner object must only be declared once (the same parameter is already defined at #1)
+  --> tests/ui/derive_fail_methods_special_args.rs:17:66
+   |
+17 |     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
+   |                                                                  ^^^^^^
+
+error: duplicate attribute
+  --> tests/ui/derive_fail_methods_special_args.rs:17:91
+   |
+17 |     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
+   |                                                                                           ^^^^
+
+error: duplicate attribute
+  --> tests/ui/derive_fail_methods_special_args.rs:17:99
+   |
+17 |     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
+   |                                                                                                   ^^^^
+
+error: the special parameter base/owner object must only be declared once (the same parameter is already defined at #1)
+  --> tests/ui/derive_fail_methods_special_args.rs:17:105
+   |
+17 |     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
+   |                                                                                                         ^^^^^^
+
+error: the async context is only available to async methods
+  --> tests/ui/derive_fail_methods_special_args.rs:20:32
+   |
+20 |     fn sync(self, #[async_ctx] ctx: ()) {}
+   |                                ^^^

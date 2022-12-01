@@ -26,11 +26,10 @@ pub(crate) mod type_tag;
 
 pub mod user_data;
 
-pub use crate::godot_wrap_method;
-#[allow(deprecated)]
-pub use crate::{deprecated_export_syntax, deprecated_reference_return};
 pub use class::*;
 pub use class_builder::*;
+#[doc(inline)]
+pub use gdnative_derive::godot_wrap_method;
 pub use method::*;
 pub use property::*;
 pub use signal::*;
