@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
 use syn::{Generics, Ident, Type, TypePath};
 
@@ -46,7 +47,12 @@ impl<'ast> BoundsVisitor<'ast> {
     }
 }
 
-pub fn with_visitor<'ast, F>(generics: Generics, bound: &syn::Path, op: F) -> Generics
+pub fn with_visitor<'ast, F>(
+    generics: Generics,
+    bound: Option<&syn::Path>,
+    lifetime: Option<&str>,
+    op: F,
+) -> Generics
 where
     F: FnOnce(&mut BoundsVisitor<'ast>),
 {
@@ -55,28 +61,57 @@ where
     op(&mut visitor);
 
     // where thing: is_trait
-    fn where_predicate(thing: Type, is_trait: syn::Path) -> syn::WherePredicate {
+    fn where_predicate(
+        thing: Type,
+        bound: Option<&syn::Path>,
+        lifetime: Option<&str>,
+    ) -> syn::WherePredicate {
+        let mut bounds = vec![];
+
+        if let Some(bound) = bound {
+            bounds.push(syn::TypeParamBound::Trait(syn::TraitBound {
+                paren_token: None,
+                modifier: syn::TraitBoundModifier::None,
+                lifetimes: None,
+                path: bound.clone(),
+            }));
+        }
+
+        if let Some(lifetime) = lifetime {
+            bounds.push(syn::TypeParamBound::Lifetime(syn::Lifetime::new(
+                lifetime,
+                thing.span(),
+            )));
+        }
+
         syn::WherePredicate::Type(syn::PredicateType {
             lifetimes: None,
             bounded_ty: thing,
             colon_token: <Token![:]>::default(),
-            bounds: vec![syn::TypeParamBound::Trait(syn::TraitBound {
-                paren_token: None,
-                modifier: syn::TraitBoundModifier::None,
-                lifetimes: None,
-                path: is_trait,
-            })]
-            .into_iter()
-            .collect(),
+            bounds: bounds.into_iter().collect(),
         })
     }
 
     // place bounds on all used type parameters and associated types
-    let new_predicates = visitor
+    let mut new_predicates = visitor
         .used
         .into_iter()
         .cloned()
-        .map(|bounded_ty| where_predicate(syn::Type::Path(bounded_ty), bound.clone()));
+        .map(|bounded_ty| where_predicate(syn::Type::Path(bounded_ty), bound, lifetime))
+        .collect::<Vec<_>>();
+
+    // Add lifetime bounds to all type parameters, regardless of usage, due to how
+    // lifetimes for generic types are determined.
+    new_predicates.extend(generics.type_params().map(|param| {
+        where_predicate(
+            syn::Type::Path(syn::TypePath {
+                qself: None,
+                path: param.ident.clone().into(),
+            }),
+            None,
+            lifetime,
+        )
+    }));
 
     let mut generics = generics;
     generics

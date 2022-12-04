@@ -16,7 +16,8 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
 
         let mut generics = with_visitor(
             input.generics,
-            &syn::parse_quote! { ::gdnative::core_types::FromVariant },
+            Some(&syn::parse_quote! { ::gdnative::core_types::FromVariant }),
+            None,
             |visitor| {
                 visitor.visit_data_struct(&struct_data);
             },

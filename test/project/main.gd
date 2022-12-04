@@ -17,6 +17,7 @@ func _ready():
 		status = gdn.call_native("standard_varcall", "run_tests", [])
 
 		status = status && _test_argument_passing_sanity()
+		status = status && _test_generic_class()
 		status = status && _test_optional_args()
 		status = status && yield(_test_async_resume(), "completed")
 
@@ -168,3 +169,30 @@ func _test_async_resume():
 func _get_async_number():
 	yield(get_tree().create_timer(0.1), "timeout")
 	return 39
+
+func _test_generic_class():
+	print(" -- _test_generic_class")
+
+	var int_script = NativeScript.new()
+	int_script.set_library(gdn.library)
+	int_script.set_class_name("IntOps")
+
+	var str_script = NativeScript.new()
+	str_script.set_library(gdn.library)
+	str_script.set_class_name("StrOps")
+	
+	var int_ops = Reference.new()
+	int_ops.set_script(int_script)
+	
+	var str_ops = Reference.new()
+	str_ops.set_script(str_script)
+
+	var status = true
+
+	status = status && int_ops.add(1, 2) == 3
+	status = status && str_ops.add("foo", "bar") == "foobar"
+
+	if !status:
+		printerr("   !! _test_generic_class failed")
+
+	return status

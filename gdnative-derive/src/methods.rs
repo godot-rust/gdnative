@@ -1,4 +1,4 @@
-use syn::{spanned::Spanned, FnArg, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
+use syn::{spanned::Spanned, FnArg, Generics, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
@@ -330,6 +330,7 @@ pub(crate) struct ExportArgs {
 pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
     let derived = crate::automatically_derived();
     let (impl_block, export) = impl_gdnative_expose(item_impl);
+    let (impl_generics, _, where_clause) = impl_block.generics.split_for_impl();
 
     let class_name = export.class_ty;
 
@@ -390,7 +391,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
                 quote_spanned!(ret_span=>)
             };
 
-            let method = wrap_method(&class_name, &export_method)
+            let method = wrap_method(&class_name, &impl_block.generics, &export_method)
                 .unwrap_or_else(|err| err.to_compile_error());
 
             quote_spanned!( sig_span=>
@@ -410,7 +411,7 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
         #impl_block
 
         #derived
-        impl gdnative::export::NativeClassMethods for #class_name {
+        impl #impl_generics gdnative::export::NativeClassMethods for #class_name #where_clause {
             fn nativeclass_register(#builder: &::gdnative::export::ClassBuilder<Self>) {
                 use gdnative::export::*;
 
@@ -767,11 +768,17 @@ pub(crate) fn expand_godot_wrap_method(
         return Err(errors);
     }
 
-    wrap_method(&class_name, &export_method.expect("ExportMethod is valid")).map_err(|e| vec![e])
+    wrap_method(
+        &class_name,
+        &Generics::default(),
+        &export_method.expect("ExportMethod is valid"),
+    )
+    .map_err(|e| vec![e])
 }
 
 fn wrap_method(
     class_name: &Type,
+    generics: &Generics,
     export_method: &ExportMethod,
 ) -> Result<TokenStream2, syn::Error> {
     let ExportMethod {
@@ -782,6 +789,21 @@ fn wrap_method(
 
     let gdnative_core = crate::crate_gdnative_core();
     let automatically_derived = crate::automatically_derived();
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let turbofish_ty_generics = ty_generics.as_turbofish();
+
+    let generic_marker_decl = if generics.params.is_empty() {
+        quote!(())
+    } else {
+        quote!(core::marker::PhantomData #ty_generics)
+    };
+
+    let generic_marker_ctor = if generics.params.is_empty() {
+        quote!(())
+    } else {
+        quote!(core::marker::PhantomData)
+    };
 
     let sig_span = sig.ident.span();
     let ret_span = sig.output.span();
@@ -875,8 +897,8 @@ fn wrap_method(
 
         quote_spanned! { sig_span =>
             #automatically_derived
-            impl #gdnative_async::StaticArgsAsyncMethod<#class_name> for ThisMethod {
-                type Args = Args;
+            impl #impl_generics #gdnative_async::StaticArgsAsyncMethod<#class_name> for ThisMethod #ty_generics #where_clause {
+                type Args = Args #ty_generics;
 
                 fn spawn_with(
                     &self,
@@ -885,7 +907,7 @@ fn wrap_method(
                     __spawner.spawn(move |__ctx, __this, __args| {
                         let __future = __this
                             .#map_method(move |__rust_val, __base| {
-                                let Args { #(#destructure_arg_list,)* } = __args;
+                                let Args { #(#destructure_arg_list,)* __generic_marker } = __args;
 
                                 #[allow(unused_unsafe)]
                                 unsafe {
@@ -916,17 +938,19 @@ fn wrap_method(
                 }
             }
 
-            #gdnative_async::Async::new(#gdnative_async::StaticArgs::new(ThisMethod))
+            #gdnative_async::Async::new(#gdnative_async::StaticArgs::new(ThisMethod #turbofish_ty_generics {
+                _marker: #generic_marker_ctor,
+            }))
         }
     } else {
         quote_spanned! { sig_span =>
             #automatically_derived
-            impl #gdnative_core::export::StaticArgsMethod<#class_name> for ThisMethod {
-                type Args = Args;
+            impl #impl_generics #gdnative_core::export::StaticArgsMethod<#class_name> for ThisMethod #ty_generics #where_clause {
+                type Args = Args #ty_generics;
                 fn call(
                     &self,
                     __this: TInstance<'_, #class_name, #gdnative_core::object::ownership::Shared>,
-                    Args { #(#destructure_arg_list,)* }: Args,
+                    Args { #(#destructure_arg_list,)* __generic_marker }: Self::Args,
                 ) -> #gdnative_core::core_types::Variant {
                     __this
                         .#map_method(|__rust_val, __base| {
@@ -950,14 +974,36 @@ fn wrap_method(
                 }
             }
 
-            #gdnative_core::export::StaticArgs::new(ThisMethod)
+            #gdnative_core::export::StaticArgs::new(ThisMethod #turbofish_ty_generics {
+                _marker: #generic_marker_ctor,
+            })
         }
     };
 
+    // Necessary standard traits have to be implemented manually because the default derive isn't smart enough.
     let output = quote_spanned! { sig_span =>
         {
-            #[derive(Copy, Clone, Default)]
-            struct ThisMethod;
+            struct ThisMethod #ty_generics #where_clause {
+                _marker: #generic_marker_decl,
+            }
+
+            impl #impl_generics Copy for ThisMethod #ty_generics #where_clause {}
+            impl #impl_generics Clone for ThisMethod #ty_generics #where_clause {
+                fn clone(&self) -> Self {
+                    *self
+                }
+            }
+
+            impl #impl_generics Default for ThisMethod #ty_generics #where_clause {
+                fn default() -> Self {
+                    Self {
+                        _marker: #generic_marker_ctor,
+                    }
+                }
+            }
+
+            unsafe impl #impl_generics Send for ThisMethod #ty_generics #where_clause {}
+            unsafe impl #impl_generics Sync for ThisMethod #ty_generics #where_clause {}
 
             use #gdnative_core::export::{NativeClass, OwnerArg};
             use #gdnative_core::object::{Instance, TInstance};
@@ -965,8 +1011,11 @@ fn wrap_method(
 
             #[derive(FromVarargs)]
             #automatically_derived
-            struct Args {
+            struct Args #ty_generics #where_clause {
                 #(#declare_arg_list,)*
+
+                #[skip]
+                __generic_marker: #generic_marker_decl,
             }
 
             #impl_body
