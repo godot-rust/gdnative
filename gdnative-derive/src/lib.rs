@@ -493,7 +493,21 @@ pub fn derive_from_variant(input: TokenStream) -> TokenStream {
 ///     #[opt] baz: Option<Ref<Node>>,
 /// }
 /// ```
-#[proc_macro_derive(FromVarargs, attributes(opt))]
+///
+/// ## Field attributes
+///
+/// Attributes can be used to customize behavior of certain fields. All attributes are optional.
+///
+/// ### `#[opt]`
+///
+/// Marks an argument as optional. Required arguments must precede all optional arguments.
+/// Default values are obtained through `Default::default`.
+///
+/// ### `#[skip]`
+///
+/// Instructs the macro to skip a field. Skipped fields do not affect the signature of the
+/// argument list. They may be located anywhere. Values are obtained through `Default::default`.
+#[proc_macro_derive(FromVarargs, attributes(opt, skip))]
 pub fn derive_from_varargs(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
     match varargs::derive_from_varargs(derive_input) {
