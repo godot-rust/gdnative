@@ -1,0 +1,13 @@
+error[E0478]: lifetime bound not satisfied
+ --> tests/ui/derive_fail_lifetime.rs:3:10
+  |
+3 | #[derive(NativeClass)]
+  |          ^^^^^^^^^^^
+  |
+note: lifetime parameter instantiated with the lifetime `'a` as defined here
+ --> tests/ui/derive_fail_lifetime.rs:4:12
+  |
+4 | struct Foo<'a> {
+  |            ^^
+  = note: but lifetime parameter must outlive the static lifetime
+  = note: this error originates in the derive macro `NativeClass` (in Nightly builds, run with -Z macro-backtrace for more info)

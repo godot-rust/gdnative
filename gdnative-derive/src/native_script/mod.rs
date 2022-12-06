@@ -1,10 +1,16 @@
 use proc_macro2::TokenStream as TokenStream2;
 
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Expr, Fields, Ident, Meta, MetaList, NestedMeta, Path, Stmt, Type};
+use syn::visit::Visit;
+use syn::{
+    AttributeArgs, Data, DeriveInput, Expr, Fields, Ident, ItemType, Meta, MetaList, NestedMeta,
+    Path, Stmt, Type,
+};
 
 mod property_args;
 use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder, PropertyGet, PropertySet};
+
+use crate::extend_bounds;
 
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
@@ -20,7 +26,18 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
     let derived = crate::automatically_derived();
     let name = &derive_input.ident;
 
-    let maybe_statically_named = if derive_input.generics.params.is_empty() {
+    let generics = extend_bounds::with_visitor(
+        derive_input.generics.clone(),
+        None,
+        Some("'static"),
+        |visitor| {
+            visitor.visit_data(&derive_input.data);
+        },
+    );
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    let maybe_statically_named = if generics.params.is_empty() {
         let name_str = name.to_string();
         Some(quote! {
             #derived
@@ -34,7 +51,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 
     quote! {
         #derived
-        impl ::gdnative::export::NativeClass for #name {
+        impl #impl_generics ::gdnative::export::NativeClass for #name #ty_generics #where_clause {
             type Base = ::gdnative::api::Object;
             type UserData = ::gdnative::export::user_data::LocalCellData<Self>;
 
@@ -50,6 +67,17 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStream2, syn::Error> {
     let derived = crate::automatically_derived();
     let data = parse_derive_input(derive_input)?;
+
+    let generics = extend_bounds::with_visitor(
+        derive_input.generics.clone(),
+        None,
+        Some("'static"),
+        |visitor| {
+            visitor.visit_data(&derive_input.data);
+        },
+    );
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     // generate NativeClass impl
     let trait_impl = {
@@ -123,7 +151,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                         PropertyGet::Owned(path_expr) | PropertyGet::Ref(path_expr) => parse_quote!(#path_expr(this, _owner))
                     };
                     quote!(
-                        .#register_fn(|this: &#name, _owner: ::gdnative::object::TRef<Self::Base>| {
+                        .#register_fn(|this: &Self, _owner: ::gdnative::object::TRef<Self::Base>| {
                             #get
                         })
                     )
@@ -134,7 +162,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                         PropertySet::WithPath(path_expr) => parse_quote!(#path_expr(this, _owner, v);),
                     };
                     quote!(
-                    .with_setter(|this: &mut #name, _owner: ::gdnative::object::TRef<Self::Base>, v| {
+                    .with_setter(|this: &mut Self, _owner: ::gdnative::object::TRef<Self::Base>, v| {
                         #set
                     }))
                 });
@@ -173,7 +201,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
 
         quote!(
             #derived
-            impl ::gdnative::export::NativeClass for #name {
+            impl #impl_generics ::gdnative::export::NativeClass for #name #ty_generics #where_clause {
                 type Base = #base;
                 type UserData = #user_data;
 
@@ -220,17 +248,18 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
         .map(|attr| attr.parse_args::<Path>())
         .transpose()?;
 
-    let user_data = input
-        .attrs
-        .iter()
-        .find(|a| a.path.is_ident("user_data"))
-        .map(|attr| attr.parse_args::<Type>())
-        .unwrap_or_else(|| {
-            Ok(syn::parse2::<Type>(
-                quote! { ::gdnative::export::user_data::DefaultUserData<#ident> },
-            )
-            .expect("quoted tokens for default userdata should be a valid type"))
-        })?;
+    let user_data =
+        input
+            .attrs
+            .iter()
+            .find(|a| a.path.is_ident("user_data"))
+            .map(|attr| attr.parse_args::<Type>())
+            .unwrap_or_else(|| {
+                Ok(syn::parse2::<Type>(
+                    quote! { ::gdnative::export::user_data::DefaultUserData<Self> },
+                )
+                .expect("quoted tokens for default userdata should be a valid type"))
+            })?;
 
     let no_constructor = input
         .attrs
@@ -306,6 +335,31 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
         user_data,
         properties,
         no_constructor,
+    })
+}
+
+pub(crate) fn derive_monomorphize(
+    args: AttributeArgs,
+    item_type: ItemType,
+) -> Result<TokenStream2, syn::Error> {
+    if let Some(arg) = args.first() {
+        return Err(syn::Error::new(
+            arg.span(),
+            "#[monomorphize] expects no arguments",
+        ));
+    }
+
+    let derived = crate::automatically_derived();
+    let name = &item_type.ident;
+    let name_str = name.to_string();
+
+    Ok(quote! {
+        #item_type
+
+        #derived
+        impl ::gdnative::export::StaticallyNamed for #name {
+            const CLASS_NAME: &'static str = #name_str;
+        }
     })
 }
 

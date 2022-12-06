@@ -14,7 +14,7 @@ pub(crate) fn extend_bounds(
     bound: &syn::Path,
     dir: Direction,
 ) -> Generics {
-    with_visitor(generics, bound, |visitor| {
+    with_visitor(generics, Some(bound), None, |visitor| {
         // iterate through parsed variant representations and visit the types of each field
         fn visit_var_repr<'ast>(
             visitor: &mut BoundsVisitor<'ast>,

@@ -8,7 +8,7 @@ extern crate quote;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{AttributeArgs, DeriveInput, ItemFn, ItemImpl};
+use syn::{AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
 
 mod extend_bounds;
 mod methods;
@@ -455,6 +455,41 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
     TokenStream::from(derived)
 }
 
+/// Wires up necessary internals for a concrete monomorphization of a generic `NativeClass`,
+/// represented as a type alias, so it can be registered.
+///
+/// The monomorphized type will be available to Godot under the name of the type alias,
+/// once registered.
+///
+/// For more context, please refer to [gdnative::derive::NativeClass](NativeClass).
+///
+/// # Examples
+///
+/// ```ignore
+/// #[derive(NativeClass)]
+/// struct Pair<T> {
+///     a: T,
+///     b: T,
+/// }
+///
+/// #[gdnative::derive::monomorphize]
+/// type IntPair = Pair<i32>;
+///
+/// fn init(handle: InitHandle) {
+///     handle.add_class::<IntPair>();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn monomorphize(meta: TokenStream, input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(meta as AttributeArgs);
+    let item_type = parse_macro_input!(input as ItemType);
+
+    match native_script::derive_monomorphize(args, item_type) {
+        Ok(tokens) => tokens.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
 #[proc_macro_derive(ToVariant, attributes(variant))]
 pub fn derive_to_variant(input: TokenStream) -> TokenStream {
     match variant::derive_to_variant(variant::ToVariantTrait::ToVariant, input) {
@@ -493,7 +528,21 @@ pub fn derive_from_variant(input: TokenStream) -> TokenStream {
 ///     #[opt] baz: Option<Ref<Node>>,
 /// }
 /// ```
-#[proc_macro_derive(FromVarargs, attributes(opt))]
+///
+/// ## Field attributes
+///
+/// Attributes can be used to customize behavior of certain fields. All attributes are optional.
+///
+/// ### `#[opt]`
+///
+/// Marks an argument as optional. Required arguments must precede all optional arguments.
+/// Default values are obtained through `Default::default`.
+///
+/// ### `#[skip]`
+///
+/// Instructs the macro to skip a field. Skipped fields do not affect the signature of the
+/// argument list. They may be located anywhere. Values are obtained through `Default::default`.
+#[proc_macro_derive(FromVarargs, attributes(opt, skip))]
 pub fn derive_from_varargs(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
     match varargs::derive_from_varargs(derive_input) {

@@ -16,7 +16,8 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
 
         let mut generics = with_visitor(
             input.generics,
-            &syn::parse_quote! { ::gdnative::core_types::FromVariant },
+            Some(&syn::parse_quote! { ::gdnative::core_types::FromVariant }),
+            None,
             |visitor| {
                 visitor.visit_data_struct(&struct_data);
             },
@@ -48,7 +49,13 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
 
         let mut required = Vec::new();
         let mut optional = Vec::new();
+        let mut skipped = Vec::new();
         for field in fields {
+            if field.attrs.iter().any(|attr| attr.path.is_ident("skip")) {
+                skipped.push(field);
+                continue;
+            }
+
             let is_optional = field.attrs.iter().any(|attr| attr.path.is_ident("opt"));
             if !is_optional && !optional.is_empty() {
                 return Err(syn::Error::new(
@@ -111,6 +118,16 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
             .map(|field| format!("{}", field.ty.to_token_stream()))
             .collect::<Vec<_>>();
 
+        let skipped_var_idents = skipped
+            .iter()
+            .enumerate()
+            .map(|(n, field)| {
+                field.ident.clone().unwrap_or_else(|| {
+                    Ident::new(&format!("__skipped_arg_{}", n), Span::call_site())
+                })
+            })
+            .collect::<Vec<_>>();
+
         Ok(quote! {
             #derived
             impl #generics ::gdnative::export::FromVarargs for #ident #generics #where_clause {
@@ -147,9 +164,14 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
                         let #req_var_idents = #req_var_idents.unwrap();
                     )*
 
+                    #(
+                        let #skipped_var_idents = core::default::Default::default();
+                    )*
+
                     std::result::Result::Ok(#ident {
                         #(#req_var_idents,)*
                         #(#opt_var_idents,)*
+                        #(#skipped_var_idents,)*
                     })
                 }
             }
