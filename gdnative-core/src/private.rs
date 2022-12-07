@@ -169,7 +169,7 @@ unsafe fn report_init_error(
             got,
         } => {
             if let Some(f) = (*options).report_version_mismatch {
-                let message = CString::new(format!("{}", api_type)).unwrap();
+                let message = CString::new(format!("{api_type}")).unwrap();
                 f((*options).gd_native_library, message.as_ptr(), want, got);
             }
         }

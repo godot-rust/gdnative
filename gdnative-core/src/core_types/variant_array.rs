@@ -617,7 +617,7 @@ godot_test!(
         arr.push(&Variant::new(true));
         arr.push(&Variant::new(42));
 
-        assert_eq!(format!("{:?}", arr), "[GodotString(hello world), Bool(True), I64(42)]");
+        assert_eq!(format!("{arr:?}"), "[GodotString(hello world), Bool(True), I64(42)]");
 
         let set = catch_unwind(|| { arr.set(3, 7i64); });
         let get = catch_unwind(|| { arr.get(3); });

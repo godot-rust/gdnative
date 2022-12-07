@@ -25,7 +25,7 @@ impl<'de> Visitor<'de> for VariantTypeVisitor {
         if value < VariantType::NAMES.len() as u64 {
             Ok(VariantType::from_sys(value as sys::godot_variant_type))
         } else {
-            Err(E::custom(&*format!("invalid VariantType value: {}", value)))
+            Err(E::custom(&*format!("invalid VariantType value: {value}")))
         }
     }
 
@@ -39,10 +39,7 @@ impl<'de> Visitor<'de> for VariantTypeVisitor {
                 return Ok(VariantType::from_sys(i as sys::godot_variant_type));
             }
         }
-        Err(E::custom(&*format!(
-            "invalid VariantType value: {:?}",
-            value
-        )))
+        Err(E::custom(&*format!("invalid VariantType value: {value:?}")))
     }
 
     #[inline]
@@ -55,10 +52,7 @@ impl<'de> Visitor<'de> for VariantTypeVisitor {
                 return Ok(VariantType::from_sys(i as sys::godot_variant_type));
             }
         }
-        Err(E::custom(&*format!(
-            "invalid VariantType value: {:?}",
-            value
-        )))
+        Err(E::custom(&*format!("invalid VariantType value: {value:?}")))
     }
 
     #[inline]

@@ -49,6 +49,6 @@ godot_test!(
 godot_test!(
     test_byte_array_debug {
         let arr = (0..8).collect::<ByteArray>();
-        assert_eq!(format!("{:?}", arr), "[0, 1, 2, 3, 4, 5, 6, 7]");
+        assert_eq!(format!("{arr:?}"), "[0, 1, 2, 3, 4, 5, 6, 7]");
     }
 );

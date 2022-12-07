@@ -578,8 +578,7 @@ godot_test!(test_dictionary {
         assert_eq!(Some(value), dict.get(&key));
         assert!(
             iter_keys.insert(key.to_string()) ,
-            "key is already contained in set: {:?}",
-            key
+            "key is already contained in set: {key:?}"
         );
     }
     assert_eq!(expected_keys, iter_keys);

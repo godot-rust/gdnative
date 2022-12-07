@@ -107,8 +107,8 @@ pub fn register_runtime_with_prefix<S>(handle: &InitHandle, prefix: S)
 where
     S: Display,
 {
-    handle.add_class_as::<bridge::SignalBridge>(format!("{}SignalBridge", prefix));
-    handle.add_class_as::<func_state::FuncState>(format!("{}FuncState", prefix));
+    handle.add_class_as::<bridge::SignalBridge>(format!("{prefix}SignalBridge"));
+    handle.add_class_as::<func_state::FuncState>(format!("{prefix}FuncState"));
 }
 
 /// Releases all observers still in use. This should be called in the

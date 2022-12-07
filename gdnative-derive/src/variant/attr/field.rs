@@ -37,8 +37,7 @@ fn generate_error_with_docs(span: Span, message: &str) -> syn::Error {
     syn::Error::new(
         span,
         format!(
-            "{}\n\texpecting #[variant(...)]. See documentation:\n\thttps://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes",
-            message
+            "{message}\n\texpecting #[variant(...)]. See documentation:\n\thttps://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes"
         ),
     )
 }
@@ -124,7 +123,7 @@ impl FieldAttrBuilder {
                 );
                 syn::Error::new(
                     path.span(),
-                    &format!("Found {}, expected one of:\n\t{}", path_token, VALID_KEYS),
+                    format!("Found {path_token}, expected one of:\n\t{VALID_KEYS}"),
                 )
             })?
             .to_string();
@@ -178,7 +177,7 @@ impl FieldAttrBuilder {
 
         Err(syn::Error::new(
             path.span(),
-            format!("unknown argument, expected one of:\n\t{}", VALID_KEYS),
+            format!("unknown argument, expected one of:\n\t{VALID_KEYS}"),
         ))
     }
 }

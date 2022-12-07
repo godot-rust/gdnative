@@ -928,7 +928,7 @@ impl FromVariantError {
     /// Returns a `FromVariantError` with a custom message.
     #[inline]
     pub fn custom<T: fmt::Display>(message: T) -> Self {
-        FromVariantError::Custom(format!("{}", message))
+        FromVariantError::Custom(format!("{message}"))
     }
 }
 
@@ -939,38 +939,31 @@ impl fmt::Display for FromVariantError {
 
         match self {
             E::Unspecified => write!(f, "unspecified error"),
-            E::Custom(s) => write!(f, "{}", s),
+            E::Custom(s) => write!(f, "{s}"),
             E::InvalidNil => write!(f, "expected non-nullable type, got null"),
             E::InvalidVariantType {
                 variant_type,
                 expected,
             } => write!(
                 f,
-                "invalid variant type: expected {:?}, got {:?}",
-                expected, variant_type
+                "invalid variant type: expected {expected:?}, got {variant_type:?}"
             ),
             E::CannotCast { class, to } => {
-                write!(f, "cannot cast object of class {} to {}", class, to)
+                write!(f, "cannot cast object of class {class} to {to}")
             }
             E::InvalidLength { len, expected } => {
-                write!(f, "expected collection of length {}, got {}", expected, len)
+                write!(f, "expected collection of length {expected}, got {len}")
             }
             E::InvalidEnumRepr { expected, error } => write!(
                 f,
-                "invalid enum representation: expected {:?}, {}",
-                expected, error
+                "invalid enum representation: expected {expected:?}, {error}"
             ),
             E::InvalidStructRepr { expected, error } => write!(
                 f,
-                "invalid struct representation: expected {:?}, {}",
-                expected, error
+                "invalid struct representation: expected {expected:?}, {error}"
             ),
             E::UnknownEnumVariant { variant, expected } => {
-                write!(
-                    f,
-                    "unknown enum variant {}, expected variants are: ",
-                    variant
-                )?;
+                write!(f, "unknown enum variant {variant}, expected variants are: ")?;
                 let mut first = true;
                 for v in *expected {
                     if first {
@@ -978,39 +971,39 @@ impl fmt::Display for FromVariantError {
                     } else {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", v)?;
+                    write!(f, "{v}")?;
                 }
                 Ok(())
             }
             E::InvalidEnumVariant { variant, error } => {
-                write!(f, "invalid value for variant {}: {}", variant, error)
+                write!(f, "invalid value for variant {variant}: {error}")
             }
             E::InvalidInstance { expected } => {
-                write!(f, "object is not an instance of `NativeClass` {}", expected)
+                write!(f, "object is not an instance of `NativeClass` {expected}")
             }
             E::InvalidField { field_name, error } => {
-                write!(f, "invalid value for field {}", field_name)?;
+                write!(f, "invalid value for field {field_name}")?;
 
                 let mut next_error = error.as_ref();
                 loop {
                     match next_error {
                         E::InvalidField { field_name, error } => {
-                            write!(f, ".{}", field_name)?;
+                            write!(f, ".{field_name}")?;
                             next_error = error.as_ref();
                         }
                         E::InvalidItem { index, error } => {
-                            write!(f, "[{}]", index)?;
+                            write!(f, "[{index}]")?;
                             next_error = error.as_ref();
                         }
                         _ => {
-                            write!(f, ": {}", next_error)?;
+                            write!(f, ": {next_error}")?;
                             return Ok(());
                         }
                     }
                 }
             }
             E::InvalidItem { index, error } => {
-                write!(f, "invalid value for item at index {}: {}", index, error)
+                write!(f, "invalid value for item at index {index}: {error}")
             }
         }
     }

@@ -200,7 +200,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
         } = m.get_name();
 
         let rust_ident = format_ident!("{}", rust_name);
-        let original_name = format!("{}\0", original_name);
+        let original_name = format!("{original_name}\0");
 
         if !skip_method(m, rust_name) {
             assert!(original_name.ends_with('\0'), "original_name must be null terminated");

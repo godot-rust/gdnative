@@ -53,16 +53,13 @@ impl PropertyAttrArgsBuilder {
     fn err_prop_already_set<T: Debug>(span: Span, prop: &str, old: &T) -> syn::Error {
         syn::Error::new(
             span,
-            format!(
-                "there is already a '{}' attribute with value: {:?}",
-                prop, old,
-            ),
+            format!("there is already a '{prop}' attribute with value: {old:?}",),
         )
     }
 
     // Error returned when the attr value is not a string literal (i.e. not `LitStr`)
     fn err_attr_not_a_string_literal(span: Span, attr: &str) -> syn::Error {
-        syn::Error::new(span, format!("'{}' value is not a string literal", attr))
+        syn::Error::new(span, format!("'{attr}' value is not a string literal"))
     }
 
     /// Convert `Lit` to `LitStr`

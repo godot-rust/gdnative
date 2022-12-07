@@ -232,7 +232,7 @@ impl std::fmt::Display for LockFailed {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LockFailed::Timeout(wait) => write!(f, "failed to acquire lock within {:?}", wait),
+            LockFailed::Timeout(wait) => write!(f, "failed to acquire lock within {wait:?}"),
             LockFailed::Pessimistic => write!(f, "failed to acquire lock, it was already held"),
         }
     }
@@ -576,8 +576,7 @@ mod local_cell {
             match self {
                 LocalCellError::DifferentThread { original, current } => write!(
                     f,
-                    "accessing from the wrong thread, expected {:?} found {:?}",
-                    original, current
+                    "accessing from the wrong thread, expected {original:?} found {current:?}"
                 ),
                 LocalCellError::BorrowFailed => write!(
                     f,

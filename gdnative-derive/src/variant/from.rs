@@ -50,7 +50,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
 
                 let var_ident_strings: Vec<String> = variants
                     .iter()
-                    .map(|(var_ident, _)| format!("{}", var_ident))
+                    .map(|(var_ident, _)| format!("{var_ident}"))
                     .collect();
 
                 let var_ident_string_literals = var_ident_strings
@@ -118,7 +118,7 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
                         }
                     });
 
-                    hints.push(Literal::string(&format!("{}({})", var_ident, discriminant)));
+                    hints.push(Literal::string(&format!("{var_ident}({discriminant})")));
 
                     discriminant = quote!(1 + (#discriminant));
                 }
@@ -169,7 +169,7 @@ fn expand_external(
 
     let var_ident_strings: Vec<String> = variants
         .iter()
-        .map(|(var_ident, _)| format!("{}", var_ident))
+        .map(|(var_ident, _)| format!("{var_ident}"))
         .collect();
 
     let var_ident_string_literals = var_ident_strings

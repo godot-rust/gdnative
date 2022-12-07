@@ -59,7 +59,7 @@ impl InitializeInfo {
 
         if let Some(report_loading_error_fn) = report_loading_error {
             // Add the trailing zero and convert Display => String
-            let message = format!("{}\0", message);
+            let message = format!("{message}\0");
 
             // Convert to FFI compatible string
             let message = std::ffi::CStr::from_bytes_with_nul(message.as_bytes())

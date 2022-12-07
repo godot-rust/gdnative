@@ -157,8 +157,7 @@ impl ArgKind {
                 errors.push(syn::Error::new(
                     optional,
                     format_args!(
-                        "the {} cannot be optional (instead, remove the argument entirely)",
-                        special_kind
+                        "the {special_kind} cannot be optional (instead, remove the argument entirely)"
                     ),
                 ));
             }
@@ -251,8 +250,7 @@ impl ExportMethod {
                     errors.push(syn::Error::new(
                         arg.span(),
                         format_args!(
-                            "required parameters must precede all optional ones (an optional parameter is defined at #{})",
-                            idx,
+                            "required parameters must precede all optional ones (an optional parameter is defined at #{idx})",
                         )
                     ));
                 }
@@ -261,8 +259,7 @@ impl ExportMethod {
                 errors.push(syn::Error::new(
                     arg.span(),
                     format_args!(
-                        "special parameters must precede all regular ones (a regular parameter is defined at #{})",
-                        idx,
+                        "special parameters must precede all regular ones (a regular parameter is defined at #{idx})",
                     )
                 ));
             } else {
@@ -279,9 +276,7 @@ impl ExportMethod {
                     errors.push(syn::Error::new(
                         arg.span(),
                         format_args!(
-                            "the special parameter {} must only be declared once (the same parameter is already defined at #{})",
-                            kind,
-                            idx,
+                            "the special parameter {kind} must only be declared once (the same parameter is already defined at #{idx})",
                         )
                     ));
                 }
@@ -534,10 +529,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                                             } else {
                                                 errors.push(syn::Error::new(
                                                     nested_meta.span(),
-                                                    format!(
-                                                        "unexpected value for `rpc`: {}",
-                                                        value
-                                                    ),
+                                                    format!("unexpected value for `rpc`: {value}"),
                                                 ));
                                             }
                                         }
@@ -683,7 +675,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                 .for_each(|(i, arg)| match arg {
                     FnArg::Typed(cap) => match *cap.pat.clone() {
                         Pat::Wild(_) => {
-                            let name = format!("___unused_arg_{}", i);
+                            let name = format!("___unused_arg_{i}");
 
                             cap.pat = Box::new(Pat::Ident(PatIdent {
                                 attrs: vec![],

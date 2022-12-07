@@ -113,7 +113,7 @@ impl VariantRepr {
                     .iter()
                     .enumerate()
                     .map(|(n, f)| {
-                        let ident = Ident::new(&format!("__field_{}", n), Span::call_site());
+                        let ident = Ident::new(&format!("__field_{n}"), Span::call_site());
                         let ty = f.ty.clone();
                         let attr = parse_attrs::<FieldAttrBuilder, _>(&f.attrs)?;
                         Ok(Field { ident, ty, attr })
@@ -317,7 +317,7 @@ impl VariantRepr {
 
                 let name_strings: Vec<String> = non_skipped_idents
                     .iter()
-                    .map(|ident| format!("{}", ident))
+                    .map(|ident| format!("{ident}"))
                     .collect();
 
                 let name_string_literals =

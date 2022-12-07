@@ -139,7 +139,7 @@ impl Foo {
         match what.as_str() {
             "int" => a.to_variant(),
             "float" => b.to_variant(),
-            _ => panic!("should be int or float, got {:?}", what),
+            _ => panic!("should be int or float, got {what:?}"),
         }
     }
 }

@@ -489,12 +489,11 @@ impl fmt::Display for VarargsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             VarargsError::InvalidArgumentType { index, error } => {
-                write!(f, "type error for argument #{}: {}", index, error)?
+                write!(f, "type error for argument #{index}: {error}")?
             }
             VarargsError::InvalidLength { expected, length } => write!(
                 f,
-                "length mismatch: expected range {}, actual {}",
-                expected, length
+                "length mismatch: expected range {expected}, actual {length}"
             )?,
         }
 
@@ -572,7 +571,7 @@ impl From<ops::RangeToInclusive<usize>> for IndexBounds {
 impl fmt::Debug for IndexBounds {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "IndexBounds({})", self)
+        write!(f, "IndexBounds({self})")
     }
 }
 
@@ -580,13 +579,13 @@ impl fmt::Display for IndexBounds {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(start) = self.start {
-            write!(f, "{}", start)?
+            write!(f, "{start}")?
         }
 
         write!(f, "..=")?;
 
         if let Some(end) = self.end {
-            write!(f, "{}", end)?
+            write!(f, "{end}")?
         }
 
         Ok(())
@@ -719,7 +718,7 @@ impl<'a> fmt::Display for ArgumentError<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(site) = &self.site {
-            write!(f, "at {}: ", site)?;
+            write!(f, "at {site}: ")?;
         }
         write!(f, "{}", self.kind)
     }
@@ -786,10 +785,10 @@ impl<'a> fmt::Display for ArgumentErrorKind<'a> {
                 idx,
                 name: Some(name),
             } => {
-                write!(f, "missing non-optional parameter `{}` (#{})", name, idx)
+                write!(f, "missing non-optional parameter `{name}` (#{idx})")
             }
             E::Missing { idx, name: None } => {
-                write!(f, "missing non-optional parameter #{}", idx)
+                write!(f, "missing non-optional parameter #{idx}")
             }
             E::CannotConvert {
                 idx,
@@ -799,8 +798,7 @@ impl<'a> fmt::Display for ArgumentErrorKind<'a> {
                 err,
             } => {
                 write!(f,
-                    "cannot convert argument `{}` (#{}, {:?}) to {}: {} (non-primitive types may impose structural checks)",
-                    name, idx, value, ty, err
+                    "cannot convert argument `{name}` (#{idx}, {value:?}) to {ty}: {err} (non-primitive types may impose structural checks)"
                 )
             }
             E::CannotConvert {
@@ -811,8 +809,7 @@ impl<'a> fmt::Display for ArgumentErrorKind<'a> {
                 err,
             } => {
                 write!(f,
-                    "cannot convert argument #{} ({:?}) to {}: {} (non-primitive types may impose structural checks)",
-                    idx, value, ty, err
+                    "cannot convert argument #{idx} ({value:?}) to {ty}: {err} (non-primitive types may impose structural checks)"
                 )
             }
             E::ExcessArguments { rest } => {

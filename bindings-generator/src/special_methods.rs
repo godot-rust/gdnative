@@ -113,7 +113,7 @@ pub fn generate_singleton_getter(class: &GodotClass) -> TokenStream {
         class.name.as_ref()
     };
 
-    let singleton_name = format!("{}\0", s_name);
+    let singleton_name = format!("{s_name}\0");
 
     assert!(
         singleton_name.ends_with('\0'),

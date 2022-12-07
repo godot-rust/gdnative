@@ -53,7 +53,7 @@ pub(crate) fn expand_to_variant(
                             .map(|(var_ident, var_repr)| {
                                 let destructure_pattern = var_repr.destructure_pattern();
                                 let to_variant = var_repr.make_to_variant_expr(trait_kind)?;
-                                let var_ident_string = format!("{}", var_ident);
+                                let var_ident_string = format!("{var_ident}");
                                 let var_ident_string_literal = Literal::string(&var_ident_string);
                                 let tokens = quote! {
                                     #ident::#var_ident #destructure_pattern => {
@@ -84,7 +84,7 @@ pub(crate) fn expand_to_variant(
                                     return Err(syn::Error::new(var_ident.span(), "`str` representation can only be used for fieldless enums"));
                                 }
 
-                                let var_ident_string = format!("{}", var_ident);
+                                let var_ident_string = format!("{var_ident}");
                                 let var_ident_string_literal = Literal::string(&var_ident_string);
                                 let tokens = quote! {
                                     #ident::#var_ident => {

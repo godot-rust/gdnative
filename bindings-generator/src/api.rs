@@ -785,7 +785,7 @@ mod tests {
         ];
         tests.iter().for_each(|(class_name, expected)| {
             let actual = module_name_from_class_name(class_name);
-            assert_eq!(*expected, actual, "Input: {}", class_name);
+            assert_eq!(*expected, actual, "Input: {class_name}");
         });
     }
 }

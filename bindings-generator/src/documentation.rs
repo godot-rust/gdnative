@@ -149,7 +149,7 @@ fn list_base_classes(output: &mut impl Write, api: &Api, parent_name: &str) -> G
     if let Some(parent) = api.find_class(parent_name) {
         let class_link = class_doc_link(parent);
 
-        writeln!(output, " - {}", class_link)?;
+        writeln!(output, " - {class_link}")?;
 
         if !parent.base_class.is_empty() {
             list_base_classes(output, api, &parent.base_class)?;

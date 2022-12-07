@@ -167,7 +167,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     }))
                 });
 
-                let label = config.path.unwrap_or_else(|| format!("{}", ident));
+                let label = config.path.unwrap_or_else(|| format!("{ident}"));
                 Ok(quote!({
                     builder.property #property_ty(#label)
                         #with_default
@@ -301,7 +301,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
                             } else if let NestedMeta::Meta(Meta::Path(ref path)) = arg {
                                 attr_args_builder.add_path(path)?;
                             } else {
-                                let msg = format!("Unexpected argument: {:?}", arg);
+                                let msg = format!("Unexpected argument: {arg:?}");
                                 return Err(syn::Error::new(arg.span(), msg));
                             }
                         }
@@ -311,7 +311,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
                             .get_or_insert_with(|| PropertyAttrArgsBuilder::new(&field.ty));
                     }
                     m => {
-                        let msg = format!("Unexpected meta variant: {:?}", m);
+                        let msg = format!("Unexpected meta variant: {m:?}");
                         return Err(syn::Error::new(m.span(), msg));
                     }
                 }
