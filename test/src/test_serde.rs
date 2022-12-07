@@ -41,8 +41,8 @@ struct Foo {
     xform: Transform,
     color: Color,
     path: NodePath,
-    // dict: Dictionary, //TODO: PartialEq
-    // v_arr: VariantArray, //TODO: PartialEq
+    // dict: Dictionary, //TODO(#990): PartialEq
+    // v_arr: VariantArray, //TODO(#990): PartialEq
     byte_arr: ByteArray,
     int_arr: Int32Array,
     float_arr: Float32Array,

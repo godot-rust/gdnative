@@ -286,8 +286,6 @@ impl GodotString {
         sys_string.leak();
         this
     }
-
-    // TODO: many missing methods.
 }
 
 impl Clone for GodotString {
@@ -454,7 +452,7 @@ impl Index<usize> for GodotString {
     }
 }
 
-// TODO: Is it useful to expose this type?
+// TODO(#993): Is it useful to expose this type?
 // Could just make it an internal detail of how to convert to a rust string.
 #[doc(hidden)]
 pub struct Utf8String(pub(crate) sys::godot_char_string);

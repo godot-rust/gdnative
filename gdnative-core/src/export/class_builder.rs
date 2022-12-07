@@ -7,7 +7,7 @@ use crate::export::*;
 use crate::object::NewRef;
 use crate::private::get_api;
 
-// TODO unify string parameters across all buiders
+// TODO(#996): unify string parameters across all buiders
 // Potential candidates:
 // * &str
 // * impl Into<GodotString>

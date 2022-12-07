@@ -1,6 +1,6 @@
 use crate::core_types::{IsEqualApprox, Vector3};
 
-// TODO enforce invariants via setters, make fields private
+// TODO(#994) enforce invariants via setters, make fields private
 // Otherwise almost all methods need to panic
 // - normal.length() == 1
 // - d > 0
@@ -322,7 +322,7 @@ mod test {
         assert!(!p.contains_point(Vector3::new(6.562291, -0.186564, -0.101982)));
     }
 
-    // TODO contains_point_eps()
+    // TODO(#994) contains_point_eps()
 
     #[test]
     fn intersect_3() {

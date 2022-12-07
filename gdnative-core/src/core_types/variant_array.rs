@@ -181,21 +181,6 @@ impl<Own: Ownership> VariantArray<Own> {
         self.into_iter()
     }
 
-    // TODO
-    // pub fn sort_custom(&mut self, obj: ?, s: ?) {
-    //     unimplemented!()
-    // }
-
-    // pub fn bsearch(&mut self, val: (), before: bool) -> i32 {
-    //     unsafe {
-    //         (get_api().godot_array_bsearch)(self.sys_mut(), val, before)
-    //     }
-    // }
-
-    // pub fn bsearch_custom(&mut self, val: ?, obj: ?, s: ?, before: bool) -> i32 {
-    //     unimplemented!();
-    // }
-
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_array {
