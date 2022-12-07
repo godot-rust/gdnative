@@ -12,6 +12,8 @@ env:
   # Don't use more features like "gdnative_bindings_generator/debug" to keep CI truly minimal
   GDRUST_FEATURES: "gdnative/async,gdnative/serde"
 
+  RIPGREP_VERSION: "13.0.0"
+
 on:
   pull_request:
     branches:
@@ -51,6 +53,19 @@ jobs:
           components: clippy
       - name: "Check clippy"
         run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented
+
+  check-todo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install ripgrep"
+        run: |
+          cd /tmp
+          wget --no-verbose https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz -O ripgrep.tar.gz
+          tar -zxvf ripgrep.tar.gz
+          sudo mv ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/bin
+      - name: "Look for TODO comments without issue numbers attached to them"
+        run: bash tools/detect-todo.sh
 
   unit-test:
     runs-on: ubuntu-latest
