@@ -103,6 +103,12 @@ impl Transform {
     This method will be renamed to translated_local in gdnative 0.12."]
     #[inline]
     pub fn translated(&self, translation: Vector3) -> Self {
+        self.translated_local(translation)
+    }
+
+    /// Returns this transform, with its origin moved by a certain `translation`
+    #[inline]
+    pub fn translated_local(&self, translation: Vector3) -> Self {
         Self {
             basis: self.basis,
             origin: self.origin + translation,
@@ -365,7 +371,7 @@ mod tests {
     #[test]
     fn translation_is_sane() {
         let translation = Vector3::new(1.0, 2.0, 3.0);
-        let t = Transform::default().translated(translation);
+        let t = Transform::default().translated_local(translation);
         assert!(t.basis.elements[0] == Vector3::new(1.0, 0.0, 0.0));
         assert!(t.basis.elements[1] == Vector3::new(0.0, 1.0, 0.0));
         assert!(t.basis.elements[2] == Vector3::new(0.0, 0.0, 1.0));

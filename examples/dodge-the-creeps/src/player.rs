@@ -82,8 +82,8 @@ impl Player {
         let change = velocity * delta;
         let position = owner.global_position() + change;
         let position = Vector2::new(
-            position.x.max(0.0).min(self.screen_size.x),
-            position.y.max(0.0).min(self.screen_size.y),
+            position.x.clamp(0.0, self.screen_size.x),
+            position.y.clamp(0.0, self.screen_size.y),
         );
         owner.set_global_position(position);
     }

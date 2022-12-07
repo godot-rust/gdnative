@@ -59,7 +59,7 @@ impl SceneCreate {
             Ok(spatial) => {
                 // Here is how you rename the child...
                 let key_str = format!("child_{}", self.children_spawned);
-                spatial.set_name(&key_str);
+                spatial.set_name(key_str);
 
                 let x = (self.children_spawned % 10) as f32;
                 let z = (self.children_spawned / 10) as f32;
