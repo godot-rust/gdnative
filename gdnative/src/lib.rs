@@ -85,7 +85,7 @@
 //!
 //!
 
-// TODO: add logo using #![doc(html_logo_url = "https://<url>")]
+#![doc(html_logo_url = "https://github.com/godot-rust/gdnative/raw/master/assets/godot-ferris.svg")]
 
 // Workaround (rustdoc 1.55):
 // Items, which are #[doc(hidden)] in their original crate and re-exported with a wildcard, lose
