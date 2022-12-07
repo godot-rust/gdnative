@@ -247,11 +247,18 @@ impl Transform {
         self.basis.is_equal_approx(&other.basis) && self.origin.is_equal_approx(other.origin)
     }
 
-    /// Interpolates the transform to other Transform by
-    /// weight amount (on the range of 0.0 to 1.0).
+    /// Interpolates the transform to other Transform by weight amount (on the range of 0.0 to 1.0).
     /// Assuming the two transforms are located on a sphere surface.
     #[inline]
+    #[deprecated = "This is the Godot 4 rename of `interpolate_with`. It will be removed in favor of the original Godot 3 naming in a future version."]
     pub fn sphere_interpolate_with(&self, other: &Transform, weight: f32) -> Self {
+        self.interpolate_with(other, weight)
+    }
+
+    /// Interpolates the transform to other Transform by weight amount (on the range of 0.0 to 1.0).
+    /// Assuming the two transforms are located on a sphere surface.
+    #[inline]
+    pub fn interpolate_with(&self, other: &Transform, weight: f32) -> Self {
         let src_scale = self.basis.scale();
         let src_rot = self.basis.to_quat();
         let src_loc = self.origin;
@@ -265,16 +272,6 @@ impl Transform {
         Transform {
             basis: new_basis,
             origin: src_loc.linear_interpolate(dst_loc, weight),
-        }
-    }
-
-    /// Interpolates the transform to other Transform by
-    /// weight amount (on the range of 0.0 to 1.0).
-    #[inline]
-    pub fn interpolate_with(&self, other: &Transform, weight: f32) -> Self {
-        Transform {
-            basis: self.basis.lerp(&other.basis, weight),
-            origin: self.origin.linear_interpolate(other.origin, weight),
         }
     }
 
@@ -314,6 +311,30 @@ impl MulAssign<Transform> for Transform {
 mod tests {
     use super::*;
 
+    /// Equivalent GDScript, in case Godot values need to be updated:
+    ///
+    /// ```gdscript
+    /// func test_inputs():
+    ///    var basis = Basis(Vector3(37.51756, 20.39467, 49.96816))
+    ///    var t = Transform(
+    ///        basis.x,
+    ///        basis.y,
+    ///        basis.z,
+    ///        Vector3(0.0, 0.0, 0.0))
+    ///    t = t.translated(Vector3(0.5, -1.0, 0.25))
+    ///    t = t.scaled(Vector3(0.25, 0.5, 2.0))
+    ///
+    ///    basis = Basis(Vector3(12.23, 50.46, 93.94))
+    ///    var t2 = Transform(
+    ///        basis.x,
+    ///        basis.y,
+    ///        basis.z,
+    ///        Vector3(0.0, 0.0, 0.0))
+    ///    t2 = t2.translated(Vector3(1.5, -2.0, 1.25))
+    ///    t2 = t2.scaled(Vector3(0.5, 0.58, 1.0))
+    ///
+    ///    return [t, t2]
+    /// ```
     fn test_inputs() -> (Transform, Transform) {
         let basis = Basis::from_euler(Vector3::new(37.51756, 20.39467, 49.96816));
         let mut t = Transform::from_basis_origin(
@@ -376,22 +397,19 @@ mod tests {
         assert!(expected.is_equal_approx(&t))
     }
 
-    /*
     #[test]
     fn inverse_is_sane() {
         let t = test_inputs().0.inverse();
         let expected = Transform::from_basis_origin(
-            // Fix values
-            Vector3::new(0.309725, -0.66022015, 3.9329607),
-            Vector3::new(-0.57629496, 1.8808193, 0.3611141),
-            Vector3::new(-0.47722515, -0.14864945, 0.012628445),
-            Vector3::new(-0.7398631, 0.0425314, 0.03682696),
+            Vector3::new(0.019358, -0.041264, 0.24581),
+            Vector3::new(-0.144074, 0.470205, 0.090279),
+            Vector3::new(-1.908901, -0.594598, 0.050514),
+            Vector3::new(-0.739863, 0.042531, 0.036827),
         );
 
         println!("TF:  {t:?}");
         assert!(expected.is_equal_approx(&t))
     }
-    */
 
     #[test]
     fn orthonormalization_is_sane() {
@@ -409,31 +427,12 @@ mod tests {
     }
 
     #[test]
-    fn linear_interpolation_is_sane() {
+    fn spherical_interpolation_is_sane() {
         // Godot reports:
         // t = 0.019358, -0.041264, 0.24581, -0.144074, 0.470205, 0.090279, -1.908901, -0.594598, 0.050514 - 0.112395, -0.519672, -0.347224
         // t2 = 0.477182, 0.118214, 0.09123, -0.165859, 0.521769, 0.191437, -0.086105, -0.367178, 0.926157 - 0.593383, -1.05303, 1.762894
-        // TODO: Get new godot result. https://github.com/godotengine/godot/commit/61759da5b35e44003ab3ffe3d4024dd611d17eff changed how Transform3D.linear_interpolate works
-        // For now assuming this is sane - examined the new implementation manually.
         let (t, t2) = test_inputs();
         let result = t.interpolate_with(&t2, 0.5);
-        let expected = Transform::from_basis_origin(
-            Vector3::new(0.24826992, -0.15496635, -0.997503),
-            Vector3::new(0.038474888, 0.49598676, -0.4808879),
-            Vector3::new(0.16852, 0.14085774, 0.48833522),
-            Vector3::new(0.352889, -0.786351, 0.707835),
-        );
-        assert!(expected.is_equal_approx(&result))
-    }
-
-    #[test]
-    fn sphere_linear_interpolation_is_sane() {
-        // Godot reports:
-        // t = 0.019358, -0.041264, 0.24581, -0.144074, 0.470205, 0.090279, -1.908901, -0.594598, 0.050514 - 0.112395, -0.519672, -0.347224
-        // t2 = 0.477182, 0.118214, 0.09123, -0.165859, 0.521769, 0.191437, -0.086105, -0.367178, 0.926157 - 0.593383, -1.05303, 1.762894
-        // result =  0.727909, -0.029075, 0.486138, -0.338385, 0.6514, 0.156468, -0.910002, -0.265481, 0.330678 - 0.352889, -0.786351, 0.707835
-        let (t, t2) = test_inputs();
-        let result = t.sphere_interpolate_with(&t2, 0.5);
         let expected = Transform::from_basis_origin(
             Vector3::new(0.7279087, -0.19632529, -0.45626357),
             Vector3::new(-0.05011323, 0.65140045, -0.22942543),

@@ -30,11 +30,11 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_string_name_ord();
 
     status &= gdnative::core_types::test_dictionary();
-    // status &= gdnative::test_dictionary_clone_clear();
+    status &= gdnative::core_types::test_dictionary_clone_clear();
     status &= gdnative::core_types::test_color();
     status &= gdnative::core_types::test_array();
     status &= gdnative::core_types::test_array_debug();
-    // status &= gdnative::test_array_clone_clear();
+    status &= gdnative::core_types::test_array_clone_clear();
 
     status &= gdnative::core_types::test_variant_nil();
     status &= gdnative::core_types::test_variant_i64();

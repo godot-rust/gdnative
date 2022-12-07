@@ -631,15 +631,16 @@ godot_test!(
     }
 );
 
-// TODO: clear arrays without affecting clones
-//godot_test!(test_array_clone_clear {
-//    let foo = Variant::new("foo");
-//    let mut array = VariantArray::new();
-//
-//    array.push(&foo);
-//    let array_clone = array.clone();
-//    array.clear();
-//
-//    assert!(array.is_empty());
-//    assert!(!array_clone.is_empty());
-//});
+godot_test!(
+    test_array_clone_clear {
+        let foo = Variant::new("foo");
+        let array = VariantArray::new();
+
+        array.push(&foo);
+        let array_clone = array.duplicate();
+        array.clear();
+
+        assert!(array.is_empty());
+        assert!(!array_clone.is_empty());
+    }
+);
