@@ -15,8 +15,6 @@ use crate::private::{get_api, ManuallyManagedClassPlaceholder};
 #[cfg(feature = "serde")]
 mod serialize;
 
-// TODO: implement Debug, PartialEq, etc.
-
 /// A `Variant` can represent all Godot values (core types or `Object` class instances).
 ///
 /// The underlying data is either stored inline or reference-counted on the heap,
