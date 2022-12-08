@@ -92,16 +92,15 @@ fn generate(
     for (class, code) in &binding_res.class_bindings {
         let mod_name = gen::module_name_from_class_name(&class.name);
 
-        let mod_path = out_path.join(format!("{}.rs", mod_name));
+        let mod_path = out_path.join(format!("{mod_name}.rs"));
         let mut mod_output = BufWriter::new(File::create(&mod_path).unwrap());
 
         write!(
             &mut mod_output,
             r#"
-            {content}
+            {code}
             use super::*;
             "#,
-            content = code,
         )
         .unwrap();
 
@@ -152,7 +151,7 @@ fn format_file_if_needed(output_rs: &Path) {
         Ok(_) => println!("Done."),
         Err(err) => {
             println!("Failed.");
-            println!("Error: {}", err);
+            println!("Error: {err}");
         }
     }
 }

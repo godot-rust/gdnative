@@ -77,7 +77,7 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
                 field
                     .ident
                     .clone()
-                    .unwrap_or_else(|| Ident::new(&format!("__req_arg_{}", n), Span::call_site()))
+                    .unwrap_or_else(|| Ident::new(&format!("__req_arg_{n}"), Span::call_site()))
             })
             .collect::<Vec<_>>();
         let req_var_names = required
@@ -101,7 +101,7 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
                 field
                     .ident
                     .clone()
-                    .unwrap_or_else(|| Ident::new(&format!("__opt_arg_{}", n), Span::call_site()))
+                    .unwrap_or_else(|| Ident::new(&format!("__opt_arg_{n}"), Span::call_site()))
             })
             .collect::<Vec<_>>();
         let opt_var_names = optional
@@ -122,9 +122,10 @@ pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, sy
             .iter()
             .enumerate()
             .map(|(n, field)| {
-                field.ident.clone().unwrap_or_else(|| {
-                    Ident::new(&format!("__skipped_arg_{}", n), Span::call_site())
-                })
+                field
+                    .ident
+                    .clone()
+                    .unwrap_or_else(|| Ident::new(&format!("__skipped_arg_{n}"), Span::call_site()))
             })
             .collect::<Vec<_>>();
 

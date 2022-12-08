@@ -472,8 +472,6 @@ fn test_transform2d_constructor() {
     let expected_local_right = Vector2::RIGHT.rotated(-rotation) * scale;
     assert!(
         actual_local_right.is_equal_approx(expected_local_right),
-        "{:?} != {:?}",
-        actual_local_right,
-        expected_local_right
+        "{actual_local_right:?} != {expected_local_right:?}"
     );
 }

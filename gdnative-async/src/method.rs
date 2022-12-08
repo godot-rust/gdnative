@@ -209,7 +209,7 @@ impl<C: NativeClass, F: AsyncMethod<C>> Method<C> for Async<F> {
                 Some(Err(err)) => {
                     log::error(
                         Self::site().unwrap_or_default(),
-                        format_args!("unable to spawn future: {}", err),
+                        format_args!("unable to spawn future: {err}"),
                     );
                     Variant::nil()
                 }

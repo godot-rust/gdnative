@@ -103,7 +103,7 @@ impl Signature<'static> {
             panic!("tag should not contain `::`");
         }
 
-        let sig = CString::new(format!("{}::{}::{}", file, line, tag))
+        let sig = CString::new(format!("{file}::{line}::{tag}"))
             .expect("file and tag should not contain NUL bytes");
         Self::from_raw_owned(sig)
     }

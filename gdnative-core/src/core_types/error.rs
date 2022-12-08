@@ -77,7 +77,7 @@ impl GodotError {
 impl std::fmt::Display for GodotError {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Godot API error: {:?}", self)
+        write!(f, "Godot API error: {self:?}")
     }
 }
 

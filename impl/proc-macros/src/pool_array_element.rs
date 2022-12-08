@@ -89,12 +89,12 @@ static METHODS: &[&str] = &[
 ];
 
 fn impl_fn_symbol(method: &str) -> Ident {
-    Ident::new(&format!("{}_fn", method), Span::call_site())
+    Ident::new(&format!("{method}_fn"), Span::call_site())
 }
 
 fn fn_symbol(godot_type: &str, method: &str) -> Ident {
     Ident::new(
-        &format!("godot_pool_{}_array_{}", godot_type, method),
+        &format!("godot_pool_{godot_type}_array_{method}"),
         Span::call_site(),
     )
 }
@@ -157,7 +157,7 @@ fn fn_ty(method: &str) -> Type {
             parse_quote!(unsafe extern "C" fn(*mut Self::SysWriteAccess, *mut Self::SysWriteAccess))
         }
         "write_access_destroy" => parse_quote!(unsafe extern "C" fn(*mut Self::SysWriteAccess)),
-        _ => panic!("unknown method: {}", method),
+        _ => panic!("unknown method: {method}"),
     }
 }
 

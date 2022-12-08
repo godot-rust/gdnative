@@ -181,21 +181,6 @@ impl<Own: Ownership> VariantArray<Own> {
         self.into_iter()
     }
 
-    // TODO
-    // pub fn sort_custom(&mut self, obj: ?, s: ?) {
-    //     unimplemented!()
-    // }
-
-    // pub fn bsearch(&mut self, val: (), before: bool) -> i32 {
-    //     unsafe {
-    //         (get_api().godot_array_bsearch)(self.sys_mut(), val, before)
-    //     }
-    // }
-
-    // pub fn bsearch_custom(&mut self, val: ?, obj: ?, s: ?, before: bool) -> i32 {
-    //     unimplemented!();
-    // }
-
     #[doc(hidden)]
     #[inline]
     pub fn sys(&self) -> *const sys::godot_array {
@@ -632,7 +617,7 @@ godot_test!(
         arr.push(&Variant::new(true));
         arr.push(&Variant::new(42));
 
-        assert_eq!(format!("{:?}", arr), "[GodotString(hello world), Bool(True), I64(42)]");
+        assert_eq!(format!("{arr:?}"), "[GodotString(hello world), Bool(True), I64(42)]");
 
         let set = catch_unwind(|| { arr.set(3, 7i64); });
         let get = catch_unwind(|| { arr.get(3); });
@@ -646,15 +631,16 @@ godot_test!(
     }
 );
 
-// TODO: clear arrays without affecting clones
-//godot_test!(test_array_clone_clear {
-//    let foo = Variant::new("foo");
-//    let mut array = VariantArray::new();
-//
-//    array.push(&foo);
-//    let array_clone = array.clone();
-//    array.clear();
-//
-//    assert!(array.is_empty());
-//    assert!(!array_clone.is_empty());
-//});
+godot_test!(
+    test_array_clone_clear {
+        let foo = Variant::new("foo");
+        let array = VariantArray::new();
+
+        array.push(&foo);
+        let array_clone = array.duplicate();
+        array.clear();
+
+        assert!(array.is_empty());
+        assert!(!array_clone.is_empty());
+    }
+);

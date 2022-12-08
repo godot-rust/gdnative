@@ -64,7 +64,7 @@ fn improve_meta_error(err: syn::Error) -> syn::Error {
         }
         other => syn::Error::new(
             err.span(),
-            format!("{}, ie: #[variant(with = \"...\")]", other),
+            format!("{other}, ie: #[variant(with = \"...\")]"),
         ),
     }
 }

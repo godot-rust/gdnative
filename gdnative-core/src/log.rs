@@ -56,7 +56,7 @@ impl<'a> Display for Site<'a> {
 #[inline]
 pub fn print<S: Display>(msg: S) {
     unsafe {
-        let msg = GodotString::from_str(&msg.to_string());
+        let msg = GodotString::from_str(msg.to_string());
         (private::get_api().godot_print)(&msg.to_sys() as *const _);
     }
 }

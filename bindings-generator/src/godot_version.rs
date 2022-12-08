@@ -15,12 +15,7 @@ pub fn parse_godot_version(version_str: &str) -> Result<GodotVersion, Box<dyn Er
 
     let caps = regex.captures(version_str).ok_or("Regex capture failed")?;
 
-    let fail = || {
-        format!(
-            "Version substring could not be matched in '{}'",
-            version_str
-        )
-    };
+    let fail = || format!("Version substring could not be matched in '{version_str}'");
 
     Ok(GodotVersion {
         major: caps.get(1).ok_or_else(fail)?.as_str().parse::<u8>()?,

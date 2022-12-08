@@ -57,6 +57,6 @@ godot_test!(
             GodotString::from("baz"),
         ]);
 
-        assert_eq!(format!("{:?}", arr), "[\"foo\", \"bar\", \"baz\"]");
+        assert_eq!(format!("{arr:?}"), "[\"foo\", \"bar\", \"baz\"]");
     }
 );

@@ -24,8 +24,6 @@ impl<'ast> Visit<'ast> for BoundsVisitor<'ast> {
             if self.all_type_params.contains(&seg.ident) {
                 // if the first segment of the type path is a known type variable, then this
                 // is likely an associated type
-                // TODO: what about cases like <Foo<T> as Trait>::A? Maybe too fringe to be
-                // useful? serde_derive can't seem to parse these either. Probably good enough.
                 self.used.insert(type_path);
             }
         }

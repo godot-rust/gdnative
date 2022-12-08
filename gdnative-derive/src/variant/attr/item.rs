@@ -76,7 +76,7 @@ impl ItemAttrBuilder {
                 );
                 syn::Error::new(
                     path.span(),
-                    &format!("Found {}, expected one of:\n\t{}", path_token, VALID_KEYS),
+                    format!("Found {path_token}, expected one of:\n\t{VALID_KEYS}"),
                 )
             })?
             .to_string();
@@ -90,7 +90,7 @@ impl ItemAttrBuilder {
 
         Err(syn::Error::new(
             path.span(),
-            format!("unknown argument, expected one of:\n\t{}", VALID_KEYS),
+            format!("unknown argument, expected one of:\n\t{VALID_KEYS}"),
         ))
     }
 }

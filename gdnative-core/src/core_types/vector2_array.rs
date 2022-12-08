@@ -57,6 +57,6 @@ godot_test!(
             Vector2::new(5.0, 6.0),
         ]);
 
-        assert_eq!(format!("{:?}", arr), format!("{:?}", &[Vector2::new(1.0, 2.0), Vector2::new(3.0, 4.0), Vector2::new(5.0, 6.0)]));
+        assert_eq!(format!("{arr:?}"), format!("{:?}", &[Vector2::new(1.0, 2.0), Vector2::new(3.0, 4.0), Vector2::new(5.0, 6.0)]));
     }
 );

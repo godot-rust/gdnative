@@ -578,23 +578,21 @@ godot_test!(test_dictionary {
         assert_eq!(Some(value), dict.get(&key));
         assert!(
             iter_keys.insert(key.to_string()) ,
-            "key is already contained in set: {:?}",
-            key
+            "key is already contained in set: {key:?}"
         );
     }
     assert_eq!(expected_keys, iter_keys);
 });
 
-// TODO: clear dictionaries without affecting clones
-//godot_test!(test_dictionary_clone_clear {
-//    let foo = Variant::from_str("foo");
-//    let bar = Variant::from_str("bar");
-//    let mut dict = Dictionary::new();
-//
-//    dict.set(&foo, &bar);
-//    let dict_clone = dict.clone();
-//    dict.clear();
-//
-//    assert!(dict.is_empty());
-//    assert!(!dict_clone.is_empty());
-//});
+godot_test!(test_dictionary_clone_clear {
+    let foo = Variant::new("foo");
+    let bar = Variant::new("bar");
+    let dict = Dictionary::new();
+
+    dict.insert(&foo, &bar);
+    let dict_clone = dict.duplicate();
+    dict.clear();
+
+    assert!(dict.is_empty());
+    assert!(!dict_clone.is_empty());
+});

@@ -77,7 +77,7 @@ where
 
         write!(s, "{},{}", self.min, self.max).unwrap();
         if let Some(step) = &self.step {
-            write!(s, ",{}", step).unwrap();
+            write!(s, ",{step}").unwrap();
         }
 
         if self.or_greater {
@@ -132,11 +132,11 @@ impl EnumHint {
         let mut iter = self.values.iter();
 
         if let Some(first) = iter.next() {
-            write!(s, "{}", first).unwrap();
+            write!(s, "{first}").unwrap();
         }
 
         for rest in iter {
-            write!(s, ",{}", rest).unwrap();
+            write!(s, ",{rest}").unwrap();
         }
 
         s.into()

@@ -96,9 +96,6 @@ pub(crate) fn generate_class_constants(class: &GodotClass) -> TokenStream {
 }
 
 pub(crate) fn generate_enums(class: &GodotClass) -> TokenStream {
-    // TODO: check whether the start of the variant name is equal to the end of the enum name and if so, don't repeat it.
-    // For example ImageFormat::Rgb8 instead of ImageFormat::FormatRgb8.
-
     let mut enums: Vec<&Enum> = class.enums.iter().collect();
     enums.sort();
     let enums = enums.iter().map(|e| {

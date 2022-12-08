@@ -73,8 +73,7 @@ fn generate_error_with_docs(span: proc_macro2::Span, message: &str) -> syn::Erro
     syn::Error::new(
         span,
         format!(
-            "{}\n\texpecting #[variant(...)]. See documentation:\n\thttps://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes",
-            message
+            "{message}\n\texpecting #[variant(...)]. See documentation:\n\thttps://docs.rs/gdnative/0.9.0/gdnative/core_types/trait.ToVariant.html#field-attributes"
         ),
     )
 }

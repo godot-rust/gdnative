@@ -43,6 +43,6 @@ godot_test!(
 godot_test!(
     test_float32_array_debug {
         let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
-        assert_eq!(format!("{:?}", arr), "[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]");
+        assert_eq!(format!("{arr:?}"), "[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]");
     }
 );

@@ -67,20 +67,10 @@ impl GodotXmlDocs {
                         if let Some(property_name) = node.attribute("name") {
                             if !property_name.contains('/') {
                                 if node.has_attribute("setter") {
-                                    self.add_fn(
-                                        class,
-                                        &format!("set_{}", property_name),
-                                        desc,
-                                        &[],
-                                    );
+                                    self.add_fn(class, &format!("set_{property_name}"), desc, &[]);
                                 }
                                 if node.has_attribute("getter") {
-                                    self.add_fn(
-                                        class,
-                                        &format!("get_{}", property_name),
-                                        desc,
-                                        &[],
-                                    );
+                                    self.add_fn(class, &format!("get_{property_name}"), desc, &[]);
                                 }
                             }
                         }
@@ -187,10 +177,7 @@ impl GodotXmlDocs {
 
         // Info for GDScript blocks
         let godot_doc = if godot_doc.contains("[codeblock]") {
-            format!(
-                "_Sample code is GDScript unless otherwise noted._\n\n{}",
-                godot_doc
-            )
+            format!("_Sample code is GDScript unless otherwise noted._\n\n{godot_doc}")
         } else {
             godot_doc
         };
@@ -213,9 +200,9 @@ impl GodotXmlDocs {
             let text = &c[2];
 
             if text.is_empty() {
-                format!("<{url}>", url = url)
+                format!("<{url}>")
             } else {
-                format!("[{text}]({url})", text = text, url = url)
+                format!("[{text}]({url})")
             }
         });
 
@@ -247,11 +234,7 @@ impl GodotXmlDocs {
             let godot_ty = &c[2];
             let rust_ty = Self::translate_type(godot_ty);
 
-            format!(
-                "[`{godot_ty}`][{rust_ty}]",
-                godot_ty = godot_ty,
-                rust_ty = rust_ty
-            )
+            format!("[`{godot_ty}`][{rust_ty}]")
         });
 
         godot_doc.to_string()

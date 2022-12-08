@@ -114,7 +114,7 @@ where
         let default = self.default.to_variant();
 
         let mut attr = sys::godot_property_attributes {
-            rset_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED, // TODO:
+            rset_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED, // TODO(#995)
             type_: variant_type as sys::godot_int,
             hint: hint_kind,
             hint_string: hint_string.to_sys(),

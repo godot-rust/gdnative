@@ -47,7 +47,7 @@ impl<'a> Extend<&'a syn::NestedMeta> for ProfiledAttrArgsBuilder {
                     if let Some(old) = self.tag.replace(string) {
                         self.errors.push(syn::Error::new(
                             pair.lit.span(),
-                            format!("there is already a tag set: {:?}", old),
+                            format!("there is already a tag set: {old:?}"),
                         ));
                     }
                 }

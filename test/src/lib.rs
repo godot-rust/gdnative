@@ -1,4 +1,4 @@
-#![allow(clippy::blacklisted_name)]
+#![allow(clippy::disallowed_names)]
 #![allow(deprecated)]
 
 use gdnative::prelude::*;
@@ -30,11 +30,11 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_string_name_ord();
 
     status &= gdnative::core_types::test_dictionary();
-    // status &= gdnative::test_dictionary_clone_clear();
+    status &= gdnative::core_types::test_dictionary_clone_clear();
     status &= gdnative::core_types::test_color();
     status &= gdnative::core_types::test_array();
     status &= gdnative::core_types::test_array_debug();
-    // status &= gdnative::test_array_clone_clear();
+    status &= gdnative::core_types::test_array_clone_clear();
 
     status &= gdnative::core_types::test_variant_nil();
     status &= gdnative::core_types::test_variant_i64();
@@ -139,7 +139,7 @@ impl Foo {
         match what.as_str() {
             "int" => a.to_variant(),
             "float" => b.to_variant(),
-            _ => panic!("should be int or float, got {:?}", what),
+            _ => panic!("should be int or float, got {what:?}"),
         }
     }
 }
