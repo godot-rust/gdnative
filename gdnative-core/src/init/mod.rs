@@ -40,8 +40,38 @@ mod info;
 mod init_handle;
 mod macros;
 
+pub mod diagnostics;
+
 pub use info::*;
 pub use init_handle::*;
+
+bitflags::bitflags! {
+    /// Initialization level used to distinguish the source of init actions, such as class registration.
+    /// Internal API.
+    #[doc(hidden)]
+    pub struct InitLevel: u8 {
+        /// Init level for automatic registration
+        const AUTO = 1;
+        /// Init level for user code
+        const USER = 2;
+    }
+}
+
+#[doc(hidden)]
+#[cfg(feature = "inventory")]
+#[inline]
+pub fn auto_register(init_handle: InitHandle) {
+    for plugin in inventory::iter::<crate::private::AutoInitPlugin> {
+        (plugin.f)(init_handle);
+    }
+}
+
+#[doc(hidden)]
+#[cfg(not(feature = "inventory"))]
+#[inline]
+pub fn auto_register(_init_handle: InitHandle) {
+    // Nothing to do here.
+}
 
 pub use crate::{
     godot_gdnative_init, godot_gdnative_terminate, godot_init, godot_nativescript_init,

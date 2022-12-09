@@ -7,10 +7,14 @@ pub(crate) fn run_tests() -> bool {
     true
 }
 
+#[cfg(not(feature = "inventory"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<IntOps>();
     handle.add_class::<StrOps>();
 }
+
+#[cfg(feature = "inventory")]
+pub(crate) fn register(_handle: InitHandle) {}
 
 #[derive(NativeClass)]
 struct GenericOps<T> {

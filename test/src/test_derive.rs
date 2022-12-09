@@ -26,6 +26,7 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
+#[cfg(not(feature = "inventory"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<MinimalDerive>();
     handle.add_class::<EmplacementOnly>();
@@ -38,6 +39,9 @@ pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<CustomGetSet>();
     handle.add_class::<MyVec>();
 }
+
+#[cfg(feature = "inventory")]
+pub(crate) fn register(_handle: InitHandle) {}
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 

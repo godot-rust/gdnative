@@ -8,22 +8,24 @@ use std::borrow::Cow;
 use std::ffi::CString;
 use std::ptr;
 
+use super::InitLevel;
+
 /// A handle that can register new classes to the engine during initialization.
 ///
 /// See [`godot_nativescript_init`](macro.godot_nativescript_init.html) and
 /// [`godot_init`](macro.godot_init.html).
 #[derive(Copy, Clone)]
 pub struct InitHandle {
-    #[doc(hidden)]
     handle: *mut libc::c_void,
+    init_level: InitLevel,
 }
 
 #[allow(deprecated)] // Remove once init(), register_properties() and register() have been renamed
 impl InitHandle {
     #[doc(hidden)]
     #[inline]
-    pub unsafe fn new(handle: *mut libc::c_void) -> Self {
-        InitHandle { handle }
+    pub unsafe fn new(handle: *mut libc::c_void, init_level: InitLevel) -> Self {
+        InitHandle { handle, init_level }
     }
 
     /// Registers a new class to the engine.
@@ -75,13 +77,14 @@ impl InitHandle {
     {
         let c_class_name = CString::new(&*name).unwrap();
 
-        if let Some(class_info) = class_registry::register_class_as::<C>(name) {
-            panic!(
-                "`{type_name}` has already been registered as `{old_name}`",
-                type_name = std::any::type_name::<C>(),
-                old_name = class_info.name,
-            );
-        }
+        match class_registry::register_class_as::<C>(name, self.init_level) {
+            Ok(true) => {}
+            Ok(false) => return,
+            Err(e) => {
+                godot_error!("gdnative-core: ignoring new registration: {e}");
+                return;
+            }
+        };
 
         unsafe {
             let base_name = CString::new(C::Base::class_name()).unwrap();

@@ -107,7 +107,8 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
     }
 }
 
-/// Makes it possible to use a type as a NativeScript.
+/// Makes it possible to use a type as a NativeScript. Automatically registers the type
+/// if the `inventory` feature is enabled on supported platforms.
 ///
 /// ## Type attributes
 ///
@@ -459,7 +460,8 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
 /// represented as a type alias, so it can be registered.
 ///
 /// The monomorphized type will be available to Godot under the name of the type alias,
-/// once registered.
+/// once registered.  Automatically registers the type if the `inventory` feature is enabled on
+/// supported platforms.
 ///
 /// For more context, please refer to [gdnative::derive::NativeClass](NativeClass).
 ///

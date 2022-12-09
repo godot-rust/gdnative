@@ -4,9 +4,13 @@ use gdnative::prelude::*;
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 
+#[cfg(not(feature = "inventory"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<MyNode>();
 }
+
+#[cfg(feature = "inventory")]
+pub(crate) fn register(_handle: InitHandle) {}
 
 pub(crate) fn run_tests() -> bool {
     let mut ok = true;
