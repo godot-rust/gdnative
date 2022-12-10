@@ -34,7 +34,19 @@ impl InitHandle {
     where
         C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Borrowed(C::CLASS_NAME), false)
+        self.add_class_with::<C>(|_| {})
+    }
+
+    /// Registers a new class to the engine.
+    #[inline]
+    pub fn add_class_with<C>(self, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods + StaticallyNamed,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Borrowed(C::CLASS_NAME), false, |builder| {
+            C::nativeclass_register_monomorphized(builder);
+            f(builder);
+        })
     }
 
     /// Registers a new tool class to the engine.
@@ -43,7 +55,19 @@ impl InitHandle {
     where
         C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Borrowed(C::CLASS_NAME), true)
+        self.add_tool_class_with::<C>(|_| {})
+    }
+
+    /// Registers a new tool class to the engine.
+    #[inline]
+    pub fn add_tool_class_with<C>(self, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods + StaticallyNamed,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Borrowed(C::CLASS_NAME), true, |builder| {
+            C::nativeclass_register_monomorphized(builder);
+            f(builder);
+        })
     }
 
     /// Registers a new class to the engine
@@ -55,7 +79,19 @@ impl InitHandle {
     where
         C: NativeClassMethods,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Owned(name), false)
+        self.add_class_as_with::<C>(name, |_| {})
+    }
+
+    /// Registers a new class to the engine
+    ///
+    /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
+    /// name provided at registration.
+    #[inline]
+    pub fn add_class_as_with<C>(self, name: String, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Owned(name), false, f)
     }
 
     /// Registers a new tool class to the engine
@@ -67,12 +103,28 @@ impl InitHandle {
     where
         C: NativeClassMethods,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Owned(name), true)
+        self.add_tool_class_as_with::<C>(name, |_| {})
+    }
+
+    /// Registers a new tool class to the engine
+    ///
+    /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
+    /// name provided at registration.
+    #[inline]
+    pub fn add_tool_class_as_with<C>(self, name: String, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Owned(name), true, f)
     }
 
     #[inline]
-    fn add_maybe_tool_class_as<C>(self, name: Cow<'static, str>, is_tool: bool)
-    where
+    fn add_maybe_tool_class_as_with<C>(
+        self,
+        name: Cow<'static, str>,
+        is_tool: bool,
+        f: impl FnOnce(&ClassBuilder<C>),
+    ) where
         C: NativeClassMethods,
     {
         let c_class_name = CString::new(&*name).unwrap();
@@ -202,6 +254,8 @@ impl InitHandle {
 
             // register methods
             C::nativeclass_register(&builder);
+
+            f(&builder);
         }
     }
 }

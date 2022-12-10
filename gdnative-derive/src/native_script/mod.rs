@@ -353,7 +353,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
 
 pub(crate) fn derive_monomorphize(
     args: AttributeArgs,
-    item_type: ItemType,
+    mut item_type: ItemType,
 ) -> Result<TokenStream2, syn::Error> {
     if let Some(arg) = args.first() {
         return Err(syn::Error::new(
@@ -367,12 +367,32 @@ pub(crate) fn derive_monomorphize(
     let name = &item_type.ident;
     let name_str = name.to_string();
 
+    let register_callback = item_type
+        .attrs
+        .iter()
+        .find(|a| a.path.is_ident("register_with"))
+        .map(|attr| attr.parse_args::<Path>())
+        .transpose()?
+        .map(|path| {
+            quote! {
+                #path(__builder);
+            }
+        });
+
+    item_type
+        .attrs
+        .retain(|attr| !attr.path.is_ident("register_with"));
+
     Ok(quote! {
         #item_type
 
         #derived
         impl #gdnative_core::export::StaticallyNamed for #name {
             const CLASS_NAME: &'static str = #name_str;
+
+            fn nativeclass_register_monomorphized(__builder: &#gdnative_core::export::ClassBuilder<#name>) {
+                #register_callback
+            }
         }
 
         #derived

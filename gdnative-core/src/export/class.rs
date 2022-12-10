@@ -99,6 +99,9 @@ pub trait NativeClass: Sized + 'static {
 
 /// A NativeScript "class" that is statically named. [`NativeClass`] types that implement this
 /// trait can be registered using  [`InitHandle::add_class`].
+///
+/// This trait will be renamed to [`Monomorphized`] in a future version since its purpose has
+/// grown beyond simply providing a static type name.
 pub trait StaticallyNamed: NativeClass {
     /// The name of the class.
     ///
@@ -106,6 +109,10 @@ pub trait StaticallyNamed: NativeClass {
     /// is hard to satisfy, consider using [`InitHandle::add_class_as`] to provide a name
     /// at registration time instead.
     const CLASS_NAME: &'static str;
+
+    /// Function that registers methods specific to this monomorphization.
+    #[inline]
+    fn nativeclass_register_monomorphized(_builder: &ClassBuilder<Self>) {}
 }
 
 /// Trait used to provide information of Godot-exposed methods of a script class.
