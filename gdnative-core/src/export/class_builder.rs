@@ -1,3 +1,6 @@
+use std::any::TypeId;
+use std::cell::RefCell;
+use std::collections::HashSet;
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::ptr;
@@ -20,6 +23,7 @@ use crate::private::get_api;
 pub struct ClassBuilder<C> {
     pub(super) init_handle: *mut libc::c_void,
     pub(super) class_name: CString,
+    mixins: RefCell<HashSet<TypeId, ahash::RandomState>>,
     _marker: PhantomData<C>,
 }
 
@@ -28,6 +32,7 @@ impl<C: NativeClass> ClassBuilder<C> {
         Self {
             init_handle,
             class_name,
+            mixins: RefCell::default(),
             _marker: PhantomData,
         }
     }
@@ -241,4 +246,48 @@ impl<C: NativeClass> ClassBuilder<C> {
             );
         }
     }
+
+    /// Add a mixin to the class being registered.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gdnative::prelude::*;
+    ///
+    /// #[derive(NativeClass)]
+    /// #[inherit(Node)]
+    /// #[register_with(my_register)]
+    /// #[no_constructor]
+    /// struct MyType {}
+    ///
+    /// // This creates a opaque type `MyMixin` in the current scope that implements
+    /// // the `Mixin` trait. Mixin types have no public interface or stable layout.
+    /// #[methods(mixin = "MyMixin")]
+    /// impl MyType {
+    ///     #[method]
+    ///     fn my_method(&self) -> i64 { 42 }
+    /// }
+    ///
+    /// fn my_register(builder: &ClassBuilder<MyType>) {
+    ///     builder.mixin::<MyMixin>();
+    /// }
+    /// ```
+    #[inline]
+    pub fn mixin<M: Mixin<C>>(&self) {
+        if self.mixins.borrow_mut().insert(TypeId::of::<M>()) {
+            M::register(self);
+        }
+    }
+}
+
+/// Trait for mixins, manually registered `#[methods]` blocks that may be applied to multiple types.
+///
+/// This trait is implemented on generated types by the `#[methods]` proc-macro only, and has no public interface.
+/// Use [`ClassBuilder::mixin`] to register mixins to [`NativeClass`] types.    
+pub trait Mixin<C>: crate::private::mixin::Sealed + 'static
+where
+    C: NativeClass,
+{
+    #[doc(hidden)]
+    fn register(builder: &ClassBuilder<C>);
 }

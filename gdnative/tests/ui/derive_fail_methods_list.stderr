@@ -1,5 +1,5 @@
-error: #[methods] does not take parameters.
- --> $DIR/derive_fail_methods_list.rs:7:11
+error: unexpected argument: Some(Ident { ident: "foo", span: #0 bytes(92..95) })
+ --> tests/ui/derive_fail_methods_list.rs:7:11
   |
 7 | #[methods(foo, bar)]
-  |           ^^^^^^^^
+  |           ^^^

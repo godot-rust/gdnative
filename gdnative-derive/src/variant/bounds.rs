@@ -2,7 +2,7 @@ use syn::punctuated::Punctuated;
 use syn::visit::Visit;
 use syn::{GenericParam, Generics};
 
-use crate::extend_bounds::{with_visitor, BoundsVisitor};
+use crate::utils::extend_bounds::{with_visitor, BoundsVisitor};
 use crate::variant::repr::StructRepr;
 
 use super::repr::{EnumRepr, Field, Repr, VariantRepr};

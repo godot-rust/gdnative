@@ -202,29 +202,40 @@ pub(crate) fn print_panic_error(err: Box<dyn std::any::Any + Send>) {
     }
 }
 
-/// Plugin type to be used by macros for auto registration.
+/// Plugin type to be used by macros for auto class registration.
 pub struct AutoInitPlugin {
     pub f: fn(init_handle: crate::init::InitHandle),
 }
 
 #[cfg(feature = "inventory")]
-pub use inventory::submit as inventory_submit;
+pub mod inventory {
+    pub use inventory::{collect, submit};
 
-#[cfg(feature = "inventory")]
-inventory::collect!(AutoInitPlugin);
-
-#[cfg(not(feature = "inventory"))]
-pub use crate::_gdnative_inventory_submit as inventory_submit;
+    inventory::collect!(super::AutoInitPlugin);
+}
 
 #[cfg(not(feature = "inventory"))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! _gdnative_inventory_submit {
-    ($($tt:tt)*) => {};
+pub mod inventory {
+    pub use crate::_inventory_discard as submit;
+    pub use crate::_inventory_discard as collect;
+
+    #[macro_export]
+    #[doc(hidden)]
+    macro_rules! _inventory_discard {
+        ($($tt:tt)*) => {};
+    }
 }
 
 pub mod godot_object {
     pub trait Sealed {}
+}
+
+pub mod mixin {
+    pub trait Sealed {}
+
+    pub struct Opaque {
+        _private: (),
+    }
 }
 
 pub(crate) struct ManuallyManagedClassPlaceholder;

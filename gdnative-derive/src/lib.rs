@@ -8,12 +8,12 @@ extern crate quote;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
+use syn::{parse::Parser, AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
 
-mod extend_bounds;
 mod methods;
 mod native_script;
 mod profiled;
+mod utils;
 mod varargs;
 mod variant;
 
@@ -44,13 +44,13 @@ mod variant;
 /// ```
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    if syn::parse::<syn::parse::Nothing>(meta.clone()).is_err() {
-        let err = syn::Error::new_spanned(
-            TokenStream2::from(meta),
-            "#[methods] does not take parameters.",
-        );
-        return error_with_input(input, err);
-    }
+    let args =
+        match syn::punctuated::Punctuated::<syn::NestedMeta, syn::Token![,]>::parse_terminated
+            .parse(meta)
+        {
+            Ok(args) => args.into_iter().collect::<Vec<_>>(),
+            Err(err) => return error_with_input(input, err),
+        };
 
     let impl_block = match syn::parse::<ItemImpl>(input.clone()) {
         Ok(impl_block) => impl_block,
@@ -63,7 +63,10 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
         err
     }
 
-    TokenStream::from(methods::derive_methods(impl_block))
+    match methods::derive_methods(args, impl_block) {
+        Ok(ts) => ts.into(),
+        Err(err) => error_with_input(input, err),
+    }
 }
 
 /// Makes a function profiled in Godot's built-in profiler. This macro automatically
@@ -593,7 +596,16 @@ fn crate_gdnative_core() -> proc_macro2::TokenStream {
         .expect("crate not found");
 
     match found_crate {
-        proc_macro_crate::FoundCrate::Itself => quote!(crate),
+        proc_macro_crate::FoundCrate::Itself => {
+            // Workaround: `proc-macro-crate` returns `Itself` in doc-tests, and refuses to use unstable env
+            // variables for detection.
+            // See https://github.com/bkchr/proc-macro-crate/issues/11
+            if std::env::var_os("UNSTABLE_RUSTDOC_TEST_PATH").is_some() {
+                quote!(gdnative_core)
+            } else {
+                quote!(crate)
+            }
+        }
         proc_macro_crate::FoundCrate::Name(name) => {
             let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
             ident.to_token_stream()
@@ -621,6 +633,29 @@ fn crate_gdnative_async() -> proc_macro2::TokenStream {
         proc_macro_crate::FoundCrate::Name(name) => {
             let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
             quote!( #ident::tasks )
+        }
+    }
+}
+
+/// Returns the (possibly renamed or imported as `gdnative`) identifier of the `gdnative_bindings` crate.
+fn crate_gdnative_bindings() -> proc_macro2::TokenStream {
+    if let Ok(found_crate) = proc_macro_crate::crate_name("gdnative-bindings") {
+        return match found_crate {
+            proc_macro_crate::FoundCrate::Itself => quote!(crate),
+            proc_macro_crate::FoundCrate::Name(name) => {
+                let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
+                ident.to_token_stream()
+            }
+        };
+    }
+
+    let found_crate = proc_macro_crate::crate_name("gdnative").expect("crate not found");
+
+    match found_crate {
+        proc_macro_crate::FoundCrate::Itself => quote!(crate::api),
+        proc_macro_crate::FoundCrate::Name(name) => {
+            let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
+            quote!( #ident::api )
         }
     }
 }
