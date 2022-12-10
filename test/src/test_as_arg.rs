@@ -4,12 +4,12 @@ use gdnative::prelude::*;
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 
-#[cfg(not(feature = "inventory"))]
+#[cfg(not(feature = "no-manual-register"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<MyNode>();
 }
 
-#[cfg(feature = "inventory")]
+#[cfg(feature = "no-manual-register")]
 pub(crate) fn register(_handle: InitHandle) {}
 
 pub(crate) fn run_tests() -> bool {

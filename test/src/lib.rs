@@ -236,14 +236,14 @@ godot_itest! { test_from_instance_id {
     assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
 }}
 
-#[cfg(not(feature = "inventory"))]
+#[cfg(not(feature = "no-manual-register"))]
 fn init(handle: InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
     delegate_init(handle);
 }
 
-#[cfg(feature = "inventory")]
+#[cfg(feature = "no-manual-register")]
 fn init(handle: InitHandle) {
     delegate_init(handle);
 }

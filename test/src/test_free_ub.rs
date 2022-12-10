@@ -10,12 +10,12 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
-#[cfg(not(feature = "inventory"))]
+#[cfg(not(feature = "no-manual-register"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<Bar>();
 }
 
-#[cfg(feature = "inventory")]
+#[cfg(feature = "no-manual-register")]
 pub(crate) fn register(_handle: InitHandle) {}
 
 #[derive(NativeClass)]
