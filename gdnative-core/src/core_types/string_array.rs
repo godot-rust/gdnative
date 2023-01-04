@@ -23,7 +23,7 @@ godot_test!(
                 GodotString::from("bar"),
                 GodotString::from("baz"),
             ], read.as_slice());
-            read.clone()
+            read
         };
 
         let mut cow_arr = arr.new_ref();

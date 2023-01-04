@@ -1,4 +1,9 @@
 //! Property registration.
+
+// For the `PropertyUsage` bitflags declaration. The attribute doesn't work above the macro
+// invocation.
+#![allow(clippy::unnecessary_cast)]
+
 use std::marker::PhantomData;
 
 use accessor::{Getter, RawGetter, RawSetter, Setter};

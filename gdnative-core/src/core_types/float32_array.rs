@@ -16,7 +16,7 @@ godot_test!(
             for (n, i) in read.as_slice().iter().enumerate() {
                 assert_relative_eq!(n as f32, i);
             }
-            read.clone()
+            read
         };
 
         let mut cow_arr = arr.new_ref();
@@ -30,7 +30,7 @@ godot_test!(
         }
 
         for i in 0..8 {
-            assert_relative_eq!(i as f32 * 2., cow_arr.get(i as i32));
+            assert_relative_eq!(i as f32 * 2., cow_arr.get(i));
         }
 
         // the write shouldn't have affected the original array
