@@ -6,7 +6,7 @@ use syn::visit::Visit;
 use syn::Fields;
 use syn::{spanned::Spanned, Data, DeriveInput, Ident};
 
-use crate::extend_bounds::with_visitor;
+use crate::utils::extend_bounds::with_visitor;
 
 pub(crate) fn derive_from_varargs(input: DeriveInput) -> Result<TokenStream2, syn::Error> {
     let derived = crate::automatically_derived();

@@ -74,7 +74,6 @@ mod header_binding {
             // New NDK
             let available_ndk_versions: Vec<_> = std::fs::read_dir(android_ndk_folder.clone())
                 .unwrap()
-                .into_iter()
                 .map(|dir| dir.unwrap().path())
                 .collect();
 

@@ -8,22 +8,52 @@ extern crate quote;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
+use syn::{parse::Parser, AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
 
-mod extend_bounds;
 mod methods;
 mod native_script;
 mod profiled;
+mod utils;
 mod varargs;
 mod variant;
 
-/// Collects method signatures of all functions in a `NativeClass` that have the `#[method]` attribute and registers them with Godot.
+/// Collects method signatures of all functions in a `NativeClass` that have the `#[method]`
+/// attribute and registers them with Godot.
 ///
-/// **Important**: Only one `impl` block per struct may be attributed with `#[methods]`.
+/// The `#[methods]` attribute can be used with both `impl Type` and `impl Trait for Type`
+/// blocks. The semantics change depending on whether a mix-in name is provided for the block.
 ///
-/// For more context, please refer to [gdnative::derive::NativeClass](NativeClass).
+/// ## Universal `impl` blocks: `#[methods]`
+///
+/// An `impl` block that doesn't have a `mixin` parameter is universal. Universal `#[methods]`
+/// blocks **must not overlap**. Usually, this means that **only one** `impl` block per struct
+/// may be universal.
+///
+/// When applied to a generic `impl`, the `impl` block must apply to **all** monomorphizations
+/// of the type, i.e. be *universal*.
+///
+/// One applicable universal block must be present for each type one wishes to use as a
+/// `NativeClass`. Universal blocks are always registered automatically.
+///
+/// ## Mix-ins: `#[methods(mixin = "Name")]`
+///
+/// When given a name with the `mixin` argument, a block behaves instead as a mix-in block.
+/// `#[method(mixin = "Name")]` creates an opaque type called `Name` under the current scope,
+/// that can be manually registered to any type the `impl` block covers. This can be done in
+/// a `register_with` callback with `builder.mixin::<MyMixin>()`.
+///
+/// Unlike universal blocks, mix-in blocks have a **many-to-many** relationship with the types
+/// they are registered to. Any number of mix-ins can be applied to any number of compatible
+/// types. This can be useful for reusing generics `impl`s, or organizing code for big interfaces.
+///
+/// Additionally, the attribute accepts the following arguments:
+///
+/// - `#[methods(pub)]`<br>
+/// Mix-in types are private by default. The `pub` argument makes them public instead.
 ///
 /// ## Example
+///
+/// ### Universal
 ///
 /// ```
 /// use gdnative::prelude::*;
@@ -42,15 +72,39 @@ mod variant;
 /// }
 ///
 /// ```
+///
+/// ### Mix-in
+///
+/// ```
+/// use gdnative::prelude::*;
+///
+/// #[derive(NativeClass)]
+/// #[inherit(Reference)]
+/// #[register_with(register_foo)]
+/// #[no_constructor]
+/// struct Foo {}
+///
+/// fn register_foo(builder: &ClassBuilder<Foo>) {
+///     builder.mixin::<FooMixin>();
+/// }
+///
+/// #[methods(mixin = "FooMixin")]
+/// impl Foo {
+///     #[method]
+///     fn foo(&self, #[base] _base: &Reference, bar: i64) -> i64 {
+///         bar
+///     }
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-    if syn::parse::<syn::parse::Nothing>(meta.clone()).is_err() {
-        let err = syn::Error::new_spanned(
-            TokenStream2::from(meta),
-            "#[methods] does not take parameters.",
-        );
-        return error_with_input(input, err);
-    }
+    let args =
+        match syn::punctuated::Punctuated::<syn::NestedMeta, syn::Token![,]>::parse_terminated
+            .parse(meta)
+        {
+            Ok(args) => args.into_iter().collect::<Vec<_>>(),
+            Err(err) => return error_with_input(input, err),
+        };
 
     let impl_block = match syn::parse::<ItemImpl>(input.clone()) {
         Ok(impl_block) => impl_block,
@@ -63,7 +117,10 @@ pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
         err
     }
 
-    TokenStream::from(methods::derive_methods(impl_block))
+    match methods::derive_methods(args, impl_block) {
+        Ok(ts) => ts.into(),
+        Err(err) => error_with_input(input, err),
+    }
 }
 
 /// Makes a function profiled in Godot's built-in profiler. This macro automatically
@@ -107,7 +164,8 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
     }
 }
 
-/// Makes it possible to use a type as a NativeScript.
+/// Makes it possible to use a type as a NativeScript. Automatically registers the type
+/// if the `inventory` feature is enabled on supported platforms.
 ///
 /// ## Type attributes
 ///
@@ -213,7 +271,9 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// ### `#[methods]`
 /// Adds the necessary information to a an `impl` block to register the properties and methods with Godot.
 ///
-/// **Important**: This needs to be added to one and only one `impl` block for a given `NativeClass`.
+/// One and only one universal `impl` block must be available for each `NativeClass`
+/// monomorphization, along with any number of additional mix-ins. See [`methods`](attr.methods.html)
+/// for more information.
 ///
 /// ### `#[method]`
 /// Registers the attributed function signature to be used by Godot.
@@ -459,26 +519,21 @@ pub fn derive_native_class(input: TokenStream) -> TokenStream {
 /// represented as a type alias, so it can be registered.
 ///
 /// The monomorphized type will be available to Godot under the name of the type alias,
-/// once registered.
+/// once registered.  Automatically registers the type if the `inventory` feature is enabled on
+/// supported platforms.
 ///
 /// For more context, please refer to [gdnative::derive::NativeClass](NativeClass).
 ///
-/// # Examples
+/// ## Type attributes
 ///
-/// ```ignore
-/// #[derive(NativeClass)]
-/// struct Pair<T> {
-///     a: T,
-///     b: T,
-/// }
+/// The behavior of the attribute can be customized using additional attributes on the type
+/// alias. All type attributes are optional.
 ///
-/// #[gdnative::derive::monomorphize]
-/// type IntPair = Pair<i32>;
+/// ### `#[register_with(path::to::function)]`
 ///
-/// fn init(handle: InitHandle) {
-///     handle.add_class::<IntPair>();
-/// }
-/// ```
+/// Use a custom function to register signals, properties or methods, in addition
+/// to the one generated by a universal `#[methods]` block on the generic type.
+/// This can be used to register extra mix-ins that apply to the specific monomorphization.
 #[proc_macro_attribute]
 pub fn monomorphize(meta: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(meta as AttributeArgs);
@@ -591,7 +646,16 @@ fn crate_gdnative_core() -> proc_macro2::TokenStream {
         .expect("crate not found");
 
     match found_crate {
-        proc_macro_crate::FoundCrate::Itself => quote!(crate),
+        proc_macro_crate::FoundCrate::Itself => {
+            // Workaround: `proc-macro-crate` returns `Itself` in doc-tests, and refuses to use unstable env
+            // variables for detection.
+            // See https://github.com/bkchr/proc-macro-crate/issues/11
+            if std::env::var_os("UNSTABLE_RUSTDOC_TEST_PATH").is_some() {
+                quote!(gdnative_core)
+            } else {
+                quote!(crate)
+            }
+        }
         proc_macro_crate::FoundCrate::Name(name) => {
             let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
             ident.to_token_stream()
@@ -619,6 +683,29 @@ fn crate_gdnative_async() -> proc_macro2::TokenStream {
         proc_macro_crate::FoundCrate::Name(name) => {
             let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
             quote!( #ident::tasks )
+        }
+    }
+}
+
+/// Returns the (possibly renamed or imported as `gdnative`) identifier of the `gdnative_bindings` crate.
+fn crate_gdnative_bindings() -> proc_macro2::TokenStream {
+    if let Ok(found_crate) = proc_macro_crate::crate_name("gdnative-bindings") {
+        return match found_crate {
+            proc_macro_crate::FoundCrate::Itself => quote!(crate),
+            proc_macro_crate::FoundCrate::Name(name) => {
+                let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
+                ident.to_token_stream()
+            }
+        };
+    }
+
+    let found_crate = proc_macro_crate::crate_name("gdnative").expect("crate not found");
+
+    match found_crate {
+        proc_macro_crate::FoundCrate::Itself => quote!(crate::api),
+        proc_macro_crate::FoundCrate::Name(name) => {
+            let ident = proc_macro2::Ident::new(&name, proc_macro2::Span::call_site());
+            quote!( #ident::api )
         }
     }
 }

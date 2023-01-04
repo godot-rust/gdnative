@@ -8,22 +8,24 @@ use std::borrow::Cow;
 use std::ffi::CString;
 use std::ptr;
 
+use super::InitLevel;
+
 /// A handle that can register new classes to the engine during initialization.
 ///
 /// See [`godot_nativescript_init`](macro.godot_nativescript_init.html) and
 /// [`godot_init`](macro.godot_init.html).
 #[derive(Copy, Clone)]
 pub struct InitHandle {
-    #[doc(hidden)]
     handle: *mut libc::c_void,
+    init_level: InitLevel,
 }
 
 #[allow(deprecated)] // Remove once init(), register_properties() and register() have been renamed
 impl InitHandle {
     #[doc(hidden)]
     #[inline]
-    pub unsafe fn new(handle: *mut libc::c_void) -> Self {
-        InitHandle { handle }
+    pub unsafe fn new(handle: *mut libc::c_void, init_level: InitLevel) -> Self {
+        InitHandle { handle, init_level }
     }
 
     /// Registers a new class to the engine.
@@ -32,7 +34,19 @@ impl InitHandle {
     where
         C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Borrowed(C::CLASS_NAME), false)
+        self.add_class_with::<C>(|_| {})
+    }
+
+    /// Registers a new class to the engine.
+    #[inline]
+    pub fn add_class_with<C>(self, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods + StaticallyNamed,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Borrowed(C::CLASS_NAME), false, |builder| {
+            C::nativeclass_register_monomorphized(builder);
+            f(builder);
+        })
     }
 
     /// Registers a new tool class to the engine.
@@ -41,7 +55,19 @@ impl InitHandle {
     where
         C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Borrowed(C::CLASS_NAME), true)
+        self.add_tool_class_with::<C>(|_| {})
+    }
+
+    /// Registers a new tool class to the engine.
+    #[inline]
+    pub fn add_tool_class_with<C>(self, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods + StaticallyNamed,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Borrowed(C::CLASS_NAME), true, |builder| {
+            C::nativeclass_register_monomorphized(builder);
+            f(builder);
+        })
     }
 
     /// Registers a new class to the engine
@@ -53,7 +79,19 @@ impl InitHandle {
     where
         C: NativeClassMethods,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Owned(name), false)
+        self.add_class_as_with::<C>(name, |_| {})
+    }
+
+    /// Registers a new class to the engine
+    ///
+    /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
+    /// name provided at registration.
+    #[inline]
+    pub fn add_class_as_with<C>(self, name: String, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Owned(name), false, f)
     }
 
     /// Registers a new tool class to the engine
@@ -65,23 +103,40 @@ impl InitHandle {
     where
         C: NativeClassMethods,
     {
-        self.add_maybe_tool_class_as::<C>(Cow::Owned(name), true)
+        self.add_tool_class_as_with::<C>(name, |_| {})
+    }
+
+    /// Registers a new tool class to the engine
+    ///
+    /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
+    /// name provided at registration.
+    #[inline]
+    pub fn add_tool_class_as_with<C>(self, name: String, f: impl FnOnce(&ClassBuilder<C>))
+    where
+        C: NativeClassMethods,
+    {
+        self.add_maybe_tool_class_as_with::<C>(Cow::Owned(name), true, f)
     }
 
     #[inline]
-    fn add_maybe_tool_class_as<C>(self, name: Cow<'static, str>, is_tool: bool)
-    where
+    fn add_maybe_tool_class_as_with<C>(
+        self,
+        name: Cow<'static, str>,
+        is_tool: bool,
+        f: impl FnOnce(&ClassBuilder<C>),
+    ) where
         C: NativeClassMethods,
     {
         let c_class_name = CString::new(&*name).unwrap();
 
-        if let Some(class_info) = class_registry::register_class_as::<C>(name) {
-            panic!(
-                "`{type_name}` has already been registered as `{old_name}`",
-                type_name = std::any::type_name::<C>(),
-                old_name = class_info.name,
-            );
-        }
+        match class_registry::register_class_as::<C>(name, self.init_level) {
+            Ok(true) => {}
+            Ok(false) => return,
+            Err(e) => {
+                godot_error!("gdnative-core: ignoring new registration: {e}");
+                return;
+            }
+        };
 
         unsafe {
             let base_name = CString::new(C::Base::class_name()).unwrap();
@@ -199,6 +254,8 @@ impl InitHandle {
 
             // register methods
             C::nativeclass_register(&builder);
+
+            f(&builder);
         }
     }
 }

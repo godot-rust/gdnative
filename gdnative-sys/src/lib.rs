@@ -35,6 +35,7 @@ fn map_option_to_init_error<T>(t: Option<T>, message: &'static str) -> Result<T,
     }
 }
 
+#[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
 unsafe fn find_version(
     mut api: *const godot_gdnative_api_struct,
     api_type: GDNATIVE_API_TYPES,

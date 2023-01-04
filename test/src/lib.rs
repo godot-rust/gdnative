@@ -144,6 +144,9 @@ impl Foo {
     }
 }
 
+#[methods]
+impl NotFoo {}
+
 godot_itest! { test_rust_class_construction {
     let foo = Foo::new_instance();
     assert_eq!(Ok(42), foo.map(|foo, base| { foo.answer(&base) }));
@@ -233,10 +236,19 @@ godot_itest! { test_from_instance_id {
     assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
 }}
 
+#[cfg(not(feature = "no-manual-register"))]
 fn init(handle: InitHandle) {
     handle.add_class::<Foo>();
     handle.add_class::<OptionalArgs>();
+    delegate_init(handle);
+}
 
+#[cfg(feature = "no-manual-register")]
+fn init(handle: InitHandle) {
+    delegate_init(handle);
+}
+
+fn delegate_init(handle: InitHandle) {
     test_as_arg::register(handle);
     test_async::register(handle);
     test_constructor::register(handle);

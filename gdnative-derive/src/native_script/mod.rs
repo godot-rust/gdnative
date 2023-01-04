@@ -10,7 +10,7 @@ use syn::{
 mod property_args;
 use property_args::{PropertyAttrArgs, PropertyAttrArgsBuilder, PropertyGet, PropertySet};
 
-use crate::extend_bounds;
+use crate::utils::extend_bounds;
 
 pub(crate) struct DeriveData {
     pub(crate) name: Ident,
@@ -24,6 +24,8 @@ pub(crate) struct DeriveData {
 
 pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2 {
     let derived = crate::automatically_derived();
+    let gdnative_core = crate::crate_gdnative_core();
+    let gdnative_bindings = crate::crate_gdnative_bindings();
     let name = &derive_input.ident;
 
     let generics = extend_bounds::with_visitor(
@@ -41,7 +43,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
         let name_str = name.to_string();
         Some(quote! {
             #derived
-            impl ::gdnative::export::StaticallyNamed for #name {
+            impl #gdnative_core::export::StaticallyNamed for #name {
                 const CLASS_NAME: &'static str = #name_str;
             }
         })
@@ -51,11 +53,11 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 
     quote! {
         #derived
-        impl #impl_generics ::gdnative::export::NativeClass for #name #ty_generics #where_clause {
-            type Base = ::gdnative::api::Object;
-            type UserData = ::gdnative::export::user_data::LocalCellData<Self>;
+        impl #impl_generics #gdnative_core::export::NativeClass for #name #ty_generics #where_clause {
+            type Base = #gdnative_bindings::Object;
+            type UserData = #gdnative_core::export::user_data::LocalCellData<Self>;
 
-            fn nativeclass_init(owner: ::gdnative::object::TRef<'_, Self::Base, Shared>) -> Self {
+            fn nativeclass_init(owner: #gdnative_core::object::TRef<'_, Self::Base, Shared>) -> Self {
                 unimplemented!()
             }
         }
@@ -66,6 +68,7 @@ pub(crate) fn impl_empty_nativeclass(derive_input: &DeriveInput) -> TokenStream2
 
 pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStream2, syn::Error> {
     let derived = crate::automatically_derived();
+    let gdnative_core = crate::crate_gdnative_core();
     let data = parse_derive_input(derive_input)?;
 
     let generics = extend_bounds::with_visitor(
@@ -96,7 +99,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     .default
                     .map(|default_value| quote!(.with_default(#default_value)));
                 let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
-                let with_usage = config.no_editor.then(|| quote!(.with_usage(::gdnative::export::PropertyUsage::NOEDITOR)));
+                let with_usage = config.no_editor.then(|| quote!(.with_usage(#gdnative_core::export::PropertyUsage::NOEDITOR)));
                 // check whether this property type is `Property<T>`. if so, extract T from it.
                 let property_ty = match config.ty {
                     Type::Path(ref path) => path
@@ -151,7 +154,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                         PropertyGet::Owned(path_expr) | PropertyGet::Ref(path_expr) => parse_quote!(#path_expr(this, _owner))
                     };
                     quote!(
-                        .#register_fn(|this: &Self, _owner: ::gdnative::object::TRef<Self::Base>| {
+                        .#register_fn(|this: &Self, _owner: #gdnative_core::object::TRef<Self::Base>| {
                             #get
                         })
                     )
@@ -162,7 +165,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                         PropertySet::WithPath(path_expr) => parse_quote!(#path_expr(this, _owner, v);),
                     };
                     quote!(
-                    .with_setter(|this: &mut Self, _owner: ::gdnative::object::TRef<Self::Base>, v| {
+                    .with_setter(|this: &mut Self, _owner: #gdnative_core::object::TRef<Self::Base>, v| {
                         #set
                     }))
                 });
@@ -183,9 +186,18 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
         let maybe_statically_named = data.godot_name.map(|name_str| {
             quote! {
                 #derived
-                impl ::gdnative::export::StaticallyNamed for #name {
+                impl #gdnative_core::export::StaticallyNamed for #name {
                     const CLASS_NAME: &'static str = #name_str;
                 }
+
+                #derived
+                #gdnative_core::private::inventory::submit!(
+                    #gdnative_core::private::AutoInitPlugin {
+                        f: |init_handle| {
+                            init_handle.add_class::<#name>();
+                        }
+                    }
+                );
             }
         });
 
@@ -193,21 +205,21 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
             None
         } else {
             Some(quote! {
-                fn nativeclass_init(owner: ::gdnative::object::TRef<Self::Base>) -> Self {
-                    Self::new(::gdnative::export::OwnerArg::from_safe_ref(owner))
+                fn nativeclass_init(owner: #gdnative_core::object::TRef<Self::Base>) -> Self {
+                    Self::new(#gdnative_core::export::OwnerArg::from_safe_ref(owner))
                 }
             })
         };
 
         quote!(
             #derived
-            impl #impl_generics ::gdnative::export::NativeClass for #name #ty_generics #where_clause {
+            impl #impl_generics #gdnative_core::export::NativeClass for #name #ty_generics #where_clause {
                 type Base = #base;
                 type UserData = #user_data;
 
                 #init
 
-                fn nativeclass_register_properties(builder: &::gdnative::export::ClassBuilder<Self>) {
+                fn nativeclass_register_properties(builder: &#gdnative_core::export::ClassBuilder<Self>) {
                     #(#properties)*;
                     #register_callback
                 }
@@ -223,6 +235,8 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
 
 fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
     let span = proc_macro2::Span::call_site();
+    let gdnative_core = crate::crate_gdnative_core();
+    let gdnative_bindings = crate::crate_gdnative_bindings();
 
     let ident = input.ident.clone();
 
@@ -232,7 +246,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
     let base = if let Some(attr) = inherit_attr {
         attr.parse_args::<Type>()?
     } else {
-        syn::parse2::<Type>(quote! { ::gdnative::api::Reference }).unwrap()
+        syn::parse2::<Type>(quote! { #gdnative_bindings::Reference }).unwrap()
     };
 
     let godot_name = if input.generics.params.is_empty() {
@@ -248,18 +262,17 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
         .map(|attr| attr.parse_args::<Path>())
         .transpose()?;
 
-    let user_data =
-        input
-            .attrs
-            .iter()
-            .find(|a| a.path.is_ident("user_data"))
-            .map(|attr| attr.parse_args::<Type>())
-            .unwrap_or_else(|| {
-                Ok(syn::parse2::<Type>(
-                    quote! { ::gdnative::export::user_data::DefaultUserData<Self> },
-                )
-                .expect("quoted tokens for default userdata should be a valid type"))
-            })?;
+    let user_data = input
+        .attrs
+        .iter()
+        .find(|a| a.path.is_ident("user_data"))
+        .map(|attr| attr.parse_args::<Type>())
+        .unwrap_or_else(|| {
+            Ok(syn::parse2::<Type>(
+                quote! { #gdnative_core::export::user_data::DefaultUserData<Self> },
+            )
+            .expect("quoted tokens for default userdata should be a valid type"))
+        })?;
 
     let no_constructor = input
         .attrs
@@ -340,7 +353,7 @@ fn parse_derive_input(input: &DeriveInput) -> Result<DeriveData, syn::Error> {
 
 pub(crate) fn derive_monomorphize(
     args: AttributeArgs,
-    item_type: ItemType,
+    mut item_type: ItemType,
 ) -> Result<TokenStream2, syn::Error> {
     if let Some(arg) = args.first() {
         return Err(syn::Error::new(
@@ -350,16 +363,46 @@ pub(crate) fn derive_monomorphize(
     }
 
     let derived = crate::automatically_derived();
+    let gdnative_core = crate::crate_gdnative_core();
     let name = &item_type.ident;
     let name_str = name.to_string();
+
+    let register_callback = item_type
+        .attrs
+        .iter()
+        .find(|a| a.path.is_ident("register_with"))
+        .map(|attr| attr.parse_args::<Path>())
+        .transpose()?
+        .map(|path| {
+            quote! {
+                #path(__builder);
+            }
+        });
+
+    item_type
+        .attrs
+        .retain(|attr| !attr.path.is_ident("register_with"));
 
     Ok(quote! {
         #item_type
 
         #derived
-        impl ::gdnative::export::StaticallyNamed for #name {
+        impl #gdnative_core::export::StaticallyNamed for #name {
             const CLASS_NAME: &'static str = #name_str;
+
+            fn nativeclass_register_monomorphized(__builder: &#gdnative_core::export::ClassBuilder<#name>) {
+                #register_callback
+            }
         }
+
+        #derived
+        #gdnative_core::private::inventory::submit!(
+            #gdnative_core::private::AutoInitPlugin {
+                f: |init_handle| {
+                    init_handle.add_class::<#name>();
+                }
+            }
+        );
     })
 }
 

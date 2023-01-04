@@ -14,7 +14,7 @@ godot_test!(
         let original_read = {
             let read = arr.read();
             assert_eq!(&[0, 1, 2, 3, 4, 5, 6, 7], read.as_slice());
-            read.clone()
+            read
         };
 
         let mut cow_arr = arr.new_ref();

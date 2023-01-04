@@ -51,6 +51,16 @@
 //! * **`serde`**<br>
 //!   Enable for `serde` support of several core types. See also [`Variant`](core_types::Variant).
 //!
+//! * **`inventory`**<br>
+//!   Enables automatic class registration via `inventory`.
+//!
+//!   **Attention:** Automatic registration is unsupported on some platforms, notably WASM. `inventory`
+//!   can still be used for iterative development if such platforms are targeted, in which case the
+//!   run-time diagnostic [`init::diagnostics::missing_manual_registration`] may be helpful.
+//!
+//!   Please refer to [the `rust-ctor` README][ctor-repo] for an up-to-date listing of platforms
+//!   that *do* support automatic registration.
+//!
 //! Bindings generation:
 //!
 //! * **`custom-godot`**<br>
@@ -82,6 +92,7 @@
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 //! [gdnative-overview]: https://godot-rust.github.io/book/gdnative-overview.html
 //! [custom-godot]: https://godot-rust.github.io/book/advanced-guides/custom-godot.html
+//! [ctor-repo]: https://github.com/mmastrac/rust-ctor
 //!
 //!
 
@@ -101,7 +112,7 @@ pub mod globalscope;
 // Implementation details (e.g. used by macros).
 // However, do not re-export macros (on crate level), thus no wildcard
 #[doc(hidden)]
-pub use gdnative_core::{libc, sys};
+pub use gdnative_core::{libc, private, sys};
 
 /// Curated re-exports of common items.
 pub mod prelude;

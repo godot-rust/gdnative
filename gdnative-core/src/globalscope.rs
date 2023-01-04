@@ -144,12 +144,8 @@ pub fn move_toward(range: RangeInclusive<f32>, delta: f32) -> f32 {
 /// Curve values cheatsheet:  
 /// ![Image](https://raw.githubusercontent.com/godotengine/godot-docs/3.4/img/ease_cheatsheet.png)
 #[inline]
-pub fn ease(mut s: f32, curve: f32) -> f32 {
-    if s < 0.0 {
-        s = 0.0;
-    } else if s > 1.0 {
-        s = 1.0;
-    }
+pub fn ease(s: f32, curve: f32) -> f32 {
+    let s = s.clamp(0.0, 1.0);
     if curve > 0.0 {
         if curve < 1.0 {
             1.0 - (1.0 - s).powf(1.0 / curve)

@@ -1,8 +1,17 @@
-use syn::{spanned::Spanned, FnArg, Generics, ImplItem, ItemImpl, Pat, PatIdent, Signature, Type};
+use syn::{
+    spanned::Spanned, visit::Visit, FnArg, Generics, ImplItem, ItemImpl, Meta, NestedMeta, Pat,
+    PatIdent, Signature, Type,
+};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use std::boxed::Box;
+
+use crate::utils::find_non_concrete;
+
+use self::mixin_args::{MixinArgsBuilder, MixinKind};
+
+mod mixin_args;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum RpcMode {
@@ -322,14 +331,56 @@ pub(crate) struct ExportArgs {
     pub(crate) is_async: bool,
 }
 
-pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
+pub(crate) fn derive_methods(
+    args: Vec<NestedMeta>,
+    item_impl: ItemImpl,
+) -> Result<TokenStream2, syn::Error> {
     let derived = crate::automatically_derived();
+    let gdnative_core = crate::crate_gdnative_core();
     let (impl_block, export) = impl_gdnative_expose(item_impl);
     let (impl_generics, _, where_clause) = impl_block.generics.split_for_impl();
 
     let class_name = export.class_ty;
 
     let builder = syn::Ident::new("builder", proc_macro2::Span::call_site());
+
+    let args = {
+        let mut attr_args_builder = MixinArgsBuilder::new();
+
+        for arg in args {
+            if let NestedMeta::Meta(Meta::NameValue(ref pair)) = arg {
+                attr_args_builder.add_pair(pair)?;
+            } else if let NestedMeta::Meta(Meta::Path(ref path)) = arg {
+                attr_args_builder.add_path(path)?;
+            } else {
+                let msg = format!("Unexpected argument: {arg:?}");
+                return Err(syn::Error::new(arg.span(), msg));
+            }
+        }
+
+        attr_args_builder.done()?
+    };
+
+    let non_concrete = find_non_concrete::with_visitor(&impl_block.generics, |v| {
+        v.visit_type(&impl_block.self_ty)
+    });
+
+    let non_concrete = if non_concrete.is_empty() {
+        None
+    } else if non_concrete.len() == 1 {
+        Some(non_concrete[0])
+    } else {
+        Some(impl_block.self_ty.span())
+    };
+
+    if let Some(span) = non_concrete {
+        if matches!(args.mixin, Some(MixinKind::Auto(_))) {
+            return Err(syn::Error::new(
+                span,
+                "non-concrete mixins must be named and manually registered",
+            ));
+        }
+    }
 
     let methods = export
         .methods
@@ -402,19 +453,66 @@ pub(crate) fn derive_methods(item_impl: ItemImpl) -> TokenStream2 {
         })
         .collect::<Vec<_>>();
 
-    quote::quote!(
-        #impl_block
+    match args.mixin {
+        Some(mixin_kind) => {
+            let vis = args.pub_.then(|| quote!(pub));
 
-        #derived
-        impl #impl_generics gdnative::export::NativeClassMethods for #class_name #where_clause {
-            fn nativeclass_register(#builder: &::gdnative::export::ClassBuilder<Self>) {
-                use gdnative::export::*;
+            let mixin_name = match &mixin_kind {
+                MixinKind::Named(ident) => ident.clone(),
+                MixinKind::Auto(span) => {
+                    return Err(syn::Error::new(
+                        *span,
+                        "mixins must be named in gdnative v0.11.x",
+                    ))
+                }
+            };
 
-                #(#methods)*
-            }
+            let body = quote! {
+                #derived
+                #vis struct #mixin_name {
+                    _opaque: #gdnative_core::private::mixin::Opaque,
+                }
+
+                #derived
+                impl #gdnative_core::private::mixin::Sealed for #mixin_name {}
+                #derived
+                impl #impl_generics #gdnative_core::export::Mixin<#class_name> for #mixin_name #where_clause {
+                    fn register(#builder: &#gdnative_core::export::ClassBuilder<#class_name>) {
+                        use #gdnative_core::export::*;
+
+                        #(#methods)*
+                    }
+                }
+            };
+
+            let body = match &mixin_kind {
+                MixinKind::Named(_) => body,
+                MixinKind::Auto(_) => quote! {
+                    const _: () = {
+                        #body
+                    }
+                },
+            };
+
+            Ok(quote::quote!(
+                #impl_block
+                #body
+            ))
         }
+        None => Ok(quote::quote!(
+            #impl_block
 
-    )
+            #derived
+            impl #impl_generics #gdnative_core::export::NativeClassMethods for #class_name #where_clause {
+                fn nativeclass_register(#builder: &#gdnative_core::export::ClassBuilder<Self>) {
+                    use #gdnative_core::export::*;
+
+                    #(#methods)*
+                }
+            }
+
+        )),
+    }
 }
 
 /// Extract the data to export from the impl block.
@@ -464,7 +562,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
                             };
 
                         if is_export {
-                            use syn::{punctuated::Punctuated, Lit, Meta, NestedMeta};
+                            use syn::{punctuated::Punctuated, Lit};
                             let mut export_args =
                                 export_args.get_or_insert_with(ExportArgs::default);
                             export_args.is_old_syntax = is_old_syntax;

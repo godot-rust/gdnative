@@ -15,12 +15,19 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
+#[cfg(not(feature = "no-manual-register"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<RegisterSignal>();
     handle.add_class::<RegisterProperty>();
     handle.add_class::<AdvancedMethods>();
     handle.add_class::<VarargsGets>();
     handle.add_class::<VarargsToTuple>();
+}
+
+#[cfg(feature = "no-manual-register")]
+pub(crate) fn register(handle: InitHandle) {
+    handle.add_class::<RegisterSignal>();
+    handle.add_class::<RegisterProperty>();
 }
 
 #[derive(Copy, Clone, Debug, Default)]

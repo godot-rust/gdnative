@@ -190,6 +190,7 @@ func _test_generic_class():
 	var status = true
 
 	status = status && int_ops.add(1, 2) == 3
+	status = status && int_ops.sub(3, 2) == 1
 	status = status && str_ops.add("foo", "bar") == "foobar"
 
 	if !status:

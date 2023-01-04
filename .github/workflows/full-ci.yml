@@ -277,6 +277,16 @@ jobs:
             godot: "3.5.1-stable"
             postfix: ' (ptrcall)'
             build_args: '--features ptrcall'
+          - rust: stable
+            godot: "3.5.1-stable"
+            postfix: ' (inventory)'
+            build_args: '--features inventory'
+          - rust: stable
+            godot: "3.5.1-stable"
+            postfix: ' (inventory)'
+            # Limiting no-manual-register tests to stable as to not slow down CI too far -- if inventory is
+            # working across all 3 Rust versions, this is likely to be as well.
+            build_args: '--features inventory,no-manual-register'
           - rust: nightly
             godot: "3.5.1-stable"
             postfix: ' (nightly)'
@@ -284,6 +294,10 @@ jobs:
             godot: "3.5.1-stable"
             postfix: ' (nightly, ptrcall)'
             build_args: '--features ptrcall'
+          - rust: nightly
+            godot: "3.5.1-stable"
+            postfix: ' (nightly, inventory)'
+            build_args: '--features inventory'
           - rust: '1.63'
             godot: "3.5.1-stable"
             postfix: ' (msrv 1.63)'
@@ -291,6 +305,10 @@ jobs:
             godot: "3.5.1-stable"
             postfix: ' (msrv 1.63, ptrcall)'
             build_args: '--features ptrcall'
+          - rust: '1.63'
+            godot: "3.5.1-stable"
+            postfix: ' (msrv 1.63, inventory)'
+            build_args: '--features inventory'
 
           # Test with oldest supported engine version
           - rust: stable

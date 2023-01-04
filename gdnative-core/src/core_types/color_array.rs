@@ -23,7 +23,7 @@ godot_test!(
                 Color::from_rgb(0.0, 1.0, 0.0),
                 Color::from_rgb(0.0, 0.0, 1.0),
             ], read.as_slice());
-            read.clone()
+            read
         };
 
         let mut cow_arr = arr.new_ref();

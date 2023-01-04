@@ -15,6 +15,8 @@ default = []
 type-tag-fallback = ["gdnative/type-tag-fallback"]
 custom-godot = ["gdnative/custom-godot"]
 ptrcall = ["gdnative/ptrcall"]
+inventory = ["gdnative/inventory"]
+no-manual-register = []
 
 [dependencies]
 gdnative = { path = "../gdnative", features = ["gd-test", "serde", "async"] }

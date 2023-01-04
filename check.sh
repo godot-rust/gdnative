@@ -62,7 +62,8 @@ function findGodot() {
     fi
 }
 
-features="gdnative/async,gdnative/serde"
+features="gdnative/async,gdnative/serde,gdnative/inventory"
+itest_toggled_features="no-manual-register"
 cmds=()
 
 for arg in "${args[@]}"; do
@@ -79,6 +80,9 @@ for arg in "${args[@]}"; do
     itest)
         findGodot
         cmds+=("cargo build --manifest-path test/Cargo.toml --features $features")
+        cmds+=("cp target/debug/*gdnative_test* test/project/lib/")
+        cmds+=("$godotBin --path test/project")
+        cmds+=("cargo build --manifest-path test/Cargo.toml --features $features,$itest_toggled_features")
         cmds+=("cp target/debug/*gdnative_test* test/project/lib/")
         cmds+=("$godotBin --path test/project")
         ;;

@@ -166,6 +166,7 @@ decl_variant_type!(
 );
 
 impl VariantType {
+    #[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
     #[doc(hidden)]
     #[inline]
     pub fn from_sys(v: sys::godot_variant_type) -> VariantType {
@@ -182,6 +183,7 @@ impl VariantType {
     }
 }
 
+#[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum CallError {
@@ -198,6 +200,7 @@ pub enum CallError {
 }
 
 impl CallError {
+    #[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
     #[inline]
     fn from_sys(v: sys::godot_variant_call_error_error) -> Result<(), CallError> {
         if v == sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_OK {
@@ -230,6 +233,7 @@ impl std::fmt::Display for CallError {
 impl std::error::Error for CallError {}
 
 /// Godot variant operator kind.
+#[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum VariantOperator {
@@ -269,6 +273,7 @@ pub enum VariantOperator {
     In = sys::godot_variant_operator_GODOT_VARIANT_OP_IN as u32,
 }
 
+#[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
 impl VariantOperator {
     const MAX: u32 = sys::godot_variant_operator_GODOT_VARIANT_OP_MAX as u32;
 

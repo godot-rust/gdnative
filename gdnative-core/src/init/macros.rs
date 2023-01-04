@@ -57,7 +57,10 @@ macro_rules! godot_nativescript_init {
             }
 
             $crate::private::report_panics("nativescript_init", || {
-                $callback($crate::init::InitHandle::new(handle));
+                $crate::init::auto_register($crate::init::InitHandle::new(handle, $crate::init::InitLevel::AUTO));
+                $callback($crate::init::InitHandle::new(handle, $crate::init::InitLevel::USER));
+
+                $crate::init::diagnostics::missing_suggested_diagnostics();
             });
         }
     };

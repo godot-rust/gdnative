@@ -23,7 +23,7 @@ godot_test!(
                 Vector2::new(3.0, 4.0),
                 Vector2::new(5.0, 6.0),
             ], read.as_slice());
-            read.clone()
+            read
         };
 
         let mut cow_arr = arr.new_ref();

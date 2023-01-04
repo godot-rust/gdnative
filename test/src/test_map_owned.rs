@@ -9,9 +9,13 @@ pub(crate) fn run_tests() -> bool {
     status
 }
 
+#[cfg(not(feature = "no-manual-register"))]
 pub(crate) fn register(handle: InitHandle) {
     handle.add_class::<VecBuilder>();
 }
+
+#[cfg(feature = "no-manual-register")]
+pub(crate) fn register(_handle: InitHandle) {}
 
 #[derive(NativeClass)]
 #[no_constructor]

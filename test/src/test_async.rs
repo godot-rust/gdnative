@@ -13,12 +13,19 @@ thread_local! {
     };
 }
 
+#[cfg(not(feature = "no-manual-register"))]
 pub(crate) fn register(handle: InitHandle) {
     gdnative::tasks::register_runtime(&handle);
     gdnative::tasks::set_executor(EXECUTOR.with(|e| *e));
 
     handle.add_class::<AsyncMethods>();
     handle.add_class::<AsyncExecutorDriver>();
+}
+
+#[cfg(feature = "no-manual-register")]
+pub(crate) fn register(handle: InitHandle) {
+    gdnative::tasks::register_runtime(&handle);
+    gdnative::tasks::set_executor(EXECUTOR.with(|e| *e));
 }
 
 #[derive(Default)]
