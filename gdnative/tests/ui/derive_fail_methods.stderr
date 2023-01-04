@@ -1,5 +1,5 @@
 error: cannot find attribute `method` in this scope
-  --> $DIR/derive_fail_methods.rs:12:7
+  --> tests/ui/derive_fail_methods.rs:12:7
    |
 12 |     #[method]
    |       ^^^^^^ help: an attribute macro with a similar name exists: `methods`
