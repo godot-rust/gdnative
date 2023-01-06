@@ -62,23 +62,27 @@ runs:
         cd test;
         mkdir -p ./project/lib;
         cp ../target/debug/libgdnative_test.so ./project/lib/;
-        ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");
-        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+        ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log") 2> >(tee "${{ runner.temp }}/stderr.log");
+        bash ../tools/check-test-output.sh "${{ runner.temp }}/stdout.log" "${{ runner.temp }}/stderr.log";
+        if [[ $? -ne 0 ]]; then
           exit 1;
         fi;
-        ${GODOT_BIN} -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log");
-        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+        ${GODOT_BIN} -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log") 2> >(tee "${{ runner.temp }}/stderr.log");
+        bash ../tools/check-test-output.sh "${{ runner.temp }}/stdout.log" "${{ runner.temp }}/stderr.log";
+        if [[ $? -ne 0 ]]; then
           exit 1;
         fi;
         cargo build --features type-tag-fallback ${{ inputs.rust_extra_args }}
         mkdir -p ./project/lib;
         cp ../target/debug/libgdnative_test.so ./project/lib/;
-        ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log");
-        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+        ${GODOT_BIN} --path ./project/ > >(tee "${{ runner.temp }}/stdout.log") 2> >(tee "${{ runner.temp }}/stderr.log");
+        bash ../tools/check-test-output.sh "${{ runner.temp }}/stdout.log" "${{ runner.temp }}/stderr.log";
+        if [[ $? -ne 0 ]]; then
           exit 1;
         fi;
-        ${GODOT_BIN} -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log");
-        if grep -q "Leaked instance" "${{ runner.temp }}/stdout.log"; then
+        ${GODOT_BIN} -e --path ./project/ --run-editor-tests > >(tee "${{ runner.temp }}/stdout.log") 2> >(tee "${{ runner.temp }}/stderr.log");
+        bash ../tools/check-test-output.sh "${{ runner.temp }}/stdout.log" "${{ runner.temp }}/stderr.log";
+        if [[ $? -ne 0 ]]; then
           exit 1;
         fi;
       shell: bash
