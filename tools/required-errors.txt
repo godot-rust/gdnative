@@ -1,0 +1,14 @@
+# Error messages that must be found in the output of the integration test, in the format:
+# <copies>,<grep pattern>
+
+# Empty lines or lines that start with '#' are ignored.
+
+# test_array_debug
+4,thread '[^']*' panicked at 'Index 3 out of bounds (len 3)'
+
+# test_derive_nativeclass_property_with_only_getter
+1,ERROR: \(<unset>: \)\?property size on native class MyVec does not have a setter
+
+# _test_optional_args
+1,ERROR: \(OptionalArgs :: opt_sum: \)\?missing non-optional parameter `b` (#1)
+1,ERROR: \(OptionalArgs :: opt_sum: \)\?an excessive argument is given: I64(6)

@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2023-01-06
+
+This is a backwards-compatible release; thus no removals or breaking changes.
+
+### Added
+
+- `NativeClass` can now be derived for generic types. Additionally, `#[monomorphize]` can be used to name concrete monomorphizations. ([#983](https://github.com/godot-rust/gdnative/pull/983))
+- With the optional `inventory` feature enabled, `NativeClass`es and their `#[monomorphize]`d aliases can now be automatically registered on supported platforms. ([#999](https://github.com/godot-rust/gdnative/pull/999))
+- `#[methods]` now supports async-await coroutines. ([#975](https://github.com/godot-rust/gdnative/pull/975))
+- Mix-in impl blocks can now be created through `#[methods(mixin = "Name")]`. These blocks have a many-to-many relationship with `NativeClass`es, and can be generic, or trait implementations. ([#999](https://github.com/godot-rust/gdnative/pull/999))
+- Added a Third-Person-Shooter example. ([#977](https://github.com/godot-rust/gdnative/pull/977))
+- Variant derive macros now support stringly and numeric representations for fieldless enums. ([#964](https://github.com/godot-rust/gdnative/pull/964))
+- `FromVariant` can now be derived for uninhabitable enums. ([#962](https://github.com/godot-rust/gdnative/pull/962))
+- Dedicated accessor methods are now generated for indexed properties, such as `SpatialMaterial::albedo_texture`. ([#970](https://github.com/godot-rust/gdnative/pull/970))
+- Implemented additional geometric operations on `Transform3D`. ([#898](https://github.com/godot-rust/gdnative/pull/898))
+- Android targets are now supported on macOS running on Apple Silicon.  ([#982](https://github.com/godot-rust/gdnative/pull/982))
+
+### Changed
+
+- Improved panic messages in init/terminate callbacks. ([#960](https://github.com/godot-rust/gdnative/pull/960))
+- `ptrcall`s are now opt-in, with the `ptrcall` feature flag. This improves binary compatibility in the default configuration. ([#973](https://github.com/godot-rust/gdnative/pull/973))
+
+### Fixed
+
+- Variant derive macros now work properly with generic types with bounds. ([#961](https://github.com/godot-rust/gdnative/pull/961))
+- `Transform::interpolate_with` now has behavior consistent with Godot 3 (spherical interpolation). ([#998](https://github.com/godot-rust/gdnative/pull/998))
+- The correct number of arguments are now reported when an invalid argument list is provided for a method with optional arguments. ([#1000](https://github.com/godot-rust/gdnative/pull/1000))
+
 ## [0.11.0] - 2022-10-02
 
 ### Changed

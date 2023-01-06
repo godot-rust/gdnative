@@ -278,7 +278,7 @@ impl<'a> Varargs<'a> {
     /// Returns the remaining arguments as a slice of `Variant`s.
     #[inline]
     pub fn as_slice(&self) -> &'a [&'a Variant] {
-        self.args
+        &self.args[self.idx..]
     }
 
     /// Discard the rest of the arguments, and return an error if there is any.
