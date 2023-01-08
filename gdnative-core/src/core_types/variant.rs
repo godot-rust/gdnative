@@ -451,7 +451,14 @@ impl Variant {
     /// Returns true if this is an empty variant.
     #[inline]
     pub fn is_nil(&self) -> bool {
-        self.get_type() == VariantType::Nil
+        match self.get_type() {
+            VariantType::Nil => true,
+            VariantType::Object => {
+                let ptr = unsafe { (get_api().godot_variant_as_object)(&self.0) };
+                ptr.is_null()
+            }
+            _ => false,
+        }
     }
 
     #[inline]
