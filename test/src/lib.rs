@@ -69,9 +69,10 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_vector3_array_debug();
     status &= gdnative::core_types::test_transform2d_behavior();
 
-    status &= test_underscore_method_binding();
-    status &= test_rust_class_construction();
     status &= test_from_instance_id();
+    status &= test_nil_object_return_value();
+    status &= test_rust_class_construction();
+    status &= test_underscore_method_binding();
 
     status &= test_as_arg::run_tests();
     status &= test_async::run_tests();
@@ -91,11 +92,20 @@ pub extern "C" fn run_tests(
     Variant::new(status).leak()
 }
 
-godot_itest! { test_underscore_method_binding {
-    let script = gdnative::api::NativeScript::new();
-    let result = script._new(&[]);
-    assert_eq!(Variant::nil(), result);
-}}
+godot_itest! {
+    test_underscore_method_binding {
+        let script = gdnative::api::NativeScript::new();
+        let result = script._new(&[]);
+        assert_eq!(Variant::nil(), result);
+    }
+
+    test_nil_object_return_value {
+        let node = Node::new();
+        // Should not panic due to conversion failure
+        let option = node.get_node("does not exist");
+        assert!(option.is_none());
+    }
+}
 
 #[derive(NativeClass)]
 #[inherit(Reference)]

@@ -5,7 +5,7 @@ description = "Runtime async support for godot-rust."
 documentation = "https://docs.rs/crate/gdnative-async"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
-version = "0.11.1"
+version = "0.11.2"
 license = "MIT"
 workspace = ".."
 edition = "2021"
@@ -14,9 +14,9 @@ rust-version = "1.63"
 [features]
 
 [dependencies]
-gdnative-derive = { path = "../gdnative-derive", version = "=0.11.1" }
-gdnative-core = { path = "../gdnative-core", version = "=0.11.1" }
-gdnative-bindings = { path = "../gdnative-bindings", version = "=0.11.1" }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.11.2" }
+gdnative-core = { path = "../gdnative-core", version = "=0.11.2" }
+gdnative-bindings = { path = "../gdnative-bindings", version = "=0.11.2" }
 atomic-waker = "1"
 crossbeam-channel = "0.5"
 futures-task = "0.3"
