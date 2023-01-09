@@ -113,9 +113,7 @@ godot_init!(init);
 
 > **Important note:**
 >
-> Before launching the examples in the Godot editor, you must first run `cargo build` and wait for the build operations to finish successfully.
->
->At startup, the Godot editor tries to load all resources used by the project, including the native library. If the latter isn't present, the editor will skip properties or signals associated with the missing native scripts in the scene. This causes the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
+> To run or edit an example, you need to build the native library for it first. Otherwise, the project will be broken. You can do so manually with `cargo build`, or use the `example.sh` shell script for convenience: `./example.sh run hello-world` or `./example.sh edit hello-world` for the editor.
 
 The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) directory contains several ready to use examples, complete with Godot projects and setup for easy compilation from Cargo:
 
@@ -130,6 +128,7 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - [**rpc**](https://github.com/godot-rust/godot-rust/tree/master/examples/rpc) - Simple peer-to-peer networking.
 - [**native-plugin**](https://github.com/godot-rust/godot-rust/tree/master/examples/native-plugin) - Create custom node plugins.
 
+At startup, the Godot editor tries to load all resources used by the project, including the native library. If the latter isn't present, the editor will skip properties or signals associated with the missing native scripts in the scene. This causes the scene tree to be non-functional for any sample that relies on properties or signals configured in the editor.
 ### Third-party projects
 
 To see a list of games and integrations developed on top of godot-rust, have a look at our list of [third-party projects](https://godot-rust.github.io/book/projects.html) in the book.
