@@ -537,13 +537,13 @@ mod impl_export {
     impl_export_for_core_type_without_hint!(NodePath);
     impl_export_for_core_type_without_hint!(Rid);
     impl_export_for_core_type_without_hint!(Dictionary);
-    impl_export_for_core_type_without_hint!(ByteArray);
-    impl_export_for_core_type_without_hint!(Int32Array);
-    impl_export_for_core_type_without_hint!(Float32Array);
-    impl_export_for_core_type_without_hint!(StringArray);
-    impl_export_for_core_type_without_hint!(Vector2Array);
-    impl_export_for_core_type_without_hint!(Vector3Array);
-    impl_export_for_core_type_without_hint!(ColorArray);
+    impl_export_for_core_type_without_hint!(PoolArray<u8>: ByteArray);
+    impl_export_for_core_type_without_hint!(PoolArray<i32>: Int32Array);
+    impl_export_for_core_type_without_hint!(PoolArray<f32>: Float32Array);
+    impl_export_for_core_type_without_hint!(PoolArray<GodotString>: StringArray);
+    impl_export_for_core_type_without_hint!(PoolArray<Vector2>: Vector2Array);
+    impl_export_for_core_type_without_hint!(PoolArray<Vector3>: Vector3Array);
+    impl_export_for_core_type_without_hint!(PoolArray<Color>: ColorArray);
 
     impl Export for Color {
         type Hint = hint::ColorHint;

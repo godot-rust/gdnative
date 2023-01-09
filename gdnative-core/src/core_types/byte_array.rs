@@ -3,13 +3,14 @@ use crate::core_types::PoolArray;
 /// A reference-counted vector of `u8` that uses Godot's pool allocator.
 ///
 /// See [`PoolByteArray`](https://docs.godotengine.org/en/stable/classes/class_poolbytearray.html) in Godot.
+#[deprecated = "Specialized pool array aliases will be removed in a future godot-rust version. Use PoolArray<T> instead."]
 pub type ByteArray = PoolArray<u8>;
 
 godot_test!(
     test_byte_array_access {
         use crate::object::NewRef as _;
 
-        let arr = (0..8).collect::<ByteArray>();
+        let arr = (0..8).collect::<PoolArray<u8>>();
 
         let original_read = {
             let read = arr.read();
@@ -48,7 +49,7 @@ godot_test!(
 
 godot_test!(
     test_byte_array_debug {
-        let arr = (0..8).collect::<ByteArray>();
+        let arr = (0..8).collect::<PoolArray<u8>>();
         assert_eq!(format!("{arr:?}"), "[0, 1, 2, 3, 4, 5, 6, 7]");
     }
 );

@@ -155,13 +155,13 @@ decl_variant_type!(
         Object(Variant) = sys::godot_variant_type_GODOT_VARIANT_TYPE_OBJECT,
         Dictionary(Dictionary) = sys::godot_variant_type_GODOT_VARIANT_TYPE_DICTIONARY,
         VariantArray(VariantArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_ARRAY,
-        ByteArray(ByteArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY,
-        Int32Array(Int32Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_INT_ARRAY,
-        Float32Array(Float32Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_REAL_ARRAY,
-        StringArray(StringArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_STRING_ARRAY,
-        Vector2Array(Vector2Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY,
-        Vector3Array(Vector3Array) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY,
-        ColorArray(ColorArray) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY,
+        ByteArray(PoolArray<u8>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_BYTE_ARRAY,
+        Int32Array(PoolArray<i32>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_INT_ARRAY,
+        Float32Array(PoolArray<f32>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_REAL_ARRAY,
+        StringArray(PoolArray<GodotString>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_STRING_ARRAY,
+        Vector2Array(PoolArray<Vector2>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR2_ARRAY,
+        Vector3Array(PoolArray<Vector3>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_VECTOR3_ARRAY,
+        ColorArray(PoolArray<Color>) = sys::godot_variant_type_GODOT_VARIANT_TYPE_POOL_COLOR_ARRAY,
     }
 );
 
@@ -598,13 +598,13 @@ impl_coerce_from_variant!(
     impl CoerceFromVariant for GodotString = from_sys(godot_variant_as_string);
     impl CoerceFromVariant for Rid = from_sys(godot_variant_as_rid);
     impl CoerceFromVariant for VariantArray<Shared> = from_sys(godot_variant_as_array);
-    impl CoerceFromVariant for ByteArray = from_sys(godot_variant_as_pool_byte_array);
-    impl CoerceFromVariant for Int32Array = from_sys(godot_variant_as_pool_int_array);
-    impl CoerceFromVariant for Float32Array = from_sys(godot_variant_as_pool_real_array);
-    impl CoerceFromVariant for StringArray = from_sys(godot_variant_as_pool_string_array);
-    impl CoerceFromVariant for Vector2Array = from_sys(godot_variant_as_pool_vector2_array);
-    impl CoerceFromVariant for Vector3Array = from_sys(godot_variant_as_pool_vector3_array);
-    impl CoerceFromVariant for ColorArray = from_sys(godot_variant_as_pool_color_array);
+    impl CoerceFromVariant for PoolArray<u8> = from_sys(godot_variant_as_pool_byte_array);
+    impl CoerceFromVariant for PoolArray<i32> = from_sys(godot_variant_as_pool_int_array);
+    impl CoerceFromVariant for PoolArray<f32> = from_sys(godot_variant_as_pool_real_array);
+    impl CoerceFromVariant for PoolArray<GodotString> = from_sys(godot_variant_as_pool_string_array);
+    impl CoerceFromVariant for PoolArray<Vector2> = from_sys(godot_variant_as_pool_vector2_array);
+    impl CoerceFromVariant for PoolArray<Vector3> = from_sys(godot_variant_as_pool_vector3_array);
+    impl CoerceFromVariant for PoolArray<Color> = from_sys(godot_variant_as_pool_color_array);
     impl CoerceFromVariant for Dictionary<Shared> = from_sys(godot_variant_as_dictionary);
 );
 

@@ -4,13 +4,14 @@ use crate::core_types::PoolArray;
 /// A reference-counted vector of `GodotString` that uses Godot's pool allocator.
 ///
 /// See [`PoolStringArray`](https://docs.godotengine.org/en/stable/classes/class_poolstringarray.html) in Godot.
+#[deprecated = "Specialized pool array aliases will be removed in a future godot-rust version. Use PoolArray<T> instead."]
 pub type StringArray = PoolArray<GodotString>;
 
 godot_test!(
     test_string_array_access {
         use crate::object::NewRef as _;
 
-        let arr = StringArray::from_vec(vec![
+        let arr = PoolArray::from_vec(vec![
             GodotString::from("foo"),
             GodotString::from("bar"),
             GodotString::from("baz"),
@@ -51,7 +52,7 @@ godot_test!(
 
 godot_test!(
     test_string_array_debug {
-        let arr = StringArray::from_vec(vec![
+        let arr = PoolArray::from_vec(vec![
             GodotString::from("foo"),
             GodotString::from("bar"),
             GodotString::from("baz"),
