@@ -8,12 +8,15 @@ const OUT_BANDWIDTH: i64 = 1000;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
-pub struct Server;
+pub struct Server {
+    #[property(rpc = "master", set = "Self::set_foo")]
+    foo: i32,
+}
 
 #[methods]
 impl Server {
     fn new(_owner: &Node) -> Self {
-        Self
+        Self { foo: 0 }
     }
 
     #[method]
@@ -40,5 +43,11 @@ impl Server {
             "return_greeting",
             &[Variant::new("hello")],
         );
+    }
+
+    #[method]
+    fn set_foo(&mut self, #[base] _owner: TRef<Node>, value: i32) {
+        godot_print!("Client sets foo to: {}", value);
+        self.foo = value;
     }
 }

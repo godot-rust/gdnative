@@ -47,6 +47,7 @@ impl ServerPuppet {
     #[method]
     fn on_connected_to_server(&mut self, #[base] owner: TRef<Node>) {
         owner.rpc("greet_server", &[Variant::new("hello")]);
+        owner.rset("foo", 42);
     }
 
     #[method(rpc = "puppet")]
