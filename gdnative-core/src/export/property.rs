@@ -15,6 +15,8 @@ use crate::object::ownership::Shared;
 use crate::object::{GodotObject, Instance, Ref};
 use crate::private::get_api;
 
+use super::RpcMode;
+
 mod accessor;
 mod invalid_accessor;
 
@@ -78,6 +80,7 @@ pub struct PropertyBuilder<'a, C, T: Export, S = InvalidSetter<'a>, G = InvalidG
     default: Option<T>,
     hint: Option<T::Hint>,
     usage: PropertyUsage,
+    rpc_mode: RpcMode,
     class_builder: &'a ClassBuilder<C>,
 }
 
@@ -96,6 +99,7 @@ where
             default: None,
             hint: None,
             usage: PropertyUsage::DEFAULT,
+            rpc_mode: RpcMode::Disabled,
             class_builder,
         }
     }
@@ -119,7 +123,7 @@ where
         let default = self.default.to_variant();
 
         let mut attr = sys::godot_property_attributes {
-            rset_type: sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED, // TODO(#995)
+            rset_type: self.rpc_mode.sys(),
             type_: variant_type as sys::godot_int,
             hint: hint_kind,
             hint_string: hint_string.to_sys(),
@@ -161,6 +165,7 @@ where
             default: self.default,
             hint: self.hint,
             usage: self.usage,
+            rpc_mode: self.rpc_mode,
             class_builder: self.class_builder,
         }
     }
@@ -184,6 +189,7 @@ where
             default: self.default,
             hint: self.hint,
             usage: self.usage,
+            rpc_mode: self.rpc_mode,
             class_builder: self.class_builder,
         }
     }
@@ -205,6 +211,7 @@ where
             default: self.default,
             hint: self.hint,
             usage: self.usage,
+            rpc_mode: self.rpc_mode,
             class_builder: self.class_builder,
         }
     }
@@ -226,6 +233,7 @@ where
             default: self.default,
             hint: self.hint,
             usage: self.usage,
+            rpc_mode: self.rpc_mode,
             class_builder: self.class_builder,
         }
     }
@@ -247,6 +255,7 @@ where
             default: self.default,
             hint: self.hint,
             usage: self.usage,
+            rpc_mode: self.rpc_mode,
             class_builder: self.class_builder,
         }
     }
@@ -268,6 +277,7 @@ where
             default: self.default,
             hint: self.hint,
             usage: self.usage,
+            rpc_mode: self.rpc_mode,
             class_builder: self.class_builder,
         }
     }
@@ -291,6 +301,13 @@ where
     #[inline]
     pub fn with_usage(mut self, usage: PropertyUsage) -> Self {
         self.usage = usage;
+        self
+    }
+
+    /// Sets a RPC mode.
+    #[inline]
+    pub fn with_rpc_mode(mut self, rpc_mode: RpcMode) -> Self {
+        self.rpc_mode = rpc_mode;
         self
     }
 }

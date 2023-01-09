@@ -218,17 +218,9 @@ impl<C: NativeClass> ClassBuilder<C> {
     pub(crate) fn add_method(&self, method: ScriptMethod) {
         let method_name = CString::new(method.name).unwrap();
 
-        let rpc = match method.attributes.rpc_mode {
-            RpcMode::Master => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTER,
-            RpcMode::Remote => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTE,
-            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPET,
-            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTESYNC,
-            RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
-            RpcMode::MasterSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTERSYNC,
-            RpcMode::PuppetSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPETSYNC,
+        let attr = sys::godot_method_attributes {
+            rpc_type: method.attributes.rpc_mode.sys(),
         };
-
-        let attr = sys::godot_method_attributes { rpc_type: rpc };
 
         let method_desc = sys::godot_instance_method {
             method: method.method_ptr,

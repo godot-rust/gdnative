@@ -96,6 +96,7 @@ type ScriptMethodFn = unsafe extern "C" fn(
     *mut *mut sys::godot_variant,
 ) -> sys::godot_variant;
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum RpcMode {
     Disabled,
     Remote,
@@ -110,6 +111,20 @@ impl Default for RpcMode {
     #[inline]
     fn default() -> Self {
         RpcMode::Disabled
+    }
+}
+
+impl RpcMode {
+    pub(crate) fn sys(self) -> sys::godot_method_rpc_mode {
+        match self {
+            RpcMode::Master => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTER,
+            RpcMode::Remote => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTE,
+            RpcMode::Puppet => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPET,
+            RpcMode::RemoteSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_REMOTESYNC,
+            RpcMode::Disabled => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_DISABLED,
+            RpcMode::MasterSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_MASTERSYNC,
+            RpcMode::PuppetSync => sys::godot_method_rpc_mode_GODOT_METHOD_RPC_MODE_PUPPETSYNC,
+        }
     }
 }
 
