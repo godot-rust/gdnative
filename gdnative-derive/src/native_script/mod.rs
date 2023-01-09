@@ -100,6 +100,8 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                     .map(|default_value| quote!(.with_default(#default_value)));
                 let with_hint = config.hint.map(|hint_fn| quote!(.with_hint(#hint_fn())));
                 let with_usage = config.no_editor.then(|| quote!(.with_usage(#gdnative_core::export::PropertyUsage::NOEDITOR)));
+                let with_rpc_mode = config.rpc_mode.map(|rpc_mode| quote!(.with_rpc_mode(#gdnative_core::export::#rpc_mode)));
+
                 // check whether this property type is `Property<T>`. if so, extract T from it.
                 let property_ty = match config.ty {
                     Type::Path(ref path) => path
@@ -176,6 +178,7 @@ pub(crate) fn derive_native_class(derive_input: &DeriveInput) -> Result<TokenStr
                         #with_default
                         #with_hint
                         #with_usage
+                        #with_rpc_mode
                         #with_getter
                         #with_setter
                         .done();

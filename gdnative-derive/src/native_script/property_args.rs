@@ -2,6 +2,8 @@ use proc_macro2::Span;
 use std::fmt::Debug;
 use syn::spanned::Spanned;
 
+use crate::syntax::rpc_mode::RpcMode;
+
 #[derive(Debug)]
 pub enum PropertyGet {
     Default,
@@ -22,6 +24,7 @@ pub struct PropertyAttrArgs {
     pub hint: Option<syn::Path>,
     pub get: Option<PropertyGet>,
     pub set: Option<PropertySet>,
+    pub rpc_mode: Option<RpcMode>,
     pub no_editor: bool,
 }
 
@@ -32,6 +35,7 @@ pub struct PropertyAttrArgsBuilder {
     hint: Option<syn::Path>,
     get: Option<PropertyGet>,
     set: Option<PropertySet>,
+    rpc_mode: Option<RpcMode>,
     no_editor: bool,
 }
 
@@ -44,6 +48,7 @@ impl PropertyAttrArgsBuilder {
             hint: None,
             get: None,
             set: None,
+            rpc_mode: None,
             no_editor: false,
         }
     }
@@ -125,6 +130,18 @@ impl PropertyAttrArgsBuilder {
             "get" => process_path_input!(get, PropertyGet::Owned),
             "get_ref" => process_path_input!(get, PropertyGet::Ref),
             "set" => process_path_input!(set, PropertySet::WithPath),
+            "rpc" => {
+                let rpc = Self::extract_lit_str(&pair.lit)
+                    .ok_or_else(|| Self::err_attr_not_a_string_literal(pair.span(), "rpc"))?;
+                let rpc = rpc.value();
+                let rpc = RpcMode::parse(&rpc).ok_or_else(|| {
+                    syn::Error::new(
+                        pair.lit.span(),
+                        format!("unexpected value for `rpc`: {rpc}"),
+                    )
+                })?;
+                update_prop!(rpc_mode, rpc)
+            }
             _ => {
                 return Err(syn::Error::new(
                     pair.span(),
@@ -167,6 +184,7 @@ impl PropertyAttrArgsBuilder {
             hint: self.hint,
             get: self.get,
             set: self.set,
+            rpc_mode: self.rpc_mode,
             no_editor: self.no_editor,
         }
     }
