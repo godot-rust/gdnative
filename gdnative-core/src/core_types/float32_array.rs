@@ -3,13 +3,14 @@ use crate::core_types::PoolArray;
 /// A reference-counted vector of `f32` that uses Godot's pool allocator.
 ///
 /// See [`PoolRealArray`](https://docs.godotengine.org/en/stable/classes/class_poolrealarray.html) in Godot.
+#[deprecated = "Specialized pool array aliases will be removed in a future godot-rust version. Use PoolArray<T> instead."]
 pub type Float32Array = PoolArray<f32>;
 
 godot_test!(
     test_float32_array_access {
         use crate::object::NewRef as _;
 
-        let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
+        let arr = (0..8).map(|i| i as f32).collect::<PoolArray<f32>>();
 
         let original_read = {
             let read = arr.read();
@@ -42,7 +43,7 @@ godot_test!(
 
 godot_test!(
     test_float32_array_debug {
-        let arr = (0..8).map(|i| i as f32).collect::<Float32Array>();
+        let arr = (0..8).map(|i| i as f32).collect::<PoolArray<f32>>();
         assert_eq!(format!("{arr:?}"), "[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]");
     }
 );

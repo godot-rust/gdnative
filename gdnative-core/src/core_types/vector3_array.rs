@@ -4,13 +4,14 @@ use crate::core_types::Vector3;
 /// A reference-counted vector of `Vector3` that uses Godot's pool allocator.
 ///
 /// See [`PoolVector3Array`](https://docs.godotengine.org/en/stable/classes/class_poolvector3array.html) in Godot.
+#[deprecated = "Specialized pool array aliases will be removed in a future godot-rust version. Use PoolArray<T> instead."]
 pub type Vector3Array = PoolArray<Vector3>;
 
 godot_test!(
     test_vector3_array_access {
         use crate::object::NewRef as _;
 
-        let arr = Vector3Array::from_vec(vec![
+        let arr = PoolArray::from_vec(vec![
             Vector3::new(1.0, 2.0, 3.0),
             Vector3::new(3.0, 4.0, 5.0),
             Vector3::new(5.0, 6.0, 7.0),
@@ -52,7 +53,7 @@ godot_test!(
 
 godot_test!(
     test_vector3_array_debug {
-        let arr = Vector3Array::from_vec(vec![
+        let arr = PoolArray::from_vec(vec![
             Vector3::new(1.0, 2.0, 3.0),
             Vector3::new(3.0, 4.0, 5.0),
             Vector3::new(5.0, 6.0, 7.0),

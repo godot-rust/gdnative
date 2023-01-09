@@ -3,13 +3,14 @@ use crate::core_types::PoolArray;
 /// A reference-counted vector of `i32` that uses Godot's pool allocator.
 ///
 /// See [`PoolIntArray`](https://docs.godotengine.org/en/stable/classes/class_poolintarray.html) in Godot.
+#[deprecated = "Specialized pool array aliases will be removed in a future godot-rust version. Use PoolArray<T> instead."]
 pub type Int32Array = PoolArray<i32>;
 
 godot_test!(
     test_int32_array_access {
         use crate::object::NewRef as _;
 
-        let arr = (0..8).collect::<Int32Array>();
+        let arr = (0..8).collect::<PoolArray<i32>>();
 
         let original_read = {
             let read = arr.read();
@@ -38,7 +39,7 @@ godot_test!(
 
 godot_test!(
     test_int32_array_debug {
-        let arr = (0..8).collect::<Int32Array>();
+        let arr = (0..8).collect::<PoolArray<i32>>();
         assert_eq!(format!("{arr:?}"), "[0, 1, 2, 3, 4, 5, 6, 7]");
     }
 );

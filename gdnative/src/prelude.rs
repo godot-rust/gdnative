@@ -5,10 +5,13 @@ pub use gdnative_bindings::{
     ResourceLoader, SceneTree, Shader, Spatial, Sprite, Texture, Timer, Tween, Viewport,
 };
 pub use gdnative_core::core_types::{
-    Aabb, Basis, ByteArray, Color, ColorArray, Dictionary, Float32Array, GodotError, GodotString,
-    Int32Array, NodePath, Plane, PoolArray, Quat, Rect2, Rid, StringArray, StringName, Transform,
-    Transform2D, Variant, VariantArray, VariantDispatch, VariantOperator, VariantType, Vector2,
-    Vector2Array, Vector3, Vector3Array,
+    Aabb, Basis, Color, Dictionary, GodotError, GodotString, NodePath, Plane, PoolArray, Quat,
+    Rect2, Rid, StringName, Transform, Transform2D, Variant, VariantArray, VariantDispatch,
+    VariantOperator, VariantType, Vector2, Vector3,
+};
+#[allow(deprecated)]
+pub use gdnative_core::core_types::{
+    ByteArray, ColorArray, Float32Array, Int32Array, StringArray, Vector2Array, Vector3Array,
 };
 pub use gdnative_core::core_types::{
     FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq,

@@ -13,6 +13,7 @@ use syn::{parse::Parser, AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType}
 mod methods;
 mod native_script;
 mod profiled;
+mod syntax;
 mod utils;
 mod varargs;
 mod variant;
@@ -267,6 +268,11 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// - `no_editor`
 ///
 ///   Hides the property from the editor. Does not prevent it from being sent over network or saved in storage.
+///
+/// - `rpc = "selected_rpc"`
+///
+///   Sets the [Multiplayer API RPC Mode](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html?highlight=RPC#enumerations) for the property.
+///   See the `#[method]` documentation below for possible values and their semantics.
 ///
 /// ### `#[methods]`
 /// Adds the necessary information to a an `impl` block to register the properties and methods with Godot.
