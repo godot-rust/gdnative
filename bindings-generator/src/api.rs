@@ -435,13 +435,13 @@ impl Ty {
             Ty::Rid => syn::parse_quote! { Rid },
             Ty::VariantArray => syn::parse_quote! { VariantArray },
             Ty::Dictionary => syn::parse_quote! { Dictionary },
-            Ty::ByteArray => syn::parse_quote! { ByteArray },
-            Ty::StringArray => syn::parse_quote! { StringArray },
-            Ty::Vector2Array => syn::parse_quote! { Vector2Array },
-            Ty::Vector3Array => syn::parse_quote! { Vector3Array },
-            Ty::ColorArray => syn::parse_quote! { ColorArray },
-            Ty::Int32Array => syn::parse_quote! { Int32Array },
-            Ty::Float32Array => syn::parse_quote! { Float32Array },
+            Ty::ByteArray => syn::parse_quote! { PoolArray<u8> },
+            Ty::StringArray => syn::parse_quote! { PoolArray<GodotString> },
+            Ty::Vector2Array => syn::parse_quote! { PoolArray<Vector2> },
+            Ty::Vector3Array => syn::parse_quote! { PoolArray<Vector3> },
+            Ty::ColorArray => syn::parse_quote! { PoolArray<Color> },
+            Ty::Int32Array => syn::parse_quote! { PoolArray<i32> },
+            Ty::Float32Array => syn::parse_quote! { PoolArray<f32> },
             Ty::Result => syn::parse_quote! { GodotResult },
             Ty::VariantType => syn::parse_quote! { VariantType },
             Ty::VariantOperator => syn::parse_quote! { VariantOperator },
@@ -590,7 +590,7 @@ impl Ty {
             | Ty::Variant => {
                 let rust_ty = self.to_rust();
                 quote! {
-                    #rust_ty::from_sys(ret)
+                    <#rust_ty>::from_sys(ret)
                 }
             }
             Ty::Object(ref path) => {
