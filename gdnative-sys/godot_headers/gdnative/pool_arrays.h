@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_POOL_ARRAYS_H
-#define GODOT_POOL_ARRAYS_H
+#ifndef GDNATIVE_POOL_ARRAYS_H
+#define GDNATIVE_POOL_ARRAYS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -182,6 +182,8 @@ void GDAPI godot_pool_byte_array_remove(godot_pool_byte_array *p_self, const god
 
 void GDAPI godot_pool_byte_array_resize(godot_pool_byte_array *p_self, const godot_int p_size);
 
+void GDAPI godot_pool_byte_array_sort(godot_pool_byte_array *p_self);
+
 godot_pool_byte_array_read_access GDAPI *godot_pool_byte_array_read(const godot_pool_byte_array *p_self);
 
 godot_pool_byte_array_write_access GDAPI *godot_pool_byte_array_write(godot_pool_byte_array *p_self);
@@ -192,6 +194,8 @@ uint8_t GDAPI godot_pool_byte_array_get(const godot_pool_byte_array *p_self, con
 godot_int GDAPI godot_pool_byte_array_size(const godot_pool_byte_array *p_self);
 
 godot_bool GDAPI godot_pool_byte_array_empty(const godot_pool_byte_array *p_self);
+
+godot_bool GDAPI godot_pool_byte_array_has(const godot_pool_byte_array *p_self, const uint8_t p_data);
 
 void GDAPI godot_pool_byte_array_destroy(godot_pool_byte_array *p_self);
 
@@ -215,6 +219,8 @@ void GDAPI godot_pool_int_array_remove(godot_pool_int_array *p_self, const godot
 
 void GDAPI godot_pool_int_array_resize(godot_pool_int_array *p_self, const godot_int p_size);
 
+void GDAPI godot_pool_int_array_sort(godot_pool_int_array *p_self);
+
 godot_pool_int_array_read_access GDAPI *godot_pool_int_array_read(const godot_pool_int_array *p_self);
 
 godot_pool_int_array_write_access GDAPI *godot_pool_int_array_write(godot_pool_int_array *p_self);
@@ -225,6 +231,8 @@ godot_int GDAPI godot_pool_int_array_get(const godot_pool_int_array *p_self, con
 godot_int GDAPI godot_pool_int_array_size(const godot_pool_int_array *p_self);
 
 godot_bool GDAPI godot_pool_int_array_empty(const godot_pool_int_array *p_self);
+
+godot_bool GDAPI godot_pool_int_array_has(const godot_pool_int_array *p_self, const godot_int p_data);
 
 void GDAPI godot_pool_int_array_destroy(godot_pool_int_array *p_self);
 
@@ -248,6 +256,8 @@ void GDAPI godot_pool_real_array_remove(godot_pool_real_array *p_self, const god
 
 void GDAPI godot_pool_real_array_resize(godot_pool_real_array *p_self, const godot_int p_size);
 
+void GDAPI godot_pool_real_array_sort(godot_pool_real_array *p_self);
+
 godot_pool_real_array_read_access GDAPI *godot_pool_real_array_read(const godot_pool_real_array *p_self);
 
 godot_pool_real_array_write_access GDAPI *godot_pool_real_array_write(godot_pool_real_array *p_self);
@@ -258,6 +268,8 @@ godot_real GDAPI godot_pool_real_array_get(const godot_pool_real_array *p_self, 
 godot_int GDAPI godot_pool_real_array_size(const godot_pool_real_array *p_self);
 
 godot_bool GDAPI godot_pool_real_array_empty(const godot_pool_real_array *p_self);
+
+godot_bool GDAPI godot_pool_real_array_has(const godot_pool_real_array *p_self, const godot_real p_data);
 
 void GDAPI godot_pool_real_array_destroy(godot_pool_real_array *p_self);
 
@@ -275,11 +287,15 @@ godot_error GDAPI godot_pool_string_array_insert(godot_pool_string_array *p_self
 
 void GDAPI godot_pool_string_array_invert(godot_pool_string_array *p_self);
 
+godot_string GDAPI godot_pool_string_array_join(const godot_pool_string_array *p_self, const godot_string *p_delimiter);
+
 void GDAPI godot_pool_string_array_push_back(godot_pool_string_array *p_self, const godot_string *p_data);
 
 void GDAPI godot_pool_string_array_remove(godot_pool_string_array *p_self, const godot_int p_idx);
 
 void GDAPI godot_pool_string_array_resize(godot_pool_string_array *p_self, const godot_int p_size);
+
+void GDAPI godot_pool_string_array_sort(godot_pool_string_array *p_self);
 
 godot_pool_string_array_read_access GDAPI *godot_pool_string_array_read(const godot_pool_string_array *p_self);
 
@@ -291,6 +307,8 @@ godot_string GDAPI godot_pool_string_array_get(const godot_pool_string_array *p_
 godot_int GDAPI godot_pool_string_array_size(const godot_pool_string_array *p_self);
 
 godot_bool GDAPI godot_pool_string_array_empty(const godot_pool_string_array *p_self);
+
+godot_bool GDAPI godot_pool_string_array_has(const godot_pool_string_array *p_self, const godot_string *p_data);
 
 void GDAPI godot_pool_string_array_destroy(godot_pool_string_array *p_self);
 
@@ -314,6 +332,8 @@ void GDAPI godot_pool_vector2_array_remove(godot_pool_vector2_array *p_self, con
 
 void GDAPI godot_pool_vector2_array_resize(godot_pool_vector2_array *p_self, const godot_int p_size);
 
+void GDAPI godot_pool_vector2_array_sort(godot_pool_vector2_array *p_self);
+
 godot_pool_vector2_array_read_access GDAPI *godot_pool_vector2_array_read(const godot_pool_vector2_array *p_self);
 
 godot_pool_vector2_array_write_access GDAPI *godot_pool_vector2_array_write(godot_pool_vector2_array *p_self);
@@ -324,6 +344,8 @@ godot_vector2 GDAPI godot_pool_vector2_array_get(const godot_pool_vector2_array 
 godot_int GDAPI godot_pool_vector2_array_size(const godot_pool_vector2_array *p_self);
 
 godot_bool GDAPI godot_pool_vector2_array_empty(const godot_pool_vector2_array *p_self);
+
+godot_bool GDAPI godot_pool_vector2_array_has(const godot_pool_vector2_array *p_self, const godot_vector2 *p_data);
 
 void GDAPI godot_pool_vector2_array_destroy(godot_pool_vector2_array *p_self);
 
@@ -347,6 +369,8 @@ void GDAPI godot_pool_vector3_array_remove(godot_pool_vector3_array *p_self, con
 
 void GDAPI godot_pool_vector3_array_resize(godot_pool_vector3_array *p_self, const godot_int p_size);
 
+void GDAPI godot_pool_vector3_array_sort(godot_pool_vector3_array *p_self);
+
 godot_pool_vector3_array_read_access GDAPI *godot_pool_vector3_array_read(const godot_pool_vector3_array *p_self);
 
 godot_pool_vector3_array_write_access GDAPI *godot_pool_vector3_array_write(godot_pool_vector3_array *p_self);
@@ -357,6 +381,8 @@ godot_vector3 GDAPI godot_pool_vector3_array_get(const godot_pool_vector3_array 
 godot_int GDAPI godot_pool_vector3_array_size(const godot_pool_vector3_array *p_self);
 
 godot_bool GDAPI godot_pool_vector3_array_empty(const godot_pool_vector3_array *p_self);
+
+godot_bool GDAPI godot_pool_vector3_array_has(const godot_pool_vector3_array *p_self, const godot_vector3 *p_data);
 
 void GDAPI godot_pool_vector3_array_destroy(godot_pool_vector3_array *p_self);
 
@@ -380,6 +406,8 @@ void GDAPI godot_pool_color_array_remove(godot_pool_color_array *p_self, const g
 
 void GDAPI godot_pool_color_array_resize(godot_pool_color_array *p_self, const godot_int p_size);
 
+void GDAPI godot_pool_color_array_sort(godot_pool_color_array *p_self);
+
 godot_pool_color_array_read_access GDAPI *godot_pool_color_array_read(const godot_pool_color_array *p_self);
 
 godot_pool_color_array_write_access GDAPI *godot_pool_color_array_write(godot_pool_color_array *p_self);
@@ -390,6 +418,8 @@ godot_color GDAPI godot_pool_color_array_get(const godot_pool_color_array *p_sel
 godot_int GDAPI godot_pool_color_array_size(const godot_pool_color_array *p_self);
 
 godot_bool GDAPI godot_pool_color_array_empty(const godot_pool_color_array *p_self);
+
+godot_bool GDAPI godot_pool_color_array_has(const godot_pool_color_array *p_self, const godot_color *p_data);
 
 void GDAPI godot_pool_color_array_destroy(godot_pool_color_array *p_self);
 
@@ -475,4 +505,4 @@ void GDAPI godot_pool_color_array_write_access_destroy(godot_pool_color_array_wr
 }
 #endif
 
-#endif // GODOT_POOL_ARRAYS_H
+#endif // GDNATIVE_POOL_ARRAYS_H

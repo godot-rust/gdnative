@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_COLOR_H
-#define GODOT_COLOR_H
+#ifndef GDNATIVE_COLOR_H
+#define GDNATIVE_COLOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,4 +117,4 @@ godot_bool GDAPI godot_color_operator_less(const godot_color *p_self, const godo
 }
 #endif
 
-#endif // GODOT_COLOR_H
+#endif // GDNATIVE_COLOR_H

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_NATIVEWEBRTC_H
-#define GODOT_NATIVEWEBRTC_H
+#ifndef GODOT_WEBRTC_H
+#define GODOT_WEBRTC_H
 
 #include <gdnative/gdnative.h>
 
@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 #define GODOT_NET_WEBRTC_API_MAJOR 3
-#define GODOT_NET_WEBRTC_API_MINOR 2
+#define GODOT_NET_WEBRTC_API_MINOR 4
 
 /* Library Interface (used to set default GDNative WebRTC implementation */
 typedef struct {
@@ -108,6 +108,13 @@ typedef struct {
 	void *next; /* For extension? */
 } godot_net_webrtc_data_channel;
 
+/* Extensions to WebRTCDataChannel */
+typedef struct {
+	int (*get_buffered_amount)(const void *);
+
+	void *next; /* For extension? */
+} godot_net_webrtc_data_channel_ext;
+
 /* Set the default GDNative library */
 godot_error GDAPI godot_net_set_webrtc_library(const godot_net_webrtc_library *);
 /* Binds a WebRTCPeerConnectionGDNative to the provided interface */
@@ -119,4 +126,4 @@ void GDAPI godot_net_bind_webrtc_data_channel(godot_object *p_obj, const godot_n
 }
 #endif
 
-#endif
+#endif // GODOT_WEBRTC_H

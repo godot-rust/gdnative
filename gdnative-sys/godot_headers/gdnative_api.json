@@ -17,7 +17,163 @@
           "major": 1,
           "minor": 2
         },
-        "next": null,
+        "next": {
+          "type": "CORE",
+          "version": {
+            "major": 1,
+            "minor": 3
+          },
+          "next": null,
+          "api": [
+            {
+              "name": "godot_dictionary_merge",
+              "return_type": "void",
+              "arguments": [
+                ["godot_dictionary *", "p_self"],
+                ["const godot_dictionary *", "p_dictionary"],
+                ["const godot_bool", "p_overwrite"]
+              ]
+            },
+            {
+              "name": "godot_pool_byte_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_byte_array *", "p_self"],
+                ["const uint8_t", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_byte_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_byte_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_pool_int_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_int_array *", "p_self"],
+                ["const godot_int", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_int_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_int_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_pool_real_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_real_array *", "p_self"],
+                ["const godot_real", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_real_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_real_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_pool_string_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_string_array *", "p_self"],
+                ["const godot_string *", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_string_array_join",
+              "return_type": "godot_string",
+              "arguments": [
+                ["const godot_pool_string_array *", "p_self"],
+                ["const godot_string *", "p_delimiter"]
+              ]
+            },
+            {
+              "name": "godot_pool_string_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_string_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_pool_vector2_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_vector2_array *", "p_self"],
+                ["const godot_vector2 *", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_vector2_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_vector2_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_pool_vector3_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_vector3_array *", "p_self"],
+                ["const godot_vector3 *", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_vector3_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_vector3_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_pool_color_array_has",
+              "return_type": "godot_bool",
+              "arguments": [
+                ["const godot_pool_color_array *", "p_self"],
+                ["const godot_color *", "p_data"]
+              ]
+            },
+            {
+              "name": "godot_pool_color_array_sort",
+              "return_type": "void",
+              "arguments": [
+                ["godot_pool_color_array *", "p_self"]
+              ]
+            },
+            {
+              "name": "godot_string_join",
+              "return_type": "godot_string",
+              "arguments": [
+                ["const godot_string *", "p_self"],
+                ["const godot_array *", "p_parts"]
+              ]
+            },
+            {
+              "name": "godot_string_num_uint64",
+              "return_type": "godot_string",
+              "arguments": [
+                ["uint64_t", "p_num"],
+                ["godot_int", "p_base"]
+              ]
+            },
+            {
+              "name": "godot_string_num_uint64_capitalized",
+              "return_type": "godot_string",
+              "arguments": [
+                ["uint64_t", "p_num"],
+                ["godot_int", "p_base"],
+                ["godot_bool", "p_capitalize_hex"]
+              ]
+            }
+          ]
+        },
         "api": [
           {
             "name": "godot_dictionary_duplicate",
@@ -5847,7 +6003,7 @@
         "name": "godot_string_humanize_size",
         "return_type": "godot_string",
         "arguments": [
-          ["size_t", "p_size"]
+          ["uint64_t", "p_size"]
         ]
       },
       {
@@ -6459,7 +6615,32 @@
         "major": 1,
         "minor": 1
       },
-      "next": null,
+      "next": {
+        "name": "arvr",
+        "type": "ARVR",
+        "version": {
+          "major": 1,
+          "minor": 2
+        },
+        "next": null,
+        "api": [
+          {
+            "name": "godot_arvr_set_interface",
+            "return_type": "void",
+            "arguments": [
+              ["godot_object *", "p_arvr_interface"],
+              ["const godot_arvr_interface_gdnative *", "p_gdn_interface"]
+            ]
+          },
+          {
+            "name": "godot_arvr_get_depthid",
+            "return_type": "godot_int",
+            "arguments": [
+              ["godot_rid *", "p_render_target"]
+            ]
+          }
+        ]
+      },
       "api": [
         {
           "name": "godot_arvr_register_interface",

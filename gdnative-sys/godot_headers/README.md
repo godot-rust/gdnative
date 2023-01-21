@@ -1,43 +1,58 @@
-# godot_headers
-#### `GDNative / NativeScript`
+# godot-headers
 
-> `GDNative` enables the use of dynamically linked libraries inside of [**Godot**](https://github.com/godotengine/godot).
+This repository contains C headers for
+[**Godot Engine**](https://github.com/godotengine/godot)'s *GDNative* API,
+which can be used to write *NativeScripts*.
+
+> `GDNative` enables the use of dynamically linked libraries inside of
+> [**Godot**](https://github.com/godotengine/godot).
 
 > `NativeScript` uses GDNative to implement scripts backed by native code.
 
--   [**Branches**](#branches)
--   [**Getting Started**](#getting-started)
--   [**FAQ**](#faq)
+- [**Versioning**](#versioning)
+- [**Getting Started**](#getting-started)
+- [**FAQ**](#faq)
+- [**Updating Headers**](#updating-headers)
 
-## Branches
+## Versioning
 
-We maintain branches on this repo that relate directly to the main builds of Godot.
-Make sure you use the correct branch for the version of Godot you are using!
+This repositories follows the same branch versioning as the main [Godot Engine
+repository](https://github.com/godotengine/godot):
 
-| Branch | Version of Godot |
-| --- | --- |
-| [master](https://github.com/GodotNativeTools/godot_headers) | Godot master  |
-| [3.2](https://github.com/GodotNativeTools/godot_headers/tree/3.2) | Godot 3.2.x  |
-| [3.1](https://github.com/GodotNativeTools/godot_headers/tree/3.1) | Godot 3.1.x  |
-| [3.0](https://github.com/GodotNativeTools/godot_headers/tree/3.0) | Godot 3.0.x  |
+- `master` tracks the current development branch. As this is a moving target,
+  the headers in this repository may not always be fully in sync with upstream.
+  See [**Updating Headers**](#updating-headers) if you need to bring
+  them up to date.
+- `3.x` tracks the development of the next 3.x minor release. Like `master`, it
+  might not always be fully up-to-date with upstream.
+- Other versioned branches (e.g. `3.3`, `3.2`) track the latest stable release
+  in the corresponding branch.
+
+Stable releases are also tagged on this repository:
+[**Tags**](https://github.com/godotengine/godot-headers/tags).
+
+**For any project built against a stable release of Godot, we recommend using
+this repository as a Git submodule, checking out the specific tag matching your
+Godot version.**
 
 ## Getting Started
 
-| **Build latest version of Godot** | [**GitHub**](https://github.com/godotengine/godot) | [**Docs**](https://godot.readthedocs.io/en/latest/development/compiling/index.html) |
+| **Build latest version of Godot** | [**GitHub**](https://github.com/godotengine/godot) | [**Docs**](https://docs.godotengine.org/en/latest/development/compiling/index.html) |
 | --- | --- | --- |
 
-### Clone godot_headers into Library
+### Clone `godot-headers` into Library
 
-Clone `godot_headers` under `SimpleLibrary/`
+Clone `godot-headers` under `SimpleLibrary/`
 
 ```bash
 cd SimpleLibrary
-git clone https://github.com/GodotNativeTools/godot_headers
+git clone https://github.com/godotengine/godot-headers
 ```
 
-> Note that the master branch of this repository contains the header for the latest Godot master. If you want to build GDNative modules for older versions of Godot add `-b <version>` to the git clone command above. i.e. `git clone https://github.com/GodotNativeTools/godot_headers -b 3.0` will retrieve headers compatible with Godot 3.0.
-
-> With the exception of a breaking change in the ARVR module between 3.0 and 3.1, GDNative plugins written for an older version of Godot will work in newer versions.
+Note that the master branch of this repository contains the headers for the
+latest Godot `master` branch. See [**Versioning**](#versioning) for details.
+You can use `-b <version>` to the above Git clone command to retrieve a specific
+branch or tag (e.g. `-b 3.x` or `-b godot-3.3.3-stable`).
 
 ```bash
 [SimpleLibrary]
@@ -47,7 +62,7 @@ git clone https://github.com/GodotNativeTools/godot_headers
 
 ### Create Script
 
-Create `test.c` under `SimpleLibrary/src/`
+Create `test.c` under `SimpleLibrary/src/`.
 
 <details>
 
@@ -58,22 +73,22 @@ Create `test.c` under `SimpleLibrary/src/`
 #include <stdio.h>
 
 void *test_constructor(godot_object *obj, void *method_data) {
-        printf("test.constructor()\n");
-        return 0;
+	printf("test.constructor()\n");
+	return 0;
 }
 
 void test_destructor(godot_object *obj, void *method_data, void *user_data) {
-        printf("test.destructor()\n");
+	printf("test.destructor()\n");
 }
 
 /** func _ready() **/
 godot_variant test_ready(godot_object *obj, void *method_data, void *user_data, int num_args, godot_variant **args) {
-        godot_variant ret;
-        godot_variant_new_nil(&ret);
+	godot_variant ret;
+	godot_variant_new_nil(&ret);
 
-        printf("_ready()\n");
+	printf("_ready()\n");
 
-        return ret;
+	return ret;
 }
 
 /** Library entry point **/
@@ -90,64 +105,64 @@ void GDN_EXPORT godot_nativescript_init(void *desc) {
 
 	godot_instance_create_func create_func = {
 		.create_func = &test_constructor,
-                .method_data = 0,
-                .free_func   = 0
-        };
+		.method_data = 0,
+		.free_func   = 0
+	};
 
-        godot_instance_destroy_func destroy_func = {
-                .destroy_func = &test_destructor,
-                .method_data  = 0,
-                .free_func    = 0
-        };
+	godot_instance_destroy_func destroy_func = {
+		.destroy_func = &test_destructor,
+		.method_data  = 0,
+		.free_func    = 0
+	};
 
-        godot_nativescript_register_class(desc, "SimpleClass", "Node", create_func, destroy_func);
+	godot_nativescript_register_class(desc, "SimpleClass", "Node", create_func, destroy_func);
 
-        {
-                godot_instance_method method = {
-                        .method = &test_ready,
-                        .method_data = 0,
-                        .free_func = 0
-                };
+	{
+		godot_instance_method method = {
+			.method = &test_ready,
+			.method_data = 0,
+			.free_func = 0
+		};
 
-                godot_method_attributes attr = {
-                        .rpc_type = GODOT_METHOD_RPC_MODE_DISABLED
-                };
+		godot_method_attributes attr = {
+			.rpc_type = GODOT_METHOD_RPC_MODE_DISABLED
+		};
 
-                godot_nativescript_register_method(desc, "SimpleClass", "_ready", attr, method);
-        }
+		godot_nativescript_register_method(desc, "SimpleClass", "_ready", attr, method);
+	}
 }
 
 godot_variant GDN_EXPORT some_test_procedure(void *data, godot_array *args) {
-        godot_variant ret;
-        godot_variant_new_int(&ret, 42);
+	godot_variant ret;
+	godot_variant_new_int(&ret, 42);
 
-        godot_string s;
-        godot_string_new_unicode_data(&s, L"Hello World", 11);
-        godot_print(&s);
+	godot_string s;
+	godot_string_new_with_wide_string(&s, L"Hello World", 11);
+	godot_print(&s);
 
-        godot_string_destroy(&s);
+	godot_string_destroy(&s);
 
-        return ret;
+	return ret;
 }
 ```
 
 </details>
 
-`Expand details for example code.`
+Expand *Details* for example code.
 
 ### Compile Library
 
 On Linux:
 
 ```bash
-clang -g -fPIC -std=c99 -c src/test.c -I/path/to/godot/headers/ -o src/test.os
+clang -g -fPIC -c src/test.c -I/path/to/godot/headers/ -o src/test.os
 clang -g -shared src/test.os -o lib/test.so
 ```
 
 On MacOS:
 
 ```bash
-clang -g -fPIC -std=c99 -c src/test.c -I/path/to/godot/headers/ -o src/test.os
+clang -g -fPIC -c src/test.c -I/path/to/godot/headers/ -o src/test.os
 clang -g -shared -framework Cocoa -Wl,-undefined,dynamic_lookup src/test.os -o lib/test.dylib
 ```
 
@@ -158,9 +173,9 @@ clang -g -shared -framework Cocoa -Wl,-undefined,dynamic_lookup src/test.os -o l
 The GDNativeLibrary resource contains links to the libraries for each platform.
 
 1. Create a new resource in memory and edit it.
-1. Select `Resource > GDNativeLibrary`.
-1. Set the library file for your platform inside the inspector.
-1. Save the edited resource as a `.tres`
+2. Select `Resource > GDNativeLibrary`.
+3. Set the library file for your platform inside the inspector.
+4. Save the edited resource as a `.tres`
 
 <details>
 
@@ -174,7 +189,7 @@ The GDNativeLibrary resource contains links to the libraries for each platform.
 
 </details>
 
-`Expand details for screenshots.`
+Expand *Details* for screenshots.
 
 ### Using GDNativeLibrary in GDScript
 
@@ -182,25 +197,25 @@ The GDNativeLibrary resource contains links to the libraries for each platform.
 extends Node
 
 func _ready():
-        var gdn = GDNative.new()
-        gdn.library = load("res://lib/libtest.tres")
+	var gdn = GDNative.new()
+	gdn.library = load("res://lib/libtest.tres")
 
-        gdn.initialize()
+	gdn.initialize()
 
-        var res = gdn.call_native("standard_varcall", "some_test_procedure", [])
+	var res = gdn.call_native("standard_varcall", "some_test_procedure", [])
 
-        print("result: ", res)
+	print("result: ", res)
 
-        gdn.terminate()
+	gdn.terminate()
 ```
 
 ### Attaching GDNativeLibrary to a Node
 
 1. Attach a new script to a node.
-1. In the pop-up dialog, choose NativeScript in the `Language` menu.
-1. Enable built-in script, or create a `.gdn` file, which only contains a name.
-1. Specify the `Class Name`.
-1. Press `Create`.
+2. In the pop-up dialog, choose NativeScript in the `Language` menu.
+3. Enable built-in script, or create a `.gdn` file, which only contains a name.
+4. Specify the `Class Name`.
+5. Press `Create`.
 
 The GDNativeLibrary field in a NativeScript is empty by default.
 
@@ -213,7 +228,7 @@ The GDNativeLibrary field in a NativeScript is empty by default.
 
 </details>
 
-`Expand details for screenshots.`
+Expand *Details* for screenshots.
 
 ## FAQ
 
@@ -227,8 +242,8 @@ use of GDNative to implement scripts backed by native code.
 
 **Which languages are binding as a NativeScript?**
 
-[**C++**](https://github.com/GodotNativeTools/cpp_bindings),
-[**D**](https://github.com/GodotNativeTools/d_bindings),
+[**C++**](https://github.com/godotengine/godot-cpp),
+[**D**](https://github.com/godot-d/godot-d),
 [**Nim**](https://github.com/pragmagic/godot-nim)
 
 **Can you debug NativeScripts?**
@@ -243,5 +258,25 @@ You can! ✨
 **What is the reason behind the name "GDNative"?**
 
 GDNative was originally named "cscript" because it exposes a C API, but people
-mistook a relation to C#, which is sometimes abbreviated as "cs". Then named "DLScript", but that brought up some confusion, so we settled with
-GDNative. 📖
+mistook a relation to C#, which is sometimes abbreviated as "cs". Then named
+"DLScript", but that brought up some confusion, so we settled with GDNative. 📖
+
+## Updating Headers
+
+See [**Versioning**](#versioning) for details on the Godot versions tracked by
+each branch of this repository.
+
+If the relevant branch is not up-to-date for your needs, or if you want to sync
+the headers with your own modified version of Godot, here is the update
+procedure used to sync this repository with upstream releases:
+
+- Compile [Godot Engine](https://github.com/godotengine/godot) at the specific
+  version/commit which you are using.
+- Use the compiled executable to generate the `api.json` file with:
+  `godot --gdnative-generate-json-api api.json`
+- Copy the file `modules/gdnative/gdnative_api.json` to this repository.
+- Copy the files and folders from `modules/gdnative/include` to this repository,
+  overwriting existing content. (To be sure to be in sync, you can delete the
+  folders of this repository first, then copy the upstream folders in place.)
+  Make sure that you compiled the correct Godot version so that the generated
+  `gdnative_api_struct.gen.h` is up-to-date.

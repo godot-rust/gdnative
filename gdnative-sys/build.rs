@@ -449,6 +449,7 @@ mod api_wrapper {
             ("ANDROID", 1, 0) => format_ident!("godot_gdnative_ext_android_api_struct"),
             ("ANDROID", 1, 1) => format_ident!("godot_gdnative_ext_android_api_struct"),
             ("ARVR", 1, 1) => format_ident!("godot_gdnative_ext_arvr_api_struct"),
+            ("ARVR", 1, 2) => format_ident!("godot_gdnative_ext_arvr_1_2_api_struct"),
             ("VIDEODECODER", 0, 1) => format_ident!("godot_gdnative_ext_videodecoder_api_struct"),
             ("NET", 3, 1) => format_ident!("godot_gdnative_ext_net_api_struct"),
             ("NET", maj, min) => format_ident!("godot_gdnative_ext_net_{}_{}_api_struct", maj, min),
