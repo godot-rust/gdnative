@@ -643,7 +643,6 @@ impl fmt::Debug for Variant {
 godot_test!(
     test_variant_nil {
         let nil = Variant::nil();
-        assert_eq!(nil.get_type(), VariantType::Nil);
         assert!(nil.is_nil());
 
         assert!(nil.try_to::<VariantArray>().is_err());
@@ -1041,7 +1040,14 @@ impl ToVariantEq for () {}
 impl FromVariant for () {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        variant.try_as_sys_of_type(VariantType::Nil).map(|_| ())
+        if variant.is_nil() {
+            return Ok(());
+        }
+
+        Err(FromVariantError::InvalidVariantType {
+            variant_type: variant.get_type(),
+            expected: VariantType::Nil,
+        })
     }
 }
 
@@ -1440,9 +1446,14 @@ impl<T> ToVariantEq for std::marker::PhantomData<T> {}
 impl<T> FromVariant for std::marker::PhantomData<T> {
     #[inline]
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
-        variant
-            .try_as_sys_of_type(VariantType::Nil)
-            .map(|_| std::marker::PhantomData)
+        if variant.is_nil() {
+            return Ok(std::marker::PhantomData);
+        }
+
+        Err(FromVariantError::InvalidVariantType {
+            variant_type: variant.get_type(),
+            expected: VariantType::Nil,
+        })
     }
 }
 
