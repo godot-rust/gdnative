@@ -104,6 +104,7 @@ godot_itest! {
         // Should not panic due to conversion failure
         let option = node.get_node("does not exist");
         assert!(option.is_none());
+        node.free();
     }
 }
 
