@@ -2,7 +2,7 @@
 
 use std::mem;
 
-use crate::core_types::{FromVariant, ToVariant, Variant};
+use crate::core_types::Variant;
 use crate::export::{class_registry, NativeClass};
 
 use super::accessor::{RawGetter, RawSetter};
@@ -78,7 +78,7 @@ extern "C" fn invalid_free_func(data: *mut libc::c_void) {
     mem::drop(data)
 }
 
-unsafe impl<'l, C: NativeClass, T: FromVariant> RawSetter<C, T> for InvalidSetter<'l> {
+unsafe impl<'l, C: NativeClass, T> RawSetter<C, T> for InvalidSetter<'l> {
     #[inline]
     unsafe fn into_godot_function(self) -> sys::godot_property_set_func {
         let mut set = sys::godot_property_set_func::default();
@@ -95,7 +95,7 @@ unsafe impl<'l, C: NativeClass, T: FromVariant> RawSetter<C, T> for InvalidSette
     }
 }
 
-unsafe impl<'l, C: NativeClass, T: ToVariant> RawGetter<C, T> for InvalidGetter<'l> {
+unsafe impl<'l, C: NativeClass, T> RawGetter<C, T> for InvalidGetter<'l> {
     #[inline]
     unsafe fn into_godot_function(self) -> sys::godot_property_get_func {
         let mut get = sys::godot_property_get_func::default();
