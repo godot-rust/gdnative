@@ -8,6 +8,11 @@ use crate::core_types::{Color, GodotString, VariantArray, Vector2, Vector3};
 use crate::object::NewRef;
 use crate::private::get_api;
 
+#[cfg(feature = "gd-test")]
+mod godot_tests;
+#[cfg(feature = "gd-test")]
+pub use godot_tests::*;
+
 /// A RAII read access for Godot pool arrays.
 pub type Read<'a, T> = Aligned<ReadGuard<'a, T>>;
 
@@ -68,15 +73,14 @@ impl<T: PoolElement> PoolArray<T> {
     ///
     /// For example:
     /// ```no_run
-    /// // Int32Array is a type alias for PoolArray<i32>
-    /// use gdnative::core_types::Int32Array;
+    /// use gdnative::core_types::PoolArray;
     ///
     /// // Collect from range
-    /// let arr = (0..4).collect::<Int32Array>();
+    /// let arr = (0i32..4).collect::<PoolArray<_>>();
     ///
     /// // Type conversion
     /// let vec: Vec<u32> = vec![1, 1, 2, 3, 5]; // note: unsigned
-    /// let arr = vec.iter().map(|&e| e as i32).collect::<Int32Array>();
+    /// let arr = vec.iter().map(|&e| e as i32).collect::<PoolArray<_>>();
     /// ```
     #[inline]
     pub fn from_vec(mut src: Vec<T>) -> Self {

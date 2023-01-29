@@ -43,13 +43,13 @@ struct Foo {
     path: NodePath,
     // dict: Dictionary, //TODO(#990): PartialEq
     // v_arr: VariantArray, //TODO(#990): PartialEq
-    byte_arr: ByteArray,
-    int_arr: Int32Array,
-    float_arr: Float32Array,
-    str_arr: StringArray,
-    vec2_arr: Vector2Array,
-    vec3_arr: Vector3Array,
-    color_arr: ColorArray,
+    byte_arr: PoolArray<u8>,
+    int_arr: PoolArray<i32>,
+    float_arr: PoolArray<f32>,
+    str_arr: PoolArray<GodotString>,
+    vec2_arr: PoolArray<Vector2>,
+    vec3_arr: PoolArray<Vector3>,
+    color_arr: PoolArray<Color>,
 }
 
 impl Foo {
@@ -88,11 +88,11 @@ impl Foo {
             },
             color: Color::from_rgb(0.549, 0.0, 1.0),
             path: "/root/Node".into(),
-            byte_arr: ByteArray::from_slice(&[30u8, 31u8, 32u8]),
-            int_arr: Int32Array::from_slice(&[33i32, 34i32, 35i32, 36i32]),
-            float_arr: Float32Array::from_slice(&[37.38, 39.40]),
-            str_arr: StringArray::from_vec(vec!["hello".into(), "world".into()]),
-            vec2_arr: Vector2Array::from_slice(&[
+            byte_arr: PoolArray::from_slice(&[30u8, 31u8, 32u8]),
+            int_arr: PoolArray::from_slice(&[33i32, 34i32, 35i32, 36i32]),
+            float_arr: PoolArray::from_slice(&[37.38, 39.40]),
+            str_arr: PoolArray::from_vec(vec!["hello".into(), "world".into()]),
+            vec2_arr: PoolArray::from_slice(&[
                 Vector2::UP,
                 Vector2::UP,
                 Vector2::DOWN,
@@ -102,12 +102,12 @@ impl Foo {
                 Vector2::LEFT,
                 Vector2::RIGHT,
             ]),
-            vec3_arr: Vector3Array::from_slice(&[
+            vec3_arr: PoolArray::from_slice(&[
                 Vector3::ONE * 41.0,
                 Vector3::BACK * 42.43,
                 Vector3::FORWARD * 44.45,
             ]),
-            color_arr: ColorArray::from_slice(&[Color::from_rgba(0.0, 1.0, 0.627, 0.8)]),
+            color_arr: PoolArray::from_slice(&[Color::from_rgba(0.0, 1.0, 0.627, 0.8)]),
         }
     }
 }

@@ -8,45 +8,31 @@
 mod geom;
 
 mod access;
-mod byte_array;
 mod color;
-mod color_array;
 mod dictionary;
 mod error;
-mod float32_array;
-mod int32_array;
 mod node_path;
 mod pool_array;
 mod rid;
 mod string;
-mod string_array;
 mod variant;
 mod variant_array;
 mod vector2;
-mod vector2_array;
 mod vector3;
-mod vector3_array;
 
 pub use access::*;
-pub use byte_array::*;
 pub use color::*;
-pub use color_array::*;
 pub use dictionary::*;
 pub use error::{GodotError, GodotResult};
-pub use float32_array::*;
 pub use geom::*;
-pub use int32_array::*;
 pub use node_path::*;
 pub use pool_array::*;
 pub use rid::*;
 pub use string::*;
-pub use string_array::*;
 pub use variant::*;
 pub use variant_array::*;
 pub use vector2::*;
-pub use vector2_array::*;
 pub use vector3::*;
-pub use vector3_array::*;
 
 use approx::relative_eq;
 

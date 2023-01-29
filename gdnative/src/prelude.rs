@@ -9,10 +9,6 @@ pub use gdnative_core::core_types::{
     Rect2, Rid, StringName, Transform, Transform2D, Variant, VariantArray, VariantDispatch,
     VariantOperator, VariantType, Vector2, Vector3,
 };
-#[allow(deprecated)]
-pub use gdnative_core::core_types::{
-    ByteArray, ColorArray, Float32Array, Int32Array, StringArray, Vector2Array, Vector3Array,
-};
 pub use gdnative_core::core_types::{
     FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq,
 };

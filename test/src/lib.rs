@@ -54,19 +54,12 @@ pub extern "C" fn run_tests(
     status &= gdnative::core_types::test_variant_dispatch();
 
     status &= gdnative::core_types::test_byte_array_access();
-    status &= gdnative::core_types::test_byte_array_debug();
     status &= gdnative::core_types::test_int32_array_access();
-    status &= gdnative::core_types::test_int32_array_debug();
     status &= gdnative::core_types::test_float32_array_access();
-    status &= gdnative::core_types::test_float32_array_debug();
     status &= gdnative::core_types::test_color_array_access();
-    status &= gdnative::core_types::test_color_array_debug();
     status &= gdnative::core_types::test_string_array_access();
-    status &= gdnative::core_types::test_string_array_debug();
     status &= gdnative::core_types::test_vector2_array_access();
-    status &= gdnative::core_types::test_vector2_array_debug();
     status &= gdnative::core_types::test_vector3_array_access();
-    status &= gdnative::core_types::test_vector3_array_debug();
     status &= gdnative::core_types::test_transform2d_behavior();
 
     status &= test_from_instance_id();
