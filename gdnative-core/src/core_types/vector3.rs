@@ -15,7 +15,10 @@ pub struct Vector3 {
     pub z: f32,
 }
 
-#[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
+#[allow(
+    clippy::unnecessary_cast, // False positives: casts necessary for cross-platform
+    clippy::exhaustive_enums, // explicitly exhaustive since there can't be more axes for Vector3
+)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Axis {

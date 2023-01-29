@@ -179,6 +179,12 @@ unsafe fn report_init_error(
                 f((*options).gd_native_library, message.as_ptr());
             }
         }
+        _ => {
+            if let Some(f) = (*options).report_loading_error {
+                let message = CString::new(format!("{error:?}")).unwrap();
+                f((*options).gd_native_library, message.as_ptr());
+            }
+        }
     }
 }
 

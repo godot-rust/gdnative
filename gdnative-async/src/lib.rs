@@ -6,6 +6,8 @@
 //!
 //! This crate assumes that all user non-Rust code follow the official threading guidelines.
 
+#![warn(clippy::exhaustive_enums)]
+
 // Workaround for macros that expect the `gdnative` crate.
 extern crate gdnative_core as gdnative;
 

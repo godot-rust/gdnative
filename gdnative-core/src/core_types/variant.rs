@@ -81,6 +81,7 @@ macro_rules! decl_variant_type {
     ) => {
         #[repr(u32)]
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+        #[non_exhaustive]
         pub enum VariantType {
             $(
                 $variant = $c_const as u32,
@@ -99,6 +100,7 @@ macro_rules! decl_variant_type {
         /// For `Variant`s containing objects, the original `Variant` is returned unchanged, due to
         /// the limitations of statically-determined memory management.
         #[repr(u32)]
+        #[non_exhaustive]
         pub enum VariantDispatch {
             $(
                 $variant $( ($inner) )?,
@@ -186,6 +188,7 @@ impl VariantType {
 #[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum CallError {
     InvalidMethod =
         sys::godot_variant_call_error_error_GODOT_CALL_ERROR_CALL_ERROR_INVALID_METHOD as u32,
@@ -236,6 +239,7 @@ impl std::error::Error for CallError {}
 #[allow(clippy::unnecessary_cast)] // False positives: casts necessary for cross-platform
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum VariantOperator {
     // Comparison
     Equal = sys::godot_variant_operator_GODOT_VARIANT_OP_EQUAL as u32,
@@ -856,6 +860,7 @@ pub trait CoerceFromVariant: Sized + private::Sealed {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 /// Error type returned by `FromVariant::from_variant`.
 pub enum FromVariantError {
     /// An unspecified error.
@@ -924,11 +929,13 @@ pub enum FromVariantError {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[non_exhaustive]
 pub enum VariantEnumRepr {
     ExternallyTagged,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[non_exhaustive]
 pub enum VariantStructRepr {
     Unit,
     Tuple,

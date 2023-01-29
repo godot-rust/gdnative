@@ -97,6 +97,7 @@ type ScriptMethodFn = unsafe extern "C" fn(
 ) -> sys::godot_variant;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[non_exhaustive]
 pub enum RpcMode {
     Disabled,
     Remote,
@@ -483,6 +484,7 @@ varargs_into_tuple!(A, B, C, D, E, F, G, H, I, J, K, L);
 /// For methods that return this error, see [`Varargs::check_length()`], [`Varargs::get()`] or [`Varargs::get_opt()`].
 /// Another context where this type is used is when destructuring `Varargs` into tuples.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum VarargsError {
     /// At least one argument type mismatches.
     InvalidArgumentType {

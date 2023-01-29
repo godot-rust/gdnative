@@ -165,6 +165,7 @@ pub type DefaultUserData<T> = LocalCellData<T>;
 
 /// Error type indicating that an operation can't fail.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[allow(clippy::exhaustive_enums)] // explicitly uninhabited
 pub enum Infallible {}
 
 impl std::fmt::Display for Infallible {
@@ -186,6 +187,7 @@ impl std::fmt::Display for Infallible {
 /// As there is no universal way to deal with such situations, behavior of locking wrappers can
 /// be customized using this enum.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[non_exhaustive]
 pub enum DeadlockPolicy {
     /// Block on all locks. Deadlocks are possible.
     Allow,
@@ -223,6 +225,7 @@ impl LockOptions for DefaultLockPolicy {
 
 /// Error indicating that a lock wasn't obtained.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[non_exhaustive]
 pub enum LockFailed {
     Pessimistic,
     Timeout(Duration),
@@ -562,6 +565,7 @@ mod local_cell {
 
     /// Error indicating that a borrow has failed.
     #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    #[non_exhaustive]
     pub enum LocalCellError {
         DifferentThread {
             original: ThreadId,

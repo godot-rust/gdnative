@@ -5,6 +5,7 @@ use crate::sys;
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(u32)]
+#[non_exhaustive]
 pub enum GodotError {
     Failed = sys::godot_error_GODOT_FAILED as u32,
     Unavailable = sys::godot_error_GODOT_ERR_UNAVAILABLE as u32,

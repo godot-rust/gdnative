@@ -390,6 +390,7 @@ pub struct GodotChar(libc::wchar_t);
 
 /// Error indicating that a `GodotChar` cannot be converted to a `char`.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum GodotCharError {
     /// The character cannot be represented as a Unicode code point.
     InvalidCodePoint,

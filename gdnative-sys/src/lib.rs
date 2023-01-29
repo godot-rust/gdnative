@@ -1,5 +1,6 @@
 // For silenced lints/warnings, see also gdnative-bindings/src/lib.rs
 
+#![warn(clippy::exhaustive_enums)]
 // Notes:
 // * deref_nullptr: since rustc 1.53, bindgen causes UB warnings -- see https://github.com/rust-lang/rust-bindgen/issues/1651
 //   remove this once bindgen has fixed the issue (currently at version 1.59.1)
@@ -15,6 +16,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 include!(concat!(env!("OUT_DIR"), "/api_wrapper.rs"));
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum InitError {
     VersionMismatch {
         api_type: GDNATIVE_API_TYPES,

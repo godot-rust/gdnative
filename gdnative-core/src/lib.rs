@@ -19,7 +19,7 @@
 //!
 //! [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
 
-#![deny(clippy::missing_inline_in_public_items)]
+#![warn(clippy::missing_inline_in_public_items, clippy::exhaustive_enums)]
 #![allow(
     clippy::transmute_ptr_to_ptr,
     clippy::missing_safety_doc,
