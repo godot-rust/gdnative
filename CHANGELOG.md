@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.3] - 2023-01-30
+
+This is a backwards-compatible release; thus no removals or breaking changes.
+
+### Added
+
+- RPC modes are now supported for properties: `#[property(rpc = "mode")]`. (#1006)
+
+### Changed
+
+- Specialized pool array aliases such as `PoolByteArray` are now deprecated and will be removed in the next version. Use `PoolArray<u8>` instead. (#1007)
+
+### Fixed
+
+- Types with one-way conversions can now be exposed through the `#[property]` attribute. (#1013)
+- `FromVariant` for marker types should no longer fail in the fringe case where null object variants are explicitly used. (#1012)
+
 ## [0.11.2] - 2023-01-09
 
 This is a hot-fix release for a high priority issue.
