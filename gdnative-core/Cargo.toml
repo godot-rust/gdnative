@@ -5,7 +5,7 @@ description = "The Godot game engine's gdnative core bindings."
 documentation = "https://docs.rs/crate/gdnative-core"
 repository = "https://github.com/godot-rust/godot-rust"
 homepage = "https://godot-rust.github.io/"
-version = "0.11.2"
+version = "0.11.3"
 license = "MIT"
 workspace = ".."
 edition = "2021"
@@ -17,9 +17,9 @@ gd-test = []
 type-tag-fallback = []
 
 [dependencies]
-gdnative-sys = { path = "../gdnative-sys", version = "=0.11.2" }
-gdnative-derive = { path = "../gdnative-derive", version = "=0.11.2" }
-gdnative-impl-proc-macros = { path = "../impl/proc-macros", version = "=0.11.2" }
+gdnative-sys = { path = "../gdnative-sys", version = "=0.11.3" }
+gdnative-derive = { path = "../gdnative-derive", version = "=0.11.3" }
+gdnative-impl-proc-macros = { path = "../impl/proc-macros", version = "=0.11.3" }
 ahash = "0.8"
 approx = "0.5"
 atomic-take = "1"
