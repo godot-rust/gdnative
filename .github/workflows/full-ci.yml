@@ -74,7 +74,7 @@ jobs:
           rust: ${{ matrix.rust.toolchain }}
           components: clippy
       - name: "Check clippy"
-        run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented
+        run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented -D warnings
 
   cargo-deny-machete:
     runs-on: ubuntu-latest
