@@ -62,8 +62,8 @@ function findGodot() {
     fi
 }
 
-features="gdnative/async,gdnative/serde,gdnative/inventory"
-itest_toggled_features="no-manual-register"
+features="gdnative/async,gdnative/serde"
+itest_toggled_features="gdnative/inventory,no-manual-register"
 cmds=()
 
 for arg in "${args[@]}"; do
