@@ -12,13 +12,13 @@ library = ExtResource( 1 )
 
 [node name="PropertyExport" type="Node" parent="."]
 script = SubResource( 1 )
-name_vec = [ "Godot", "Godette", "Go ." ]
+name_vec = PoolStringArray("Godot", "Godette", "Go .")
 color_map = {
 "blue": Color( 0.184314, 0.160784, 0.8, 1 ),
 "green": Color( 0.0941176, 0.447059, 0.192157, 1 ),
 "teal": Color( 0.0941176, 0.423529, 0.564706, 1 )
 }
-id_set = [ 21, 77, 8, 90 ]
+id_set = PoolIntArray(21, 77, 8, 90)
 
 [node name="GDScriptPrinter" type="Node" parent="."]
 script = ExtResource( 2 )

@@ -4,9 +4,11 @@
 use crate::object::bounds::MemorySpec;
 
 /// Marker that indicates that a type is manually managed.
+#[allow(clippy::exhaustive_enums)] // explicitly uninhabited
 pub enum ManuallyManaged {}
 
 /// Marker that indicates that a type is reference-counted.
+#[allow(clippy::exhaustive_enums)] // explicitly uninhabited
 pub enum RefCounted {}
 
 /// Trait to parameterize over the memory management markers [`ManuallyManaged`] and [`RefCounted`].

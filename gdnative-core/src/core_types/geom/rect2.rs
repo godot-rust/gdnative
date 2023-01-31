@@ -267,6 +267,7 @@ pub struct MarginError(i64);
 ///
 /// [margin]: https://docs.godotengine.org/en/stable/classes/class_%40globalscope.html#enum-globalscope-margin
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum Margin {
     Left,
     Top,

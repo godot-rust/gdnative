@@ -145,6 +145,7 @@ impl EnumHint {
 
 /// Possible hints for integers.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum IntHint<T> {
     /// Hints that an integer or float property should be within a range.
     Range(RangeHint<T>),
@@ -260,6 +261,7 @@ impl ExpEasingHint {
 
 /// Possible hints for floats.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum FloatHint<T> {
     /// Hints that an integer or float property should be within a range.
     Range(RangeHint<T>),
@@ -325,6 +327,7 @@ impl<T> From<ExpEasingHint> for FloatHint<T> {
 
 /// Possible hints for strings.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum StringHint {
     /// Hints that an integer, float or string property is an enumerated value to pick in a list.
     Enum(EnumHint),
@@ -373,6 +376,7 @@ impl StringHint {
 
 /// Possible hints for `Color`.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum ColorHint {
     /// Hints that a color property should be edited without changing its alpha component.
     NoAlpha,

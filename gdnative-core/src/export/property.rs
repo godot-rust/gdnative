@@ -23,6 +23,38 @@ mod invalid_accessor;
 pub mod hint;
 
 /// Trait for exportable types.
+///
+/// ## Rust collections
+///
+/// `Export` is intentionally unimplemented for standard Rust collections, such as [`Vec`] or
+/// [`HashMap`][std::collections::HashMap]. The reason is that such types exhibit surprising
+/// behavior when used from GDScript, due to how [`ToVariant`]/[`FromVariant`] conversions work
+/// for these types.
+///
+/// Godot has no concept of Rust collections, and cannot operate on them. Whenever a standard
+/// collection is converted to [`Variant`] via [`ToVariant`], what actually happens is that:
+///
+/// - First, a new Godot collection of the corresponding "kind" is allocated.
+/// - Then, the Rust collection is iterated over, and each element is converted and inserted into
+///   the new collection, possibly triggering many more allocations in the process.
+///
+/// With properties, this whole process happens anew *with each access to the property*, which
+/// means that:
+///
+/// - Modifying such properties from the remote debugger, or calling methods on the property
+///   directly from GDScript (e.g. `thing.exported_vec.append("foo")`) do not produce the desired
+///   behavior by the user.
+/// - Seemingly innocuous expressions such as
+///   `thing.exported_vec[0] + thing.exported_vec[1] + thing.exported_vec[2]` can be much more
+///   expensive computationally than what the user would expect.
+///
+/// As such, we do not allow these types to be exported as properties directly as a precaution.
+/// If you wish to export collections to GDScript, consider the following options:
+///
+/// - Exporting a [`Variant`] collection such as [`VariantArray`] or [`Dictionary`] explicitly,
+///   embracing their respective semantics.
+/// - Exporting not a property, but methods that have to be explicitly called, to set clear
+///   expectations that the return value might be expensive to produce.
 pub trait Export: crate::core_types::ToVariant {
     /// A type-specific hint type that is valid for the type being exported.
     ///
@@ -455,8 +487,6 @@ pub struct Property<T> {
 }
 
 mod impl_export {
-    use std::collections::{HashMap, HashSet};
-
     use super::*;
 
     /// Hint type indicating that there are no hints available for the time being.
@@ -613,43 +643,6 @@ mod impl_export {
         #[inline]
         fn export_info(hint: Option<Self::Hint>) -> ExportInfo {
             hint.unwrap_or_default().export_info()
-        }
-    }
-
-    impl<K, V> Export for HashMap<K, V>
-    where
-        K: std::hash::Hash + ToVariantEq + ToVariant,
-        V: ToVariant,
-    {
-        type Hint = NoHint;
-
-        #[inline]
-        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
-            ExportInfo::new(VariantType::Dictionary)
-        }
-    }
-
-    impl<T> Export for HashSet<T>
-    where
-        T: ToVariant,
-    {
-        type Hint = NoHint;
-
-        #[inline]
-        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
-            ExportInfo::new(VariantType::VariantArray)
-        }
-    }
-
-    impl<T> Export for Vec<T>
-    where
-        T: ToVariant,
-    {
-        type Hint = NoHint;
-
-        #[inline]
-        fn export_info(_hint: Option<Self::Hint>) -> ExportInfo {
-            ExportInfo::new(VariantType::VariantArray)
         }
     }
 }
