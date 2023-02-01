@@ -3,9 +3,12 @@ use gdnative::prelude::*;
 mod client;
 mod server;
 
-fn init(handle: InitHandle) {
-    handle.add_class::<client::ServerPuppet>();
-    handle.add_class::<server::Server>();
-}
+struct RpcLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for RpcLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<client::ServerPuppet>();
+        handle.add_class::<server::Server>();
+    }
+}

@@ -240,16 +240,25 @@ godot_itest! { test_from_instance_id {
     assert!(unsafe { Reference::try_from_instance_id(instance_id).is_none() });
 }}
 
-#[cfg(not(feature = "no-manual-register"))]
-fn init(handle: InitHandle) {
-    handle.add_class::<Foo>();
-    handle.add_class::<OptionalArgs>();
-    delegate_init(handle);
-}
+struct TestLibrary;
 
-#[cfg(feature = "no-manual-register")]
-fn init(handle: InitHandle) {
-    delegate_init(handle);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for TestLibrary {
+    #[cfg(not(feature = "no-manual-register"))]
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<Foo>();
+        handle.add_class::<OptionalArgs>();
+        delegate_init(handle);
+    }
+
+    #[cfg(feature = "no-manual-register")]
+    fn nativescript_init(handle: InitHandle) {
+        delegate_init(handle);
+    }
+
+    fn gdnative_terminate(_info: gdnative::init::TerminateInfo) {
+        gdnative::tasks::terminate_runtime();
+    }
 }
 
 fn delegate_init(handle: InitHandle) {
@@ -267,11 +276,3 @@ fn delegate_init(handle: InitHandle) {
     test_variant_call_args::register(handle);
     test_variant_ops::register(handle);
 }
-
-fn terminate(_term_info: &gdnative::init::TerminateInfo) {
-    gdnative::tasks::terminate_runtime();
-}
-
-gdnative::init::godot_gdnative_init!();
-gdnative::init::godot_nativescript_init!(init);
-gdnative::init::godot_gdnative_terminate!(terminate);

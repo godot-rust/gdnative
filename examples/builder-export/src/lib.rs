@@ -57,8 +57,11 @@ impl ExportsArrays {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<ExportsArrays>();
-}
+struct BuilderExportLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for BuilderExportLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<ExportsArrays>();
+    }
+}

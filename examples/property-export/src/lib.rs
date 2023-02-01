@@ -41,8 +41,11 @@ impl PropertyExport {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<PropertyExport>();
-}
+struct PropertyExportLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for PropertyExportLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<PropertyExport>();
+    }
+}

@@ -46,9 +46,12 @@ impl Greeter {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<Greeter>();
-    handle.add_class::<GreetingResource>();
-}
+struct ResourceLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for ResourceLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<Greeter>();
+        handle.add_class::<GreetingResource>();
+    }
+}
