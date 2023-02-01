@@ -17,7 +17,7 @@ rust-version = "1.63"
 # Public
 default = []
 async = ["gdnative-async"]
-custom-godot = ["gdnative-bindings/custom-godot"]
+custom-godot = ["gdnative-bindings/custom-godot", "gdnative-core/custom-godot"]
 formatted = ["gdnative-bindings/formatted", "gdnative-bindings/one-class-one-file"]
 ptrcall = ["gdnative-bindings/ptrcall"]
 serde = ["gdnative-core/serde"]

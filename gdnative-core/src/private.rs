@@ -35,6 +35,7 @@ pub unsafe fn bind_api(options: *mut sys::godot_gdnative_init_options) -> bool {
     ObjectMethodTable::get(get_api());
     ReferenceMethodTable::get(get_api());
     NativeScriptMethodTable::get(get_api());
+    EngineMethodTable::get(get_api());
 
     true
 }
@@ -325,4 +326,9 @@ make_method_table!(struct NativeScriptMethodTable for NativeScript {
     set_class_name,
     set_library,
     new,
+});
+
+// `Engine` is known to the engine as `_Engine`.
+make_method_table!(struct EngineMethodTable for _Engine {
+    get_version_info,
 });

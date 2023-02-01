@@ -15,6 +15,7 @@ rust-version = "1.63"
 default = []
 gd-test = []
 type-tag-fallback = []
+custom-godot = []
 
 [dependencies]
 gdnative-sys = { path = "../gdnative-sys", version = "=0.11.3" }
@@ -26,11 +27,12 @@ atomic-take = "1"
 bitflags = "1"
 glam = "0.22"
 indexmap = "1"
+inventory = { version = "0.3", optional = true }
 libc = "0.2"
 once_cell = "1"
 parking_lot = "0.12"
+semver = "1"
 serde = { version = "1", features = ["derive"], optional = true }
-inventory = { version = "0.3", optional = true }
 
 [dev-dependencies]
 gdnative = { path = "../gdnative" } # for doc-tests
