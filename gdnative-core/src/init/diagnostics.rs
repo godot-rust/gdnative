@@ -5,8 +5,12 @@
 //! any problems were found. This is so that they can be freely improved without compatibility
 //! concerns.
 
+mod godot_version_mismatch;
 mod missing_manual_registration;
 mod missing_suggested_diagnostics;
+
+#[doc(inline)]
+pub use godot_version_mismatch::godot_version_mismatch;
 
 #[doc(inline)]
 pub use missing_manual_registration::missing_manual_registration;
