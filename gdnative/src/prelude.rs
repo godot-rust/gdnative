@@ -16,8 +16,6 @@ pub use gdnative_core::export::{
     ClassBuilder, ExportInfo, Method, MethodBuilder, NativeClass, NativeClassMethods, Property,
     PropertyUsage, SignalBuilder, SignalParam,
 };
-#[allow(deprecated)]
-pub use gdnative_core::godot_init;
 pub use gdnative_core::init::{GDNativeCallbacks, InitHandle};
 pub use gdnative_core::object::{
     memory::{ManuallyManaged, RefCounted},
@@ -26,6 +24,10 @@ pub use gdnative_core::object::{
     TRef,
 };
 pub use gdnative_core::{godot_dbg, godot_error, godot_print, godot_warn};
+#[allow(deprecated)]
+pub use gdnative_core::{
+    godot_gdnative_init, godot_gdnative_terminate, godot_init, godot_nativescript_init,
+};
 pub use gdnative_derive::*;
 
 /// User-data attributes from [`export::user_data`][crate::export::user_data] module.
