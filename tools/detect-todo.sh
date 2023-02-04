@@ -67,7 +67,7 @@ fi
 
 # Actual run
 
-rg -iTh -Tsh --pcre2 "$REGEX"
+rg -iTh -Tsh --pcre2 "$REGEX" "$(pwd)"
 if [[ $? -eq 0 ]]
 then
     echo 'Found TODO comments without issue numbers.'
