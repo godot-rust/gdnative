@@ -16,8 +16,11 @@ impl HelloWorld {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<HelloWorld>();
-}
+struct HelloWorldLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for HelloWorldLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<HelloWorld>();
+    }
+}

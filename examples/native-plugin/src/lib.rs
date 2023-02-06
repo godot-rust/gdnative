@@ -54,9 +54,12 @@ impl MyButton {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_tool_class::<CustomNode>();
-    handle.add_tool_class::<MyButton>();
-}
+struct PluginLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for PluginLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_tool_class::<CustomNode>();
+        handle.add_tool_class::<MyButton>();
+    }
+}

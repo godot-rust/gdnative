@@ -69,8 +69,11 @@ impl RustTest {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<RustTest>();
-}
+struct CubeLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for CubeLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<RustTest>();
+    }
+}

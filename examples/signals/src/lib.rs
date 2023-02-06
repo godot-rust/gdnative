@@ -95,9 +95,12 @@ impl SignalSubscriber {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<SignalEmitter>();
-    handle.add_class::<SignalSubscriber>();
-}
+struct SignalLibrary;
 
-godot_init!(init);
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for SignalLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<SignalEmitter>();
+        handle.add_class::<SignalSubscriber>();
+    }
+}

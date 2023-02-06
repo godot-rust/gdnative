@@ -100,10 +100,6 @@ impl SceneCreate {
     }
 }
 
-fn init(handle: InitHandle) {
-    handle.add_class::<SceneCreate>();
-}
-
 pub fn load_scene(path: &str) -> Option<Ref<PackedScene, ThreadLocal>> {
     let scene = load::<PackedScene>(path)?;
     let scene = unsafe { scene.assume_thread_local() };
@@ -151,4 +147,11 @@ fn update_panel(owner: &Spatial, num_children: i64) {
     }
 }
 
-godot_init!(init);
+struct SceneCreateLibrary;
+
+#[gdnative::init::callbacks]
+impl GDNativeCallbacks for SceneCreateLibrary {
+    fn nativescript_init(handle: InitHandle) {
+        handle.add_class::<SceneCreate>();
+    }
+}
