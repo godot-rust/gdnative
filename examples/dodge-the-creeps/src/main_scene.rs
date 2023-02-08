@@ -95,7 +95,7 @@ impl Main {
         let mob_scene: Ref<RigidBody2D, _> = instance_scene(&self.mob);
 
         let mut rng = rand::thread_rng();
-        let offset = rng.gen_range(std::u32::MIN..std::u32::MAX);
+        let offset = rng.gen_range(u32::MIN..u32::MAX);
 
         mob_spawn_location.set_offset(offset.into());
 
