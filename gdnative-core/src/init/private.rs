@@ -12,6 +12,7 @@ pub unsafe fn gdnative_init<C: GDNativeCallbacks>(
         return;
     }
 
+    crate::private::init_main_thread_id();
     crate::init::diagnostics::godot_version_mismatch();
 
     crate::private::report_panics("gdnative_init", || {

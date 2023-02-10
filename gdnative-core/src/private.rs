@@ -332,3 +332,28 @@ make_method_table!(struct NativeScriptMethodTable for NativeScript {
 make_method_table!(struct EngineMethodTable for _Engine {
     get_version_info,
 });
+
+static MAIN_THREAD_ID: once_cell::sync::OnceCell<std::thread::ThreadId> =
+    once_cell::sync::OnceCell::new();
+
+#[doc(hidden)]
+pub fn init_main_thread_id() {
+    let c = std::thread::current();
+    MAIN_THREAD_ID
+        .set(c.id())
+        .expect("init_main_thread_id() must be called only once");
+}
+
+#[inline]
+pub(crate) fn assert_main_thread() {
+    debug_assert!(
+        {
+            let c = std::thread::current();
+            let id = MAIN_THREAD_ID
+                .get()
+                .expect("init_main_thread_id() must be called at initialization");
+            c.id() == *id
+        },
+        "Calls from Godot to Rust must be within the main thread"
+    )
+}

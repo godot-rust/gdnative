@@ -58,6 +58,7 @@ pub mod init;
 pub mod log;
 pub mod object;
 pub mod profiler;
+pub mod register;
 
 /// Internal low-level API for use by macros and generated bindings. Not a part of the public API.
 #[doc(hidden)]
