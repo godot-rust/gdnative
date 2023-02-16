@@ -289,7 +289,13 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// [exporting](https://docs.godotengine.org/en/stable/tutorials/export/exporting_basics.html) in GDScript.
 ///
 /// A valid function signature must have:
-/// - `self`, `&self` or `&mut self` as its first parameter, if applicable.
+/// - Up to one receiver parameter as the first parameter. This can be one of:
+///     - `self`, `&self` or `&mut self`.
+///     - `self: Instance<Self>` or `self: TInstance<Self>`, when the `arbitrary_self_types` feature
+///       is available. Additionally, `self: Arc<Self>` is allowed when the `user_data` wrapper is
+///       specified to be `ArcData<Self>`.
+///     - `#[self] this: T` where `T` is any of the types mentioned above, as a workaround when
+///       `arbitrary_self_types` is unavailable.
 /// - Up of one of each of the following special arguments, in any order, denoted by the attributes:
 ///     - `#[base]` - A reference to the base/owner object. This may be `&T` or `TRef<T>`m where `T` refers to
 ///       the type declared in `#[inherit(T)]` attribute for the `NativeClass` type.
@@ -306,6 +312,10 @@ pub fn profiled(meta: TokenStream, input: TokenStream) -> TokenStream {
 /// // Associated function
 /// #[method]
 /// fn foo();
+///
+/// // Access `TInstance` instead of a variation of `self`, without `arbitrary_self_types`.
+/// #[method]
+/// fn foo(#[self] this: TInstance<Self>);
 ///
 /// // No access to base parameter
 /// #[method]

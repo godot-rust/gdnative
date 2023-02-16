@@ -1,9 +1,9 @@
 use syn::{
-    spanned::Spanned, visit::Visit, FnArg, Generics, ImplItem, ItemImpl, Meta, NestedMeta, Pat,
-    PatIdent, Signature, Type,
+    spanned::Spanned, visit::Visit, visit_mut::VisitMut, FnArg, Generics, ImplItem, ItemImpl, Meta,
+    NestedMeta, Pat, PatIdent, Signature, Type,
 };
 
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use std::boxed::Box;
 
@@ -56,9 +56,19 @@ impl std::fmt::Display for ArgKind {
 
 impl ArgKind {
     fn strip_parse(arg: &mut FnArg, errors: &mut Vec<syn::Error>) -> (bool, Self) {
-        let (receiver, attrs) = match arg {
+        let (mut receiver, attrs) = match arg {
             FnArg::Receiver(a) => (Some(a.self_token.span), &mut a.attrs),
-            FnArg::Typed(a) => (None, &mut a.attrs),
+            FnArg::Typed(a) => {
+                let mut receiver = None;
+
+                if let syn::Pat::Ident(ident) = &*a.pat {
+                    if ident.ident == "self" {
+                        receiver = Some(ident.span());
+                    }
+                }
+
+                (receiver, &mut a.attrs)
+            }
         };
 
         let mut optional = None;
@@ -68,7 +78,14 @@ impl ArgKind {
         let mut fail = false;
 
         attrs.retain(|attr| {
-            if attr.path.is_ident("opt") {
+            if attr.path.is_ident("self") {
+                if let Some(old_span) = receiver.replace(attr.path.span()) {
+                    fail = true;
+                    optional = Some(old_span);
+                    errors.push(syn::Error::new(attr.path.span(), "duplicate attribute"));
+                }
+                false
+            } else if attr.path.is_ident("opt") {
                 if let Some(old_span) = optional.replace(attr.path.span()) {
                     fail = true;
                     optional = Some(old_span);
@@ -139,10 +156,47 @@ impl ArgKind {
 
 impl ExportMethod {
     fn strip_parse(
+        class_name: &Type,
         sig: &mut Signature,
         export_args: ExportArgs,
         errors: &mut Vec<syn::Error>,
     ) -> Option<Self> {
+        fn sanitize_self_type(ty: &mut Type, class_name: &Type) {
+            struct Visitor<'a> {
+                class_name: &'a Type,
+            }
+
+            impl<'a> VisitMut for Visitor<'a> {
+                fn visit_type_mut(&mut self, i: &mut Type) {
+                    if let syn::Type::Path(ty) = i {
+                        if ty.qself.is_none() {
+                            if let Some(seg) = ty.path.segments.first() {
+                                if seg.ident == "Self" {
+                                    if ty.path.segments.len() > 1 {
+                                        ty.path.segments =
+                                            ty.path.segments.iter().skip(1).cloned().collect();
+                                        ty.qself = Some(syn::QSelf {
+                                            lt_token: Token![<](Span::call_site()),
+                                            ty: Box::new(self.class_name.clone()),
+                                            position: 0,
+                                            as_token: None,
+                                            gt_token: Token![>](Span::call_site()),
+                                        });
+                                    } else {
+                                        *i = self.class_name.clone();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    syn::visit_mut::visit_type_mut(self, i);
+                }
+            }
+
+            Visitor { class_name }.visit_type_mut(ty);
+        }
+
         let mut arg_kind = Vec::new();
         let sig_span = sig.ident.span();
 
@@ -200,9 +254,13 @@ impl ExportMethod {
         let mut regular_argument_seen = None;
         let mut optional_argument_seen = None;
 
-        for (n, arg) in inputs {
+        for (n, mut arg) in inputs {
             let (arg_fail, kind) = ArgKind::strip_parse(arg, errors);
             fail |= arg_fail;
+
+            if let FnArg::Typed(arg) = &mut arg {
+                sanitize_self_type(&mut arg.ty, class_name);
+            }
 
             if let ArgKind::Regular { optional } = &kind {
                 regular_argument_seen.get_or_insert(n);
@@ -244,14 +302,6 @@ impl ExportMethod {
                         )
                     ));
                 }
-            }
-
-            if matches!(kind, ArgKind::Receiver) && !matches!(arg, FnArg::Receiver(_)) {
-                fail = true;
-                errors.push(syn::Error::new(
-                    arg.span(),
-                    "non-self receivers aren't supported yet",
-                ));
             }
 
             if matches!(kind, ArgKind::AsyncCtx) && !is_async {
@@ -669,6 +719,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                 if let Some(export_args) = export_args.take() {
                     methods_to_export.extend(ExportMethod::strip_parse(
+                        &export.class_ty,
                         &mut method.sig,
                         export_args,
                         &mut errors,
@@ -807,7 +858,8 @@ pub(crate) fn expand_godot_wrap_method(
     };
 
     let mut errors = Vec::new();
-    let export_method = ExportMethod::strip_parse(&mut signature, export_args, &mut errors);
+    let export_method =
+        ExportMethod::strip_parse(&class_name, &mut signature, export_args, &mut errors);
 
     if !errors.is_empty() {
         return Err(errors);
@@ -826,6 +878,28 @@ fn wrap_method(
     generics: &Generics,
     export_method: &ExportMethod,
 ) -> Result<TokenStream2, syn::Error> {
+    fn wrap_maybe_receiver(
+        receiver: Option<&Type>,
+        span: Span,
+        body: TokenStream2,
+        err_value: TokenStream2,
+    ) -> TokenStream2 {
+        let gdnative_core = crate::crate_gdnative_core();
+
+        if let Some(receiver) = receiver {
+            quote_spanned! { span =>
+                <#receiver as #gdnative_core::object::Receiver<_>>::with_instance(__this, move |__rust_val| { #body })
+                    .unwrap_or_else(|err| {
+                        #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
+                        #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
+                        #err_value
+                    })
+            }
+        } else {
+            body
+        }
+    }
+
     let ExportMethod {
         sig,
         export_args,
@@ -894,28 +968,38 @@ fn wrap_method(
         .collect::<Vec<_>>();
 
     let is_async = export_args.is_async || sig.asyncness.is_some();
-    let mut map_method = None;
+
+    let mut receiver = None;
+    let mut maybe_extract_base = None;
 
     let invoke_arg_list = arg_kind
         .iter()
         .zip(&sig.inputs)
         .map(|(kind, arg)| match kind {
             ArgKind::Receiver => {
-                if let FnArg::Receiver(receiver) = arg {
-                    map_method = Some(if receiver.reference.is_some() {
-                        if receiver.mutability.is_some() {
-                            syn::Ident::new("map_mut", sig_span)
-                        } else {
-                            syn::Ident::new("map", sig_span)
-                        }
-                    } else {
-                        syn::Ident::new("map_owned", sig_span)
-                    });
-                }
+                receiver = Some(match arg {
+                    FnArg::Receiver(syn::Receiver {
+                        reference: Some(_),
+                        mutability,
+                        ..
+                    }) => parse_quote! {
+                        & #mutability #class_name
+                    },
+                    FnArg::Receiver(syn::Receiver {
+                        reference: None, ..
+                    }) => parse_quote! {
+                        #class_name
+                    },
+                    FnArg::Typed(syn::PatType { ty, .. }) => *ty.clone(),
+                });
 
                 Ok(quote_spanned! { sig_span => __rust_val })
             }
-            ArgKind::Base => Ok(quote_spanned! { sig_span => OwnerArg::from_safe_ref(__base) }),
+            ArgKind::Base => {
+                maybe_extract_base =
+                    Some(quote_spanned! { sig_span => let __base = __this.base(); });
+                Ok(quote_spanned! { sig_span => OwnerArg::from_safe_ref(__base) })
+            }
             ArgKind::AsyncCtx => Ok(quote_spanned! { sig_span => __ctx }),
             ArgKind::Regular { .. } => match arg {
                 FnArg::Receiver(_) => {
@@ -929,8 +1013,6 @@ fn wrap_method(
         })
         .collect::<Result<Vec<_>, syn::Error>>()?;
 
-    let map_method = map_method.unwrap_or_else(|| syn::Ident::new("map", sig_span));
-
     let recover = if export_args.is_deref_return {
         quote_spanned! { ret_span => std::ops::Deref::deref(&ret) }
     } else {
@@ -939,6 +1021,22 @@ fn wrap_method(
 
     let impl_body = if is_async {
         let gdnative_async = crate::crate_gdnative_async();
+
+        let body = wrap_maybe_receiver(
+            receiver.as_ref(),
+            sig_span,
+            quote_spanned! { sig_span =>
+                let Args { #(#destructure_arg_list,)* __generic_marker } = __args;
+
+                #[allow(unused_unsafe)]
+                unsafe {
+                    Some(<#class_name>::#method_name(
+                        #(#invoke_arg_list,)*
+                    ))
+                }
+            },
+            quote_spanned! { sig_span => None },
+        );
 
         quote_spanned! { sig_span =>
             #automatically_derived
@@ -950,22 +1048,8 @@ fn wrap_method(
                     __spawner: #gdnative_async::Spawner::<'_, #class_name, Self::Args>,
                 ) {
                     __spawner.spawn(move |__ctx, __this, __args| {
-                        let __future = __this
-                            .#map_method(move |__rust_val, __base| {
-                                let Args { #(#destructure_arg_list,)* __generic_marker } = __args;
-
-                                #[allow(unused_unsafe)]
-                                unsafe {
-                                    Some(<#class_name>::#method_name(
-                                        #(#invoke_arg_list,)*
-                                    ))
-                                }
-                            })
-                            .unwrap_or_else(|err| {
-                                #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
-                                #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                                None
-                            });
+                        #maybe_extract_base
+                        let __future = #body;
 
                         async move {
                             if let Some(__future) = __future {
@@ -988,6 +1072,21 @@ fn wrap_method(
             }))
         }
     } else {
+        let body = wrap_maybe_receiver(
+            receiver.as_ref(),
+            sig_span,
+            quote_spanned! { sig_span =>
+                #[allow(unused_unsafe)]
+                unsafe {
+                    let ret = <#class_name>::#method_name(
+                        #(#invoke_arg_list,)*
+                    );
+                    #gdnative_core::core_types::OwnedToVariant::owned_to_variant(#recover)
+                }
+            },
+            quote_spanned! { sig_span => #gdnative_core::core_types::Variant::nil() },
+        );
+
         quote_spanned! { sig_span =>
             #automatically_derived
             impl #impl_generics #gdnative_core::export::StaticArgsMethod<#class_name> for ThisMethod #ty_generics #where_clause {
@@ -997,21 +1096,8 @@ fn wrap_method(
                     __this: TInstance<'_, #class_name, #gdnative_core::object::ownership::Shared>,
                     Args { #(#destructure_arg_list,)* __generic_marker }: Self::Args,
                 ) -> #gdnative_core::core_types::Variant {
-                    __this
-                        .#map_method(|__rust_val, __base| {
-                            #[allow(unused_unsafe)]
-                            unsafe {
-                                let ret = <#class_name>::#method_name(
-                                    #(#invoke_arg_list,)*
-                                );
-                                #gdnative_core::core_types::OwnedToVariant::owned_to_variant(#recover)
-                            }
-                        })
-                        .unwrap_or_else(|err| {
-                            #gdnative_core::godot_error!("gdnative-core: method call failed with error: {}", err);
-                            #gdnative_core::godot_error!("gdnative-core: check module level documentation on gdnative::user_data for more information");
-                            #gdnative_core::core_types::Variant::nil()
-                        })
+                    #maybe_extract_base
+                    #body
                 }
 
                 fn site() -> Option<#gdnative_core::log::Site<'static>> {
