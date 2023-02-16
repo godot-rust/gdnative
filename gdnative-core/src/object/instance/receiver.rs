@@ -22,7 +22,7 @@ pub trait Receiver<C: NativeClass>: Sized {
     #[doc(hidden)]
     type This<'a>;
     #[doc(hidden)]
-    type Err: Debug;
+    type Err: std::error::Error;
 
     #[doc(hidden)]
     fn with_instance<F, R>(instance: TInstance<'_, C, Shared>, f: F) -> Result<R, Self::Err>
@@ -35,6 +35,7 @@ pub trait Receiver<C: NativeClass>: Sized {
 #[allow(clippy::exhaustive_enums)] // explicitly uninhabited
 pub enum Infallible {}
 
+impl std::error::Error for Infallible {}
 impl Display for Infallible {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!("uninhabited enum")
