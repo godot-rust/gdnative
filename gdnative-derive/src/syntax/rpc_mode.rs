@@ -1,7 +1,8 @@
 use quote::{quote, ToTokens};
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub enum RpcMode {
+    #[default]
     Disabled,
     Remote,
     RemoteSync,
@@ -23,12 +24,6 @@ impl RpcMode {
             "puppet_sync" => Some(RpcMode::PuppetSync),
             _ => None,
         }
-    }
-}
-
-impl Default for RpcMode {
-    fn default() -> Self {
-        RpcMode::Disabled
     }
 }
 
