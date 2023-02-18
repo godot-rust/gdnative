@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["The godot-rust developers"]
 publish = false
-rust-version = "1.63"
+rust-version = "1.67"
 license = "MIT"
 
 [dependencies]

@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::ptr::NonNull;
 
 use crate::core_types::{
@@ -13,6 +14,9 @@ use crate::object::ownership::{NonUniqueOwnership, Ownership, Shared, ThreadLoca
 use crate::object::{GodotObject, Instanciable, QueueFree, RawObject, Ref, TRef};
 use crate::private::{get_api, ReferenceCountedClassPlaceholder};
 
+mod receiver;
+
+pub use receiver::Receiver;
 /// A persistent reference to a GodotObject with a rust NativeClass attached.
 ///
 /// `Instance`s can be worked on directly using `map` and `map_mut` if the base object is

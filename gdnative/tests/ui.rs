@@ -3,9 +3,10 @@ fn ui_tests() {
     let t = trybuild::TestCases::new();
 
     // NativeClass
+    t.pass("tests/ui/derive_flexible_self_types.rs");
+    t.pass("tests/ui/derive_no_inherit.rs");
     t.pass("tests/ui/derive_pass.rs");
     t.pass("tests/ui/derive_property_basic.rs");
-    t.pass("tests/ui/derive_no_inherit.rs");
     t.compile_fail("tests/ui/derive_fail_inherit_param.rs");
     t.compile_fail("tests/ui/derive_fail_lifetime.rs");
     t.compile_fail("tests/ui/derive_fail_methods_list.rs");

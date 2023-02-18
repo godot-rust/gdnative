@@ -121,7 +121,7 @@ pub unsafe trait UserData: Sized + Clone {
 
 /// Trait for wrappers that can be mapped immutably.
 pub trait Map: UserData {
-    type Err: Debug;
+    type Err: std::error::Error;
 
     /// Maps a `&T` to `U`. Called for methods that take `&self`.
     ///
@@ -134,7 +134,7 @@ pub trait Map: UserData {
 
 /// Trait for wrappers that can be mapped mutably.
 pub trait MapMut: UserData {
-    type Err: Debug;
+    type Err: std::error::Error;
 
     /// Maps a `&mut T` to `U`. Called for methods that take `&mut self`.
     ///
@@ -147,7 +147,7 @@ pub trait MapMut: UserData {
 
 /// Trait for wrappers that can be mapped once.
 pub trait MapOwned: UserData {
-    type Err: Debug;
+    type Err: std::error::Error;
 
     /// Maps a `T` to `U`. Called for methods that take `self`. This method may fail with
     /// an error if it is called more than once on the same object.
@@ -168,10 +168,11 @@ pub type DefaultUserData<T> = LocalCellData<T>;
 #[allow(clippy::exhaustive_enums)] // explicitly uninhabited
 pub enum Infallible {}
 
+impl std::error::Error for Infallible {}
 impl std::fmt::Display for Infallible {
     #[inline]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "operation that can't fail just failed")
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        unreachable!("uninhabited enum")
     }
 }
 
