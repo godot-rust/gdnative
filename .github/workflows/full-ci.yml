@@ -130,7 +130,7 @@ jobs:
           - rust: { toolchain: 'nightly' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
-            rust: { toolchain: '1.63', postfix: ' (msrv 1.63)' }
+            rust: { toolchain: '1.67', postfix: ' (msrv 1.67)' }
             testflags: '-- --skip ui_tests'
           - os: { id: ubuntu-latest, name: linux }
             rust: { toolchain: 'stable', postfix: ' (minimal-deps)', special: 'minimal-deps' }
@@ -298,16 +298,16 @@ jobs:
             godot: "3.5.1-stable"
             postfix: ' (nightly, inventory)'
             build_args: '--features inventory'
-          - rust: '1.63'
+          - rust: '1.67'
             godot: "3.5.1-stable"
-            postfix: ' (msrv 1.63)'
-          - rust: '1.63'
+            postfix: ' (msrv 1.67)'
+          - rust: '1.67'
             godot: "3.5.1-stable"
-            postfix: ' (msrv 1.63, ptrcall)'
+            postfix: ' (msrv 1.67, ptrcall)'
             build_args: '--features ptrcall'
-          - rust: '1.63'
+          - rust: '1.67'
             godot: "3.5.1-stable"
-            postfix: ' (msrv 1.63, inventory)'
+            postfix: ' (msrv 1.67, inventory)'
             build_args: '--features inventory'
 
           # Test with oldest supported engine version
