@@ -25,7 +25,7 @@ ahash = "0.8"
 approx = "0.5"
 atomic-take = "1"
 bitflags = "1"
-glam = "0.22"
+glam = "0.23"
 indexmap = "1"
 inventory = { version = "0.3", optional = true }
 libc = "0.2"
