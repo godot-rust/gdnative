@@ -4,7 +4,7 @@ use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
 
 use gdnative_bindings::{Object, Reference};
-use gdnative_core::core_types::{GodotError, Variant, VariantArray};
+use gdnative_core::core_types::{GodotError, GodotString, Variant, VariantArray};
 use gdnative_core::export::user_data::{ArcData, Map};
 use gdnative_core::export::{ClassBuilder, Method, NativeClass, NativeClassMethods, Varargs};
 use gdnative_core::godot_site;
@@ -58,7 +58,7 @@ impl NativeClass for SignalBridge {
 impl SignalBridge {
     pub(crate) fn connect(
         source: TRef<Object>,
-        signal: &str,
+        signal: GodotString,
         resume: Resume<Vec<Variant>>,
     ) -> Result<(), GodotError> {
         let mut pool = BRIDGES.get_or_init(Mutex::default).lock();

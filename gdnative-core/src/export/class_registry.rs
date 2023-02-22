@@ -1,5 +1,4 @@
 use std::any::TypeId;
-use std::borrow::Cow;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt;
@@ -15,7 +14,7 @@ static CLASS_REGISTRY: Lazy<RwLock<HashMap<TypeId, ClassInfo>>> =
 
 #[derive(Clone, Debug)]
 pub(crate) struct ClassInfo {
-    pub name: Cow<'static, str>,
+    pub name: String,
     pub init_level: InitLevel,
 }
 
@@ -31,7 +30,7 @@ where
 /// Returns the NativeScript name of the class `C` if it is registered.
 /// Can also be used to validate whether or not `C` has been added using `InitHandle::add_class<C>()`
 #[inline]
-pub(crate) fn class_name<C: NativeClass>() -> Option<Cow<'static, str>> {
+pub(crate) fn class_name<C: NativeClass>() -> Option<String> {
     with_class_info::<C, _, _>(|i| i.name.clone())
 }
 
@@ -41,8 +40,8 @@ pub(crate) fn class_name<C: NativeClass>() -> Option<Cow<'static, str>> {
 /// The returned string should only be used for diagnostic purposes, not for types that the user
 /// has to name explicitly. The format is not guaranteed.
 #[inline]
-pub(crate) fn class_name_or_default<C: NativeClass>() -> Cow<'static, str> {
-    class_name::<C>().unwrap_or_else(|| Cow::Borrowed(std::any::type_name::<C>()))
+pub(crate) fn class_name_or_default<C: NativeClass>() -> String {
+    class_name::<C>().unwrap_or_else(|| std::any::type_name::<C>().into())
 }
 
 /// Registers the class `C` in the class registry, using a custom name at the given level.
@@ -51,14 +50,17 @@ pub(crate) fn class_name_or_default<C: NativeClass>() -> Cow<'static, str> {
 /// Returns an error with the old `ClassInfo` if a conflicting entry for `C` was already added.
 #[inline]
 pub(crate) fn register_class_as<C: NativeClass>(
-    name: Cow<'static, str>,
+    name: &str,
     init_level: InitLevel,
 ) -> Result<bool, RegisterError> {
     let type_id = TypeId::of::<C>();
     let mut registry = CLASS_REGISTRY.write();
     match registry.entry(type_id) {
         Entry::Vacant(entry) => {
-            entry.insert(ClassInfo { name, init_level });
+            entry.insert(ClassInfo {
+                name: name.into(),
+                init_level,
+            });
             Ok(true)
         }
         Entry::Occupied(entry) => {
@@ -86,7 +88,7 @@ pub(crate) fn register_class_as<C: NativeClass>(
 
 #[inline]
 #[allow(dead_code)] // Currently unused on platforms with inventory support
-pub(crate) fn types_with_init_level(allow: InitLevel, deny: InitLevel) -> Vec<Cow<'static, str>> {
+pub(crate) fn types_with_init_level(allow: InitLevel, deny: InitLevel) -> Vec<String> {
     let registry = CLASS_REGISTRY.read();
     let mut list = registry
         .values()

@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use func_state::FuncState;
 use gdnative_bindings::Object;
-use gdnative_core::core_types::{GodotError, Variant};
+use gdnative_core::core_types::{GodotError, GodotString, Variant};
 use gdnative_core::init::InitHandle;
 use gdnative_core::object::{Instance, SubClass, TInstance, TRef};
 
@@ -77,13 +77,13 @@ impl Context {
     pub fn signal<C>(
         &self,
         obj: TRef<'_, C>,
-        signal: &str,
+        signal: impl Into<GodotString>,
     ) -> Result<future::Yield<Vec<Variant>>, GodotError>
     where
         C: SubClass<Object>,
     {
         let (future, resume) = future::make();
-        bridge::SignalBridge::connect(obj.upcast(), signal, resume)?;
+        bridge::SignalBridge::connect(obj.upcast(), signal.into(), resume)?;
         Ok(future)
     }
 }
@@ -107,8 +107,8 @@ pub fn register_runtime_with_prefix<S>(handle: &InitHandle, prefix: S)
 where
     S: Display,
 {
-    handle.add_class_as::<bridge::SignalBridge>(format!("{prefix}SignalBridge"));
-    handle.add_class_as::<func_state::FuncState>(format!("{prefix}FuncState"));
+    handle.add_class_as::<bridge::SignalBridge>(&format!("{prefix}SignalBridge"));
+    handle.add_class_as::<func_state::FuncState>(&format!("{prefix}FuncState"));
 }
 
 /// Releases all observers still in use. This should be called in the

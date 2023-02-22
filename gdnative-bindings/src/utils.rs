@@ -18,7 +18,7 @@ use super::generated::{Engine, Node, SceneTree};
 /// invariants must be observed for the resulting node during `'a`, if any.
 ///
 /// [thread-safety]: https://docs.godotengine.org/en/stable/tutorials/threads/thread_safe_apis.html
-pub unsafe fn autoload<'a, T>(name: &str) -> Option<TRef<'a, T>>
+pub unsafe fn autoload<'a, T>(name: impl Into<NodePath>) -> Option<TRef<'a, T>>
 where
     T: SubClass<Node>,
 {

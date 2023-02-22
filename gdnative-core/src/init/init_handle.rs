@@ -4,7 +4,6 @@ use crate::export::{
 };
 use crate::object::{GodotObject, RawObject, TRef};
 use crate::private::get_api;
-use std::borrow::Cow;
 use std::ffi::CString;
 use std::ptr;
 
@@ -43,7 +42,7 @@ impl InitHandle {
     where
         C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class_as_with::<C>(Cow::Borrowed(C::CLASS_NAME), false, |builder| {
+        self.add_maybe_tool_class_as_with::<C>(C::CLASS_NAME, false, |builder| {
             C::nativeclass_register_monomorphized(builder);
             f(builder);
         })
@@ -64,7 +63,7 @@ impl InitHandle {
     where
         C: NativeClassMethods + StaticallyNamed,
     {
-        self.add_maybe_tool_class_as_with::<C>(Cow::Borrowed(C::CLASS_NAME), true, |builder| {
+        self.add_maybe_tool_class_as_with::<C>(C::CLASS_NAME, true, |builder| {
             C::nativeclass_register_monomorphized(builder);
             f(builder);
         })
@@ -75,7 +74,7 @@ impl InitHandle {
     /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
     /// name provided at registration.
     #[inline]
-    pub fn add_class_as<C>(self, name: String)
+    pub fn add_class_as<C>(self, name: &str)
     where
         C: NativeClassMethods,
     {
@@ -87,11 +86,11 @@ impl InitHandle {
     /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
     /// name provided at registration.
     #[inline]
-    pub fn add_class_as_with<C>(self, name: String, f: impl FnOnce(&ClassBuilder<C>))
+    pub fn add_class_as_with<C>(self, name: &str, f: impl FnOnce(&ClassBuilder<C>))
     where
         C: NativeClassMethods,
     {
-        self.add_maybe_tool_class_as_with::<C>(Cow::Owned(name), false, f)
+        self.add_maybe_tool_class_as_with::<C>(name, false, f)
     }
 
     /// Registers a new tool class to the engine
@@ -99,7 +98,7 @@ impl InitHandle {
     /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
     /// name provided at registration.
     #[inline]
-    pub fn add_tool_class_as<C>(self, name: String)
+    pub fn add_tool_class_as<C>(self, name: &str)
     where
         C: NativeClassMethods,
     {
@@ -111,23 +110,23 @@ impl InitHandle {
     /// If the type implements [`StaticallyTyped`], that name is ignored in favor of the
     /// name provided at registration.
     #[inline]
-    pub fn add_tool_class_as_with<C>(self, name: String, f: impl FnOnce(&ClassBuilder<C>))
+    pub fn add_tool_class_as_with<C>(self, name: &str, f: impl FnOnce(&ClassBuilder<C>))
     where
         C: NativeClassMethods,
     {
-        self.add_maybe_tool_class_as_with::<C>(Cow::Owned(name), true, f)
+        self.add_maybe_tool_class_as_with::<C>(name, true, f)
     }
 
     #[inline]
     fn add_maybe_tool_class_as_with<C>(
         self,
-        name: Cow<'static, str>,
+        name: &str,
         is_tool: bool,
         f: impl FnOnce(&ClassBuilder<C>),
     ) where
         C: NativeClassMethods,
     {
-        let c_class_name = CString::new(&*name).unwrap();
+        let c_class_name = CString::new(name).unwrap();
 
         match class_registry::register_class_as::<C>(name, self.init_level) {
             Ok(true) => {}

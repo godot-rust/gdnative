@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::Debug;
 use std::ptr::NonNull;
 
@@ -599,7 +600,7 @@ where
     fn from_variant(variant: &Variant) -> Result<Self, FromVariantError> {
         let owner = Ref::<T::Base, Shared>::from_variant(variant)?;
         Self::from_base(owner).ok_or(FromVariantError::InvalidInstance {
-            expected: class_registry::class_name_or_default::<T>(),
+            expected: Cow::Owned(class_registry::class_name_or_default::<T>()),
         })
     }
 }

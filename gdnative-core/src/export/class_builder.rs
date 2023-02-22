@@ -10,12 +10,6 @@ use crate::export::*;
 use crate::object::NewRef;
 use crate::private::get_api;
 
-// TODO(#996): unify string parameters across all buiders
-// Potential candidates:
-// * &str
-// * impl Into<GodotString>
-// * impl Into<Cow<'a, str>>
-
 /// Allows registration of exported properties, methods and signals.
 ///
 /// See member functions of this class for usage examples.
