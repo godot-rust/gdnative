@@ -122,7 +122,7 @@ The [/examples](https://github.com/godot-rust/godot-rust/tree/master/examples) d
 - [**scene-create**](https://github.com/godot-rust/godot-rust/tree/master/examples/scene-create) - Load, instance and place scenes using Rust code.
 - [**builder-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/builder-export) - Export using the builder API.
 - [**property-export**](https://github.com/godot-rust/godot-rust/tree/master/examples/property-export) - Export complex properties such as collections.
-- [**dodge-the-creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge-the-creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/stable/getting_started/step_by_step/your_first_game.html).
+- [**dodge-the-creeps**](https://github.com/godot-rust/godot-rust/tree/master/examples/dodge-the-creeps) - A Rust port of the [little Godot game](https://docs.godotengine.org/en/3.3/getting_started/step_by_step/your_first_game.html).
 - [**signals**](https://github.com/godot-rust/godot-rust/tree/master/examples/signals) - Connect and emit signals.
 - [**resource**](https://github.com/godot-rust/godot-rust/tree/master/examples/resource) - Create and use custom resources.
 - [**rpc**](https://github.com/godot-rust/godot-rust/tree/master/examples/rpc) - Simple peer-to-peer networking.
