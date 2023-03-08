@@ -22,6 +22,10 @@ Minimum supported Rust version (MSRV) is **1.67**. We use the Rust 2021 Edition.
 
 ## Engine compatibility
 
+> **Warning**: **Linux users: Be aware of the source of your Godot binary!** Binary distributions of Godot using a container-based format may ship versions of dependencies that may not be compatible with GDNative libraries built directly from your base system. Examples of such formats include **Flatpak**, **Snap**, and **AppImage**.
+>
+> As of 2023, some package managers might silently install one of these instead of a normal package when Godot is requested, which can then cause bizarre compatibility issues with your GDNative libraries. We recommend using the official binaries from [godotengine.org](https://godotengine.org/download/3.x/linux) for both the editor and the export templates.
+
 Due to GDNative API not strictly following SemVer and some concepts not mapping 1:1 to Rust (default parameters),
 it is difficult for a godot-rust version to remain compatible with multiple Godot versions simultaneously.
 
@@ -35,9 +39,7 @@ Compatibility list:
 * Godot 3.3 (custom build)
 * Godot 3.2 (custom build)
 
-The bindings do _**not**_ support in-development Godot 4 versions.
-A GDExtension binding is planned.
-
+The bindings do _**not**_ support Godot 4. If you are looking for a Rust binding for GDExtension (Godot 4), checkout [`gdextension`](https://github.com/godot-rust/gdextension).
 
 ## Getting started
 
