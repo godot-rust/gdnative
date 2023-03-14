@@ -24,7 +24,7 @@ gdnative-impl-proc-macros = { path = "../impl/proc-macros", version = "=0.11.3" 
 ahash = "0.8"
 approx = "0.5"
 atomic-take = "1"
-bitflags = "1"
+bitflags = "2"
 glam = "0.23"
 indexmap = "1"
 inventory = { version = "0.3", optional = true }
