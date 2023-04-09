@@ -96,9 +96,10 @@ type ScriptMethodFn = unsafe extern "C" fn(
     *mut *mut sys::godot_variant,
 ) -> sys::godot_variant;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
 #[non_exhaustive]
 pub enum RpcMode {
+    #[default]
     Disabled,
     Remote,
     RemoteSync,
@@ -106,13 +107,6 @@ pub enum RpcMode {
     Puppet,
     MasterSync,
     PuppetSync,
-}
-
-impl Default for RpcMode {
-    #[inline]
-    fn default() -> Self {
-        RpcMode::Disabled
-    }
 }
 
 impl RpcMode {

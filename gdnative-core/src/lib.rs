@@ -27,7 +27,11 @@
 )]
 #![cfg_attr(
     any(test, feature = "gd-test"),
-    allow(clippy::excessive_precision, clippy::disallowed_names)
+    allow(
+        clippy::excessive_precision,
+        clippy::disallowed_names,
+        clippy::redundant_clone
+    )
 )]
 
 #[doc(hidden)]
