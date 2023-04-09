@@ -149,8 +149,8 @@ pub(crate) fn expand_from_variant(derive_data: DeriveData) -> Result<TokenStream
                 use ::gdnative::core_types::ToVariant;
                 use ::gdnative::core_types::FromVariant;
                 use ::gdnative::core_types::FromVariantError as FVE;
-                use ::gdnative::core_types::VariantEnumRepr;
-                use ::gdnative::core_types::VariantStructRepr;
+                use ::gdnative::core_types::variant::VariantEnumRepr;
+                use ::gdnative::core_types::variant::VariantStructRepr;
 
                 #return_expr
             }

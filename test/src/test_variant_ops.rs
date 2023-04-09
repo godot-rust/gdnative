@@ -1,4 +1,4 @@
-use gdnative::core_types::InvalidOp;
+use gdnative::core_types::variant::{InvalidOp, VariantOperator};
 use gdnative::prelude::*;
 
 pub(crate) fn run_tests() -> bool {

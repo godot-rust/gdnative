@@ -25,42 +25,8 @@ pub extern "C" fn run_tests(
     _args: *mut gdnative::sys::godot_array,
 ) -> gdnative::sys::godot_variant {
     let mut status = true;
-    status &= gdnative::core_types::test_string();
-    status &= gdnative::core_types::test_string_name_eq();
-    status &= gdnative::core_types::test_string_name_ord();
 
-    status &= gdnative::core_types::test_dictionary();
-    status &= gdnative::core_types::test_dictionary_clone_clear();
-    status &= gdnative::core_types::test_color();
-    status &= gdnative::core_types::test_array();
-    status &= gdnative::core_types::test_array_debug();
-    status &= gdnative::core_types::test_array_clone_clear();
-
-    status &= gdnative::core_types::test_variant_nil();
-    status &= gdnative::core_types::test_variant_i64();
-    status &= gdnative::core_types::test_variant_bool();
-
-    status &= gdnative::core_types::test_vector2_variants();
-
-    status &= gdnative::core_types::test_vector3_variants();
-
-    status &= gdnative::core_types::test_variant_option();
-    status &= gdnative::core_types::test_variant_result();
-    status &= gdnative::core_types::test_variant_hash_map();
-    status &= gdnative::core_types::test_variant_hash_set();
-    status &= gdnative::core_types::test_variant_vec();
-    status &= gdnative::core_types::test_to_variant_iter();
-    status &= gdnative::core_types::test_variant_tuple();
-    status &= gdnative::core_types::test_variant_dispatch();
-
-    status &= gdnative::core_types::test_byte_array_access();
-    status &= gdnative::core_types::test_int32_array_access();
-    status &= gdnative::core_types::test_float32_array_access();
-    status &= gdnative::core_types::test_color_array_access();
-    status &= gdnative::core_types::test_string_array_access();
-    status &= gdnative::core_types::test_vector2_array_access();
-    status &= gdnative::core_types::test_vector3_array_access();
-    status &= gdnative::core_types::test_transform2d_behavior();
+    status &= gdnative::core_types::test_core_types();
 
     status &= test_from_instance_id();
     status &= test_nil_object_return_value();

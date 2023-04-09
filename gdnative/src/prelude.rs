@@ -6,8 +6,8 @@ pub use gdnative_bindings::{
 };
 pub use gdnative_core::core_types::{
     Aabb, Basis, Color, Dictionary, GodotError, GodotString, NodePath, Plane, PoolArray, Quat,
-    Rect2, Rid, StringName, Transform, Transform2D, Variant, VariantArray, VariantDispatch,
-    VariantOperator, VariantType, Vector2, Vector3,
+    Rect2, Rid, StringName, Transform, Transform2D, Variant, VariantArray, VariantType, Vector2,
+    Vector3,
 };
 pub use gdnative_core::core_types::{
     FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq,

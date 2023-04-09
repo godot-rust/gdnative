@@ -248,7 +248,7 @@ impl<'de> Visitor<'de> for VariantDispatchVisitor {
                 v.newtype_variant::<Vec<VariantDispatch>>()?
                     .iter()
                     .map(Into::<Variant>::into)
-                    .collect::<variant_array::VariantArray<Unique>>()
+                    .collect::<array::VariantArray<Unique>>()
                     .into_shared(),
             ),
             ByteArray => VariantDispatch::ByteArray(v.newtype_variant()?),
