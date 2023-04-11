@@ -1,3 +1,4 @@
+use gdnative::core_types::variant::VariantDispatch;
 use gdnative::prelude::*;
 use serde::{Deserialize, Serialize};
 

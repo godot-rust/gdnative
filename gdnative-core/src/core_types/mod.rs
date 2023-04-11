@@ -5,34 +5,36 @@
 //!
 //! godot-rust provides optional serialization support for many core types.  Enable the feature `serde` to make use of it.
 
-mod geom;
-
-mod access;
 mod color;
-mod dictionary;
 mod error;
 mod node_path;
 mod pool_array;
 mod rid;
-mod string;
-mod variant;
-mod variant_array;
 mod vector2;
 mod vector3;
 
-pub use access::*;
-pub use color::*;
-pub use dictionary::*;
+pub mod access;
+pub mod array;
+pub mod dictionary;
+pub mod geom;
+pub mod string;
+pub mod variant;
+
+pub use array::VariantArray;
+pub use color::Color;
+pub use dictionary::Dictionary;
 pub use error::{GodotError, GodotResult};
-pub use geom::*;
-pub use node_path::*;
-pub use pool_array::*;
-pub use rid::*;
-pub use string::*;
-pub use variant::*;
-pub use variant_array::*;
-pub use vector2::*;
-pub use vector3::*;
+pub use geom::{Aabb, Basis, Margin, MarginError, Plane, Quat, Rect2, Transform, Transform2D};
+pub use node_path::NodePath;
+pub use pool_array::{PoolArray, PoolElement};
+pub use rid::Rid;
+pub use string::{GodotString, StringName};
+pub use variant::{
+    CoerceFromVariant, FromVariant, FromVariantError, OwnedToVariant, ToVariant, ToVariantEq,
+    Variant, VariantType,
+};
+pub use vector2::Vector2;
+pub use vector3::{Axis, Vector3};
 
 use approx::relative_eq;
 
@@ -54,4 +56,50 @@ impl IsEqualApprox for f64 {
     fn is_equal_approx(self, to: Self) -> bool {
         relative_eq!(self, to, epsilon = CMP_EPSILON)
     }
+}
+
+#[cfg(feature = "gd-test")]
+#[doc(hidden)]
+#[inline]
+#[must_use]
+pub fn test_core_types() -> bool {
+    let mut status = true;
+
+    status &= string::test_string();
+    status &= string::test_string_name_eq();
+    status &= string::test_string_name_ord();
+
+    status &= array::test_array();
+    status &= array::test_array_debug();
+    status &= array::test_array_clone_clear();
+    status &= dictionary::test_dictionary();
+    status &= dictionary::test_dictionary_clone_clear();
+
+    status &= color::test_color();
+    status &= vector2::test_vector2_variants();
+    status &= vector3::test_vector3_variants();
+
+    status &= variant::test_variant_nil();
+    status &= variant::test_variant_i64();
+    status &= variant::test_variant_bool();
+    status &= variant::test_variant_option();
+    status &= variant::test_variant_result();
+    status &= variant::test_variant_hash_map();
+    status &= variant::test_variant_hash_set();
+    status &= variant::test_variant_vec();
+    status &= variant::test_to_variant_iter();
+    status &= variant::test_variant_tuple();
+    status &= variant::test_variant_dispatch();
+
+    status &= pool_array::test_byte_array_access();
+    status &= pool_array::test_int32_array_access();
+    status &= pool_array::test_float32_array_access();
+    status &= pool_array::test_color_array_access();
+    status &= pool_array::test_string_array_access();
+    status &= pool_array::test_vector2_array_access();
+    status &= pool_array::test_vector3_array_access();
+
+    status &= geom::test_transform2d_behavior();
+
+    status
 }
