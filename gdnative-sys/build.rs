@@ -158,18 +158,21 @@ mod header_binding {
             .to_string_lossy(),
         );
 
+        let target_triple = match target_triple.as_str() {
+            "armv7-linux-androideabi" => "arm-linux-androideabi", // Workaround for different naming scheme with NDK
+            _ => &target_triple,
+        };
+
         builder = builder.clang_arg("-I").clang_arg(
             Path::join(
                 &android_ndk_root,
                 format!(
                     "toolchains/llvm/prebuilt/{host}/sysroot/usr/include/{target_triple}",
                     host = &host_tag,
-                    target_triple = &target_triple,
                 ),
             )
             .to_string_lossy(),
         );
-
         builder
     }
 
