@@ -1,10 +1,10 @@
 error: cannot find attribute `method` in this scope
-  --> tests/ui/derive_fail_methods.rs:12:7
-   |
-12 |     #[method]
-   |       ^^^^^^ help: an attribute macro with a similar name exists: `methods`
-   |
-  ::: $WORKSPACE/gdnative-derive/src/lib.rs
-   |
-   | pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
-   | -------------------------------------------------------------------- similarly named attribute macro `methods` defined here
+   --> tests/ui/derive_fail_methods.rs:12:7
+    |
+12  |     #[method]
+    |       ^^^^^^ help: an attribute macro with a similar name exists: `methods`
+    |
+   ::: $WORKSPACE/gdnative-derive/src/lib.rs
+    |
+    | pub fn methods(meta: TokenStream, input: TokenStream) -> TokenStream {
+    | -------------------------------------------------------------------- similarly named attribute macro `methods` defined here
