@@ -2,6 +2,6 @@ error[E0271]: type mismatch resolving `<String as Export>::Hint == ()`
  --> $DIR/derive_fail_property_hint.rs:5:19
   |
 5 | #[derive(Default, NativeClass)]
-  |                   ^^^^^^^^^^^ expected enum `StringHint`, found `()`
+  |                   ^^^^^^^^^^^ expected `StringHint`, found `()`
   |
   = note: this error originates in the derive macro `NativeClass` (in Nightly builds, run with -Z macro-backtrace for more info)
