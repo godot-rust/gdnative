@@ -10,7 +10,7 @@
 
 **godot-rust** is a Rust library that implements native bindings for the [Godot game engine](http://godotengine.org/). This allows you to develop games or other applications in Godot, while benefiting from Rust's strengths, such as its type system, scalability and performance.
 
-> **Note**: if you are looking for a Rust binding for GDExtension (Godot 4), checkout [`gdextension`](https://github.com/godot-rust/gdextension).
+> **Note**: if you are looking for a Rust binding for GDExtension (Godot 4), checkout [`gdext`](https://github.com/godot-rust/gdext).
 
 
 ## Stability
