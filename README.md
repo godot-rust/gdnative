@@ -12,15 +12,17 @@
 
 > **Note**: if you are looking for a Rust binding for GDExtension (Godot 4), checkout [`gdext`](https://github.com/godot-rust/gdext).
 
+## Maintenance Policy
 
-## Stability
+`gdnative` is considered mostly feature complete, and is maintained with a focus on API stability. We try to avoid unnecessary breaking changes, and try to limit their end-user impact to a minimum whenever we have to make them.
 
-The bindings cover most of the exposed API of Godot 3.5, and are being used on a number of projects in development, but we still expect non-trivial breaking changes in the API in the coming releases. godot-rust adheres to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html).
+We adhere to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html) as the means to convey changes in the public API between versions. Future releases are planned publicly on GitHub, with the [milestone](https://github.com/godot-rust/gdnative/milestones) feature. Note that we use the `breaking-change` label to indicate the existence of *any* technical breakage, regardless of the expected impact on end user programs.
 
-Minimum supported Rust version (MSRV) is **1.67**. We use the Rust 2021 Edition.
+If you are looking to contribute, but are not sure if what you want to do falls in the scope of the project and is permitted by our maintenance policy, feel free to [get in touch](CONTRIBUTING.md#communication) with the project maintainers before you start.
 
+## Toolchain compatibility
 
-## Engine compatibility
+`gdnative` currently has a minimum supported Rust version (MSRV) of **1.67**. We use the Rust 2021 Edition.
 
 > **Warning**: **Linux users: Be aware of the source of your Godot binary!** Binary distributions of Godot using a container-based format may ship versions of dependencies that may not be compatible with GDNative libraries built directly from your base system. Examples of such formats include **Flatpak**, **Snap**, and **AppImage**.
 >
