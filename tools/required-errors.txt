@@ -4,7 +4,7 @@
 # Empty lines or lines that start with '#' are ignored.
 
 # test_array_debug
-4,thread '[^']*' panicked at 'Index 3 out of bounds (len 3)'
+4,Index 3 out of bounds (len 3)
 
 # test_derive_nativeclass_property_with_only_getter
 1,ERROR: \(<unset>: \)\?property size on native class MyVec does not have a setter
