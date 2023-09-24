@@ -157,6 +157,7 @@ impl<'a, C: NativeClass, A> Spawner<'a, C, A> {
     /// Consumes this `Spawner` and spawns a future returned by the closure. This indirection
     /// is necessary so that implementors of the `AsyncMethod` trait do not have to name their
     /// future types.
+    #[allow(clippy::arc_with_non_send_sync)] // Stability concerns: part of public API
     pub fn spawn<F, R>(self, f: F)
     where
         F: FnOnce(Arc<Context>, TInstance<'_, C>, A) -> R,

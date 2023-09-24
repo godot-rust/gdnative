@@ -70,7 +70,7 @@ impl<T: GodotObject> RawObject<T> {
     pub fn class_name(&self) -> String {
         let api = crate::private::get_api();
         let get_class_method = crate::private::ObjectMethodTable::get(api).get_class;
-        let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
+        let mut argument_buffer: [*const libc::c_void; 0] = [];
         let mut class_name = sys::godot_string::default();
         let ret_ptr = &mut class_name as *mut sys::godot_string;
 
@@ -127,7 +127,7 @@ impl<T: GodotObject<Memory = RefCounted>> RawObject<T> {
     pub fn add_ref(&self) {
         let api = crate::private::get_api();
         let addref_method = crate::private::ReferenceMethodTable::get(api).reference;
-        let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
+        let mut argument_buffer: [*const libc::c_void; 0] = [];
         let mut ok = false;
         let ok_ptr = &mut ok as *mut bool;
 
@@ -158,7 +158,7 @@ impl<T: GodotObject<Memory = RefCounted>> RawObject<T> {
         let api = crate::private::get_api();
         let unref_method = crate::private::ReferenceMethodTable::get(api).unreference;
 
-        let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
+        let mut argument_buffer: [*const libc::c_void; 0] = [];
         let mut last_reference = false;
         let ret_ptr = &mut last_reference as *mut bool;
         (api.godot_method_bind_ptrcall)(
@@ -201,7 +201,7 @@ impl<T: GodotObject<Memory = RefCounted>> RawObject<T> {
         let api = crate::private::get_api();
         let init_method = crate::private::ReferenceMethodTable::get(api).init_ref;
 
-        let mut argument_buffer = [ptr::null() as *const libc::c_void; 0];
+        let mut argument_buffer: [*const libc::c_void; 0] = [];
         let mut ok = false;
         let ret_ptr = &mut ok as *mut bool;
         (api.godot_method_bind_ptrcall)(
@@ -237,7 +237,7 @@ unsafe fn ptr_is_class(obj: *mut sys::godot_object, class_name: &str) -> bool {
         class_name.len() as _,
     );
 
-    let mut argument_buffer = [ptr::null() as *const libc::c_void; 1];
+    let mut argument_buffer: [*const libc::c_void; 1] = [ptr::null(); 1];
     argument_buffer[0] = (&class_name) as *const _ as *const _;
 
     let mut ret = false;

@@ -90,10 +90,10 @@ pub(crate) fn types_with_init_level(allow: InitLevel, deny: InitLevel) -> Vec<Co
     let registry = CLASS_REGISTRY.read();
     let mut list = registry
         .values()
-        .filter_map(|class_info| {
-            (class_info.init_level.intersects(allow) && !class_info.init_level.intersects(deny))
-                .then(|| class_info.name.clone())
+        .filter(|class_info| {
+            class_info.init_level.intersects(allow) && !class_info.init_level.intersects(deny)
         })
+        .map(|class_info| class_info.name.clone())
         .collect::<Vec<_>>();
 
     list.sort_unstable();

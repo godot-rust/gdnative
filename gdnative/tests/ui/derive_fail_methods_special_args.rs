@@ -11,13 +11,13 @@ impl Foo {
     }
 
     #[method]
-    async fn optional(#[opt] self, #[base] #[opt] _base: &Node, #[async_ctx] #[opt] ctx: ()) {}
+    async fn optional(#[opt] self, #[base] #[opt] _base: &Node, #[async_ctx] #[opt] _ctx: ()) {}
 
     #[method]
     fn based(#[base] self, #[base] _base: &Node, #[base] #[base] _basil: &Node, #[base] #[base] #[base] _basin: &Node) {}
 
     #[method]
-    fn sync(self, #[async_ctx] ctx: ()) {}
+    fn sync(self, #[async_ctx] _ctx: ()) {}
 }
 
 fn main() {}

@@ -568,8 +568,7 @@ fn impl_gdnative_expose(ast: ItemImpl) -> (ItemImpl, ClassMethodExport) {
 
                         if is_export {
                             use syn::{punctuated::Punctuated, Lit};
-                            let mut export_args =
-                                export_args.get_or_insert_with(ExportArgs::default);
+                            let export_args = export_args.get_or_insert_with(ExportArgs::default);
                             export_args.is_old_syntax = is_old_syntax;
 
                             // Codes like #[macro(path, name = "value")] are accepted.
