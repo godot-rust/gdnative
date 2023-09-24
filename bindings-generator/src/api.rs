@@ -178,7 +178,7 @@ impl core::cmp::Ord for Enum {
 
 impl core::cmp::PartialOrd for Enum {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        core::cmp::PartialOrd::partial_cmp(&self.name, &other.name)
+        Some(self.cmp(other))
     }
 }
 

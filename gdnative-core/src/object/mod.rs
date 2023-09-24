@@ -724,7 +724,7 @@ impl<T: GodotObject, Own: Ownership> Ord for Ref<T, Own> {
 impl<T: GodotObject, Own: Ownership> PartialOrd for Ref<T, Own> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.ptr.as_non_null().partial_cmp(&other.ptr.as_non_null())
+        Some(self.cmp(other))
     }
 }
 
@@ -863,7 +863,7 @@ impl<'a, T: GodotObject, Own: Ownership> Copy for TRef<'a, T, Own> {}
 impl<'a, T: GodotObject, Own: Ownership> Clone for TRef<'a, T, Own> {
     #[inline]
     fn clone(&self) -> Self {
-        TRef::new(self.obj)
+        *self
     }
 }
 

@@ -19,10 +19,10 @@ impl Foo {
     fn arc(self: Arc<Self>) {}
 
     #[method]
-    fn instance(#[self] this: Instance<Self>) {}
+    fn instance(#[self] _this: Instance<Self>) {}
 
     #[method]
-    fn t_instance(#[self] this: TInstance<Self>) {}
+    fn t_instance(#[self] _this: TInstance<Self>) {}
 }
 
 fn main() {}
