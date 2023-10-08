@@ -7,7 +7,7 @@ pub(crate) fn derive_export(input: &DeriveInput) -> syn::Result<TokenStream2> {
         _ => {
             return Err(syn::Error::new(
                 input.ident.span(),
-                "#[derive(Export)] can only use on enum",
+                "#[derive(Export)] only supports fieldless enums",
             ))
         }
     };
@@ -17,23 +17,35 @@ pub(crate) fn derive_export(input: &DeriveInput) -> syn::Result<TokenStream2> {
 }
 
 fn impl_export(enum_ty: &syn::Ident, data: &syn::DataEnum) -> syn::Result<TokenStream2> {
-    let mappings = {
-        let mut m = Vec::with_capacity(data.variants.len());
-
-        for variant in &data.variants {
-            if !matches!(variant.fields, Fields::Unit) {
-                return Err(syn::Error::new(
+    let err = data
+        .variants
+        .iter()
+        .filter_map(|variant| {
+            (!matches!(variant.fields, Fields::Unit)).then(|| {
+                syn::Error::new(
                     variant.ident.span(),
                     "#[derive(Export)] only supports fieldless enums",
-                ));
-            }
+                )
+            })
+        })
+        .reduce(|mut acc, err| {
+            acc.combine(err);
+            acc
+        });
+    if let Some(err) = err {
+        return Err(err);
+    }
+
+    let mappings = data
+        .variants
+        .iter()
+        .map(|variant| {
             let key = &variant.ident;
             let val = quote! { #enum_ty::#key as i64 };
-            m.push(quote! { (stringify!(#key).to_string(), #val) });
-        }
+            quote! { (stringify!(#key).to_string(), #val) }
+        })
+        .collect::<Vec<_>>();
 
-        m
-    };
     let impl_block = quote! {
         impl ::gdnative::export::Export for #enum_ty {
             type Hint = ::gdnative::export::hint::IntHint<i64>;
