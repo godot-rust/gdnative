@@ -1,0 +1,5 @@
+error: #[derive(Export)] only supports fieldless enums
+ --> tests/ui/export_fail_01.rs:5:5
+  |
+5 |     Bar(String),
+  |     ^^^
