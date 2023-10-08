@@ -10,12 +10,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{parse::Parser, AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
 
-<<<<<<< HEAD
+mod export;
 mod init;
-=======
-mod export_enum;
-mod extend_bounds;
->>>>>>> feat(derive): add `ExportEnum`
 mod methods;
 mod native_script;
 mod profiled;
@@ -678,7 +674,7 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
 /// ```
 /// use gdnative::prelude::*;
 ///
-/// #[derive(Debug, PartialEq, Clone, Copy, ExportEnum)]
+/// #[derive(Debug, PartialEq, Clone, Copy, Export)]
 /// enum Dir {
 ///     Up = 1,
 ///     Down = -1,
@@ -692,32 +688,32 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// You can't derive `ExportEnum` on `enum` that has non-unit variant.
+/// You can't derive `Export` on `enum` that has non-unit variant.
 ///
 /// ```compile_fail
 /// use gdnative::prelude::*;
 ///
-/// #[derive(Debug, PartialEq, Clone, Copy, ExportEnum)]
+/// #[derive(Debug, PartialEq, Clone, Copy, Export)]
 /// enum Action {
 ///     Move((f32, f32, f32)),
 ///     Attack(u64),
 /// }
 /// ```
 ///
-/// You can't derive `ExportEnum` on `struct` or `union`.
+/// You can't derive `Export` on `struct` or `union`.
 ///
 /// ```compile_fail
 /// use gdnative::prelude::*;
 ///
-/// #[derive(ExportEnum)]
+/// #[derive(Export)]
 /// struct Foo {
 ///   f1: i32
 /// }
 /// ```
-#[proc_macro_derive(ExportEnum)]
-pub fn derive_export_enum(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Export)]
+pub fn derive_export(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
-    match export_enum::derive_export_enum(&derive_input) {
+    match export::derive_export(&derive_input) {
         Ok(stream) => stream.into(),
         Err(err) => err.to_compile_error().into(),
     }

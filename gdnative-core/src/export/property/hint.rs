@@ -140,13 +140,22 @@ impl EnumHint {
         let mut s = String::new();
 
         let mut iter = self.values.iter();
+        let write_item = |s: &mut String, item: &(String, Option<i64>)| match item {
+            (key, Some(val)) => {
+                write!(s, "{key}:{val}")
+            }
+            (key, None) => {
+                write!(s, "{key}")
+            }
+        };
 
         if let Some(first) = iter.next() {
-            write!(s, "{first}").unwrap();
+            write_item(&mut s, first).unwrap();
         }
 
         for rest in iter {
-            write!(s, ",{rest}").unwrap();
+            write!(s, ",").unwrap();
+            write_item(&mut s, rest).unwrap();
         }
 
         s.into()
