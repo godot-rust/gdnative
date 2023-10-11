@@ -1,14 +1,19 @@
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
+use syn::spanned::Spanned;
 use syn::{DeriveInput, Fields};
+
+fn err_only_supports_fieldless_enums(span: Span) -> syn::Error {
+    syn::Error::new(span, "#[derive(Export)] only supports fieldless enums")
+}
 
 pub(crate) fn derive_export(input: &DeriveInput) -> syn::Result<TokenStream2> {
     let derived_enum = match &input.data {
         syn::Data::Enum(data) => data,
-        _ => {
-            return Err(syn::Error::new(
-                input.ident.span(),
-                "#[derive(Export)] only supports fieldless enums",
-            ))
+        syn::Data::Struct(data) => {
+            return Err(err_only_supports_fieldless_enums(data.struct_token.span()));
+        }
+        syn::Data::Union(data) => {
+            return Err(err_only_supports_fieldless_enums(data.union_token.span()));
         }
     };
 
@@ -20,14 +25,8 @@ fn impl_export(enum_ty: &syn::Ident, data: &syn::DataEnum) -> syn::Result<TokenS
     let err = data
         .variants
         .iter()
-        .filter_map(|variant| {
-            (!matches!(variant.fields, Fields::Unit)).then(|| {
-                syn::Error::new(
-                    variant.ident.span(),
-                    "#[derive(Export)] only supports fieldless enums",
-                )
-            })
-        })
+        .filter(|variant| !matches!(variant.fields, Fields::Unit))
+        .map(|variant| err_only_supports_fieldless_enums(variant.ident.span()))
         .reduce(|mut acc, err| {
             acc.combine(err);
             acc
