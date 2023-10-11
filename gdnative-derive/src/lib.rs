@@ -675,6 +675,8 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
 /// use gdnative::prelude::*;
 ///
 /// #[derive(Debug, PartialEq, Clone, Copy, Export, ToVariant, FromVariant)]
+/// #[variant(enum = "repr")]
+/// #[repr(i32)]
 /// enum Dir {
 ///     Up = 1,
 ///     Down = -1,
