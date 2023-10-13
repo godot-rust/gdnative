@@ -31,8 +31,6 @@ pub extern "C" fn run_tests(
     status &= gdnative::export::hint::test_enum_hint_without_mapping();
     status &= gdnative::export::hint::test_enum_hint_with_mapping();
 
-    status &= test_underscore_method_binding();
-    status &= test_rust_class_construction();
     status &= test_from_instance_id();
     status &= test_nil_object_return_value();
     status &= test_rust_class_construction();
