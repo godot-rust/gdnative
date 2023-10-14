@@ -1,0 +1,5 @@
+error: string literal expected, wrap with double quotes
+ --> tests/ui/export_fail_07.rs:4:17
+  |
+4 | #[export(kind = 123)]
+  |                 ^^^

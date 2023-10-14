@@ -46,6 +46,12 @@ fn ui_tests() {
     t.compile_fail("tests/ui/export_fail_01.rs");
     t.compile_fail("tests/ui/export_fail_02.rs");
     t.compile_fail("tests/ui/export_fail_03.rs");
+    t.compile_fail("tests/ui/export_fail_04.rs");
+    t.compile_fail("tests/ui/export_fail_05.rs");
+    t.compile_fail("tests/ui/export_fail_06.rs");
+    t.compile_fail("tests/ui/export_fail_07.rs");
+    t.compile_fail("tests/ui/export_fail_08.rs");
+    t.compile_fail("tests/ui/export_fail_09.rs");
 }
 
 // FIXME(rust/issues/54725): Full path spans are only available on nightly as of now

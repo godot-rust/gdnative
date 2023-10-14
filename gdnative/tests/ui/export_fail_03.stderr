@@ -1,11 +1,11 @@
 error: #[derive(Export)] only supports fieldless enums
- --> tests/ui/export_fail_03.rs:4:5
+ --> tests/ui/export_fail_03.rs:5:5
   |
-4 | pub union Foo {
+5 | pub union Foo {
   |     ^^^^^
 
 error: Variant conversion derive macro does not work on unions.
  --> tests/ui/export_fail_03.rs:4:1
   |
-4 | pub union Foo {
-  | ^^^
+4 | #[export(kind = "enum")]
+  | ^

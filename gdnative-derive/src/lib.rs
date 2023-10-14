@@ -676,6 +676,7 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
 ///
 /// #[derive(Debug, PartialEq, Clone, Copy, Export, ToVariant, FromVariant)]
 /// #[variant(enum = "repr")]
+/// #[export(kind = "enum")]
 /// #[repr(i32)]
 /// enum Dir {
 ///     Up = 1,
@@ -712,10 +713,10 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
 ///   f1: i32
 /// }
 /// ```
-#[proc_macro_derive(Export)]
+#[proc_macro_derive(Export, attributes(export))]
 pub fn derive_export(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
-    match export::derive_export(&derive_input) {
+    match export::derive_export(derive_input) {
         Ok(stream) => stream.into(),
         Err(err) => err.to_compile_error().into(),
     }

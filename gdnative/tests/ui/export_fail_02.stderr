@@ -1,5 +1,5 @@
 error: #[derive(Export)] only supports fieldless enums
- --> tests/ui/export_fail_02.rs:4:5
+ --> tests/ui/export_fail_02.rs:5:5
   |
-4 | pub struct Foo {
+5 | pub struct Foo {
   |     ^^^^^^
