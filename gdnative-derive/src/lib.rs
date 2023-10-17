@@ -10,6 +10,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{parse::Parser, AttributeArgs, DeriveInput, ItemFn, ItemImpl, ItemType};
 
+mod export;
 mod init;
 mod methods;
 mod native_script;
@@ -660,6 +661,64 @@ pub fn godot_wrap_method(input: TokenStream) -> TokenStream {
             }
             tokens.into()
         }
+    }
+}
+
+/// Make a rust `enum` has drop-down list in Godot editor.
+/// Note that the derived `enum` should also implements `Copy` trait.
+///
+/// Take the following example, you will see a drop-down list for the `dir`
+/// property, and `Up` and `Down` converts to `1` and `-1` in the GDScript
+/// side.
+///
+/// ```
+/// use gdnative::prelude::*;
+///
+/// #[derive(Debug, PartialEq, Clone, Copy, Export, ToVariant, FromVariant)]
+/// #[variant(enum = "repr")]
+/// #[export(kind = "enum")]
+/// #[repr(i32)]
+/// enum Dir {
+///     Up = 1,
+///     Down = -1,
+/// }
+///
+/// #[derive(NativeClass)]
+/// #[no_constructor]
+/// struct Move {
+///     #[property]
+///     pub dir: Dir,
+/// }
+/// ```
+///
+/// You can't derive `Export` on `enum` that has non-unit variant.
+///
+/// ```compile_fail
+/// use gdnative::prelude::*;
+///
+/// #[derive(Debug, PartialEq, Clone, Copy, Export)]
+/// enum Action {
+///     Move((f32, f32, f32)),
+///     Attack(u64),
+/// }
+/// ```
+///
+/// You can't derive `Export` on `struct` or `union`.
+///
+/// ```compile_fail
+/// use gdnative::prelude::*;
+///
+/// #[derive(Export)]
+/// struct Foo {
+///   f1: i32
+/// }
+/// ```
+#[proc_macro_derive(Export, attributes(export))]
+pub fn derive_export(input: TokenStream) -> TokenStream {
+    let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
+    match export::derive_export(derive_input) {
+        Ok(stream) => stream.into(),
+        Err(err) => err.to_compile_error().into(),
     }
 }
 

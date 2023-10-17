@@ -1,0 +1,5 @@
+error: kind already set
+ --> tests/ui/export_fail_09.rs:5:17
+  |
+5 | #[export(kind = "enum")]
+  |                 ^^^^^^
