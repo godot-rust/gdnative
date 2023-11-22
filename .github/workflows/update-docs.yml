@@ -39,6 +39,7 @@ jobs:
           {
             "op": "put",
             "repo": "gdnative",
+            "repo-owner": "${{ github.repository_owner }}",
             "num": "master",
             "commit-sha": "${{ github.sha }}",
             "date": "${{ github.event.head_commit.timestamp }}"
@@ -52,18 +53,25 @@ jobs:
       # Opened/reopened/updated PR: include PR author + title
       - name: "Construct JSON (for PR sync)"
         if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        # jq escapes backticks, double quotes etc. in PR title.
         run: |
-          payload=$(cat <<'HEREDOC'
-          {
+          payload=$(jq -n \
+          --arg repoOwner '${{ github.repository_owner }}' \
+          --arg num '${{ github.event.number }}' \
+          --arg commitSha '${{ github.event.pull_request.head.sha }}' \
+          --arg date '${{ github.event.pull_request.updated_at }}' \
+          --arg prAuthor '${{ github.event.pull_request.user.login }}' \
+          --arg prTitle '${{ github.event.pull_request.title }}' \
+          '{
             "op": "put",
             "repo": "gdnative",
-            "num": "${{ github.event.number }}",
-            "commit-sha": "${{ github.event.pull_request.head.sha }}",
-            "date": "${{ github.event.pull_request.updated_at }}",
-            "pr-author": "${{ github.event.pull_request.user.login }}",
-            "pr-title": "${{ github.event.pull_request.title }}"
-          }
-          HEREDOC)
+            "repo-owner": $repoOwner,
+            "num": $num,
+            "commit-sha": $commitSha,
+            "date": $date,
+            "pr-author": $prAuthor,
+            "pr-title": $prTitle
+          }')
           echo "VAR=$payload"
           echo "GDNATIVE_JSON<<HEREDOC" >> $GITHUB_ENV
           echo "${payload}" >> $GITHUB_ENV
@@ -77,6 +85,7 @@ jobs:
           {
               "op": "delete",
               "repo": "gdnative",
+              "repo-owner": "${{ github.repository_owner }}",
               "num": "${{ github.event.number }}",
               "date": "${{ github.event.pull_request.updated_at }}"
           }
