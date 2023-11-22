@@ -87,16 +87,25 @@ jobs:
         with:
           godot_ver: ${{ env.GODOT_VER }}
 
-# Not really needed, since bors is not involved. Just needs an extra runner and makes the tests run longer.
 
-#  ci-success:
-#    if: success()
-#    needs:
-#      - rustfmt
-#      - clippy
-#      - unit-test
-#      - integration-test-godot
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Mark the job as a success
-#        run: exit 0
+  # ---------------------------------------------------------------------------------------------------------------------------------------------
+  # CI status report
+
+  # Job to notify merge queue about success/failure. Named the same as the one in full-ci.
+  ci-status:
+    if: always()
+    needs:
+      - rustfmt
+      - clippy
+      - check-todo
+      - unit-test
+      - integration-test-godot
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Success"
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+
+      - name: "Failure"
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
