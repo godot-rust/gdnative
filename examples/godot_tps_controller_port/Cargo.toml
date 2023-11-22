@@ -8,7 +8,7 @@ rust-version = "1.67"
 license = "MIT"
 
 [dependencies]
-gdnative = { path = "../../gdnative" , features = ["formatted"] }
+gdnative = { path = "../../gdnative", features = ["formatted"] }
 
 [lib]
 crate-type = ["cdylib"]

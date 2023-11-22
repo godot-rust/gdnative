@@ -1,5 +1,5 @@
 # Complete CI workflow
-# Run by bors, and enforced before any PR is merged
+# Run by GitHub merge queues, and enforced before any PR is merged
 # Includes unit and integration tests for all platforms, as well as optional nightly jobs
 
 # See also: https://matklad.github.io/2021/09/04/fast-rust-builds.html
@@ -33,10 +33,7 @@ env:
   CARGO_MACHETE_VERSION: "0.3"
 
 on:
-  push:
-    branches:
-      - staging
-      - trying
+  merge_group:
 
 defaults:
   run:
@@ -330,23 +327,28 @@ jobs:
           godot_ver: ${{ matrix.godot }}
 
 
-  # This job doesn't actually test anything, but is used to tell bors that the build completed,
-  # as there is no practical way to detect when a workflow is successful, listening to webhooks only.
-  # The ID (not name) of this job is the one referenced in bors.toml.
+  # Job to notify merge queue about success/failure. Named the same as the one in minimal-ci.
+  # It is always run, even on failure, to not wait until timeouts happen.
   #
   # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
-  full-ci:
-    if: github.event_name == 'push' && success()
+  ci-status:
+    # Check for 'merge_group' not strictly necessary, but helpful when adding add-hoc `push:` trigger to `on:` for testing branch.
+    if: always() && github.event_name == 'merge_group'
     needs:
-      #- rustfmt
+      - rustfmt
       - clippy
       - cargo-deny-machete
       - test
-      - integration-test-godot
       - build-release
       - build-ios
       - build-android
+      - integration-test-godot
     runs-on: ubuntu-latest
     steps:
-      - name: "Mark the job as a success"
+      - name: "Success"
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
         run: exit 0
+
+      - name: "Failure"
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
