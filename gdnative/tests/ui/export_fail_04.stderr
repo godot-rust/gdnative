@@ -1,0 +1,17 @@
+error: missing macro arguments. expected #[export(...)]
+ --> tests/ui/export_fail_04.rs:4:3
+  |
+4 | #[export]
+  |   ^^^^^^
+
+error: missing macro arguments. expected #[export(...)]
+  --> tests/ui/export_fail_04.rs:10:3
+   |
+10 | #[export = "foo"]
+   |   ^^^^^^
+
+error: unknown attribute format. expected #[export(...)]: expected `,`
+  --> tests/ui/export_fail_04.rs:16:16
+   |
+16 | #[export(weird format a => b)]
+   |                ^^^^^^

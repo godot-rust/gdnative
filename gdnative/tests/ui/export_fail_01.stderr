@@ -1,0 +1,11 @@
+error: #[derive(Export)] only supports fieldless enums
+ --> tests/ui/export_fail_01.rs:6:5
+  |
+6 |     Bar(String),
+  |     ^^^
+
+error: #[derive(Export)] only supports fieldless enums
+ --> tests/ui/export_fail_01.rs:7:5
+  |
+7 |     Baz { a: i32, b: u32 },
+  |     ^^^
