@@ -84,7 +84,7 @@ unsafe impl<'l, C: NativeClass, T> RawSetter<C, T> for InvalidSetter<'l> {
         let mut set = sys::godot_property_set_func::default();
 
         let data = Box::new(InvalidAccessorData {
-            class_name: class_registry::class_name_or_default::<C>().into_owned(),
+            class_name: class_registry::class_name_or_default::<C>(),
             property_name: self.property_name.to_string(),
         });
 
@@ -101,7 +101,7 @@ unsafe impl<'l, C: NativeClass, T> RawGetter<C, T> for InvalidGetter<'l> {
         let mut get = sys::godot_property_get_func::default();
 
         let data = Box::new(InvalidAccessorData {
-            class_name: class_registry::class_name_or_default::<C>().into_owned(),
+            class_name: class_registry::class_name_or_default::<C>(),
             property_name: self.property_name.to_string(),
         });
 
