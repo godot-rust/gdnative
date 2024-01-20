@@ -155,7 +155,7 @@ impl VariantRepr {
             VariantRepr::Tuple(fields) => {
                 if fields.len() == 1 {
                     // as newtype
-                    let field = fields.get(0).unwrap();
+                    let field = fields.first().unwrap();
                     if field.attr.skip_to_variant {
                         return Err(syn::Error::new(
                             field.ident.span(),
@@ -235,7 +235,7 @@ impl VariantRepr {
             VariantRepr::Tuple(fields) => {
                 if fields.len() == 1 {
                     // as newtype
-                    let field = fields.get(0).unwrap();
+                    let field = fields.first().unwrap();
                     if field.attr.skip_from_variant {
                         return Err(syn::Error::new(
                             field.ident.span(),
