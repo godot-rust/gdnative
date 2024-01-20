@@ -15,7 +15,6 @@
 
 mod class;
 mod class_builder;
-mod macros;
 mod method;
 mod property;
 mod signal;
