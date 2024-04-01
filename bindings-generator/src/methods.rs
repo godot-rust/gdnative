@@ -224,6 +224,7 @@ pub fn generate_method_table(api: &Api, class: &GodotClass) -> TokenStream {
                     #(#impl_methods),*
                 };
 
+                #[allow(static_mut_refs)]
                 &mut TABLE
             }
 
