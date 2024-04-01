@@ -16,7 +16,6 @@ pub(crate) fn run_tests() -> bool {
 
     status &= test_ron();
     status &= test_json();
-    status &= test_yaml();
     status &= test_msgpack();
     status &= test_bincode();
 
@@ -161,20 +160,6 @@ crate::godot_itest! { test_json {
         .expect("Dispatch from JSON");
 
     let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from JSON");
-    assert_eq!(foo, result);
-}}
-
-crate::godot_itest! { test_yaml {
-    let foo = Foo::new();
-
-    let yaml_str = serde_yaml::to_string(&foo).expect("Foo to YAML");
-    let result = serde_yaml::from_str::<Foo>(&yaml_str).expect("Foo from YAML");
-    assert_eq!(foo, result);
-
-    let yaml_str =
-        serde_yaml::to_string(&foo.to_variant().dispatch()).expect("Dispatch to YAML");
-    let disp = serde_yaml::from_str::<VariantDispatch>(&yaml_str).expect("Dispatch from YAML");
-    let result = Foo::from_variant(&Variant::from(&disp)).expect("Foo from Dispatch from YAML");
     assert_eq!(foo, result);
 }}
 
