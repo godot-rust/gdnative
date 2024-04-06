@@ -136,13 +136,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: "Install nightly Rust (minimal-deps only)"
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: false # use selected toolchain for remainder of this step
-          components: cargo
         if: ${{ matrix.rust.special == 'minimal-deps' }}
+        run: rustup toolchain install nightly --profile minimal --component cargo
       - name: "Install minimal dependency versions from Cargo"
         run: cargo +nightly update -Z minimal-versions
         if: ${{ matrix.rust.special == 'minimal-deps' }}

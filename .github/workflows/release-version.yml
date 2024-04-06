@@ -74,11 +74,10 @@ jobs:
     needs: validation
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - name: "Install Rust toolchain"
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
       - name: "Compile tests"
         run: cargo test --workspace --features ${GDRUST_FEATURES} --no-run
       - name: "Test"
@@ -89,12 +88,10 @@ jobs:
     needs: validation
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: clippy
+      - name: "Install Rust toolchain"
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup default stable
       - name: "Check clippy"
         run: cargo clippy --workspace --features ${GDRUST_FEATURES} -- -D clippy::style -D clippy::complexity -D clippy::perf -D clippy::dbg_macro -D clippy::todo -D clippy::unimplemented
 
@@ -103,12 +100,10 @@ jobs:
     needs: validation
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt
+      - name: "Install Rust toolchain"
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt
+          rustup default stable
       - name: "Check rustfmt"
         run: cargo fmt --all -- --check
 
