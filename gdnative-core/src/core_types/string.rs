@@ -410,6 +410,7 @@ impl TryFrom<GodotChar> for char {
             1 => std::char::from_u32(c.0 as u32).ok_or(GodotCharError::IncompleteSequence),
             4 => std::char::from_u32(c.0 as u32).ok_or(GodotCharError::InvalidCodePoint),
             2 => {
+                #[allow(clippy::unnecessary_cast)] // type wchar_t may be platform-dependent
                 let mut iter = std::char::decode_utf16(std::iter::once(c.0 as u16));
                 let c = iter
                     .next()

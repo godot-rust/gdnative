@@ -355,7 +355,7 @@ impl<T: GodotObject> Ref<T, Unique> {
             // Classes with NUL-bytes in their names can not exist
             let class_name = CString::new(class_name).ok()?;
             let ctor = (get_api().godot_get_class_constructor)(class_name.as_ptr())?;
-            let ptr = NonNull::new(ctor() as *mut sys::godot_object)?;
+            let ptr = NonNull::new(ctor().cast::<sys::godot_object>())?;
             <T::Memory as MemorySpec>::impl_from_maybe_ref_counted(ptr)
         }
     }

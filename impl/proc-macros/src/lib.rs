@@ -9,7 +9,6 @@ use proc_macro::TokenStream;
 use syn::AttributeArgs;
 
 mod cfg_ex;
-mod doc;
 mod pool_array_element;
 
 #[proc_macro]

@@ -281,6 +281,7 @@ macro_rules! make_method_table {
                     $($methods: std::ptr::null_mut(),)*
                 };
 
+                #[allow(static_mut_refs)]
                 &mut TABLE
             }
 

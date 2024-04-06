@@ -5,7 +5,6 @@ use syn::{
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
-use std::boxed::Box;
 
 use crate::syntax::rpc_mode::RpcMode;
 use crate::utils::find_non_concrete;

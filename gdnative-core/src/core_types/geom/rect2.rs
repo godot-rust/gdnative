@@ -261,7 +261,7 @@ impl Rect2 {
 
 /// Error indicating that an `i64` cannot be converted to a [`Margin`].
 #[derive(Debug)]
-pub struct MarginError(i64);
+pub struct MarginError(pub i64);
 
 /// Provides compatibility with Godot's [`Margin` enum][margin] through the [`TryFrom`] trait.
 ///

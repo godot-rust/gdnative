@@ -22,7 +22,7 @@ If you are looking to contribute, but are not sure if what you want to do falls 
 
 ## Toolchain compatibility
 
-`gdnative` currently has a minimum supported Rust version (MSRV) of **1.67**. We use the Rust 2021 Edition.
+`gdnative` currently has a minimum supported Rust version (MSRV) of **1.70**. We use the Rust 2021 Edition.
 
 > **Warning**: **Linux users: Be aware of the source of your Godot binary!** Binary distributions of Godot using a container-based format may ship versions of dependencies that may not be compatible with GDNative libraries built directly from your base system. Examples of such formats include **Flatpak**, **Snap**, and **AppImage**.
 >
