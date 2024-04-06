@@ -34,6 +34,7 @@ env:
 
 on:
   merge_group:
+  push:
 
 defaults:
   run:
