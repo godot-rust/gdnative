@@ -254,7 +254,6 @@ mod header_binding {
 mod api_wrapper {
     use proc_macro2::{Ident, TokenStream};
     use quote::{format_ident, quote, ToTokens};
-    use std::convert::AsRef;
     use std::fs::File;
     use std::io::Write as _;
     use std::path;
@@ -392,44 +391,44 @@ mod api_wrapper {
         }
     }
 
+    impl de::Visitor for Place<Argument> {
+        fn seq(&mut self) -> miniserde::Result<Box<dyn de::Seq + '_>> {
+            Ok(Box::new(ArgumentBuilder {
+                out: &mut self.out,
+                tuple: (None, None),
+            }))
+        }
+    }
+
+    struct ArgumentBuilder<'a> {
+        out: &'a mut Option<Argument>,
+        tuple: (Option<String>, Option<String>),
+    }
+
+    impl<'a> de::Seq for ArgumentBuilder<'a> {
+        fn element(&mut self) -> miniserde::Result<&mut dyn de::Visitor> {
+            if self.tuple.0.is_none() {
+                Ok(Deserialize::begin(&mut self.tuple.0))
+            } else if self.tuple.1.is_none() {
+                Ok(Deserialize::begin(&mut self.tuple.1))
+            } else {
+                Err(miniserde::Error)
+            }
+        }
+
+        fn finish(&mut self) -> miniserde::Result<()> {
+            if let (Some(a), Some(b)) = (self.tuple.0.take(), self.tuple.1.take()) {
+                *self.out = Some(Argument { type_: a, name: b });
+                Ok(())
+            } else {
+                Err(miniserde::Error)
+            }
+        }
+    }
+
     // Used to convert [String, String] in JSON into the Argument struct.
     impl Deserialize for Argument {
         fn begin(out: &mut Option<Self>) -> &mut dyn de::Visitor {
-            impl de::Visitor for Place<Argument> {
-                fn seq(&mut self) -> miniserde::Result<Box<dyn de::Seq + '_>> {
-                    Ok(Box::new(ArgumentBuilder {
-                        out: &mut self.out,
-                        tuple: (None, None),
-                    }))
-                }
-            }
-
-            struct ArgumentBuilder<'a> {
-                out: &'a mut Option<Argument>,
-                tuple: (Option<String>, Option<String>),
-            }
-
-            impl<'a> de::Seq for ArgumentBuilder<'a> {
-                fn element(&mut self) -> miniserde::Result<&mut dyn de::Visitor> {
-                    if self.tuple.0.is_none() {
-                        Ok(Deserialize::begin(&mut self.tuple.0))
-                    } else if self.tuple.1.is_none() {
-                        Ok(Deserialize::begin(&mut self.tuple.1))
-                    } else {
-                        Err(miniserde::Error)
-                    }
-                }
-
-                fn finish(&mut self) -> miniserde::Result<()> {
-                    if let (Some(a), Some(b)) = (self.tuple.0.take(), self.tuple.1.take()) {
-                        *self.out = Some(Argument { type_: a, name: b });
-                        Ok(())
-                    } else {
-                        Err(miniserde::Error)
-                    }
-                }
-            }
-
             Place::new(out)
         }
     }

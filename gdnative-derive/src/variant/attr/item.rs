@@ -1,5 +1,3 @@
-use std::iter::FromIterator;
-
 use proc_macro2::Span;
 use syn::spanned::Spanned;
 
