@@ -28,9 +28,9 @@ env:
   # Local variables
   # Note: using variables is limited at the moment, see https://github.com/actions/runner/issues/480
   GDRUST_FEATURES: "gdnative/async,gdnative/serde,gdnative_bindings_generator/debug"
-  CARGO_DENY_VERSION: "0.11.4"
-  CARGO_DINGHY_VERSION: "0.6.4"
-  CARGO_MACHETE_VERSION: "0.3"
+  CARGO_DENY_VERSION: "0.14.20"
+  CARGO_DINGHY_VERSION: "0.6.8"
+  CARGO_MACHETE_VERSION: "0.6.2"
 
 on:
   merge_group:
