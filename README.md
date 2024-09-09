@@ -14,7 +14,12 @@
 
 ## Maintenance Policy
 
-`gdnative` is considered mostly feature complete, and is maintained with a focus on API stability. We try to avoid unnecessary breaking changes, and try to limit their end-user impact to a minimum whenever we have to make them.
+> [!Important]  
+> At the moment, `gdnative` is no longer actively maintained. Almost all development resources from the godot-rust project are invested in
+> [`gdext`](https://github.com/godot-rust/gdext), which still requires a ton of work. If you are interested in assisting with `gdnative`
+> maintenance, please contact us via e-mail or on Discord.
+
+`gdnative` is considered mostly feature complete, and lies a focus on API stability. We try to avoid unnecessary breaking changes, and try to limit their end-user impact to a minimum whenever we have to make them. No large-scale features are planned anymore.
 
 We adhere to [Cargo's semantic versioning](https://doc.rust-lang.org/cargo/reference/semver.html) as the means to convey changes in the public API between versions. Future releases are planned publicly on GitHub, with the [milestone](https://github.com/godot-rust/gdnative/milestones) feature. Note that we use the `breaking-change` label to indicate the existence of *any* technical breakage, regardless of the expected impact on end user programs.
 
