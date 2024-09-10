@@ -1,0 +1,5 @@
+error: invalid syntax. expected #[export(key = "value")]
+ --> tests/ui/export_fail_05.rs:4:10
+  |
+4 | #[export(kind)]
+  |          ^^^^

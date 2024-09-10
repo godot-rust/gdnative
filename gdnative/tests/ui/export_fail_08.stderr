@@ -1,0 +1,5 @@
+error: unknown kind, expected enum
+ --> tests/ui/export_fail_08.rs:4:17
+  |
+4 | #[export(kind = "foo")]
+  |                 ^^^^^

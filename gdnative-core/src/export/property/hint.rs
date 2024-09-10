@@ -1,6 +1,6 @@
 //! Strongly typed property hints.
 
-use std::fmt::{self, Write};
+use std::fmt::{self, Display, Write};
 use std::ops::RangeInclusive;
 
 use crate::core_types::GodotString;
@@ -116,20 +116,26 @@ where
 /// ```
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct EnumHint {
-    values: Vec<String>,
+    entries: Vec<EnumHintEntry>,
 }
 
 impl EnumHint {
     #[inline]
-    pub fn new(values: Vec<String>) -> Self {
-        EnumHint { values }
+    pub fn new(keys: Vec<String>) -> Self {
+        let entries = keys.into_iter().map(EnumHintEntry::new).collect();
+        EnumHint { entries }
+    }
+
+    #[inline]
+    pub fn with_entries(entries: Vec<EnumHintEntry>) -> Self {
+        EnumHint { entries }
     }
 
     /// Formats the hint as a Godot hint string.
     fn to_godot_hint_string(&self) -> GodotString {
         let mut s = String::new();
 
-        let mut iter = self.values.iter();
+        let mut iter = self.entries.iter();
 
         if let Some(first) = iter.next() {
             write!(s, "{first}").unwrap();
@@ -140,6 +146,38 @@ impl EnumHint {
         }
 
         s.into()
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct EnumHintEntry {
+    key: String,
+    value: Option<i64>,
+}
+
+impl EnumHintEntry {
+    #[inline]
+    pub fn new(key: String) -> Self {
+        Self { key, value: None }
+    }
+
+    #[inline]
+    pub fn with_value(key: String, value: i64) -> Self {
+        Self {
+            key,
+            value: Some(value),
+        }
+    }
+}
+
+impl Display for EnumHintEntry {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.key)?;
+        if let Some(value) = self.value {
+            write!(f, ":{}", value)?;
+        }
+        Ok(())
     }
 }
 
@@ -469,3 +507,16 @@ impl ArrayHint {
         }
     }
 }
+
+godot_test!(test_enum_hint_without_mapping {
+    let hint = EnumHint::new(vec!["Foo".into(), "Bar".into()]);
+    assert_eq!(hint.to_godot_hint_string().to_string(), "Foo,Bar".to_string(),);
+});
+
+godot_test!(test_enum_hint_with_mapping {
+    let hint = EnumHint::with_entries(vec![
+        EnumHintEntry::with_value("Foo".to_string(), 42),
+        EnumHintEntry::with_value("Bar".to_string(), 67),
+    ]);
+    assert_eq!(hint.to_godot_hint_string().to_string(), "Foo:42,Bar:67".to_string(),);
+});

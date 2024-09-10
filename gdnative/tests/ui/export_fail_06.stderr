@@ -1,0 +1,5 @@
+error: found kinb, expected kind
+ --> tests/ui/export_fail_06.rs:4:10
+  |
+4 | #[export(kinb = "enum")]
+  |          ^^^^
