@@ -20,7 +20,7 @@
 //! [@GDScript]: https://docs.godotengine.org/en/stable/classes/class_@gdscript.html
 
 use crate::api::{Resource, ResourceLoader};
-use crate::core_types::NodePath;
+use crate::core_types::GodotString;
 use crate::object::{memory::RefCounted, GodotObject, Ref, SubClass};
 
 #[doc(inline)]
@@ -52,7 +52,7 @@ pub use gdnative_core::globalscope::*;
 /// let scene = load::<PackedScene>("res://path/to/Main.tscn").unwrap();
 /// ```
 #[inline]
-pub fn load<T>(path: impl Into<NodePath>) -> Option<Ref<T>>
+pub fn load<T>(path: impl Into<GodotString>) -> Option<Ref<T>>
 where
     T: SubClass<Resource> + GodotObject<Memory = RefCounted>,
 {
