@@ -46,6 +46,7 @@ fn check_godot_version_mismatch() -> bool {
     }
 }
 
+#[allow(unused)]
 fn godot_version() -> Option<semver::Version> {
     let version = unsafe {
         let api = get_api();
