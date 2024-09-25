@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_GDNATIVE_H
-#define GODOT_GDNATIVE_H
+#ifndef GDNATIVE_GDNATIVE_H
+#define GDNATIVE_GDNATIVE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,10 +53,14 @@ extern "C" {
 #endif
 
 // This is for libraries *using* the header, NOT GODOT EXPOSING STUFF!!
-#ifdef _WIN32
+#if !defined(GDN_EXPORT)
+#if defined(_WIN32)
 #define GDN_EXPORT __declspec(dllexport)
+#elif defined(__GNUC__)
+#define GDN_EXPORT __attribute__((visibility("default")))
 #else
 #define GDN_EXPORT
+#endif
 #endif
 
 #include <stdbool.h>
@@ -297,4 +301,4 @@ godot_object GDAPI *godot_instance_from_id(godot_int p_instance_id);
 }
 #endif
 
-#endif // GODOT_C_H
+#endif // GDNATIVE_GDNATIVE_H

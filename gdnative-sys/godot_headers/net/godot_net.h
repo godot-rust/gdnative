@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_NATIVENET_H
-#define GODOT_NATIVENET_H
+#ifndef GODOT_NET_H
+#define GODOT_NET_H
 
 #include <gdnative/gdnative.h>
 
@@ -45,7 +45,6 @@ extern "C" {
 #define GODOT_NET_API_MINOR 1
 
 typedef struct {
-
 	godot_gdnative_api_version version; /* version of our API */
 	godot_object *data; /* User reference */
 
@@ -118,4 +117,4 @@ void GDAPI godot_net_bind_multiplayer_peer(godot_object *p_obj, const godot_net_
 // WebRTC Bindings
 #include "net/godot_webrtc.h"
 
-#endif /* GODOT_NATIVENET_H */
+#endif // GODOT_NET_H

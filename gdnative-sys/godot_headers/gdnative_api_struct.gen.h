@@ -105,6 +105,14 @@ typedef struct godot_gdnative_ext_android_api_struct {
 	bool (*godot_android_is_activity_resumed)();
 } godot_gdnative_ext_android_api_struct;
 
+typedef struct godot_gdnative_ext_arvr_1_2_api_struct {
+	unsigned int type;
+	godot_gdnative_api_version version;
+	const godot_gdnative_api_struct *next;
+	void (*godot_arvr_set_interface)(godot_object *p_arvr_interface, const godot_arvr_interface_gdnative *p_gdn_interface);
+	godot_int (*godot_arvr_get_depthid)(godot_rid *p_render_target);
+} godot_gdnative_ext_arvr_1_2_api_struct;
+
 typedef struct godot_gdnative_ext_arvr_api_struct {
 	unsigned int type;
 	godot_gdnative_api_version version;
@@ -148,6 +156,31 @@ typedef struct godot_gdnative_ext_net_api_struct {
 	void (*godot_net_bind_packet_peer)(godot_object *p_obj, const godot_net_packet_peer *p_interface);
 	void (*godot_net_bind_multiplayer_peer)(godot_object *p_obj, const godot_net_multiplayer_peer *p_interface);
 } godot_gdnative_ext_net_api_struct;
+
+typedef struct godot_gdnative_core_1_3_api_struct {
+	unsigned int type;
+	godot_gdnative_api_version version;
+	const godot_gdnative_api_struct *next;
+	void (*godot_dictionary_merge)(godot_dictionary *p_self, const godot_dictionary *p_dictionary, const godot_bool p_overwrite);
+	godot_bool (*godot_pool_byte_array_has)(const godot_pool_byte_array *p_self, const uint8_t p_data);
+	void (*godot_pool_byte_array_sort)(godot_pool_byte_array *p_self);
+	godot_bool (*godot_pool_int_array_has)(const godot_pool_int_array *p_self, const godot_int p_data);
+	void (*godot_pool_int_array_sort)(godot_pool_int_array *p_self);
+	godot_bool (*godot_pool_real_array_has)(const godot_pool_real_array *p_self, const godot_real p_data);
+	void (*godot_pool_real_array_sort)(godot_pool_real_array *p_self);
+	godot_bool (*godot_pool_string_array_has)(const godot_pool_string_array *p_self, const godot_string *p_data);
+	godot_string (*godot_pool_string_array_join)(const godot_pool_string_array *p_self, const godot_string *p_delimiter);
+	void (*godot_pool_string_array_sort)(godot_pool_string_array *p_self);
+	godot_bool (*godot_pool_vector2_array_has)(const godot_pool_vector2_array *p_self, const godot_vector2 *p_data);
+	void (*godot_pool_vector2_array_sort)(godot_pool_vector2_array *p_self);
+	godot_bool (*godot_pool_vector3_array_has)(const godot_pool_vector3_array *p_self, const godot_vector3 *p_data);
+	void (*godot_pool_vector3_array_sort)(godot_pool_vector3_array *p_self);
+	godot_bool (*godot_pool_color_array_has)(const godot_pool_color_array *p_self, const godot_color *p_data);
+	void (*godot_pool_color_array_sort)(godot_pool_color_array *p_self);
+	godot_string (*godot_string_join)(const godot_string *p_self, const godot_array *p_parts);
+	godot_string (*godot_string_num_uint64)(uint64_t p_num, godot_int p_base);
+	godot_string (*godot_string_num_uint64_capitalized)(uint64_t p_num, godot_int p_base, godot_bool p_capitalize_hex);
+} godot_gdnative_core_1_3_api_struct;
 
 typedef struct godot_gdnative_core_1_2_api_struct {
 	unsigned int type;
@@ -916,7 +949,7 @@ typedef struct godot_gdnative_core_api_struct {
 	godot_bool (*godot_string_empty)(const godot_string *p_self);
 	godot_string (*godot_string_get_base_dir)(const godot_string *p_self);
 	godot_string (*godot_string_get_file)(const godot_string *p_self);
-	godot_string (*godot_string_humanize_size)(size_t p_size);
+	godot_string (*godot_string_humanize_size)(uint64_t p_size);
 	godot_bool (*godot_string_is_abs_path)(const godot_string *p_self);
 	godot_bool (*godot_string_is_rel_path)(const godot_string *p_self);
 	godot_bool (*godot_string_is_resource_file)(const godot_string *p_self);

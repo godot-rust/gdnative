@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_DICTIONARY_H
-#define GODOT_DICTIONARY_H
+#ifndef GDNATIVE_DICTIONARY_H
+#define GDNATIVE_DICTIONARY_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,8 +102,12 @@ godot_bool GDAPI godot_dictionary_erase_with_return(godot_dictionary *p_self, co
 
 godot_variant GDAPI godot_dictionary_get_with_default(const godot_dictionary *p_self, const godot_variant *p_key, const godot_variant *p_default);
 
+// GDNative core 1.3
+
+void GDAPI godot_dictionary_merge(godot_dictionary *p_self, const godot_dictionary *p_dictionary, const godot_bool p_overwrite);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // GODOT_DICTIONARY_H
+#endif // GDNATIVE_DICTIONARY_H
